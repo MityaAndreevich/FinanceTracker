@@ -11,3 +11,7 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# Xcode workspace/user data
+**/*.xcuserdatad/
+**/xcuserdata/
