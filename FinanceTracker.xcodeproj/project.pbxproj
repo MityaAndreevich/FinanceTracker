@@ -75,10 +75,10 @@
 		CA770D762F19983F007EC55F = {
 			isa = PBXGroup;
 			children = (
-				CA770D812F19983F007EC55F /* FinanceTracker */,
 				CA770D922F199840007EC55F /* FinanceTrackerTests */,
 				CA770D9C2F199840007EC55F /* FinanceTrackerUITests */,
 				CA770D802F19983F007EC55F /* Products */,
+				CA770D812F19983F007EC55F /* FinanceTracker */,
 			);
 			sourceTree = "<group>";
 		};
