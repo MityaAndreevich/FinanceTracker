@@ -1,0 +1,18 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+"tab.dashboard" = "Dashboard";
+"tab.transactions" = "Transactions";
+"tab.add" = "Add";
+"tab.analytics" = "Analytics";
+"tab.settings" = "Settings";
+
+"title.dashboard" = "Dashboard";
+"title.transactions" = "Transactions";
+"title.add" = "Add";
+"title.analytics" = "Analytics";
+"title.settings" = "Settings";
