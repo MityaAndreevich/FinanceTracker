@@ -9,7 +9,8 @@ import SwiftUI
 import SwiftData
 
 struct TransactionsView: View {
-    @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
+    @Query(sort: \Transaction.date, order: .reverse)
+    private var transactions: [Transaction]
 
     var body: some View {
         NavigationStack {
@@ -19,13 +20,20 @@ struct TransactionsView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(transactions) { tx in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(tx.merchant ?? tx.category.name)
-                                .font(.headline)
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(tx.merchant ?? tx.category.name)
+                                    .font(.headline)
 
-                            Text(tx.date, style: .date)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                Text(tx.date, style: .date)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Text(formatMoney(cents: tx.amountCents, currency: tx.currency))
+                                .font(.headline)
                         }
                     }
                 }
@@ -33,4 +41,20 @@ struct TransactionsView: View {
             .navigationTitle("title.transactions")
         }
     }
+
+    /// Превращаем cents (Int) в красивую валюту ("$12.50")
+    private func formatMoney(cents: Int, currency: String) -> String {
+        let amount = Decimal(cents) / 100
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency
+
+        return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
+    }
+}
+
+#Preview {
+    TransactionsView()
+        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }
