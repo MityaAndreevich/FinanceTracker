@@ -13,32 +13,75 @@ struct AnalyticsView: View {
     private var transactions: [Transaction]
 
     var body: some View {
-        let summary = monthlyExpenseByCategory()
+        let expenseByCategory = monthlyExpenseByCategory()
+        let incomeBySource = monthlyIncomeBySource()
+        let netBySource = monthlyNetBySource()
 
         NavigationStack {
             List {
-                if summary.isEmpty {
-                    Text("No expense data for this month yet")
-                        .foregroundStyle(.secondary)
-                } else {
-                    Section("Top categories (this month)") {
-                        ForEach(summary.prefix(3), id: \.categoryId) { row in
+                // ===== Expenses =====
+                Section("Top expense categories (this month)") {
+                    if expenseByCategory.isEmpty {
+                        Text("No expense data for this month yet")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(expenseByCategory.prefix(3), id: \.id) { row in
                             HStack {
-                                Text(row.categoryName)
+                                Text(row.name)
                                 Spacer()
                                 Text(formatMoney(cents: row.totalCents))
                                     .font(.headline)
                             }
                         }
                     }
+                }
 
-                    Section("All categories") {
-                        ForEach(summary, id: \.categoryId) { row in
+                Section("All expense categories") {
+                    if expenseByCategory.isEmpty {
+                        Text("—")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(expenseByCategory, id: \.id) { row in
                             HStack {
-                                Text(row.categoryName)
+                                Text(row.name)
                                 Spacer()
                                 Text(formatMoney(cents: row.totalCents))
                                     .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                // ===== Income by source =====
+                Section("Income by source (this month)") {
+                    if incomeBySource.isEmpty {
+                        Text("No income data for this month yet")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(incomeBySource, id: \.id) { row in
+                            HStack {
+                                Text(row.name)
+                                Spacer()
+                                Text(formatMoney(cents: row.totalCents))
+                                    .font(.headline)
+                            }
+                        }
+                    }
+                }
+
+                // ===== Net by source =====
+                Section("Net by source (this month)") {
+                    if netBySource.isEmpty {
+                        Text("No data for this month yet")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(netBySource, id: \.id) { row in
+                            HStack {
+                                Text(row.name)
+                                Spacer()
+                                Text(formatMoney(cents: row.totalCents))
+                                    .font(.headline)
+                                    .foregroundStyle(row.totalCents >= 0 ? .green : .red)
                             }
                         }
                     }
@@ -48,34 +91,62 @@ struct AnalyticsView: View {
         }
     }
 
-    // MARK: - Data
+    // MARK: - Data helpers
 
-    private func monthlyExpenseByCategory() -> [CategoryExpenseRow] {
+    private func currentMonth(_ date: Date) -> Bool {
         let calendar = Calendar.current
-        let now = Date()
+        return calendar.isDate(date, equalTo: Date(), toGranularity: .month)
+    }
 
-        // Берём только траты текущего месяца
-        let monthExpenses = transactions.filter {
-            $0.typeRaw == "expense" &&
-            calendar.isDate($0.date, equalTo: now, toGranularity: .month)
+    private func monthlyExpenseByCategory() -> [SummaryRow] {
+        let monthExpenses = transactions.filter { tx in
+            tx.typeRaw == "expense" && currentMonth(tx.date)
         }
 
-        // Группируем по категории и суммируем
         var dict: [UUID: (name: String, total: Int)] = [:]
 
         for tx in monthExpenses {
             let id = tx.category.id
             let name = tx.category.name
-            let current = dict[id]?.total ?? 0
-            dict[id] = (name: name, total: current + tx.amountCents)
+            dict[id] = (name: name, total: (dict[id]?.total ?? 0) + tx.amountCents)
         }
 
-        // Превращаем в массив, сортируем по убыванию суммы
-        let rows = dict.map { (key, value) in
-            CategoryExpenseRow(categoryId: key, categoryName: value.name, totalCents: value.total)
+        return dict.map { SummaryRow(id: $0.key, name: $0.value.name, totalCents: $0.value.total) }
+            .sorted { $0.totalCents > $1.totalCents }
+    }
+
+    private func monthlyIncomeBySource() -> [SummaryRow] {
+        let monthIncome = transactions.filter { tx in
+            tx.typeRaw == "income" && currentMonth(tx.date)
         }
 
-        return rows.sorted { $0.totalCents > $1.totalCents }
+        // source может быть nil -> складываем в "Unassigned"
+        var dict: [String: Int] = [:]
+
+        for tx in monthIncome {
+            let key = tx.source?.name ?? "Unassigned"
+            dict[key] = (dict[key] ?? 0) + tx.amountCents
+        }
+
+        return dict.map { SummaryRow(id: UUID().uuidString, name: $0.key, totalCents: $0.value) }
+            .sorted { $0.totalCents > $1.totalCents }
+    }
+
+    private func monthlyNetBySource() -> [SummaryRow] {
+        let monthTx = transactions.filter { currentMonth($0.date) }
+
+        // net по source: income +, expense -
+        var dict: [String: Int] = [:]
+
+        for tx in monthTx {
+            let key = tx.source?.name ?? "Unassigned"
+            let signed = (tx.typeRaw == "income") ? tx.amountCents : -tx.amountCents
+            dict[key] = (dict[key] ?? 0) + signed
+        }
+
+        // Сортируем по абсолютной величине (самые “влияющие” источники сверху)
+        return dict.map { SummaryRow(id: UUID().uuidString, name: $0.key, totalCents: $0.value) }
+            .sorted { abs($0.totalCents) > abs($1.totalCents) }
     }
 
     // MARK: - Formatting
@@ -89,11 +160,10 @@ struct AnalyticsView: View {
     }
 }
 
-// MARK: - Row model for UI
-
-private struct CategoryExpenseRow {
-    let categoryId: UUID
-    let categoryName: String
+// Универсальная строка-резюме для списков аналитики
+private struct SummaryRow {
+    let id: AnyHashable
+    let name: String
     let totalCents: Int
 }
 
