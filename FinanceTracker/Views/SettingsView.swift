@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -35,6 +36,11 @@ struct SettingsView: View {
     @State private var exportFilename: String = ""
     @State private var showExportError = false
     @State private var exportErrorMessage = ""
+    
+    // MARK: - Import
+    @State private var showImporter = false
+    @State private var showImportResult = false
+    @State private var importResultMessage = ""
     
     var body: some View {
         Form {
@@ -127,6 +133,10 @@ struct SettingsView: View {
             }
             
             Section("Data") {
+                Button("Import CSV") {
+                    showImporter = true
+                }
+                
                 Button("Export CSV (This Month)") {
                     exportCSV(scope: .month)
                 }
@@ -144,6 +154,18 @@ struct SettingsView: View {
         }
         .navigationTitle("title.settings")
         .onTapGesture { hideKeyboard() }
+        .fileImporter(
+            isPresented: $showImporter,
+            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImport(result: result)
+        }
+        .alert("Import result", isPresented: $showImportResult) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(importResultMessage)
+        }
         .alert("Can't delete", isPresented: $showBlockedDeleteAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -258,6 +280,39 @@ struct SettingsView: View {
         saveContext()
     }
     
+    //MARK: - Import
+    private func handleImport(result: Result<[URL], Error>) {
+        do {
+            let urls = try result.get()
+            guard let url = urls.first else { return }
+
+            // Security scoped resource для Files
+            let didStart = url.startAccessingSecurityScopedResource()
+            defer {
+                if didStart { url.stopAccessingSecurityScopedResource() }
+            }
+
+            let data = try Data(contentsOf: url)
+
+            let importResult = try CSVImportService.importCSV(modelContext: modelContext, data: data)
+
+            var lines: [String] = []
+            lines.append("Imported: \(importResult.imported)")
+            lines.append("Skipped: \(importResult.skipped)")
+            lines.append("Created categories: \(importResult.createdCategories)")
+            lines.append("Created sources: \(importResult.createdSources)")
+            if let first = importResult.firstError {
+                lines.append("First error: \(first)")
+            }
+
+            importResultMessage = lines.joined(separator: "\n")
+            showImportResult = true
+
+        } catch {
+            importResultMessage = "Import failed: \(error.localizedDescription)"
+            showImportResult = true
+        }
+    }
     // MARK: - Export
     private func exportCSV(scope: CSVExportScope) {
         do {
