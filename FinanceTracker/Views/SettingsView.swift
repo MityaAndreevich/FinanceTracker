@@ -29,7 +29,13 @@ struct SettingsView: View {
     // MARK: - Alerts
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
-
+    
+    // MARK: - Export
+    @State private var exportURL: URL?
+    @State private var exportFilename: String = ""
+    @State private var showExportError = false
+    @State private var exportErrorMessage = ""
+    
     var body: some View {
         Form {
             // ===== Sources =====
@@ -119,6 +125,22 @@ struct SettingsView: View {
                     }
                 }
             }
+            
+            Section("Data") {
+                Button("Export CSV (This Month)") {
+                    exportCSV(scope: .month)
+                }
+
+                Button("Export CSV (All)") {
+                    exportCSV(scope: .all)
+                }
+
+                if let url = exportURL {
+                    ShareLink(item: url) {
+                        Label("Share last export (\(exportFilename))", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
         }
         .navigationTitle("title.settings")
         .onTapGesture { hideKeyboard() }
@@ -126,6 +148,11 @@ struct SettingsView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(blockedDeleteMessage)
+        }
+        .alert("Export error", isPresented: $showExportError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(exportErrorMessage)
         }
     }
 
@@ -230,6 +257,20 @@ struct SettingsView: View {
         }
         saveContext()
     }
+    
+    // MARK: - Export
+    private func exportCSV(scope: CSVExportScope) {
+        do {
+            let result = try CSVExportService.makeCSV(modelContext: modelContext, scope: scope)
+            let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
+
+            exportURL = url
+            exportFilename = result.filename
+        } catch {
+            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            showExportError = true
+        }
+    }
 
     // MARK: - Safe counts (reference checks)
 
@@ -285,6 +326,7 @@ struct SettingsView: View {
         }
     }
 }
+
 
 // MARK: - Helpers
 
