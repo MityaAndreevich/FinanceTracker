@@ -29,21 +29,25 @@ struct TransactionsView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(filtered) { tx in
-                    HStack(alignment: .firstTextBaseline) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(tx.merchant ?? tx.category.name)
+                    NavigationLink {
+                        TransactionDetailView(tx: tx)
+                    } label: {
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(tx.merchant ?? tx.category.name)
+                                    .font(.headline)
+
+                                Text(tx.date, style: .date)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Text(formatMoney(cents: tx.amountCents, currency: tx.currency))
                                 .font(.headline)
-
-                            Text(tx.date, style: .date)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(tx.typeRaw == "income" ? .green : .red)
                         }
-
-                        Spacer()
-
-                        Text(formatMoney(cents: tx.amountCents, currency: tx.currency))
-                            .font(.headline)
-                            .foregroundStyle(tx.typeRaw == "income" ? .green : .red)
                     }
                 }
                 .onDelete(perform: deleteTransactions)
