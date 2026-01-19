@@ -23,8 +23,12 @@ struct SettingsView: View {
 
     // MARK: - New Category
     @State private var newCategoryName: String = ""
-    @State private var newCategoryTypeRaw: String = "expense" // "expense" or "income"
+    @State private var newCategoryTypeRaw: String = "expense"
     @State private var newCategoryIcon: String = ""
+
+    // MARK: - Alerts
+    @State private var showBlockedDeleteAlert = false
+    @State private var blockedDeleteMessage = ""
 
     var body: some View {
         Form {
@@ -118,6 +122,11 @@ struct SettingsView: View {
         }
         .navigationTitle("title.settings")
         .onTapGesture { hideKeyboard() }
+        .alert("Can't delete", isPresented: $showBlockedDeleteAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(blockedDeleteMessage)
+        }
     }
 
     // MARK: - Actions: Sources
@@ -138,8 +147,31 @@ struct SettingsView: View {
     }
 
     private func deleteSources(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(sources[index])
+        let toDelete = offsets.map { sources[$0] }
+
+        var blocked: [(String, Int)] = []
+        var allowed: [Source] = []
+
+        for source in toDelete {
+            let count = countTransactions(using: source)
+            if count > 0 {
+                blocked.append((source.name, count))
+            } else {
+                allowed.append(source)
+            }
+        }
+
+        if !blocked.isEmpty {
+            blockedDeleteMessage = blocked
+                .map { "“\($0.0)” is used in \($0.1) transaction(s)." }
+                .joined(separator: "\n")
+            showBlockedDeleteAlert = true
+        }
+
+        guard !allowed.isEmpty else { return }
+
+        for source in allowed {
+            modelContext.delete(source)
         }
         saveContext()
     }
@@ -170,10 +202,77 @@ struct SettingsView: View {
     }
 
     private func deleteCategories(from subset: [Category], at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(subset[index])
+        let toDelete = offsets.map { subset[$0] }
+
+        var blocked: [(String, Int)] = []
+        var allowed: [Category] = []
+
+        for cat in toDelete {
+            let count = countTransactions(using: cat)
+            if count > 0 {
+                blocked.append((cat.name, count))
+            } else {
+                allowed.append(cat)
+            }
+        }
+
+        if !blocked.isEmpty {
+            blockedDeleteMessage = blocked
+                .map { "“\($0.0)” is used in \($0.1) transaction(s)." }
+                .joined(separator: "\n")
+            showBlockedDeleteAlert = true
+        }
+
+        guard !allowed.isEmpty else { return }
+
+        for cat in allowed {
+            modelContext.delete(cat)
         }
         saveContext()
+    }
+
+    // MARK: - Safe counts (reference checks)
+
+    /// Сколько транзакций ссылаются на категорию
+    private func countTransactions(using category: Category) -> Int {
+        do {
+            let categoryId = category.id
+            let descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate { tx in
+                    tx.category.id == categoryId
+                }
+            )
+            return try modelContext.fetchCount(descriptor)
+        } catch {
+            // fallback (если вдруг SwiftData/Predicate начнёт капризничать)
+            do {
+                let all = try modelContext.fetch(FetchDescriptor<Transaction>())
+                return all.filter { $0.category.id == category.id }.count
+            } catch {
+                return 0
+            }
+        }
+    }
+
+    /// Сколько транзакций ссылаются на source (source может быть nil)
+    private func countTransactions(using source: Source) -> Int {
+        do {
+            let sourceId = source.id
+            let descriptor = FetchDescriptor<Transaction>(
+                predicate: #Predicate { tx in
+                    tx.source?.id == sourceId
+                }
+            )
+            return try modelContext.fetchCount(descriptor)
+        } catch {
+            // fallback
+            do {
+                let all = try modelContext.fetch(FetchDescriptor<Transaction>())
+                return all.filter { $0.source?.id == source.id }.count
+            } catch {
+                return 0
+            }
+        }
     }
 
     // MARK: - Persistence
@@ -187,7 +286,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Small helpers
+// MARK: - Helpers
 
 private extension String {
     var trimmed: String {
@@ -196,8 +295,6 @@ private extension String {
 }
 
 #Preview {
-    NavigationStack {
-        SettingsView()
-    }
-    .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
+    NavigationStack { SettingsView() }
+        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }
