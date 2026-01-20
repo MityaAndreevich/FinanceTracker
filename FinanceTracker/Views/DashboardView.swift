@@ -12,76 +12,49 @@ struct DashboardView: View {
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    private var currentMonthTransactions: [Transaction] {
+    var body: some View {
+        let monthTx = transactionsThisMonth()
+        let incomeCents = monthTx
+            .filter { $0.typeRaw == "income" }
+            .reduce(0) { $0 + $1.amountCents }
+
+        let expenseCents = monthTx
+            .filter { $0.typeRaw == "expense" }
+            .reduce(0) { $0 + $1.amountCents }
+
+        let netCents = incomeCents - expenseCents
+
+        NavigationStack {
+            if monthTx.isEmpty {
+                // ✅ Empty state when there is no data
+                EmptyStateView(
+                    systemImage: "creditcard",
+                    title: "No data yet",
+                    message: "Add your first income or expense to see your monthly summary here."
+                )
+                .navigationTitle("title.dashboard")
+            } else {
+                List {
+                    Section("This month") {
+                        SummaryRow(title: "Income", value: formatMoney(cents: incomeCents), valueColor: .green)
+                        SummaryRow(title: "Expenses", value: formatMoney(cents: expenseCents), valueColor: .red)
+                        SummaryRow(title: "Net", value: formatMoney(cents: netCents), valueColor: netCents >= 0 ? .green : .red)
+                    }
+
+                    // Можно позже добавить Top categories / Top sources
+                }
+                .listStyle(.insetGrouped)
+                .navigationTitle("title.dashboard")
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func transactionsThisMonth() -> [Transaction] {
         let calendar = Calendar.current
         let now = Date()
-
-        return transactions.filter {
-            calendar.isDate($0.date, equalTo: now, toGranularity: .month)
-        }
-    }
-
-    private var totalIncomeCents: Int {
-        currentMonthTransactions
-            .filter { $0.typeRaw == "income" }
-            .map { $0.amountCents }
-            .reduce(0, +)
-    }
-
-    private var totalExpenseCents: Int {
-        currentMonthTransactions
-            .filter { $0.typeRaw == "expense" }
-            .map { $0.amountCents }
-            .reduce(0, +)
-    }
-
-    private var netCents: Int {
-        totalIncomeCents - totalExpenseCents
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                summaryCard(
-                    title: "Income",
-                    cents: totalIncomeCents,
-                    color: .green
-                )
-
-                summaryCard(
-                    title: "Expenses",
-                    cents: totalExpenseCents,
-                    color: .red
-                )
-
-                summaryCard(
-                    title: "Net",
-                    cents: netCents,
-                    color: netCents >= 0 ? .green : .red
-                )
-            }
-            .padding()
-        }
-        .navigationTitle("title.dashboard")
-    }
-
-    // MARK: - UI helpers
-
-    private func summaryCard(title: String, cents: Int, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(formatMoney(cents: cents))
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(color)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        return transactions.filter { calendar.isDate($0.date, equalTo: now, toGranularity: .month) }
     }
 
     private func formatMoney(cents: Int) -> String {
@@ -93,7 +66,27 @@ struct DashboardView: View {
     }
 }
 
+// MARK: - Small UI component
+
+private struct SummaryRow: View {
+    let title: String
+    let value: String
+    let valueColor: Color
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text(value)
+                .font(.headline)
+                .foregroundStyle(valueColor)
+        }
+    }
+}
+
 #Preview {
-    DashboardView()
-        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
+    NavigationStack {
+        DashboardView()
+    }
+    .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }

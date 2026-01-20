@@ -25,8 +25,13 @@ struct TransactionsView: View {
 
         List {
             if filtered.isEmpty {
-                Text("No transactions yet")
-                    .foregroundStyle(.secondary)
+                EmptyStateView(
+                    systemImage: "tray",
+                    title: "No transactions yet",
+                    message: "Add your first income or expense. Your dashboard and analytics will appear here."
+                )
+                .listRowSeparator(.hidden)
+                .listStyle(.insetGrouped)
             } else {
                 ForEach(filtered) { tx in
                     NavigationLink {
