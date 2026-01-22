@@ -32,6 +32,9 @@ struct FinanceTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                            PurchaseManager.shared.start()
+                        }
         }
         .modelContainer(sharedModelContainer)
     }

@@ -42,6 +42,10 @@ struct SettingsView: View {
     @State private var showImportResult = false
     @State private var importResultMessage = ""
     
+    // MARK: - Purchases
+    @StateObject private var pm = PurchaseManager.shared
+    @State private var showPaywall = false
+    
     var body: some View {
         Form {
             // ===== Sources =====
@@ -133,16 +137,25 @@ struct SettingsView: View {
             }
             
             Section("Data") {
-                Button("Import CSV") {
-                    showImporter = true
-                }
-                
+
                 Button("Export CSV (This Month)") {
                     exportCSV(scope: .month)
                 }
 
                 Button("Export CSV (All)") {
-                    exportCSV(scope: .all)
+                    if pm.isPremium {
+                        exportCSV(scope: .all)
+                    } else {
+                        showPaywall = true
+                    }
+                }
+
+                Button("Import CSV") {
+                    if pm.isPremium {
+                        showImporter = true
+                    } else {
+                        showPaywall = true
+                    }
                 }
 
                 if let url = exportURL {
@@ -150,6 +163,15 @@ struct SettingsView: View {
                         Label("Share last export (\(exportFilename))", systemImage: "square.and.arrow.up")
                     }
                 }
+
+                if !pm.isPremium {
+                    Text("Premium unlocks Import CSV and Export All.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
             }
         }
         .navigationTitle("title.settings")
