@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CA770DF22F21CABB007EC55F /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA770DF12F21CABB007EC55F /* StoreKit.framework */; };
+		CA770E012F231EBE007EC55F /* FinanceTracker.storekit in Resources */ = {isa = PBXBuildFile; fileRef = CA770E002F231EBE007EC55F /* FinanceTracker.storekit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CA770D902F199840007EC55F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +32,8 @@
 		CA770D7F2F19983F007EC55F /* FinanceTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinanceTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA770D8F2F199840007EC55F /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA770D992F199840007EC55F /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA770DF12F21CABB007EC55F /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		CA770E002F231EBE007EC55F /* FinanceTracker.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = FinanceTracker.storekit; path = FinanceTracker/FinanceTracker.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA770DF22F21CABB007EC55F /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,10 +83,12 @@
 		CA770D762F19983F007EC55F = {
 			isa = PBXGroup;
 			children = (
+				CA770E002F231EBE007EC55F /* FinanceTracker.storekit */,
 				CA770D922F199840007EC55F /* FinanceTrackerTests */,
 				CA770D9C2F199840007EC55F /* FinanceTrackerUITests */,
 				CA770D802F19983F007EC55F /* Products */,
 				CA770D812F19983F007EC55F /* FinanceTracker */,
+				CA770DF02F21CABB007EC55F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -90,6 +100,14 @@
 				CA770D992F199840007EC55F /* FinanceTrackerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CA770DF02F21CABB007EC55F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CA770DF12F21CABB007EC55F /* StoreKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +230,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA770E012F231EBE007EC55F /* FinanceTracker.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
