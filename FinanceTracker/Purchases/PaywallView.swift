@@ -50,25 +50,11 @@ struct PaywallView: View {
                     VStack(spacing: 10) {
                         ForEach(pm.products, id: \.id) { product in
                             Button {
-                                Task { await pm.purchase(product) }
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(product.displayName)
-                                            .font(.headline)
-                                        Text(product.description)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    Text(product.displayPrice)
-                                        .font(.headline)
+                                    Task { await pm.purchase(product) }
+                                } label: {
+                                    PaywallProductRow(product: product)
                                 }
-                                .padding(14)
-                                .background(.thinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            }
-                            .buttonStyle(.plain)
+                                .buttonStyle(.plain)
                         }
 
                         Button("Restore Purchases") {
@@ -110,6 +96,57 @@ private struct FeatureRow: View {
                 .foregroundStyle(.primary)
             Spacer()
         }
+    }
+}
+
+private struct PaywallProductRow: View {
+    let product: Product
+
+    private var isYearly: Bool {
+        product.id.contains("yearly")
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(isYearly ? "Yearly" : "Monthly")
+                        .font(.headline)
+
+                    if isYearly {
+                        Text("Best value")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.thinMaterial)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                Text(isYearly ? "Full access for 1 year" : "Full access billed monthly")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(product.displayPrice)
+                    .font(.headline)
+
+                Text(isYearly ? "/ year" : "/ month")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(14)
+        .background(.thinMaterial)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
