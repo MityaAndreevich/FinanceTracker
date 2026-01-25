@@ -199,6 +199,18 @@ struct SettingsView: View {
                 } label: {
                     Label("Export CSV (All)", systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
                 }
+                
+                Button("Export PDF (This Month)") {
+                    exportPDF(scope: .month)
+                }
+
+                Button("Export PDF (All)") {
+                    if pm.isPremium {
+                        exportPDF(scope: .all)
+                    } else {
+                        showPaywall = true
+                    }
+                }
 
                 Button {
                     if pm.isPremium {
@@ -395,6 +407,18 @@ struct SettingsView: View {
             let result = try CSVExportService.makeCSV(modelContext: modelContext, scope: scope)
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
 
+            exportURL = url
+            exportFilename = result.filename
+        } catch {
+            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            showExportError = true
+        }
+    }
+    
+    private func exportPDF(scope: CSVExportScope) {
+        do {
+            let result = try PDFExportService.makeMonthlyReportPDF(modelContext: modelContext, scope: scope)
+            let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
             exportURL = url
             exportFilename = result.filename
         } catch {
