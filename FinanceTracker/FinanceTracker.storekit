@@ -136,7 +136,7 @@
             }
           ],
           "productID" : "ft_premium_yearly",
-          "recurringSubscriptionPeriod" : "P1M",
+          "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Premium Yearly",
           "subscriptionGroupID" : "D022D54F",
           "type" : "RecurringSubscription",
