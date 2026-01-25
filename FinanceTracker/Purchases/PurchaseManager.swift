@@ -19,7 +19,8 @@ final class PurchaseManager: ObservableObject {
 
     private let productIDs: [String] = [
         "ft_premium_monthly",
-        "ft_premium_yearly"
+        "ft_premium_yearly",
+        "ft_premium_lifetime"
     ]
 
     @Published private(set) var products: [Product] = []

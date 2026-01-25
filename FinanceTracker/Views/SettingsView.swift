@@ -8,6 +8,8 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import StoreKit
+import UIKit
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -30,24 +32,64 @@ struct SettingsView: View {
     // MARK: - Alerts
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
-    
+
     // MARK: - Export
     @State private var exportURL: URL?
     @State private var exportFilename: String = ""
     @State private var showExportError = false
     @State private var exportErrorMessage = ""
-    
+
     // MARK: - Import
     @State private var showImporter = false
     @State private var showImportResult = false
     @State private var importResultMessage = ""
-    
+
     // MARK: - Purchases
     @StateObject private var pm = PurchaseManager.shared
     @State private var showPaywall = false
-    
+
     var body: some View {
         Form {
+            // ===== Premium =====
+            Section("Premium") {
+                HStack {
+                    Label("Status", systemImage: "crown")
+                    Spacer()
+                    Text(pm.isPremium ? "Active" : "Free")
+                        .foregroundStyle(pm.isPremium ? .green : .secondary)
+                }
+
+                if pm.isPremium == false {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Label("Upgrade to Premium", systemImage: "star.circle.fill")
+                    }
+                }
+
+                Button {
+                    openManageSubscriptions()
+                } label: {
+                    Label("Manage Subscription", systemImage: "gearshape")
+                }
+
+                Button {
+                    redeemOfferCode()
+                } label: {
+                    Label("Redeem Code", systemImage: "qrcode")
+                }
+
+                Button {
+                    Task { await pm.restorePurchases() }
+                } label: {
+                    Label("Restore Purchases", systemImage: "arrow.clockwise")
+                }
+
+                Text("Tip: If you’re using a promo code, tap “Redeem Code” and enter it.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             // ===== Sources =====
             Section("Add source") {
                 TextField("Name (e.g., Amazon Flex)", text: $newSourceName)
@@ -95,7 +137,9 @@ struct SettingsView: View {
             }
 
             Section("Expense categories") {
-                let expense = categories.filter { $0.kindRaw == "expense" }.sorted { $0.order < $1.order }
+                let expense = categories
+                    .filter { $0.kindRaw == "expense" }
+                    .sorted { $0.order < $1.order }
 
                 if expense.isEmpty {
                     Text("No expense categories").foregroundStyle(.secondary)
@@ -116,7 +160,9 @@ struct SettingsView: View {
             }
 
             Section("Income categories") {
-                let income = categories.filter { $0.kindRaw == "income" }.sorted { $0.order < $1.order }
+                let income = categories
+                    .filter { $0.kindRaw == "income" }
+                    .sorted { $0.order < $1.order }
 
                 if income.isEmpty {
                     Text("No income categories").foregroundStyle(.secondary)
@@ -135,27 +181,33 @@ struct SettingsView: View {
                     }
                 }
             }
-            
-            Section("Data") {
 
-                Button("Export CSV (This Month)") {
+            // ===== Data =====
+            Section("Data") {
+                Button {
                     exportCSV(scope: .month)
+                } label: {
+                    Label("Export CSV (This Month)", systemImage: "square.and.arrow.up")
                 }
 
-                Button("Export CSV (All)") {
+                Button {
                     if pm.isPremium {
                         exportCSV(scope: .all)
                     } else {
                         showPaywall = true
                     }
+                } label: {
+                    Label("Export CSV (All)", systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
                 }
 
-                Button("Import CSV") {
+                Button {
                     if pm.isPremium {
                         showImporter = true
                     } else {
                         showPaywall = true
                     }
+                } label: {
+                    Label("Import CSV", systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
                 }
 
                 if let url = exportURL {
@@ -170,12 +222,12 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .sheet(isPresented: $showPaywall) {
-                PaywallView()
-            }
         }
         .navigationTitle("title.settings")
         .onTapGesture { hideKeyboard() }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: [.commaSeparatedText, .plainText],
@@ -301,8 +353,9 @@ struct SettingsView: View {
         }
         saveContext()
     }
-    
-    //MARK: - Import
+
+    // MARK: - Import
+
     private func handleImport(result: Result<[URL], Error>) {
         do {
             let urls = try result.get()
@@ -315,7 +368,6 @@ struct SettingsView: View {
             }
 
             let data = try Data(contentsOf: url)
-
             let importResult = try CSVImportService.importCSV(modelContext: modelContext, data: data)
 
             var lines: [String] = []
@@ -335,7 +387,9 @@ struct SettingsView: View {
             showImportResult = true
         }
     }
+
     // MARK: - Export
+
     private func exportCSV(scope: CSVExportScope) {
         do {
             let result = try CSVExportService.makeCSV(modelContext: modelContext, scope: scope)
@@ -347,6 +401,32 @@ struct SettingsView: View {
             exportErrorMessage = "Export failed: \(error.localizedDescription)"
             showExportError = true
         }
+    }
+
+    // MARK: - Subscription management / promo codes
+
+    private func openManageSubscriptions() {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        Task {
+            try? await AppStore.showManageSubscriptions(in: scene)
+        }
+    }
+
+    private func redeemOfferCode() {
+    #if os(iOS)
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first else { return }
+
+        if #available(iOS 18.0, *) {
+            Task {
+                try? await AppStore.presentOfferCodeRedeemSheet(in: scene)
+            }
+        } else {
+            // iOS 14–17 fallback (deprecated, but still valid)
+            SKPaymentQueue.default().presentCodeRedemptionSheet()
+        }
+    #endif
     }
 
     // MARK: - Safe counts (reference checks)
@@ -403,7 +483,6 @@ struct SettingsView: View {
         }
     }
 }
-
 
 // MARK: - Helpers
 
