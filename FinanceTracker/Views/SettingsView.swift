@@ -211,6 +211,18 @@ struct SettingsView: View {
                         showPaywall = true
                     }
                 }
+                
+                Button("Export Excel/Numbers (This Month)") {
+                    exportTSV(scope: .month)
+                }
+
+                Button("Export Excel/Numbers (All)") {
+                    if pm.isPremium {
+                        exportTSV(scope: .all)
+                    } else {
+                        showPaywall = true
+                    }
+                }
 
                 Button {
                     if pm.isPremium {
@@ -419,6 +431,19 @@ struct SettingsView: View {
         do {
             let result = try PDFExportService.makeMonthlyReportPDF(modelContext: modelContext, scope: scope)
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
+            exportURL = url
+            exportFilename = result.filename
+        } catch {
+            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            showExportError = true
+        }
+    }
+    
+    private func exportTSV(scope: CSVExportScope) {
+        do {
+            let result = try TSVExportService.makeTSV(modelContext: modelContext, scope: scope)
+            let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
+
             exportURL = url
             exportFilename = result.filename
         } catch {
