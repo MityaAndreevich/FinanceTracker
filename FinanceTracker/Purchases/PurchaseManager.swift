@@ -13,49 +13,85 @@ typealias SKTransaction = StoreKit.Transaction
 @MainActor
 final class PurchaseManager: ObservableObject {
 
-    // MARK: - Products
+    // MARK: - Singleton
 
     static let shared = PurchaseManager()
+    private init() {}
 
-    private let productIDs: [String] = [
-        "ft_premium_monthly",
-        "ft_premium_yearly",
-        "ft_premium_lifetime"
-    ]
+    // MARK: - Product IDs
 
+    enum ProductID: String, CaseIterable {
+        case premiumMonthly  = "ft_premium_monthly"
+        case premiumYearly   = "ft_premium_yearly"
+        case premiumLifetime = "ft_premium_lifetime"
+    }
+
+    private var productIDs: [String] {
+        ProductID.allCases.map { $0.rawValue }
+    }
+
+    // MARK: - Published state
+
+    /// Продукты для показа в Paywall (в нужном порядке)
     @Published private(set) var products: [Product] = []
+
+    /// Главный флаг для gating (Import/Export All и т.д.)
     @Published private(set) var isPremium: Bool = false
+
+    /// Можно показывать в UI, если нужно
     @Published var lastErrorMessage: String?
+
+    // MARK: - Internals
 
     private var updatesTask: Task<Void, Never>?
 
-    // MARK: - Init
-
-    private init() {}
-
-    // MARK: - Public API
+    // MARK: - Lifecycle
 
     func start() {
-        // 1) Load products
+        // Загружаем продукты
         Task { await loadProducts() }
 
-        // 2) Initial entitlement check
+        // Проверяем статус premium при запуске
         Task { await refreshPremiumStatus() }
 
-        // 3) Listen for transaction updates (refunds, renewals, etc.)
+        // Слушаем обновления транзакций (renewals, refunds, upgrades, etc.)
         updatesTask?.cancel()
         updatesTask = Task { await listenForTransactionUpdates() }
     }
 
+    deinit {
+        updatesTask?.cancel()
+    }
+
+    // MARK: - Products
+
     func loadProducts() async {
         do {
             let storeProducts = try await Product.products(for: productIDs)
-            // Стабильный порядок (годовой сначала обычно выгоднее)
-            self.products = storeProducts.sorted { $0.id > $1.id }
+
+            // Порядок показа в paywall: yearly (best value), monthly, lifetime (pay once)
+            self.products = orderProducts(storeProducts)
+
+            // Если всё ок — чистим прошлые ошибки
+            self.lastErrorMessage = nil
         } catch {
             self.lastErrorMessage = "Failed to load products: \(error.localizedDescription)"
         }
     }
+
+    private func orderProducts(_ list: [Product]) -> [Product] {
+        // Жёстко задаём порядок, чтобы UI был стабильный
+        let order: [String: Int] = [
+            ProductID.premiumYearly.rawValue: 0,
+            ProductID.premiumMonthly.rawValue: 1,
+            ProductID.premiumLifetime.rawValue: 2
+        ]
+        return list.sorted { (a, b) in
+            (order[a.id] ?? 999) < (order[b.id] ?? 999)
+        }
+    }
+
+    // MARK: - Purchase / Restore
 
     func purchase(_ product: Product) async {
         do {
@@ -66,12 +102,13 @@ final class PurchaseManager: ObservableObject {
                 let transaction = try verified(verification)
                 await transaction.finish()
                 await refreshPremiumStatus()
+                self.lastErrorMessage = nil
 
             case .userCancelled:
                 break
 
             case .pending:
-                // Например, Family approval / Strong Customer Auth
+                // Family approval / SCA / etc.
                 break
 
             @unknown default:
@@ -82,27 +119,41 @@ final class PurchaseManager: ObservableObject {
         }
     }
 
+    /// Это настоящая "Restore Purchases" для StoreKit 2
     func restorePurchases() async {
-        // StoreKit 2: обычно достаточно refresh entitlements
-        await refreshPremiumStatus()
+        do {
+            try await AppStore.sync()
+            await refreshPremiumStatus()
+            self.lastErrorMessage = nil
+        } catch {
+            self.lastErrorMessage = "Restore failed: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Premium status
 
+    /// Pull-to-refresh будет дергать именно это.
+    /// Оно безопасно обновляет isPremium на MainActor.
     func refreshPremiumStatus() async {
-        // Проверяем активные энтайтлменты (подписки/покупки)
         var premium = false
 
         for await result in SKTransaction.currentEntitlements {
             do {
                 let transaction = try verified(result)
 
-                // Признаём премиумом только наши подписки
-                if productIDs.contains(transaction.productID) {
-                    // Для подписок важно ещё убедиться, что не отозвана
-                    premium = true
-                    break
+                // 1) Игнорируем отозванные/рефанднутые
+                if transaction.revocationDate != nil {
+                    continue
                 }
+
+                // 2) Признаём premium только по нашим Product IDs
+                guard productIDs.contains(transaction.productID) else {
+                    continue
+                }
+
+                // Этого достаточно: если есть активное entitlement — premium true
+                premium = true
+                break
             } catch {
                 // ignore invalid entitlement
             }
@@ -130,9 +181,11 @@ final class PurchaseManager: ObservableObject {
     private func verified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
-            throw NSError(domain: "PurchaseManager", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Transaction verification failed."
-            ])
+            throw NSError(
+                domain: "PurchaseManager",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Transaction verification failed."]
+            )
         case .verified(let safe):
             return safe
         }
