@@ -59,6 +59,9 @@ struct TransactionsView: View {
                     }
                 }
             }
+            .refreshable {
+                await PurchaseManager.shared.refreshStatus()
+            }
             .listStyle(.insetGrouped)
             .navigationTitle("title.transactions")
             .toolbar {
