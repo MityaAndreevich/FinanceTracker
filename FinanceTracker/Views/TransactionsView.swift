@@ -23,78 +23,18 @@ struct TransactionsView: View {
         var id: String { rawValue }
     }
 
-    var body: some View {
-        NavigationStack {
-            List {
-                let filtered = filteredTransactions()
-                let groups = groupedByDay(filtered)
+    // MARK: - Derived data (вынесли из body)
 
-                if filtered.isEmpty {
-                    EmptyStateView(
-                        systemImage: "list.bullet.rectangle",
-                        title: "No transactions",
-                        message: scope == .month
-                            ? "Add a transaction to see it here."
-                            : "No transactions found."
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    ForEach(groups.keys.sorted(by: >), id: \.self) { day in
-                        Section(header: Text(sectionTitle(for: day))) {
-                            ForEach(groups[day] ?? []) { tx in
-                                NavigationLink {
-                                    destination(for: tx)
-                                } label: {
-                                    TransactionRow(tx: tx)
-                                }
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        delete(tx)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .refreshable {
-                await PurchaseManager.shared.refreshStatus()
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle("title.transactions")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Picker("Scope", selection: $scope) {
-                        ForEach(Scope.allCases) { s in
-                            Text(s.rawValue).tag(s)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-            }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
-        }
-    }
-
-    // MARK: - Destination
-
-    private func destination(for tx: Transaction) -> some View {
-        TransactionDetailView(tx: tx)
-    }
-
-    // MARK: - Filtering
-
-    private func filteredTransactions() -> [Transaction] {
+    private var filtered: [Transaction] {
         let base: [Transaction]
+
         switch scope {
         case .all:
             base = transactions
         case .month:
-            let calendar = Calendar.current
+            let cal = Calendar.current
             let now = Date()
-            base = transactions.filter { calendar.isDate($0.date, equalTo: now, toGranularity: .month) }
+            base = transactions.filter { cal.isDate($0.date, equalTo: now, toGranularity: .month) }
         }
 
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -108,20 +48,91 @@ struct TransactionsView: View {
             let note = (tx.note ?? "").lowercased()
 
             return merchant.contains(lower)
-                || category.contains(lower)
-                || source.contains(lower)
-                || note.contains(lower)
+            || category.contains(lower)
+            || source.contains(lower)
+            || note.contains(lower)
         }
     }
 
-    // MARK: - Grouping (by day)
-
-    private func groupedByDay(_ list: [Transaction]) -> [Date: [Transaction]] {
+    private var grouped: [Date: [Transaction]] {
         let cal = Calendar.current
-        return Dictionary(grouping: list) { tx in
+        return Dictionary(grouping: filtered) { tx in
             cal.startOfDay(for: tx.date)
         }
     }
+
+    private var sortedDays: [Date] {
+        grouped.keys.sorted(by: >)
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if filtered.isEmpty {
+                    emptyStateRow
+                } else {
+                    ForEach(sortedDays, id: \.self) { day in
+                        daySection(for: day)
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("title.transactions")
+            .toolbar { scopeToolbar }
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+            .refreshable {
+                // Pull-to-refresh: обновляем статус премиума/энтитлменты
+                await PurchaseManager.shared.refreshStatus()
+            }
+        }
+    }
+
+    // MARK: - UI pieces (разрезаем body)
+
+    private var emptyStateRow: some View {
+        EmptyStateView(
+            systemImage: "list.bullet.rectangle",
+            title: "No transactions",
+            message: scope == .month ? "Add a transaction to see it here." : "No transactions found."
+        )
+        .listRowBackground(Color.clear)
+    }
+
+    private var scopeToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Picker("Scope", selection: $scope) {
+                ForEach(Scope.allCases) { s in
+                    Text(s.rawValue).tag(s)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private func daySection(for day: Date) -> some View {
+        Section(header: Text(sectionTitle(for: day))) {
+            let dayItems = grouped[day] ?? []
+
+            ForEach(dayItems) { tx in
+                NavigationLink {
+                    TransactionDetailView(tx: tx)
+                } label: {
+                    TransactionRow(tx: tx)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        delete(tx)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Helpers
 
     private func sectionTitle(for day: Date) -> String {
         let cal = Calendar.current
@@ -134,8 +145,6 @@ struct TransactionsView: View {
         df.timeStyle = .none
         return df.string(from: day)
     }
-
-    // MARK: - Actions
 
     private func delete(_ tx: Transaction) {
         modelContext.delete(tx)
@@ -154,13 +163,13 @@ private struct TransactionRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            // Левая часть
             VStack(alignment: .leading, spacing: 3) {
                 Text(primaryTitle)
                     .font(.headline)
 
                 HStack(spacing: 6) {
                     Text(tx.category.name)
+
                     if let sourceName = tx.source?.name, !sourceName.isEmpty {
                         Text("•")
                         Text(sourceName)
@@ -172,20 +181,18 @@ private struct TransactionRow: View {
 
             Spacer()
 
-            // Правая часть (сумма)
             Text(formattedAmount)
                 .font(.headline)
                 .foregroundStyle(isIncome ? .green : .red)
                 .monospacedDigit()
         }
-        .contentShape(Rectangle()) // чтобы тапалось по всей строке
+        .contentShape(Rectangle())
         .padding(.vertical, 4)
     }
 
     private var primaryTitle: String {
         let merchant = (tx.merchant ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if merchant.isEmpty { return tx.category.name }
-        return merchant
+        return merchant.isEmpty ? tx.category.name : merchant
     }
 
     private var isIncome: Bool {

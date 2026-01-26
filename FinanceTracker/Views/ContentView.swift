@@ -9,28 +9,36 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    // 1) Достаём "контекст базы данных" из окружения
-    // Он будет доступен, потому что в FinanceTrackerApp.swift мы подключили .modelContainer(...)
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         TabView {
-            DashboardView()
-                .tabItem { Label("tab.dashboard", systemImage: "house") }
 
-            TransactionsView()
-                .tabItem { Label("tab.transactions", systemImage: "list.bullet") }
+            NavigationStack {
+                DashboardView()
+            }
+            .tabItem { Label("tab.dashboard", systemImage: "house") }
 
-            AddTransactionView()
-                .tabItem { Label("tab.add", systemImage: "plus.circle.fill") }
+            NavigationStack {
+                TransactionsView()
+            }
+            .tabItem { Label("tab.transactions", systemImage: "list.bullet") }
 
-            AnalyticsView()
-                .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
+            NavigationStack {
+                AddTransactionView()
+            }
+            .tabItem { Label("tab.add", systemImage: "plus.circle.fill") }
 
-            SettingsView()
-                .tabItem { Label("tab.settings", systemImage: "gear") }
+            NavigationStack {
+                AnalyticsView()
+            }
+            .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
+
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem { Label("tab.settings", systemImage: "gear") }
         }
-        // 2) Seed делаем здесь, один раз при появлении ContentView
         .task {
             SeedService.seedIfNeeded(modelContext: modelContext)
         }
@@ -38,7 +46,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    // В Preview используем inMemory: true, чтобы не трогать реальную базу
     ContentView()
         .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }

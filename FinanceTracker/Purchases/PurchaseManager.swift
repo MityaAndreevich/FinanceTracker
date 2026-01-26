@@ -190,4 +190,13 @@ final class PurchaseManager: ObservableObject {
             return safe
         }
     }
+    
+    @MainActor
+    func refreshStatus() async {
+        // 1) На будущее можно тут ещё обновлять products
+        // await loadProducts()
+        
+        // 2) Сейчас главное — перечитать энтитлменты
+        await refreshPremiumStatus()
+    }
 }
