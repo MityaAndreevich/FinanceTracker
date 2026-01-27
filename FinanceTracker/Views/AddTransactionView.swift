@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct AddTransactionView: View {
     @Environment(\.modelContext) private var modelContext
@@ -31,6 +32,10 @@ struct AddTransactionView: View {
 
     @State private var errorMessage: String?
     @State private var showError: Bool = false
+
+    // Inline create
+    @State private var showAddCategorySheet = false
+    @State private var showAddSourceSheet = false
 
     // MARK: - Computed
 
@@ -72,15 +77,27 @@ struct AddTransactionView: View {
                 Section("Category") {
                     if filteredCategories.isEmpty {
                         Text(typeRaw == "income"
-                             ? "No income categories yet. Add one in Settings."
-                             : "No expense categories yet. Add one in Settings.")
+                             ? "No income categories yet."
+                             : "No expense categories yet.")
                         .foregroundStyle(.secondary)
+
+                        Button {
+                            showAddCategorySheet = true
+                        } label: {
+                            Label("Add Category", systemImage: "plus.circle")
+                        }
                     } else {
                         Picker("Category", selection: $selectedCategory) {
                             Text("Select…").tag(Optional<Category>.none)
                             ForEach(filteredCategories) { category in
                                 Text(category.name).tag(Optional(category))
                             }
+                        }
+
+                        Button {
+                            showAddCategorySheet = true
+                        } label: {
+                            Label("Add Category", systemImage: "plus.circle")
                         }
                     }
                 }
@@ -95,6 +112,12 @@ struct AddTransactionView: View {
                     }
 
                     if typeRaw == "income" {
+                        Button {
+                            showAddSourceSheet = true
+                        } label: {
+                            Label("Add Source", systemImage: "plus.circle")
+                        }
+
                         Text("Tip: Use Source to track where income comes from (job, client, etc.).")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
@@ -143,13 +166,32 @@ struct AddTransactionView: View {
             }
             .onChange(of: typeRaw) { _, _ in
                 // при смене типа — подставляем первую категорию соответствующего типа
-                selectedSource = (typeRaw == "income") ? selectedSource : nil
+                if typeRaw != "income" {
+                    selectedSource = nil
+                }
                 ensureValidCategorySelection()
             }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "Unknown error")
+            }
+            // ===== Sheets =====
+            .sheet(isPresented: $showAddCategorySheet) {
+                AddCategorySheet(
+                    kindRaw: typeRaw,
+                    existingMaxOrder: (categories.map(\.order).max() ?? 0),
+                    onCreated: { newCat in
+                        selectedCategory = newCat
+                    }
+                )
+                .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showAddSourceSheet) {
+                AddSourceSheet { newSource in
+                    selectedSource = newSource
+                }
+                .presentationDetents([.medium])
             }
         }
     }
@@ -190,7 +232,6 @@ struct AddTransactionView: View {
         do {
             try modelContext.save()
 
-            // лёгкий "успех" (нативно)
             #if os(iOS)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             #endif
@@ -204,12 +245,10 @@ struct AddTransactionView: View {
     private func ensureValidCategorySelection() {
         let subset = filteredCategories
 
-        // если текущая выбранная категория не подходит по типу — сбрасываем
         if let current = selectedCategory, current.kindRaw != typeRaw {
             selectedCategory = nil
         }
 
-        // если ничего не выбрано — ставим первую подходящую
         if selectedCategory == nil {
             selectedCategory = subset.first
         }
@@ -222,11 +261,8 @@ struct AddTransactionView: View {
         merchantText = ""
         date = Date()
 
-        // Оставляем выбранный тип (обычно пользователь добавляет пачкой)
-        // Категорию оставляем, если она всё ещё валидна
         ensureValidCategorySelection()
 
-        // Source по UX: для income логично оставить, для expense очищаем
         if typeRaw != "income" {
             selectedSource = nil
         }
@@ -251,6 +287,130 @@ struct AddTransactionView: View {
         let centsDecimal = decimal * 100
         let rounded = NSDecimalNumber(decimal: centsDecimal).rounding(accordingToBehavior: nil).intValue
         return rounded
+    }
+}
+
+// MARK: - Add Category Sheet
+
+private struct AddCategorySheet: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let kindRaw: String
+    let existingMaxOrder: Int
+    let onCreated: (Category) -> Void
+
+    @State private var name: String = ""
+    @State private var icon: String = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("New Category") {
+                    TextField("Name (e.g., Rent, Gas)", text: $name)
+
+                    TextField("SF Symbol (optional)", text: $icon)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    Text(kindRaw == "income" ? "Type: Income" : "Type: Expense")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Add Category")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add") { create() }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func create() {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else { return }
+
+        let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextOrder = existingMaxOrder + 1
+
+        let category = Category(
+            name: cleanName,
+            kindRaw: kindRaw,
+            icon: cleanIcon.isEmpty ? nil : cleanIcon,
+            order: nextOrder
+        )
+
+        modelContext.insert(category)
+
+        do {
+            try modelContext.save()
+            onCreated(category)
+            dismiss()
+        } catch {
+            // если хочешь — можем красиво показать alert,
+            // но для MVP достаточно просто не закрывать sheet
+            print("Failed to create category: \(error)")
+        }
+    }
+}
+
+// MARK: - Add Source Sheet
+
+private struct AddSourceSheet: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
+    let onCreated: (Source) -> Void
+
+    @State private var name: String = ""
+    @State private var note: String = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("New Source") {
+                    TextField("Name (e.g., Amazon Flex)", text: $name)
+                    TextField("Note (optional)", text: $note)
+                }
+            }
+            .navigationTitle("Add Source")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add") { create() }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+
+    private func create() {
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else { return }
+
+        let cleanNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let source = Source(
+            name: cleanName,
+            note: cleanNote.isEmpty ? nil : cleanNote
+        )
+
+        modelContext.insert(source)
+
+        do {
+            try modelContext.save()
+            onCreated(source)
+            dismiss()
+        } catch {
+            print("Failed to create source: \(error)")
+        }
     }
 }
 
