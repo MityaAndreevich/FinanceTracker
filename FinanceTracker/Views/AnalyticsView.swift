@@ -7,167 +7,186 @@
 
 import SwiftUI
 import SwiftData
+import Charts
 
 struct AnalyticsView: View {
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    var body: some View {
-        let expenseByCategory = monthlyExpenseByCategory()
-        let incomeBySource = monthlyIncomeBySource()
-        let netBySource = monthlyNetBySource()
+    @State private var scope: Scope = .month
 
+    enum Scope: String, CaseIterable, Identifiable {
+        case month = "This month"
+        case all = "All"
+        var id: String { rawValue }
+    }
+
+    var body: some View {
         NavigationStack {
             List {
-                // ===== Expenses =====
-                Section("Top expense categories (this month)") {
-                    if expenseByCategory.isEmpty {
-                        Text("No expense data for this month yet")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(expenseByCategory.prefix(3), id: \.id) { row in
-                            HStack {
-                                Text(row.name)
-                                Spacer()
-                                Text(formatMoney(cents: row.totalCents))
-                                    .font(.headline)
+                Section {
+                    Picker("Scope", selection: $scope) {
+                        ForEach(Scope.allCases) { s in
+                            Text(s.rawValue).tag(s)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                if filteredTransactions.isEmpty {
+                    EmptyStateView(
+                        systemImage: "chart.bar.xaxis",
+                        title: "No data yet",
+                        message: "Add transactions to see analytics."
+                    )
+                    .listRowBackground(Color.clear)
+
+                } else {
+
+                    Section("Expenses by Category") {
+                        if expenseByCategory.isEmpty {
+                            Text("No expenses in this period.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Chart(expenseByCategory) { row in
+                                BarMark(
+                                    x: .value("Amount", row.amount),
+                                    y: .value("Category", row.name)
+                                )
+                            }
+                            .chartXAxis { AxisMarks(position: .bottom) }
+                            .frame(height: chartHeight(for: expenseByCategory.count))
+                            .padding(.vertical, 6)
+
+                            ForEach(expenseByCategory) { row in
+                                HStack {
+                                    Text(row.name)
+                                    Spacer()
+                                    Text(formatCents(row.amountCents, currencyCode: row.currency))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .font(.footnote)
                             }
                         }
                     }
-                }
 
-                Section("All expense categories") {
-                    if expenseByCategory.isEmpty {
-                        Text("—")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(expenseByCategory, id: \.id) { row in
-                            HStack {
-                                Text(row.name)
-                                Spacer()
-                                Text(formatMoney(cents: row.totalCents))
-                                    .foregroundStyle(.secondary)
+                    Section("Income by Source") {
+                        if incomeBySource.isEmpty {
+                            Text("No income in this period.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Chart(incomeBySource) { row in
+                                BarMark(
+                                    x: .value("Amount", row.amount),
+                                    y: .value("Source", row.name)
+                                )
                             }
-                        }
-                    }
-                }
+                            .chartXAxis { AxisMarks(position: .bottom) }
+                            .frame(height: chartHeight(for: incomeBySource.count))
+                            .padding(.vertical, 6)
 
-                // ===== Income by source =====
-                Section("Income by source (this month)") {
-                    if incomeBySource.isEmpty {
-                        Text("No income data for this month yet")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(incomeBySource, id: \.id) { row in
-                            HStack {
-                                Text(row.name)
-                                Spacer()
-                                Text(formatMoney(cents: row.totalCents))
-                                    .font(.headline)
-                            }
-                        }
-                    }
-                }
-
-                // ===== Net by source =====
-                Section("Net by source (this month)") {
-                    if netBySource.isEmpty {
-                        Text("No data for this month yet")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(netBySource, id: \.id) { row in
-                            HStack {
-                                Text(row.name)
-                                Spacer()
-                                Text(formatMoney(cents: row.totalCents))
-                                    .font(.headline)
-                                    .foregroundStyle(row.totalCents >= 0 ? .green : .red)
+                            ForEach(incomeBySource) { row in
+                                HStack {
+                                    Text(row.name)
+                                    Spacer()
+                                    Text(formatCents(row.amountCents, currencyCode: row.currency))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .font(.footnote)
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("title.analytics")
+            .navigationTitle("Analytics")
+            .listStyle(.insetGrouped)
         }
     }
 
-    // MARK: - Data helpers
+    // MARK: - Computed data (вынесли из List, чтобы компилятор не умирал)
 
-    private func currentMonth(_ date: Date) -> Bool {
-        let calendar = Calendar.current
-        return calendar.isDate(date, equalTo: Date(), toGranularity: .month)
+    private var filteredTransactions: [Transaction] {
+        switch scope {
+        case .all:
+            return transactions
+        case .month:
+            let cal = Calendar.current
+            let now = Date()
+            return transactions.filter { cal.isDate($0.date, equalTo: now, toGranularity: .month) }
+        }
     }
 
-    private func monthlyExpenseByCategory() -> [SummaryRow] {
-        let monthExpenses = transactions.filter { tx in
-            tx.typeRaw == "expense" && currentMonth(tx.date)
+    private var expenseByCategory: [ChartRow] {
+        let list = filteredTransactions.filter { $0.typeRaw == "expense" }
+        guard let currency = list.first?.currency else { return [] }
+
+        var sums: [String: Int] = [:]
+        for tx in list {
+            sums[tx.category.name, default: 0] += tx.amountCents
         }
 
-        var dict: [UUID: (name: String, total: Int)] = [:]
-
-        for tx in monthExpenses {
-            let id = tx.category.id
-            let name = tx.category.name
-            dict[id] = (name: name, total: (dict[id]?.total ?? 0) + tx.amountCents)
-        }
-
-        return dict.map { SummaryRow(id: $0.key, name: $0.value.name, totalCents: $0.value.total) }
-            .sorted { $0.totalCents > $1.totalCents }
+        return sums
+            .map { (name, cents) in
+                ChartRow(
+                    name: name,
+                    amount: Double(cents) / 100.0,
+                    amountCents: cents,
+                    currency: currency
+                )
+            }
+            .sorted { $0.amountCents > $1.amountCents }
     }
 
-    private func monthlyIncomeBySource() -> [SummaryRow] {
-        let monthIncome = transactions.filter { tx in
-            tx.typeRaw == "income" && currentMonth(tx.date)
+    private var incomeBySource: [ChartRow] {
+        let list = filteredTransactions.filter { $0.typeRaw == "income" }
+        guard let currency = list.first?.currency else { return [] }
+
+        var sums: [String: Int] = [:]
+        for tx in list {
+            let name = tx.source?.name ?? "Unknown"
+            sums[name, default: 0] += tx.amountCents
         }
 
-        // source может быть nil -> складываем в "Unassigned"
-        var dict: [String: Int] = [:]
-
-        for tx in monthIncome {
-            let key = tx.source?.name ?? "Unassigned"
-            dict[key] = (dict[key] ?? 0) + tx.amountCents
-        }
-
-        return dict.map { SummaryRow(id: UUID().uuidString, name: $0.key, totalCents: $0.value) }
-            .sorted { $0.totalCents > $1.totalCents }
+        return sums
+            .map { (name, cents) in
+                ChartRow(
+                    name: name,
+                    amount: Double(cents) / 100.0,
+                    amountCents: cents,
+                    currency: currency
+                )
+            }
+            .sorted { $0.amountCents > $1.amountCents }
     }
 
-    private func monthlyNetBySource() -> [SummaryRow] {
-        let monthTx = transactions.filter { currentMonth($0.date) }
+    // MARK: - Models
 
-        // net по source: income +, expense -
-        var dict: [String: Int] = [:]
-
-        for tx in monthTx {
-            let key = tx.source?.name ?? "Unassigned"
-            let signed = (tx.typeRaw == "income") ? tx.amountCents : -tx.amountCents
-            dict[key] = (dict[key] ?? 0) + signed
-        }
-
-        // Сортируем по абсолютной величине (самые “влияющие” источники сверху)
-        return dict.map { SummaryRow(id: UUID().uuidString, name: $0.key, totalCents: $0.value) }
-            .sorted { abs($0.totalCents) > abs($1.totalCents) }
+    private struct ChartRow: Identifiable {
+        let id = UUID()
+        let name: String
+        let amount: Double
+        let amountCents: Int
+        let currency: String
     }
 
-    // MARK: - Formatting
+    // MARK: - Helpers
 
-    private func formatMoney(cents: Int) -> String {
+    private func chartHeight(for rows: Int) -> CGFloat {
+        let base: CGFloat = 160
+        let extraPerRow: CGFloat = 24
+        return max(base, CGFloat(rows) * extraPerRow)
+    }
+
+    // Локальный форматтер, чтобы не зависеть от MoneyFormatter из другого файла
+    private static let formatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        return f
+    }()
+
+    private func formatCents(_ cents: Int, currencyCode: String) -> String {
         let amount = Decimal(cents) / 100
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
+        Self.formatter.currencyCode = currencyCode
+        return Self.formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
     }
-}
-
-// Универсальная строка-резюме для списков аналитики
-private struct SummaryRow {
-    let id: AnyHashable
-    let name: String
-    let totalCents: Int
-}
-
-#Preview {
-    AnalyticsView()
-        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }
