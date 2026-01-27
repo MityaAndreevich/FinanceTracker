@@ -8,13 +8,26 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @StateObject private var pm = PurchaseManager.shared
+
     var body: some View {
         List {
             Section {
                 NavigationLink {
                     PremiumSettingsView()
                 } label: {
-                    Label("Premium", systemImage: "crown.fill")
+                    HStack(spacing: 12) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(.yellow)
+
+                        Text("Premium")
+
+                        Spacer()
+
+                        Text(pm.isPremium ? "Active" : "Free")
+                            .font(.subheadline)
+                            .foregroundStyle(pm.isPremium ? .green : .secondary)
+                    }
                 }
 
                 NavigationLink {
