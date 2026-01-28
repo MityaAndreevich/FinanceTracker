@@ -180,7 +180,7 @@ struct AddTransactionView: View {
             .sheet(isPresented: $showAddCategorySheet) {
                 AddCategorySheet(
                     kindRaw: typeRaw,
-                    existingMaxOrder: (categories.map(\.order).max() ?? 0),
+                    existingMaxOrder: (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0),
                     onCreated: { newCat in
                         selectedCategory = newCat
                     }
