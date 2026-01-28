@@ -14,7 +14,7 @@ struct AnalyticsView: View {
     private var transactions: [Transaction]
 
     @State private var scope: Scope = .month
-    @State private var chartKind: ChartKind = .bars
+    @State private var chartKind: ChartKind = .line
 
     enum Scope: String, CaseIterable, Identifiable {
         case month = "This month"
@@ -66,25 +66,26 @@ struct AnalyticsView: View {
         }
     }
 
-    // MARK: - Main Combined Section (Income + Expense + Net)
+    // MARK: - Combined (Income + Expense) | Net only as number
 
     @ViewBuilder
     private var combinedSection: some View {
-        Section("Income • Expense • Net") {
+        Section("Income • Expense") {
+
             switch chartKind {
             case .bars:
-                barsChart(points: seriesPoints)
+                barsChart(values: seriesValues)
 
             case .line:
-                lineChart(points: seriesPoints)
+                lineChart(values: seriesValues)
 
             case .pie:
                 pieChart(summary: periodSummary)
             }
 
-            // маленькая “легенда” внизу (нативно и понятно)
+            // Summary rows (Net только текстом)
             HStack {
-                legendDot("Income")
+                Text("Income").foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.incomeCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
@@ -92,7 +93,7 @@ struct AnalyticsView: View {
             .font(.footnote)
 
             HStack {
-                legendDot("Expense")
+                Text("Expense").foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.expenseCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
@@ -100,7 +101,7 @@ struct AnalyticsView: View {
             .font(.footnote)
 
             HStack {
-                legendDot("Net")
+                Text("Net").foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.netCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
@@ -109,76 +110,77 @@ struct AnalyticsView: View {
         }
     }
 
-    private func legendDot(_ title: String) -> some View {
-        HStack(spacing: 8) {
-            Circle()
-                .frame(width: 10, height: 10)
-            Text(title)
-                .foregroundStyle(.secondary)
+    // MARK: - Bars (Income vs Expense only)
+
+    private func barsChart(values: [SeriesValue]) -> some View {
+        Chart(values) { v in
+            BarMark(
+                x: .value("Date", v.bucketDate),
+                y: .value("Amount", v.amount)
+            )
+            .foregroundStyle(by: .value("Type", v.kind.rawValue))
+            .position(by: .value("Type", v.kind.rawValue)) // рядом, НЕ stacked
+            .opacity(v.kind == .expense ? 0.55 : 1.0)
         }
-    }
-
-    // MARK: - Bars
-
-    private func barsChart(points: [SeriesPoint]) -> some View {
-        Chart {
-            ForEach(points) { p in
-                BarMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Income", p.incomeAmount)
-                )
-                .position(by: .value("Series", "Income"))
-
-                BarMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Expense", p.expenseAmount)
-                )
-                .position(by: .value("Series", "Expense"))
-
-                BarMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Net", p.netAmount)
-                )
-                .position(by: .value("Series", "Net"))
+        .chartXAxis {
+            AxisMarks(position: .bottom) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    Text(xAxisLabel(for: value.as(Date.self)))
+                }
             }
         }
-        .chartXAxis { AxisMarks(position: .bottom) }
         .chartYAxis { AxisMarks(position: .leading) }
+        .chartLegend(position: .bottom)
         .frame(height: 260)
         .padding(.vertical, 6)
     }
 
-    // MARK: - Line
+    // MARK: - Line (Bank-style: smooth timeline, no “single nail”)
 
-    private func lineChart(points: [SeriesPoint]) -> some View {
-        Chart {
-            ForEach(points) { p in
-                LineMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Income", p.incomeAmount)
-                )
-                .foregroundStyle(by: .value("Series", "Income"))
+    private func lineChart(values: [SeriesValue]) -> some View {
+        Chart(values) { v in
+            LineMark(
+                x: .value("Date", v.bucketDate),
+                y: .value("Amount", v.amount)
+            )
+            .foregroundStyle(by: .value("Type", v.kind.rawValue))
+            .interpolationMethod(.catmullRom)
 
-                LineMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Expense", p.expenseAmount)
+            // точки оставляем, но маленькие и только когда мало данных
+            if shouldShowPoints {
+                PointMark(
+                    x: .value("Date", v.bucketDate),
+                    y: .value("Amount", v.amount)
                 )
-                .foregroundStyle(by: .value("Series", "Expense"))
-
-                LineMark(
-                    x: .value("Date", p.bucketDate),
-                    y: .value("Net", p.netAmount)
-                )
-                .foregroundStyle(by: .value("Series", "Net"))
+                .foregroundStyle(by: .value("Type", v.kind.rawValue))
             }
         }
-        .chartXAxis { AxisMarks(position: .bottom) }
-        .chartYAxis { AxisMarks(position: .leading) }
+        .chartXScale(domain: xDomain) // вот это и делает “банковскую” ось
+        .chartXAxis {
+            AxisMarks(position: .bottom, values: xAxisTicks) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    Text(xAxisLabel(for: value.as(Date.self)))
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+        .chartLegend(position: .bottom)
         .frame(height: 260)
         .padding(.vertical, 6)
     }
 
-    // MARK: - Pie
+    private var shouldShowPoints: Bool {
+        // когда очень мало бакетов — точки помогают
+        seriesBucketCount <= 8
+    }
+
+    // MARK: - Pie (Income vs Expense only)
 
     private func pieChart(summary: PeriodSummary) -> some View {
         let slices = summary.pieSlices
@@ -195,7 +197,7 @@ struct AnalyticsView: View {
         .padding(.vertical, 6)
     }
 
-    // MARK: - Breakdown Sections (your old ones, but made stable)
+    // MARK: - Breakdown Sections
 
     @ViewBuilder
     private var breakdownExpensesByCategorySection: some View {
@@ -270,15 +272,19 @@ struct AnalyticsView: View {
         }
     }
 
-    // MARK: - Combined Series Data
+    // MARK: - Series (Income/Expense with “filled” timeline buckets)
 
-    private var seriesPoints: [SeriesPoint] {
+    private enum SeriesKind: String {
+        case income = "Income"
+        case expense = "Expense"
+    }
+
+    private var seriesValues: [SeriesValue] {
         let list = filteredTransactions
-
-        // Выбор “шага”:
-        // - This month -> по дням
-        // - All -> по месяцам
         let cal = Calendar.current
+        let currency = list.first?.currency ?? "USD"
+
+        // агрегируем реальные суммы по бакетам
         let bucket: (Date) -> Date = {
             switch scope {
             case .month:
@@ -290,30 +296,45 @@ struct AnalyticsView: View {
         }
 
         var dict: [Date: (income: Int, expense: Int)] = [:]
-
         for tx in list {
             let key = bucket(tx.date)
             var cur = dict[key] ?? (0, 0)
-            if tx.typeRaw == "income" {
-                cur.income += tx.amountCents
-            } else {
-                cur.expense += tx.amountCents
-            }
+            if tx.typeRaw == "income" { cur.income += tx.amountCents }
+            else { cur.expense += tx.amountCents }
             dict[key] = cur
         }
 
-        let currency = list.first?.currency ?? "USD"
+        // “банк-вид”: добавляем пустые бакеты от min до max (иначе один столбик/точка)
+        let keysSorted = dict.keys.sorted()
+        guard let first = keysSorted.first, let last = keysSorted.last else { return [] }
 
-        return dict.keys.sorted().map { day in
+        let allBuckets: [Date] = {
+            switch scope {
+            case .month:
+                return fillDays(from: first, to: last)
+            case .all:
+                return fillMonths(from: first, to: last)
+            }
+        }()
+
+        var out: [SeriesValue] = []
+        out.reserveCapacity(allBuckets.count * 2)
+
+        for day in allBuckets {
             let v = dict[day] ?? (0, 0)
-            return SeriesPoint(
-                bucketDate: day,
-                incomeCents: v.income,
-                expenseCents: v.expense,
-                currency: currency
-            )
+            out.append(.init(bucketDate: day, kind: .income, amount: Double(v.income) / 100.0, currency: currency))
+            out.append(.init(bucketDate: day, kind: .expense, amount: Double(v.expense) / 100.0, currency: currency))
         }
+
+        return out
     }
+
+    private var seriesBucketCount: Int {
+        // считаем бакеты по income (у нас их ровно столько же сколько expense)
+        seriesValues.filter { $0.kind == .income }.count
+    }
+
+    // MARK: - Period summary
 
     private var periodSummary: PeriodSummary {
         let list = filteredTransactions
@@ -321,13 +342,80 @@ struct AnalyticsView: View {
 
         var income = 0
         var expense = 0
-
         for tx in list {
             if tx.typeRaw == "income" { income += tx.amountCents }
             else { expense += tx.amountCents }
         }
 
         return PeriodSummary(incomeCents: income, expenseCents: expense, currency: currency)
+    }
+
+    // MARK: - X axis (domain + ticks + labels)
+
+    private var xDomain: ClosedRange<Date> {
+        let cal = Calendar.current
+        let dates = seriesValues.map(\.bucketDate)
+        guard let minD = dates.min(), let maxD = dates.max() else {
+            let now = Date()
+            return now...now
+        }
+
+        switch scope {
+        case .month:
+            // чуть расширим края, чтобы не “прилипало”
+            let start = cal.date(byAdding: .day, value: -1, to: minD) ?? minD
+            let end = cal.date(byAdding: .day, value: 1, to: maxD) ?? maxD
+            return start...end
+        case .all:
+            let start = cal.date(byAdding: .month, value: -1, to: minD) ?? minD
+            let end = cal.date(byAdding: .month, value: 1, to: maxD) ?? maxD
+            return start...end
+        }
+    }
+
+    private var xAxisTicks: [Date] {
+        // не рисуем 31 подпись — делаем “умную” разметку
+        let cal = Calendar.current
+        let dates = seriesValues.map(\.bucketDate)
+        guard let minD = dates.min(), let maxD = dates.max() else { return [] }
+
+        switch scope {
+        case .month:
+            // метка раз в 5 дней
+            var ticks: [Date] = []
+            var cur = minD
+            while cur <= maxD {
+                ticks.append(cur)
+                cur = cal.date(byAdding: .day, value: 5, to: cur) ?? cur
+                if ticks.count > 20 { break }
+            }
+            return ticks
+
+        case .all:
+            // метка раз в 2 месяца
+            var ticks: [Date] = []
+            var cur = minD
+            while cur <= maxD {
+                ticks.append(cur)
+                cur = cal.date(byAdding: .month, value: 2, to: cur) ?? cur
+                if ticks.count > 20 { break }
+            }
+            return ticks
+        }
+    }
+
+    private func xAxisLabel(for date: Date?) -> String {
+        guard let date else { return "" }
+        let df = DateFormatter()
+        df.locale = .current
+
+        switch scope {
+        case .month:
+            df.dateFormat = "d MMM" // 26 Jan
+        case .all:
+            df.dateFormat = "MMM yy" // Jan 26
+        }
+        return df.string(from: date)
     }
 
     // MARK: - Breakdown Data
@@ -343,12 +431,7 @@ struct AnalyticsView: View {
 
         return sums
             .map { (name, cents) in
-                ChartRow(
-                    name: name,
-                    amount: Double(cents) / 100.0,
-                    amountCents: cents,
-                    currency: currency
-                )
+                ChartRow(name: name, amount: Double(cents) / 100.0, amountCents: cents, currency: currency)
             }
             .sorted { $0.amountCents > $1.amountCents }
     }
@@ -365,12 +448,7 @@ struct AnalyticsView: View {
 
         return sums
             .map { (name, cents) in
-                ChartRow(
-                    name: name,
-                    amount: Double(cents) / 100.0,
-                    amountCents: cents,
-                    currency: currency
-                )
+                ChartRow(name: name, amount: Double(cents) / 100.0, amountCents: cents, currency: currency)
             }
             .sorted { $0.amountCents > $1.amountCents }
     }
@@ -393,24 +471,20 @@ struct AnalyticsView: View {
         }
     }
 
-    private struct SeriesPoint: Identifiable {
-        let id: Date
+    private struct SeriesValue: Identifiable {
+        let id: String
         let bucketDate: Date
-        let incomeCents: Int
-        let expenseCents: Int
+        let kind: SeriesKind
+        let amount: Double
         let currency: String
 
-        init(bucketDate: Date, incomeCents: Int, expenseCents: Int, currency: String) {
-            self.id = bucketDate
+        init(bucketDate: Date, kind: SeriesKind, amount: Double, currency: String) {
             self.bucketDate = bucketDate
-            self.incomeCents = incomeCents
-            self.expenseCents = expenseCents
+            self.kind = kind
+            self.amount = amount
             self.currency = currency
+            self.id = "\(bucketDate.timeIntervalSinceReferenceDate)-\(kind.rawValue)"
         }
-
-        var incomeAmount: Double { Double(incomeCents) / 100.0 }
-        var expenseAmount: Double { Double(expenseCents) / 100.0 }
-        var netAmount: Double { Double(incomeCents - expenseCents) / 100.0 }
     }
 
     private struct PeriodSummary {
@@ -426,28 +500,53 @@ struct AnalyticsView: View {
             let value: Double
         }
 
-        // Pie не любит отрицательные значения — делаем аккуратно
         var pieSlices: [PieSlice] {
             let income = Double(max(incomeCents, 0)) / 100.0
             let expense = Double(max(expenseCents, 0)) / 100.0
 
-            let net = incomeCents - expenseCents
-            let netAbs = Double(abs(net)) / 100.0
-
-            var slices: [PieSlice] = []
-            slices.append(.init(id: "Income", name: "Income", value: max(income, 0.01)))
-            slices.append(.init(id: "Expense", name: "Expense", value: max(expense, 0.01)))
-
-            if net != 0 {
-                slices.append(.init(
-                    id: net > 0 ? "Savings" : "Deficit",
-                    name: net > 0 ? "Savings" : "Deficit",
-                    value: max(netAbs, 0.01)
-                ))
-            }
-
-            return slices
+            // чтобы pie не исчезал при нуле
+            return [
+                .init(id: "Income", name: "Income", value: max(income, 0.01)),
+                .init(id: "Expense", name: "Expense", value: max(expense, 0.01))
+            ]
         }
+    }
+
+    // MARK: - Fill buckets
+
+    private func fillDays(from start: Date, to end: Date) -> [Date] {
+        let cal = Calendar.current
+        var out: [Date] = []
+        var cur = cal.startOfDay(for: start)
+        let last = cal.startOfDay(for: end)
+
+        while cur <= last {
+            out.append(cur)
+            cur = cal.date(byAdding: .day, value: 1, to: cur) ?? cur
+            if out.count > 400 { break }
+        }
+        return out
+    }
+
+    private func fillMonths(from start: Date, to end: Date) -> [Date] {
+        let cal = Calendar.current
+        let startComps = cal.dateComponents([.year, .month], from: start)
+        let endComps = cal.dateComponents([.year, .month], from: end)
+
+        guard
+            let s = cal.date(from: startComps),
+            let e = cal.date(from: endComps)
+        else { return [] }
+
+        var out: [Date] = []
+        var cur = s
+
+        while cur <= e {
+            out.append(cur)
+            cur = cal.date(byAdding: .month, value: 1, to: cur) ?? cur
+            if out.count > 200 { break }
+        }
+        return out
     }
 
     // MARK: - Helpers
