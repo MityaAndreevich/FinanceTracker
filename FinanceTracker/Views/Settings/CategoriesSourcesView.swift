@@ -275,7 +275,7 @@ private struct AddCategorySheet: View {
                         guard !trimmed.isEmpty else { return }
 
                         let iconTrimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let nextOrder = (categories.map(\.order).max() ?? 0) + 1
+                        let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
 
                         let category = Category(
                             name: trimmed,

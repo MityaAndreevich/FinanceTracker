@@ -14,6 +14,12 @@ struct SettingsView: View {
         List {
             Section {
                 NavigationLink {
+                    GeneralSettingsView()
+                } label: {
+                    Label("General", systemImage: "slider.horizontal.3")
+                }
+
+                NavigationLink {
                     PremiumSettingsView()
                 } label: {
                     HStack(spacing: 12) {
