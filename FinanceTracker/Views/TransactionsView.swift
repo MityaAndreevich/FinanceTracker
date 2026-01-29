@@ -17,6 +17,9 @@ struct TransactionsView: View {
     @State private var scope: Scope = .month
     @State private var searchText: String = ""
 
+    // Навигация на edit (чтобы и тап, и swipe edit работали одинаково)
+    @State private var editTx: Transaction?
+
     enum Scope: String, CaseIterable, Identifiable {
         case month = "This month"
         case all = "All"
@@ -85,6 +88,9 @@ struct TransactionsView: View {
             .refreshable {
                 await PurchaseManager.shared.refreshStatus()
             }
+            .navigationDestination(item: $editTx) { tx in
+                EditTransactionView(transaction: tx)
+            }
         }
     }
 
@@ -115,12 +121,12 @@ struct TransactionsView: View {
             let dayItems = grouped[day] ?? []
 
             ForEach(dayItems) { tx in
-                NavigationLink {
-                    // ✅ Редактирование конкретной транзакции
-                    EditTransactionView(transaction: tx)
+                Button {
+                    editTx = tx
                 } label: {
                     TransactionRow(tx: tx)
                 }
+                .buttonStyle(.plain)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
                         delete(tx)
@@ -129,9 +135,7 @@ struct TransactionsView: View {
                     }
 
                     Button {
-                        // Swipe Edit — тоже ведём на экран редактирования
-                        // (свайп → редактирование, тап → тоже редактирование)
-                        // Если хочешь: тап = detail, swipe = edit — скажи.
+                        editTx = tx
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
@@ -139,8 +143,7 @@ struct TransactionsView: View {
                 }
                 .contextMenu {
                     Button {
-                        // fallback: если захочешь оставить detail view:
-                        // навигацию на детали можно вернуть по тапу, а тут оставить edit
+                        editTx = tx
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
