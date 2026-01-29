@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 
-struct EditTransactionViewLegacy: View {
+struct EditTransactionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -93,12 +93,17 @@ struct EditTransactionViewLegacy: View {
         Section("Amount") {
             TextField("0.00", text: $amountText)
                 .keyboardType(.decimalPad)
+                .onChange(of: amountText) { _, newValue in
+                    amountText = sanitizeMoneyInput(newValue)
+                }
 
             TextField("Tax (optional)", text: $taxText)
                 .keyboardType(.decimalPad)
+                .onChange(of: taxText) { _, newValue in
+                    taxText = sanitizeMoneyInput(newValue)
+                }
         }
     }
-
     private var currencySection: some View {
         Section("Currency") {
             Picker("Currency", selection: $currencyCode) {
@@ -243,5 +248,33 @@ struct EditTransactionViewLegacy: View {
     private func formatDecimalFromCents(_ cents: Int) -> String {
         let amount = Decimal(cents) / 100
         return NSDecimalNumber(decimal: amount).stringValue
+    }
+    
+    private func sanitizeMoneyInput(_ input: String) -> String {
+        // 1) заменяем запятую на точку
+        var s = input.replacingOccurrences(of: ",", with: ".")
+
+        // 2) оставляем только цифры и точки
+        s = s.filter { $0.isNumber || $0 == "." }
+
+        // 3) разрешаем только одну точку
+        if let firstDot = s.firstIndex(of: ".") {
+            let afterFirst = s.index(after: firstDot)
+            let prefix = s[..<afterFirst]
+            let suffix = s[afterFirst...].replacingOccurrences(of: ".", with: "")
+            s = String(prefix) + suffix
+        }
+
+        // 4) максимум 2 знака после точки
+        if let dot = s.firstIndex(of: ".") {
+            let afterDot = s.index(after: dot)
+            let decimals = s[afterDot...]
+            if decimals.count > 2 {
+                let end = s.index(afterDot, offsetBy: 2)
+                s = String(s[..<end])
+            }
+        }
+
+        return s
     }
 }

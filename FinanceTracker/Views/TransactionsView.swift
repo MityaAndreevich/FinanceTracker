@@ -23,7 +23,7 @@ struct TransactionsView: View {
         var id: String { rawValue }
     }
 
-    // MARK: - Derived data (вынесли из body)
+    // MARK: - Derived data
 
     private var filtered: [Transaction] {
         let base: [Transaction]
@@ -83,13 +83,12 @@ struct TransactionsView: View {
             .toolbar { scopeToolbar }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
             .refreshable {
-                // Pull-to-refresh: обновляем статус премиума/энтитлменты
                 await PurchaseManager.shared.refreshStatus()
             }
         }
     }
 
-    // MARK: - UI pieces (разрезаем body)
+    // MARK: - UI pieces
 
     private var emptyStateRow: some View {
         EmptyStateView(
@@ -117,11 +116,35 @@ struct TransactionsView: View {
 
             ForEach(dayItems) { tx in
                 NavigationLink {
-                    TransactionDetailView(tx: tx)
+                    // ✅ Редактирование конкретной транзакции
+                    EditTransactionView(transaction: tx)
                 } label: {
                     TransactionRow(tx: tx)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        delete(tx)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+
+                    Button {
+                        // Swipe Edit — тоже ведём на экран редактирования
+                        // (свайп → редактирование, тап → тоже редактирование)
+                        // Если хочешь: тап = detail, swipe = edit — скажи.
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                }
+                .contextMenu {
+                    Button {
+                        // fallback: если захочешь оставить detail view:
+                        // навигацию на детали можно вернуть по тапу, а тут оставить edit
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
                     Button(role: .destructive) {
                         delete(tx)
                     } label: {

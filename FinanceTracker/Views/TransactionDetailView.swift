@@ -42,7 +42,7 @@ struct TransactionDetailView: View {
             }
         }
         .sheet(isPresented: $showEdit) {
-            EditTransactionView(tx: tx)
+            EditTransactionView(transaction: tx)
         }
     }
 

@@ -63,9 +63,15 @@ struct AddTransactionView: View {
                 Section("Amount") {
                     TextField("0.00", text: $amountText)
                         .keyboardType(.decimalPad)
+                        .onChange(of: amountText) { _, newValue in
+                            amountText = sanitizeMoneyInput(newValue)
+                        }
 
                     TextField("Tax (optional)", text: $taxText)
                         .keyboardType(.decimalPad)
+                        .onChange(of: taxText) { _, newValue in
+                            taxText = sanitizeMoneyInput(newValue)
+                        }
                 }
 
                 // ===== Merchant / Title =====
@@ -287,6 +293,34 @@ struct AddTransactionView: View {
         let centsDecimal = decimal * 100
         let rounded = NSDecimalNumber(decimal: centsDecimal).rounding(accordingToBehavior: nil).intValue
         return rounded
+    }
+    
+    private func sanitizeMoneyInput(_ input: String) -> String {
+        // 1) заменяем запятую на точку
+        var s = input.replacingOccurrences(of: ",", with: ".")
+
+        // 2) оставляем только цифры и точки
+        s = s.filter { $0.isNumber || $0 == "." }
+
+        // 3) разрешаем только одну точку
+        if let firstDot = s.firstIndex(of: ".") {
+            let afterFirst = s.index(after: firstDot)
+            let prefix = s[..<afterFirst]
+            let suffix = s[afterFirst...].replacingOccurrences(of: ".", with: "")
+            s = String(prefix) + suffix
+        }
+
+        // 4) необязательно: ограничим до 2 знаков после точки
+        if let dot = s.firstIndex(of: ".") {
+            let afterDot = s.index(after: dot)
+            let decimals = s[afterDot...]
+            if decimals.count > 2 {
+                let end = s.index(afterDot, offsetBy: 2)
+                s = String(s[..<end])
+            }
+        }
+
+        return s
     }
 }
 

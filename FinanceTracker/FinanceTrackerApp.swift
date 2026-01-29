@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct FinanceTrackerApp: App {
+    @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Transaction.self,
@@ -29,12 +31,21 @@ struct FinanceTrackerApp: App {
         }
     }()
 
+    private var appLocale: Locale {
+        if appLanguageCode == "system" {
+            return .current
+        } else {
+            return Locale(identifier: appLanguageCode)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.locale, appLocale)
                 .task {
-                            PurchaseManager.shared.start()
-                        }
+                    PurchaseManager.shared.start()
+                }
         }
         .modelContainer(sharedModelContainer)
     }
