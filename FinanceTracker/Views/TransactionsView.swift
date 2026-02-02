@@ -71,26 +71,25 @@ struct TransactionsView: View {
     // MARK: - Body
 
     var body: some View {
-        NavigationStack {
-            List {
-                if filtered.isEmpty {
-                    emptyStateRow
-                } else {
-                    ForEach(sortedDays, id: \.self) { day in
-                        daySection(for: day)
-                    }
+        List {
+            if filtered.isEmpty {
+                emptyStateRow
+            } else {
+                ForEach(sortedDays, id: \.self) { day in
+                    daySection(for: day)
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("title.transactions")
-            .toolbar { scopeToolbar }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
-            .refreshable {
-                await PurchaseManager.shared.refreshStatus()
-            }
-            .navigationDestination(item: $editTx) { tx in
-                EditTransactionView(transaction: tx)
-            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("title.transactions")
+        .toolbar { scopeToolbar }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+        .refreshable {
+            await PurchaseManager.shared.refreshStatus()
+        }
+        .navigationDestination(item: $editTx) { tx in
+            // ✅ Вот здесь открывается твой экран редактирования
+            EditTransactionView(transaction: tx)
         }
     }
 
@@ -128,6 +127,7 @@ struct TransactionsView: View {
                 }
                 .buttonStyle(.plain)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+
                     Button(role: .destructive) {
                         delete(tx)
                     } label: {
