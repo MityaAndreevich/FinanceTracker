@@ -18,7 +18,7 @@ enum SupportedCurrency: String, CaseIterable, Identifiable {
     case krw = "KRW"
     case inr = "INR"
     case rub = "RUB"
-    case uah = "UAH"   // 🇺🇦 добавлено
+    case uah = "UAH"
     case brl = "BRL"
     case mxn = "MXN"
     case tryy = "TRY"
@@ -83,5 +83,13 @@ enum SupportedCurrency: String, CaseIterable, Identifiable {
         case .hkd: return "🇭🇰"
         case .sgd: return "🇸🇬"
         }
+    }
+
+    var displayName: String {
+        "\(flag) \(code) — \(name)"
+    }
+
+    static func from(code: String) -> SupportedCurrency {
+        SupportedCurrency(rawValue: code) ?? .usd
     }
 }

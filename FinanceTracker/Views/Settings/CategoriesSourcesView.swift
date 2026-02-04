@@ -17,19 +17,17 @@ struct CategoriesSourcesView: View {
     @Query(sort: \Category.order, order: .forward)
     private var categories: [Category]
 
-    // Sheets
     @State private var showAddSource = false
     @State private var showAddCategory = false
 
-    // Alerts
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
     var body: some View {
         List {
-            Section("Sources") {
+            Section("cs.section.sources") {
                 if sources.isEmpty {
-                    Text("No sources yet").foregroundStyle(.secondary)
+                    Text("cs.sources.empty").foregroundStyle(.secondary)
                 } else {
                     ForEach(sources) { source in
                         VStack(alignment: .leading, spacing: 4) {
@@ -44,18 +42,16 @@ struct CategoriesSourcesView: View {
                     .onDelete(perform: deleteSources)
                 }
 
-                Button {
-                    showAddSource = true
-                } label: {
-                    Label("Add Source", systemImage: "plus")
+                Button { showAddSource = true } label: {
+                    Label("cs.sources.add", systemImage: "plus")
                 }
             }
 
-            Section("Expense categories") {
+            Section("cs.section.expense_categories") {
                 let expense = categories.filter { $0.kindRaw == "expense" }.sorted { $0.order < $1.order }
 
                 if expense.isEmpty {
-                    Text("No expense categories").foregroundStyle(.secondary)
+                    Text("cs.expense.empty").foregroundStyle(.secondary)
                 } else {
                     ForEach(expense) { cat in
                         HStack(spacing: 10) {
@@ -70,18 +66,16 @@ struct CategoriesSourcesView: View {
                     }
                 }
 
-                Button {
-                    showAddCategory = true
-                } label: {
-                    Label("Add Category", systemImage: "plus")
+                Button { showAddCategory = true } label: {
+                    Label("cs.categories.add", systemImage: "plus")
                 }
             }
 
-            Section("Income categories") {
+            Section("cs.section.income_categories") {
                 let income = categories.filter { $0.kindRaw == "income" }.sorted { $0.order < $1.order }
 
                 if income.isEmpty {
-                    Text("No income categories").foregroundStyle(.secondary)
+                    Text("cs.income.empty").foregroundStyle(.secondary)
                 } else {
                     ForEach(income) { cat in
                         HStack(spacing: 10) {
@@ -97,16 +91,12 @@ struct CategoriesSourcesView: View {
                 }
             }
         }
-        .navigationTitle("Categories & Sources")
+        .navigationTitle("settings.categories")
         .listStyle(.insetGrouped)
-        .sheet(isPresented: $showAddSource) {
-            AddSourceSheet()
-        }
-        .sheet(isPresented: $showAddCategory) {
-            AddCategorySheet()
-        }
-        .alert("Can't delete", isPresented: $showBlockedDeleteAlert) {
-            Button("OK", role: .cancel) { }
+        .sheet(isPresented: $showAddSource) { AddSourceSheet() }
+        .sheet(isPresented: $showAddCategory) { AddCategorySheet() }
+        .alert("cs.alert.cant_delete.title", isPresented: $showBlockedDeleteAlert) {
+            Button("common.ok", role: .cancel) {}
         } message: {
             Text(blockedDeleteMessage)
         }
@@ -128,7 +118,12 @@ struct CategoriesSourcesView: View {
 
         if !blocked.isEmpty {
             blockedDeleteMessage = blocked
-                .map { "“\($0.0)” is used in \($0.1) transaction(s)." }
+                .map { name, count in
+                    String(
+                        format: NSLocalizedString("cs.alert.used_in_transactions.format", comment: ""),
+                        name, count
+                    )
+                }
                 .joined(separator: "\n")
             showBlockedDeleteAlert = true
         }
@@ -154,7 +149,12 @@ struct CategoriesSourcesView: View {
 
         if !blocked.isEmpty {
             blockedDeleteMessage = blocked
-                .map { "“\($0.0)” is used in \($0.1) transaction(s)." }
+                .map { name, count in
+                    String(
+                        format: NSLocalizedString("cs.alert.used_in_transactions.format", comment: ""),
+                        name, count
+                    )
+                }
                 .joined(separator: "\n")
             showBlockedDeleteAlert = true
         }
@@ -208,18 +208,16 @@ private struct AddSourceSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Source") {
-                    TextField("Name (e.g., Amazon Flex)", text: $name)
-                    TextField("Note (optional)", text: $note)
+                Section("cs.source_sheet.section") {
+                    TextField("cs.source_sheet.name.placeholder", text: $name)
+                    TextField("cs.source_sheet.note.placeholder", text: $note)
                 }
             }
-            .navigationTitle("Add Source")
+            .navigationTitle("cs.source_sheet.title")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .topBarLeading) { Button("common.cancel") { dismiss() } }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") {
+                    Button("common.add") {
                         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
                         let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -250,27 +248,25 @@ private struct AddCategorySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Category") {
-                    TextField("Name (e.g., Rent, Gas)", text: $name)
+                Section("cs.category_sheet.section") {
+                    TextField("cs.category_sheet.name.placeholder", text: $name)
 
-                    Picker("Type", selection: $typeRaw) {
-                        Text("Expense").tag("expense")
-                        Text("Income").tag("income")
+                    Picker("add.type.picker.title", selection: $typeRaw) {
+                        Text("add.type.expense").tag("expense")
+                        Text("add.type.income").tag("income")
                     }
                     .pickerStyle(.segmented)
 
-                    TextField("SF Symbol (optional)", text: $icon)
+                    TextField("cs.category_sheet.icon.placeholder", text: $icon)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
             }
-            .navigationTitle("Add Category")
+            .navigationTitle("cs.category_sheet.title")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
+                ToolbarItem(placement: .topBarLeading) { Button("common.cancel") { dismiss() } }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") {
+                    Button("common.add") {
                         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
 
@@ -293,9 +289,4 @@ private struct AddCategorySheet: View {
             }
         }
     }
-}
-
-#Preview {
-    NavigationStack { CategoriesSourcesView() }
-        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
 }

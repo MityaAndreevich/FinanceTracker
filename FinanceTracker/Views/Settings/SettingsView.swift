@@ -16,36 +16,25 @@ struct SettingsView: View {
                 NavigationLink {
                     GeneralSettingsView()
                 } label: {
-                    Label("General", systemImage: "slider.horizontal.3")
+                    Label("settings.general", systemImage: "slider.horizontal.3")
                 }
 
                 NavigationLink {
                     PremiumSettingsView()
                 } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "crown.fill")
-                            .foregroundStyle(.yellow)
-
-                        Text("Premium")
-
-                        Spacer()
-
-                        Text(pm.isPremium ? "Active" : "Free")
-                            .font(.subheadline)
-                            .foregroundStyle(pm.isPremium ? .green : .secondary)
-                    }
+                    premiumRow
                 }
 
                 NavigationLink {
                     DataSettingsView()
                 } label: {
-                    Label("Data", systemImage: "externaldrive")
+                    Label("settings.data", systemImage: "externaldrive")
                 }
 
                 NavigationLink {
                     CategoriesSourcesView()
                 } label: {
-                    Label("Categories & Sources", systemImage: "square.grid.2x2")
+                    Label("settings.categories", systemImage: "square.grid.2x2")
                 }
             }
 
@@ -53,16 +42,33 @@ struct SettingsView: View {
                 NavigationLink {
                     AboutView()
                 } label: {
-                    Label("About", systemImage: "info.circle")
+                    Label("settings.about", systemImage: "info.circle")
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle("settings.title")
         .listStyle(.insetGrouped)
+    }
+
+    private var premiumRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "crown.fill")
+                .foregroundStyle(.yellow)
+
+            Text("settings.premium")
+
+            Spacer()
+
+            Text(pm.isPremium ? "premium.status.active" : "premium.status.free")
+                .font(.subheadline)
+                .foregroundStyle(pm.isPremium ? .green : .secondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("settings.premium"))
+        .accessibilityValue(Text(pm.isPremium ? "premium.status.active" : "premium.status.free"))
     }
 }
 
 #Preview {
     NavigationStack { SettingsView() }
 }
-

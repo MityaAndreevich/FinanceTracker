@@ -1,0 +1,142 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "總覽";
+"tab.transactions" = "交易";
+"tab.add" = "新增";
+"tab.analytics" = "分析";
+"tab.settings" = "設定";
+
+/* Titles */
+"title.dashboard" = "總覽";
+"title.transactions" = "交易";
+"title.add" = "新增";
+"title.analytics" = "分析";
+"title.settings" = "設定";
+
+/* Onboarding */
+"onboarding.language.title" = "選擇語言";
+"onboarding.language.subtitle" = "你可以隨時在設定中更改。";
+"onboarding.language.picker" = "語言";
+
+"onboarding.currency.title" = "選擇幣別";
+"onboarding.currency.subtitle" = "將作為新增交易的預設幣別。";
+"onboarding.currency.picker" = "幣別";
+
+"onboarding.next" = "下一步";
+"onboarding.start" = "開始";
+"onboarding.back" = "返回";
+
+/* Settings */
+"settings.title" = "設定";
+"settings.general" = "一般";
+"settings.premium" = "進階版";
+"settings.data" = "資料";
+"settings.categories" = "分類與來源";
+"settings.about" = "關於";
+
+/* Premium */
+"premium.status.active" = "已啟用";
+"premium.status.free" = "免費";
+
+/* General Settings (legacy keys kept) */
+"settings.general.title" = "一般";
+"settings.general.preferences" = "偏好設定";
+"settings.general.currency" = "幣別";
+"settings.general.language" = "語言";
+"settings.general.maintenance" = "維護";
+"settings.general.clearCache" = "清除快取";
+"settings.general.restartOnboarding" = "重新開始引導";
+"settings.general.resetTransactions" = "重設交易";
+"settings.general.account" = "帳戶";
+"settings.general.signOut" = "登出";
+
+/* General */
+"general.title" = "一般";
+
+"general.section.preferences" = "偏好設定";
+"general.section.maintenance" = "維護";
+"general.section.account" = "帳戶";
+
+"general.currency" = "幣別";
+"general.language" = "語言";
+
+"general.language_hint" = "加入完整本地化後，將全面啟用語言切換。";
+
+"general.clear_cache" = "清除快取";
+"general.cache.message" = "目前沒有可清除的快取。加入離線快取後會更有用。";
+
+"general.restart_onboarding" = "重新開始引導";
+"general.reset_transactions" = "重設交易";
+"general.reset_hint" = "重設交易會刪除所有交易，但會保留分類與來源。";
+
+"general.sign_out" = "登出";
+"general.signout.message" = "加入帳戶功能（iCloud 同步／登入）後才會提供登出。";
+
+/* Alerts */
+"general.alert.info.title" = "資訊";
+"general.alert.ok" = "好";
+
+"general.alert.cancel" = "取消";
+"general.alert.reset" = "重設";
+"general.alert.restart" = "重新開始";
+
+"general.alert.reset_tx.title" = "要重設交易嗎？";
+"general.alert.reset_tx.message" = "這將永久刪除此裝置上的所有交易。";
+
+"general.alert.restart_onboarding.title" = "要重新開始引導嗎？";
+"general.alert.restart_onboarding.message" = "你將再次看到語言與幣別設定。交易資料不會受影響。";
+
+"general.reset_success.message" = "已成功刪除交易。";
+"general.reset_failed.message" = "重設失敗。";
+"general.info.default" = "好的。";
+
+/* Common */
+"common.cancel" = "取消";
+"common.ok" = "好";
+"common.delete" = "刪除";
+"common.edit" = "編輯";
+"common.today" = "今天";
+"common.yesterday" = "昨天";
+
+/* Empty states */
+"empty.noData" = "尚無資料";
+"empty.noTransactions" = "尚無交易";
+"empty.addFirstTransaction" = "新增第一筆交易即可開始。";
+
+/* Data */
+"data.title" = "資料";
+
+"data.section.export" = "匯出";
+"data.section.import" = "匯入";
+
+"data.export.csv.month" = "匯出 CSV（本月）";
+"data.export.csv.all" = "匯出 CSV（全部）";
+
+"data.export.pdf.month" = "匯出 PDF（本月）";
+"data.export.pdf.all" = "匯出 PDF（全部）";
+
+"data.export.excel.month" = "匯出 Excel/Numbers（本月）";
+"data.export.excel.all" = "匯出 Excel/Numbers（全部）";
+
+"data.export.share_last.format" = "分享上次匯出（%@）";
+
+"data.import.csv" = "匯入 CSV";
+"data.premium_hint" = "進階版可解鎖 CSV 匯入與「匯出全部」。";
+
+"data.alert.import_result.title" = "匯入結果";
+"data.alert.export_error.title" = "匯出錯誤";
+
+"data.import.result.imported.format" = "已匯入：%d";
+"data.import.result.skipped.format" = "已略過：%d";
+"data.import.result.created_categories.format" = "已建立分類：%d";
+"data.import.result.created_sources.format" = "已建立來源：%d";
+"data.import.result.first_error.format" = "第一個錯誤：%@";
+
+"data.import.failed.format" = "匯入失敗：%@";
+"data.export.failed.format" = "匯出失敗：%@";

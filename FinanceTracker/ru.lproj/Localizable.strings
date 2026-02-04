@@ -1,0 +1,135 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+"tab.dashboard" = "Обзор";
+"tab.transactions" = "Транзакции";
+"tab.add" = "Добавить";
+"tab.analytics" = "Аналитика";
+"tab.settings" = "Настройки";
+
+"title.dashboard" = "Обзор";
+"title.transactions" = "Транзакции";
+"title.add" = "Добавить";
+"title.analytics" = "Аналитика";
+"title.settings" = "Настройки";
+
+"onboarding.language.title" = "Выберите язык";
+"onboarding.language.subtitle" = "Вы сможете изменить его в любое время в настройках.";
+"onboarding.language.picker" = "Язык";
+
+"onboarding.currency.title" = "Выберите валюту";
+"onboarding.currency.subtitle" = "Она будет использоваться по умолчанию для новых транзакций.";
+"onboarding.currency.picker" = "Валюта";
+
+"onboarding.next" = "Далее";
+"onboarding.start" = "Начать";
+"onboarding.back" = "Назад";
+
+/* Settings */
+"settings.title" = "Настройки";
+"settings.general" = "Основные";
+"settings.premium" = "Премиум";
+"settings.data" = "Данные";
+"settings.categories" = "Категории и источники";
+"settings.about" = "О приложении";
+
+"premium.status.active" = "Активен";
+"premium.status.free" = "Бесплатно";
+
+/* General Settings */
+"settings.general.title" = "Основные";
+"settings.general.preferences" = "Параметры";
+"settings.general.currency" = "Валюта";
+"settings.general.language" = "Язык";
+"settings.general.maintenance" = "Обслуживание";
+"settings.general.clearCache" = "Очистить кэш";
+"settings.general.restartOnboarding" = "Перезапустить онбординг";
+"settings.general.resetTransactions" = "Сбросить транзакции";
+"settings.general.account" = "Аккаунт";
+"settings.general.signOut" = "Выйти";
+
+"general.title" = "Основные";
+
+"general.section.preferences" = "Параметры";
+"general.section.maintenance" = "Обслуживание";
+"general.section.account" = "Аккаунт";
+
+"general.currency" = "Валюта";
+"general.language" = "Язык";
+
+"general.language_hint" = "Переключение языка будет полностью доступно после добавления всех переводов.";
+
+"general.clear_cache" = "Очистить кэш";
+"general.cache.message" = "Кэш пока отсутствует. Эта функция будет полезна при добавлении офлайн-режима.";
+
+"general.restart_onboarding" = "Перезапустить онбординг";
+"general.reset_transactions" = "Сбросить транзакции";
+"general.reset_hint" = "Сброс удаляет все транзакции, но сохраняет категории и источники.";
+
+"general.sign_out" = "Выйти";
+"general.signout.message" = "Выход будет доступен после добавления аккаунтов (iCloud / вход).";
+
+"general.alert.info.title" = "Информация";
+"general.alert.ok" = "ОК";
+
+"general.alert.cancel" = "Отмена";
+"general.alert.reset" = "Сбросить";
+"general.alert.restart" = "Перезапустить";
+
+"general.alert.reset_tx.title" = "Сбросить транзакции?";
+"general.alert.reset_tx.message" = "Все транзакции будут удалены с этого устройства без возможности восстановления.";
+
+"general.alert.restart_onboarding.title" = "Перезапустить онбординг?";
+"general.alert.restart_onboarding.message" = "Вы снова увидите настройку языка и валюты. Транзакции останутся.";
+
+"general.reset_success.message" = "Транзакции успешно удалены.";
+"general.reset_failed.message" = "Не удалось выполнить сброс.";
+"general.info.default" = "ОК.";
+
+/* Common */
+"common.cancel" = "Отмена";
+"common.ok" = "ОК";
+"common.delete" = "Удалить";
+"common.edit" = "Изменить";
+"common.today" = "Сегодня";
+"common.yesterday" = "Вчера";
+
+/* Empty states */
+"empty.noData" = "Пока нет данных";
+"empty.noTransactions" = "Нет транзакций";
+"empty.addFirstTransaction" = "Добавьте первую транзакцию, чтобы начать.";
+
+"data.title" = "Данные";
+
+"data.section.export" = "Экспорт";
+"data.section.import" = "Импорт";
+
+"data.export.csv.month" = "Экспорт CSV (за месяц)";
+"data.export.csv.all" = "Экспорт CSV (все данные)";
+
+"data.export.pdf.month" = "Экспорт PDF (за месяц)";
+"data.export.pdf.all" = "Экспорт PDF (все данные)";
+
+"data.export.excel.month" = "Экспорт Excel/Numbers (за месяц)";
+"data.export.excel.all" = "Экспорт Excel/Numbers (все данные)";
+
+"data.export.share_last.format" = "Поделиться последним экспортом (%@)";
+
+"data.import.csv" = "Импорт CSV";
+"data.premium_hint" = "Премиум открывает импорт CSV и экспорт всех данных.";
+
+"data.alert.import_result.title" = "Результат импорта";
+"data.alert.export_error.title" = "Ошибка экспорта";
+
+"data.import.result.imported.format" = "Импортировано: %d";
+"data.import.result.skipped.format" = "Пропущено: %d";
+"data.import.result.created_categories.format" = "Создано категорий: %d";
+"data.import.result.created_sources.format" = "Создано источников: %d";
+"data.import.result.first_error.format" = "Первая ошибка: %@";
+
+"data.import.failed.format" = "Ошибка импорта: %@";
+"data.export.failed.format" = "Ошибка экспорта: %@";

@@ -1,0 +1,66 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Oversigt";
+"tab.transactions" = "Transaktioner";
+"tab.add" = "Tilføj";
+"tab.analytics" = "Analyse";
+"tab.settings" = "Indstillinger";
+
+/* Titles */
+"title.dashboard" = "Oversigt";
+"title.transactions" = "Transaktioner";
+"title.add" = "Tilføj";
+"title.analytics" = "Analyse";
+"title.settings" = "Indstillinger";
+
+/* Onboarding */
+"onboarding.language.title" = "Vælg sprog";
+"onboarding.language.subtitle" = "Du kan ændre dette når som helst i indstillingerne.";
+"onboarding.language.picker" = "Sprog";
+
+"onboarding.currency.title" = "Vælg valuta";
+"onboarding.currency.subtitle" = "Denne valuta bruges som standard for nye transaktioner.";
+"onboarding.currency.picker" = "Valuta";
+
+"onboarding.next" = "Næste";
+"onboarding.start" = "Start";
+"onboarding.back" = "Tilbage";
+
+/* Settings */
+"settings.title" = "Indstillinger";
+"settings.general" = "Generelt";
+"settings.premium" = "Premium";
+"settings.data" = "Data";
+"settings.categories" = "Kategorier og kilder";
+"settings.about" = "Om";
+
+/* Premium */
+"premium.status.active" = "Aktiv";
+"premium.status.free" = "Gratis";
+
+/* General */
+"general.title" = "Generelt";
+
+"general.section.preferences" = "Præferencer";
+"general.section.maintenance" = "Vedligeholdelse";
+"general.section.account" = "Konto";
+
+"general.currency" = "Valuta";
+"general.language" = "Sprog";
+
+"general.clear_cache" = "Ryd cache";
+"general.restart_onboarding" = "Genstart introduktion";
+
+/* Common */
+"common.cancel" = "Annuller";
+"common.ok" = "OK";
+"common.delete" = "Slet";
+"common.edit" = "Rediger";
+"common.today" = "I dag";
+"common.yesterday" = "I går";

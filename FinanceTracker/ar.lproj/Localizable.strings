@@ -1,0 +1,144 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "لوحة المعلومات";
+"tab.transactions" = "المعاملات";
+"tab.add" = "إضافة";
+"tab.analytics" = "التحليلات";
+"tab.settings" = "الإعدادات";
+
+/* Titles */
+"title.dashboard" = "لوحة المعلومات";
+"title.transactions" = "المعاملات";
+"title.add" = "إضافة";
+"title.analytics" = "التحليلات";
+"title.settings" = "الإعدادات";
+
+/* Onboarding */
+"onboarding.language.title" = "اختر اللغة";
+"onboarding.language.subtitle" = "يمكنك تغيير ذلك في أي وقت من الإعدادات.";
+"onboarding.language.picker" = "اللغة";
+
+"onboarding.currency.title" = "اختر العملة";
+"onboarding.currency.subtitle" = "ستُستخدم كعملة افتراضية للمعاملات الجديدة.";
+"onboarding.currency.picker" = "العملة";
+
+"onboarding.next" = "التالي";
+"onboarding.start" = "ابدأ";
+"onboarding.back" = "رجوع";
+
+/* Settings */
+"settings.title" = "الإعدادات";
+"settings.general" = "عام";
+"settings.premium" = "بريميوم";
+"settings.data" = "البيانات";
+"settings.categories" = "الفئات والمصادر";
+"settings.about" = "حول";
+
+/* Premium */
+"premium.status.active" = "مفعل";
+"premium.status.free" = "مجاني";
+
+/* General Settings (legacy keys kept) */
+"settings.general.title" = "عام";
+"settings.general.preferences" = "التفضيلات";
+"settings.general.currency" = "العملة";
+"settings.general.language" = "اللغة";
+"settings.general.maintenance" = "الصيانة";
+"settings.general.clearCache" = "مسح ذاكرة التخزين المؤقت";
+"settings.general.restartOnboarding" = "إعادة بدء الإعداد الأولي";
+"settings.general.resetTransactions" = "إعادة تعيين المعاملات";
+"settings.general.account" = "الحساب";
+"settings.general.signOut" = "تسجيل الخروج";
+
+/* General */
+"general.title" = "عام";
+
+"general.section.preferences" = "التفضيلات";
+"general.section.maintenance" = "الصيانة";
+"general.section.account" = "الحساب";
+
+"general.currency" = "العملة";
+"general.language" = "اللغة";
+
+"general.language_hint" = "سيتم تفعيل تبديل اللغة بالكامل عند إضافة مفاتيح الترجمة.";
+
+/* Maintenance */
+"general.clear_cache" = "مسح ذاكرة التخزين المؤقت";
+"general.cache.message" = "لا توجد ذاكرة مؤقتة لمسحها حالياً. ستكون هذه الميزة مفيدة عند إضافة التخزين دون اتصال.";
+
+"general.restart_onboarding" = "إعادة بدء الإعداد الأولي";
+"general.reset_transactions" = "إعادة تعيين المعاملات";
+"general.reset_hint" = "إعادة تعيين المعاملات تحذف جميع المعاملات لكنها تُبقي الفئات والمصادر.";
+
+/* Account */
+"general.sign_out" = "تسجيل الخروج";
+"general.signout.message" = "سيتوفر تسجيل الخروج عند إضافة الحسابات (مزامنة iCloud / تسجيل الدخول).";
+
+/* Alerts */
+"general.alert.info.title" = "معلومة";
+"general.alert.ok" = "حسناً";
+
+"general.alert.cancel" = "إلغاء";
+"general.alert.reset" = "إعادة تعيين";
+"general.alert.restart" = "إعادة البدء";
+
+"general.alert.reset_tx.title" = "إعادة تعيين المعاملات؟";
+"general.alert.reset_tx.message" = "سيؤدي ذلك إلى حذف جميع المعاملات نهائياً على هذا الجهاز.";
+
+"general.alert.restart_onboarding.title" = "إعادة بدء الإعداد الأولي؟";
+"general.alert.restart_onboarding.message" = "سترى إعداد اللغة والعملة مرة أخرى. ستبقى معاملاتك كما هي.";
+
+"general.reset_success.message" = "تم حذف المعاملات بنجاح.";
+"general.reset_failed.message" = "فشلت عملية إعادة التعيين.";
+"general.info.default" = "حسناً.";
+
+/* Common */
+"common.cancel" = "إلغاء";
+"common.ok" = "حسناً";
+"common.delete" = "حذف";
+"common.edit" = "تعديل";
+"common.today" = "اليوم";
+"common.yesterday" = "أمس";
+
+/* Empty states */
+"empty.noData" = "لا توجد بيانات بعد";
+"empty.noTransactions" = "لا توجد معاملات";
+"empty.addFirstTransaction" = "أضف أول معاملة للبدء.";
+
+/* Data */
+"data.title" = "البيانات";
+
+"data.section.export" = "تصدير";
+"data.section.import" = "استيراد";
+
+"data.export.csv.month" = "تصدير CSV (هذا الشهر)";
+"data.export.csv.all" = "تصدير CSV (الكل)";
+
+"data.export.pdf.month" = "تصدير PDF (هذا الشهر)";
+"data.export.pdf.all" = "تصدير PDF (الكل)";
+
+"data.export.excel.month" = "تصدير Excel/Numbers (هذا الشهر)";
+"data.export.excel.all" = "تصدير Excel/Numbers (الكل)";
+
+"data.export.share_last.format" = "مشاركة آخر تصدير (%@)";
+
+"data.import.csv" = "استيراد CSV";
+"data.premium_hint" = "يتيح بريميوم استيراد CSV وتصدير الكل.";
+
+"data.alert.import_result.title" = "نتيجة الاستيراد";
+"data.alert.export_error.title" = "خطأ في التصدير";
+
+"data.import.result.imported.format" = "تم الاستيراد: %d";
+"data.import.result.skipped.format" = "تم التخطي: %d";
+"data.import.result.created_categories.format" = "تم إنشاء فئات: %d";
+"data.import.result.created_sources.format" = "تم إنشاء مصادر: %d";
+"data.import.result.first_error.format" = "أول خطأ: %@";
+
+"data.import.failed.format" = "فشل الاستيراد: %@";
+"data.export.failed.format" = "فشل التصدير: %@";

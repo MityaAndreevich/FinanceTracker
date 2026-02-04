@@ -210,6 +210,32 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
+				uk,
+				fr,
+				ja,
+				it,
+				el,
+				es,
+				de,
+				kk,
+				he,
+				ar,
+				"zh-Hant",
+				"zh-HK",
+				"zh-Hans",
+				hi,
+				ko,
+				sv,
+				tr,
+				nl,
+				cs,
+				fi,
+				vi,
+				"pt-PT",
+				"es-419",
+				pl,
+				da,
 			);
 			mainGroup = CA770D762F19983F007EC55F;
 			minimizedProjectReferenceProxies = 1;
@@ -293,6 +319,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -354,6 +381,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";

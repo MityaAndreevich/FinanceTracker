@@ -13,15 +13,12 @@ struct AddTransactionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    // Settings (будем управлять из Settings → General позже)
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    // SwiftData
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
     @Query(sort: \Source.name, order: .forward) private var sources: [Source]
 
-    // UI state
-    @State private var typeRaw: String = "expense"      // "expense" or "income"
+    @State private var typeRaw: String = "expense"
     @State private var amountText: String = ""
     @State private var merchantText: String = ""
     @State private var selectedCategory: Category?
@@ -30,14 +27,11 @@ struct AddTransactionView: View {
     @State private var note: String = ""
     @State private var taxText: String = ""
 
-    @State private var errorMessage: String?
+    @State private var errorMessageKey: String = "add.error.unknown"
     @State private var showError: Bool = false
 
-    // Inline create
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
-
-    // MARK: - Computed
 
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
@@ -50,154 +44,124 @@ struct AddTransactionView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // ===== Type =====
                 Section {
-                    Picker("Type", selection: $typeRaw) {
-                        Text("Expense").tag("expense")
-                        Text("Income").tag("income")
+                    Picker("add.type.picker.title", selection: $typeRaw) {
+                        Text("add.type.expense").tag("expense")
+                        Text("add.type.income").tag("income")
                     }
                     .pickerStyle(.segmented)
                 }
 
-                // ===== Amount =====
-                Section("Amount") {
-                    TextField("0.00", text: $amountText)
+                Section("add.section.amount") {
+                    TextField("add.amount.placeholder", text: $amountText)
                         .keyboardType(.decimalPad)
                         .onChange(of: amountText) { _, newValue in
                             amountText = sanitizeMoneyInput(newValue)
                         }
 
-                    TextField("Tax (optional)", text: $taxText)
+                    TextField("add.tax.placeholder", text: $taxText)
                         .keyboardType(.decimalPad)
                         .onChange(of: taxText) { _, newValue in
                             taxText = sanitizeMoneyInput(newValue)
                         }
                 }
 
-                // ===== Merchant / Title =====
-                Section("Title (optional)") {
-                    TextField("e.g., Starbucks, Rent, Salary", text: $merchantText)
+                Section("add.section.title") {
+                    TextField("add.title.placeholder", text: $merchantText)
                 }
 
-                // ===== Category =====
-                Section("Category") {
+                Section("add.section.category") {
                     if filteredCategories.isEmpty {
                         Text(typeRaw == "income"
-                             ? "No income categories yet."
-                             : "No expense categories yet.")
+                             ? "add.category.empty_income"
+                             : "add.category.empty_expense")
                         .foregroundStyle(.secondary)
 
-                        Button {
-                            showAddCategorySheet = true
-                        } label: {
-                            Label("Add Category", systemImage: "plus.circle")
+                        Button { showAddCategorySheet = true } label: {
+                            Label("add.category.add", systemImage: "plus.circle")
                         }
                     } else {
-                        Picker("Category", selection: $selectedCategory) {
-                            Text("Select…").tag(Optional<Category>.none)
+                        Picker("add.category.picker.title", selection: $selectedCategory) {
+                            Text("add.select.placeholder").tag(Optional<Category>.none)
                             ForEach(filteredCategories) { category in
                                 Text(category.name).tag(Optional(category))
                             }
                         }
 
-                        Button {
-                            showAddCategorySheet = true
-                        } label: {
-                            Label("Add Category", systemImage: "plus.circle")
+                        Button { showAddCategorySheet = true } label: {
+                            Label("add.category.add", systemImage: "plus.circle")
                         }
                     }
                 }
 
-                // ===== Source =====
-                Section(typeRaw == "income" ? "Source" : "Source (optional)") {
-                    Picker("Source", selection: $selectedSource) {
-                        Text("None").tag(Optional<Source>.none)
+                Section(typeRaw == "income" ? "add.section.source" : "add.section.source_optional") {
+                    Picker("add.source.picker.title", selection: $selectedSource) {
+                        Text("add.source.none").tag(Optional<Source>.none)
                         ForEach(sources) { source in
                             Text(source.name).tag(Optional(source))
                         }
                     }
 
                     if typeRaw == "income" {
-                        Button {
-                            showAddSourceSheet = true
-                        } label: {
-                            Label("Add Source", systemImage: "plus.circle")
+                        Button { showAddSourceSheet = true } label: {
+                            Label("add.source.add", systemImage: "plus.circle")
                         }
 
-                        Text("Tip: Use Source to track where income comes from (job, client, etc.).")
+                        Text("add.source.tip")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
                 }
 
-                // ===== Date =====
-                Section("Date") {
-                    DatePicker("Date", selection: $date, displayedComponents: [.date])
+                Section("add.section.date") {
+                    DatePicker("add.date.picker.title", selection: $date, displayedComponents: [.date])
                 }
 
-                // ===== Note =====
-                Section("Note (optional)") {
-                    TextField("Comment", text: $note, axis: .vertical)
+                Section("add.section.note") {
+                    TextField("add.note.placeholder", text: $note, axis: .vertical)
                         .lineLimit(2...4)
                 }
             }
             .navigationTitle("title.add")
             .toolbar {
-                // Cancel (если экран будет открыт модально)
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                    Button("common.cancel") {
                         hideKeyboard()
                         dismiss()
                     }
                 }
 
-                // Hide keyboard (decimalPad без кнопки Done)
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Hide Keyboard") {
-                        hideKeyboard()
-                    }
+                    Button("add.keyboard.hide") { hideKeyboard() }
                 }
 
-                // Add (нативно вместо Save)
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") {
-                        add()
-                    }
-                    .disabled(!canAdd)
+                    Button("common.add") { add() }
+                        .disabled(!canAdd)
                 }
             }
-            .onAppear {
-                ensureValidCategorySelection()
-            }
+            .onAppear { ensureValidCategorySelection() }
             .onChange(of: typeRaw) { _, _ in
-                // при смене типа — подставляем первую категорию соответствующего типа
-                if typeRaw != "income" {
-                    selectedSource = nil
-                }
+                if typeRaw != "income" { selectedSource = nil }
                 ensureValidCategorySelection()
             }
-            .alert("Error", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
+            .alert("common.error", isPresented: $showError) {
+                Button("common.ok", role: .cancel) {}
             } message: {
-                Text(errorMessage ?? "Unknown error")
+                Text(errorMessageKey)
             }
-            // ===== Sheets =====
             .sheet(isPresented: $showAddCategorySheet) {
                 AddCategorySheet(
                     kindRaw: typeRaw,
                     existingMaxOrder: (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0),
-                    onCreated: { newCat in
-                        selectedCategory = newCat
-                    }
+                    onCreated: { newCat in selectedCategory = newCat }
                 )
                 .presentationDetents([.medium])
             }
             .sheet(isPresented: $showAddSourceSheet) {
-                AddSourceSheet { newSource in
-                    selectedSource = newSource
-                }
-                .presentationDetents([.medium])
+                AddSourceSheet { newSource in selectedSource = newSource }
+                    .presentationDetents([.medium])
             }
         }
     }
@@ -208,11 +172,11 @@ struct AddTransactionView: View {
         hideKeyboard()
 
         guard let category = selectedCategory else {
-            showErrorMessage("Please select a category.")
+            showErrorKey("add.error.select_category")
             return
         }
         guard let amountCents = parseCents(from: amountText) else {
-            showErrorMessage("Invalid amount.")
+            showErrorKey("add.error.invalid_amount")
             return
         }
 
@@ -244,7 +208,10 @@ struct AddTransactionView: View {
 
             resetFormKeepType()
         } catch {
-            showErrorMessage("Save failed: \(error.localizedDescription)")
+            // Динамический текст нельзя как LocalizedStringKey-ключом с подстановкой без String(localized:)
+            // Поэтому делаем общий ключ.
+            showErrorKey("add.error.save_failed")
+            print("Save failed: \(error.localizedDescription)")
         }
     }
 
@@ -274,12 +241,11 @@ struct AddTransactionView: View {
         }
     }
 
-    private func showErrorMessage(_ message: String) {
-        errorMessage = message
+    private func showErrorKey(_ key: String) {
+        errorMessageKey = key
         showError = true
     }
 
-    /// Парсим строку вида "12.34" в cents (1234).
     private func parseCents(from text: String) -> Int? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -294,15 +260,11 @@ struct AddTransactionView: View {
         let rounded = NSDecimalNumber(decimal: centsDecimal).rounding(accordingToBehavior: nil).intValue
         return rounded
     }
-    
-    private func sanitizeMoneyInput(_ input: String) -> String {
-        // 1) заменяем запятую на точку
-        var s = input.replacingOccurrences(of: ",", with: ".")
 
-        // 2) оставляем только цифры и точки
+    private func sanitizeMoneyInput(_ input: String) -> String {
+        var s = input.replacingOccurrences(of: ",", with: ".")
         s = s.filter { $0.isNumber || $0 == "." }
 
-        // 3) разрешаем только одну точку
         if let firstDot = s.firstIndex(of: ".") {
             let afterFirst = s.index(after: firstDot)
             let prefix = s[..<afterFirst]
@@ -310,7 +272,6 @@ struct AddTransactionView: View {
             s = String(prefix) + suffix
         }
 
-        // 4) необязательно: ограничим до 2 знаков после точки
         if let dot = s.firstIndex(of: ".") {
             let afterDot = s.index(after: dot)
             let decimals = s[afterDot...]
@@ -340,25 +301,25 @@ private struct AddCategorySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("New Category") {
-                    TextField("Name (e.g., Rent, Gas)", text: $name)
+                Section("add.category_sheet.section.title") {
+                    TextField("add.category_sheet.name.placeholder", text: $name)
 
-                    TextField("SF Symbol (optional)", text: $icon)
+                    TextField("add.category_sheet.icon.placeholder", text: $icon)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
-                    Text(kindRaw == "income" ? "Type: Income" : "Type: Expense")
+                    Text(kindRaw == "income" ? "add.category_sheet.type_income" : "add.category_sheet.type_expense")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Add Category")
+            .navigationTitle("add.category_sheet.nav_title")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("common.cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") { create() }
+                    Button("common.add") { create() }
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -386,8 +347,6 @@ private struct AddCategorySheet: View {
             onCreated(category)
             dismiss()
         } catch {
-            // если хочешь — можем красиво показать alert,
-            // но для MVP достаточно просто не закрывать sheet
             print("Failed to create category: \(error)")
         }
     }
@@ -407,18 +366,18 @@ private struct AddSourceSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("New Source") {
-                    TextField("Name (e.g., Amazon Flex)", text: $name)
-                    TextField("Note (optional)", text: $note)
+                Section("add.source_sheet.section.title") {
+                    TextField("add.source_sheet.name.placeholder", text: $name)
+                    TextField("add.source_sheet.note.placeholder", text: $note)
                 }
             }
-            .navigationTitle("Add Source")
+            .navigationTitle("add.source_sheet.nav_title")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("common.cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") { create() }
+                    Button("common.add") { create() }
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }

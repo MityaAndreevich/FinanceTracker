@@ -15,24 +15,29 @@ struct DashboardView: View {
     @State private var scope: Scope = .month
 
     enum Scope: String, CaseIterable, Identifiable {
-        case month = "This month"
-        case all = "All"
+        case month
+        case all
         var id: String { rawValue }
+
+        var titleKey: LocalizedStringKey {
+            switch self {
+            case .month: "scope.month"
+            case .all: "scope.all"
+            }
+        }
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-
-                    // ===== Summary cards =====
                     let summary = computeSummary()
 
                     if summary.hasAnyData == false {
                         EmptyStateView(
                             systemImage: "creditcard",
-                            title: "No data yet",
-                            message: "Add your first transaction to see insights here."
+                            title: "empty.noData",
+                            message: "empty.addFirstTransaction"
                         )
                         .padding(.top, 24)
                         .padding(.horizontal, 16)
@@ -46,7 +51,6 @@ struct DashboardView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
 
-                        // ===== Quick insights =====
                         QuickInsights(
                             expenseByCategory: summary.expenseByCategory,
                             incomeBySource: summary.incomeBySource,
@@ -62,9 +66,9 @@ struct DashboardView: View {
             .navigationTitle("title.dashboard")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Picker("Scope", selection: $scope) {
+                    Picker("scope.picker.title", selection: $scope) {
                         ForEach(Scope.allCases) { s in
-                            Text(s.rawValue).tag(s)
+                            Text(s.titleKey).tag(s)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -79,25 +83,18 @@ struct DashboardView: View {
     private func computeSummary() -> DashboardSummary {
         let filtered = filteredTransactions()
 
-        // Currency choice (simple MVP rule):
-        // If there are transactions -> take currency from first one.
-        // Later we will add "default currency" in Settings.
         let currency = filtered.first?.currency ?? "USD"
 
         var incomeCents = 0
         var expenseCents = 0
 
-        var expenseByCategory: [(String, Int)] = []
-        var incomeBySource: [(String, Int)] = []
-
-        // Aggregate maps
         var expenseMap: [String: Int] = [:]
         var incomeMap: [String: Int] = [:]
 
         for tx in filtered {
             if tx.typeRaw == "income" {
                 incomeCents += tx.amountCents
-                let key = tx.source?.name ?? "Unknown source"
+                let key = tx.source?.name ?? String(localized: "dashboard.unknown_source")
                 incomeMap[key, default: 0] += tx.amountCents
             } else {
                 expenseCents += tx.amountCents
@@ -106,13 +103,13 @@ struct DashboardView: View {
             }
         }
 
-        expenseByCategory = expenseMap
+        let expenseByCategory = expenseMap
             .map { ($0.key, $0.value) }
             .sorted { $0.1 > $1.1 }
             .prefix(5)
             .map { $0 }
 
-        incomeBySource = incomeMap
+        let incomeBySource = incomeMap
             .map { ($0.key, $0.value) }
             .sorted { $0.1 > $1.1 }
             .prefix(5)
@@ -167,14 +164,14 @@ private struct SummaryCards: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 SummaryCard(
-                    title: "Income",
+                    titleKey: "dashboard.summary.income",
                     value: formatMoney(cents: incomeCents, currency: currency),
                     systemImage: "arrow.down.circle.fill",
                     accent: .green
                 )
 
                 SummaryCard(
-                    title: "Expenses",
+                    titleKey: "dashboard.summary.expenses",
                     value: formatMoney(cents: expenseCents, currency: currency),
                     systemImage: "arrow.up.circle.fill",
                     accent: .red
@@ -182,7 +179,7 @@ private struct SummaryCards: View {
             }
 
             SummaryCard(
-                title: "Net",
+                titleKey: "dashboard.summary.net",
                 value: formatMoney(cents: netCents, currency: currency),
                 systemImage: "equal.circle.fill",
                 accent: netCents >= 0 ? .green : .red
@@ -200,7 +197,7 @@ private struct SummaryCards: View {
 }
 
 private struct SummaryCard: View {
-    let title: String
+    let titleKey: LocalizedStringKey
     let value: String
     let systemImage: String
     let accent: Color
@@ -211,7 +208,7 @@ private struct SummaryCard: View {
                 Image(systemName: systemImage)
                     .foregroundStyle(accent)
 
-                Text(title)
+                Text(titleKey)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -219,10 +216,8 @@ private struct SummaryCard: View {
             }
 
             Text(value)
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.title3.weight(.semibold))
                 .minimumScaleFactor(0.8)
-
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -244,8 +239,8 @@ private struct QuickInsights: View {
         VStack(spacing: 12) {
             if !expenseByCategory.isEmpty {
                 InsightCard(
-                    title: "Top expenses",
-                    subtitle: "This helps you spot where money leaks.",
+                    titleKey: "dashboard.insights.top_expenses.title",
+                    subtitleKey: "dashboard.insights.top_expenses.subtitle",
                     rows: expenseByCategory,
                     currency: currency,
                     icon: "chart.pie.fill"
@@ -254,8 +249,8 @@ private struct QuickInsights: View {
 
             if !incomeBySource.isEmpty {
                 InsightCard(
-                    title: "Top income sources",
-                    subtitle: "Useful when you have multiple streams.",
+                    titleKey: "dashboard.insights.top_income_sources.title",
+                    subtitleKey: "dashboard.insights.top_income_sources.subtitle",
                     rows: incomeBySource,
                     currency: currency,
                     icon: "chart.bar.fill"
@@ -266,8 +261,8 @@ private struct QuickInsights: View {
 }
 
 private struct InsightCard: View {
-    let title: String
-    let subtitle: String
+    let titleKey: LocalizedStringKey
+    let subtitleKey: LocalizedStringKey
     let rows: [(String, Int)]
     let currency: String
     let icon: String
@@ -277,12 +272,12 @@ private struct InsightCard: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .foregroundStyle(.secondary)
-                Text(title)
+                Text(titleKey)
                     .font(.headline)
                 Spacer()
             }
 
-            Text(subtitle)
+            Text(subtitleKey)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 

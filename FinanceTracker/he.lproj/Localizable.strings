@@ -1,0 +1,144 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "דשבורד";
+"tab.transactions" = "עסקאות";
+"tab.add" = "הוספה";
+"tab.analytics" = "ניתוח";
+"tab.settings" = "הגדרות";
+
+/* Titles */
+"title.dashboard" = "דשבורד";
+"title.transactions" = "עסקאות";
+"title.add" = "הוספה";
+"title.analytics" = "ניתוח";
+"title.settings" = "הגדרות";
+
+/* Onboarding */
+"onboarding.language.title" = "בחר שפה";
+"onboarding.language.subtitle" = "אפשר לשנות זאת בכל עת בהגדרות.";
+"onboarding.language.picker" = "שפה";
+
+"onboarding.currency.title" = "בחר מטבע";
+"onboarding.currency.subtitle" = "זה יהיה מטבע ברירת המחדל לעסקאות חדשות.";
+"onboarding.currency.picker" = "מטבע";
+
+"onboarding.next" = "הבא";
+"onboarding.start" = "התחל";
+"onboarding.back" = "חזרה";
+
+/* Settings */
+"settings.title" = "הגדרות";
+"settings.general" = "כללי";
+"settings.premium" = "פרימיום";
+"settings.data" = "נתונים";
+"settings.categories" = "קטגוריות ומקורות";
+"settings.about" = "אודות";
+
+/* Premium */
+"premium.status.active" = "פעיל";
+"premium.status.free" = "חינם";
+
+/* General Settings (legacy keys kept) */
+"settings.general.title" = "כללי";
+"settings.general.preferences" = "העדפות";
+"settings.general.currency" = "מטבע";
+"settings.general.language" = "שפה";
+"settings.general.maintenance" = "תחזוקה";
+"settings.general.clearCache" = "נקה מטמון";
+"settings.general.restartOnboarding" = "הפעל מחדש את ההדרכה";
+"settings.general.resetTransactions" = "איפוס עסקאות";
+"settings.general.account" = "חשבון";
+"settings.general.signOut" = "התנתקות";
+
+/* General */
+"general.title" = "כללי";
+
+"general.section.preferences" = "העדפות";
+"general.section.maintenance" = "תחזוקה";
+"general.section.account" = "חשבון";
+
+"general.currency" = "מטבע";
+"general.language" = "שפה";
+
+"general.language_hint" = "החלפת שפה תופעל במלואה לאחר הוספת מפתחות תרגום.";
+
+/* Maintenance */
+"general.clear_cache" = "נקה מטמון";
+"general.cache.message" = "אין כרגע מטמון לניקוי. זה יהיה שימושי כשנוסיף שמירה לאופליין.";
+
+"general.restart_onboarding" = "הפעל מחדש את ההדרכה";
+"general.reset_transactions" = "איפוס עסקאות";
+"general.reset_hint" = "איפוס עסקאות מוחק את כל העסקאות אך שומר על קטגוריות ומקורות.";
+
+/* Account */
+"general.sign_out" = "התנתקות";
+"general.signout.message" = "התנתקות תהיה זמינה כשנוסיף חשבונות (סנכרון iCloud / התחברות).";
+
+/* Alerts */
+"general.alert.info.title" = "מידע";
+"general.alert.ok" = "אישור";
+
+"general.alert.cancel" = "ביטול";
+"general.alert.reset" = "איפוס";
+"general.alert.restart" = "הפעלה מחדש";
+
+"general.alert.reset_tx.title" = "לאפס עסקאות?";
+"general.alert.reset_tx.message" = "פעולה זו תמחק לצמיתות את כל העסקאות במכשיר זה.";
+
+"general.alert.restart_onboarding.title" = "להפעיל מחדש את ההדרכה?";
+"general.alert.restart_onboarding.message" = "תראה שוב את הגדרת השפה והמטבע. העסקאות יישארו ללא שינוי.";
+
+"general.reset_success.message" = "העסקאות נמחקו בהצלחה.";
+"general.reset_failed.message" = "האיפוס נכשל.";
+"general.info.default" = "אוקיי.";
+
+/* Common */
+"common.cancel" = "ביטול";
+"common.ok" = "אישור";
+"common.delete" = "מחיקה";
+"common.edit" = "עריכה";
+"common.today" = "היום";
+"common.yesterday" = "אתמול";
+
+/* Empty states */
+"empty.noData" = "אין נתונים עדיין";
+"empty.noTransactions" = "אין עסקאות";
+"empty.addFirstTransaction" = "הוסף את העסקה הראשונה כדי להתחיל.";
+
+/* Data */
+"data.title" = "נתונים";
+
+"data.section.export" = "ייצוא";
+"data.section.import" = "ייבוא";
+
+"data.export.csv.month" = "ייצוא CSV (החודש)";
+"data.export.csv.all" = "ייצוא CSV (הכול)";
+
+"data.export.pdf.month" = "ייצוא PDF (החודש)";
+"data.export.pdf.all" = "ייצוא PDF (הכול)";
+
+"data.export.excel.month" = "ייצוא Excel/Numbers (החודש)";
+"data.export.excel.all" = "ייצוא Excel/Numbers (הכול)";
+
+"data.export.share_last.format" = "שיתוף הייצוא האחרון (%@)";
+
+"data.import.csv" = "ייבוא CSV";
+"data.premium_hint" = "פרימיום פותח ייבוא CSV וייצוא של הכול.";
+
+"data.alert.import_result.title" = "תוצאת הייבוא";
+"data.alert.export_error.title" = "שגיאת ייצוא";
+
+"data.import.result.imported.format" = "יובאו: %d";
+"data.import.result.skipped.format" = "דולגו: %d";
+"data.import.result.created_categories.format" = "נוצרו קטגוריות: %d";
+"data.import.result.created_sources.format" = "נוצרו מקורות: %d";
+"data.import.result.first_error.format" = "השגיאה הראשונה: %@";
+
+"data.import.failed.format" = "הייבוא נכשל: %@";
+"data.export.failed.format" = "הייצוא נכשל: %@";

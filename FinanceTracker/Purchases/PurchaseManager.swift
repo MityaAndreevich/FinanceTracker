@@ -29,6 +29,11 @@ final class PurchaseManager: ObservableObject {
     private var productIDs: [String] {
         ProductID.allCases.map { $0.rawValue }
     }
+    
+    var hasSubscriptionProducts: Bool {
+            productIDs.contains(ProductID.premiumMonthly.rawValue)
+            || productIDs.contains(ProductID.premiumYearly.rawValue)
+        }
 
     // MARK: - Published state
 

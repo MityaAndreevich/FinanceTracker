@@ -1,0 +1,144 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Tableau de bord";
+"tab.transactions" = "Transactions";
+"tab.add" = "Ajouter";
+"tab.analytics" = "Analyse";
+"tab.settings" = "Réglages";
+
+/* Titles */
+"title.dashboard" = "Tableau de bord";
+"title.transactions" = "Transactions";
+"title.add" = "Ajouter";
+"title.analytics" = "Analyse";
+"title.settings" = "Réglages";
+
+/* Onboarding – Language */
+"onboarding.language.title" = "Choisir la langue";
+"onboarding.language.subtitle" = "Vous pourrez modifier ce choix à tout moment dans les réglages.";
+"onboarding.language.picker" = "Langue";
+
+/* Onboarding – Currency */
+"onboarding.currency.title" = "Choisir la devise";
+"onboarding.currency.subtitle" = "Cette devise sera utilisée par défaut pour les nouvelles transactions.";
+"onboarding.currency.picker" = "Devise";
+
+/* Onboarding – Actions */
+"onboarding.next" = "Suivant";
+"onboarding.start" = "Commencer";
+"onboarding.back" = "Retour";
+
+/* Settings */
+"settings.title" = "Réglages";
+"settings.general" = "Général";
+"settings.premium" = "Premium";
+"settings.data" = "Données";
+"settings.categories" = "Catégories et sources";
+"settings.about" = "À propos";
+
+/* Premium */
+"premium.status.active" = "Actif";
+"premium.status.free" = "Gratuit";
+
+/* General Settings */
+"settings.general.title" = "Général";
+"settings.general.preferences" = "Préférences";
+"settings.general.currency" = "Devise";
+"settings.general.language" = "Langue";
+"settings.general.maintenance" = "Maintenance";
+"settings.general.clearCache" = "Vider le cache";
+"settings.general.restartOnboarding" = "Relancer la configuration";
+"settings.general.resetTransactions" = "Réinitialiser les transactions";
+"settings.general.account" = "Compte";
+"settings.general.signOut" = "Se déconnecter";
+
+/* General (New keys) */
+"general.title" = "Général";
+
+"general.section.preferences" = "Préférences";
+"general.section.maintenance" = "Maintenance";
+"general.section.account" = "Compte";
+
+"general.currency" = "Devise";
+"general.language" = "Langue";
+
+"general.language_hint" = "Le changement de langue sera entièrement disponible une fois toutes les clés de localisation ajoutées.";
+
+"general.clear_cache" = "Vider le cache";
+"general.cache.message" = "Il n’y a actuellement aucun cache à vider. Cette fonctionnalité sera utile lorsque le mode hors ligne sera disponible.";
+
+"general.restart_onboarding" = "Relancer la configuration";
+"general.reset_transactions" = "Réinitialiser les transactions";
+"general.reset_hint" = "La réinitialisation supprime toutes les transactions mais conserve les catégories et les sources.";
+
+"general.sign_out" = "Se déconnecter";
+"general.signout.message" = "La déconnexion sera disponible lorsque les comptes seront ajoutés (iCloud / connexion).";
+
+/* Alerts */
+"general.alert.info.title" = "Information";
+"general.alert.ok" = "OK";
+
+"general.alert.cancel" = "Annuler";
+"general.alert.reset" = "Réinitialiser";
+"general.alert.restart" = "Redémarrer";
+
+"general.alert.reset_tx.title" = "Réinitialiser les transactions ?";
+"general.alert.reset_tx.message" = "Toutes les transactions sur cet appareil seront définitivement supprimées.";
+
+"general.alert.restart_onboarding.title" = "Relancer la configuration ?";
+"general.alert.restart_onboarding.message" = "La configuration de la langue et de la devise sera relancée. Vos transactions resteront intactes.";
+
+"general.reset_success.message" = "Les transactions ont été supprimées avec succès.";
+"general.reset_failed.message" = "Échec de la réinitialisation.";
+"general.info.default" = "OK.";
+
+/* Common */
+"common.cancel" = "Annuler";
+"common.ok" = "OK";
+"common.delete" = "Supprimer";
+"common.edit" = "Modifier";
+"common.today" = "Aujourd’hui";
+"common.yesterday" = "Hier";
+
+/* Empty states */
+"empty.noData" = "Aucune donnée pour le moment";
+"empty.noTransactions" = "Aucune transaction";
+"empty.addFirstTransaction" = "Ajoutez votre première transaction pour commencer.";
+
+/* Data */
+"data.title" = "Données";
+
+"data.section.export" = "Exporter";
+"data.section.import" = "Importer";
+
+"data.export.csv.month" = "Exporter CSV (ce mois-ci)";
+"data.export.csv.all" = "Exporter CSV (toutes les données)";
+
+"data.export.pdf.month" = "Exporter PDF (ce mois-ci)";
+"data.export.pdf.all" = "Exporter PDF (toutes les données)";
+
+"data.export.excel.month" = "Exporter Excel/Numbers (ce mois-ci)";
+"data.export.excel.all" = "Exporter Excel/Numbers (toutes les données)";
+
+"data.export.share_last.format" = "Partager le dernier export (%@)";
+
+"data.import.csv" = "Importer CSV";
+"data.premium_hint" = "Premium débloque l’import CSV et l’export de toutes les données.";
+
+"data.alert.import_result.title" = "Résultat de l’importation";
+"data.alert.export_error.title" = "Erreur d’exportation";
+
+"data.import.result.imported.format" = "Importées : %d";
+"data.import.result.skipped.format" = "Ignorées : %d";
+"data.import.result.created_categories.format" = "Catégories créées : %d";
+"data.import.result.created_sources.format" = "Sources créées : %d";
+"data.import.result.first_error.format" = "Première erreur : %@";
+
+"data.import.failed.format" = "Échec de l’importation : %@";
+"data.export.failed.format" = "Échec de l’exportation : %@";
