@@ -48,10 +48,16 @@ struct SettingsView: View {
         }
         .navigationTitle("settings.title")
         .listStyle(.insetGrouped)
+        .task {
+            // Гарантируем актуальный статус, если вернулись с paywall/restore.
+            await pm.refreshStatus()
+        }
     }
 
     private var premiumRow: some View {
-        HStack(spacing: 12) {
+        let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
+
+        return HStack(spacing: 12) {
             Image(systemName: "crown.fill")
                 .foregroundStyle(.yellow)
 
@@ -59,13 +65,13 @@ struct SettingsView: View {
 
             Spacer()
 
-            Text(pm.isPremium ? "premium.status.active" : "premium.status.free")
+            Text(statusKey)
                 .font(.subheadline)
                 .foregroundStyle(pm.isPremium ? .green : .secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("settings.premium"))
-        .accessibilityValue(Text(pm.isPremium ? "premium.status.active" : "premium.status.free"))
+        .accessibilityValue(Text(statusKey))
     }
 }
 

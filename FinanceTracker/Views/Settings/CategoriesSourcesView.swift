@@ -23,82 +23,99 @@ struct CategoriesSourcesView: View {
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
+    // MARK: - Derived
+
+    private var expenseCategories: [Category] {
+        categories
+            .filter { $0.kindRaw == "expense" }
+            .sorted { $0.order < $1.order }
+    }
+
+    private var incomeCategories: [Category] {
+        categories
+            .filter { $0.kindRaw == "income" }
+            .sorted { $0.order < $1.order }
+    }
+
     var body: some View {
         List {
-            Section("cs.section.sources") {
-                if sources.isEmpty {
-                    Text("cs.sources.empty").foregroundStyle(.secondary)
-                } else {
-                    ForEach(sources) { source in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(source.name).font(.headline)
-                            if let note = source.note, !note.isEmpty {
-                                Text(note)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .onDelete(perform: deleteSources)
-                }
-
-                Button { showAddSource = true } label: {
-                    Label("cs.sources.add", systemImage: "plus")
-                }
-            }
-
-            Section("cs.section.expense_categories") {
-                let expense = categories.filter { $0.kindRaw == "expense" }.sorted { $0.order < $1.order }
-
-                if expense.isEmpty {
-                    Text("cs.expense.empty").foregroundStyle(.secondary)
-                } else {
-                    ForEach(expense) { cat in
-                        HStack(spacing: 10) {
-                            if let icon = cat.icon, !icon.isEmpty {
-                                Image(systemName: icon).foregroundStyle(.secondary)
-                            }
-                            Text(cat.name)
-                        }
-                    }
-                    .onDelete { offsets in
-                        deleteCategories(from: expense, at: offsets)
-                    }
-                }
-
-                Button { showAddCategory = true } label: {
-                    Label("cs.categories.add", systemImage: "plus")
-                }
-            }
-
-            Section("cs.section.income_categories") {
-                let income = categories.filter { $0.kindRaw == "income" }.sorted { $0.order < $1.order }
-
-                if income.isEmpty {
-                    Text("cs.income.empty").foregroundStyle(.secondary)
-                } else {
-                    ForEach(income) { cat in
-                        HStack(spacing: 10) {
-                            if let icon = cat.icon, !icon.isEmpty {
-                                Image(systemName: icon).foregroundStyle(.secondary)
-                            }
-                            Text(cat.name)
-                        }
-                    }
-                    .onDelete { offsets in
-                        deleteCategories(from: income, at: offsets)
-                    }
-                }
-            }
+            sourcesSection
+            expenseSection
+            incomeSection
         }
         .navigationTitle("settings.categories")
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showAddSource) { AddSourceSheet() }
         .sheet(isPresented: $showAddCategory) { AddCategorySheet() }
-        .alert("cs.alert.cant_delete.title", isPresented: $showBlockedDeleteAlert) {
+        .alert(Text("cs.alert.cant_delete.title"), isPresented: $showBlockedDeleteAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
             Text(blockedDeleteMessage)
+        }
+    }
+
+    // MARK: - Sections
+
+    @ViewBuilder
+    private var sourcesSection: some View {
+        Section {
+            if sources.isEmpty {
+                Text("cs.sources.empty")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(sources, id: \.uuid) { source in
+                    SourceRow(source: source)
+                }
+                .onDelete(perform: deleteSources)
+            }
+
+            Button { showAddSource = true } label: {
+                Label("cs.sources.add", systemImage: "plus")
+            }
+        } header: {
+            Text("cs.section.sources")
+        }
+    }
+
+    @ViewBuilder
+    private var expenseSection: some View {
+        Section {
+            if expenseCategories.isEmpty {
+                Text("cs.expense.empty")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(expenseCategories, id: \.uuid) { cat in
+                    CategoryRow(category: cat)
+                }
+                .onDelete { offsets in
+                    deleteCategories(from: expenseCategories, at: offsets)
+                }
+            }
+
+            Button { showAddCategory = true } label: {
+                Label("cs.categories.add", systemImage: "plus")
+            }
+        } header: {
+            Text("cs.section.expense_categories")
+        }
+    }
+
+    @ViewBuilder
+    private var incomeSection: some View {
+        Section {
+            if incomeCategories.isEmpty {
+                Text("cs.income.empty")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(incomeCategories, id: \.uuid) { cat in
+                    CategoryRow(category: cat)
+                }
+                .onDelete { offsets in
+                    deleteCategories(from: incomeCategories, at: offsets)
+                }
+            }
+        } header: {
+            Text("cs.section.income_categories")
         }
     }
 
@@ -143,8 +160,11 @@ struct CategoriesSourcesView: View {
 
         for cat in toDelete {
             let count = countTransactions(using: cat)
-            if count > 0 { blocked.append((cat.name, count)) }
-            else { allowed.append(cat) }
+            if count > 0 {
+                blocked.append((visibleCategoryNameForAlerts(cat), count))
+            } else {
+                allowed.append(cat)
+            }
         }
 
         if !blocked.isEmpty {
@@ -164,13 +184,21 @@ struct CategoriesSourcesView: View {
         saveContext()
     }
 
+    private func visibleCategoryNameForAlerts(_ cat: Category) -> String {
+        if let custom = cat.nameCustom, !custom.isEmpty { return custom }
+        if let k = cat.nameKey, !k.isEmpty { return NSLocalizedString(k, comment: "") }
+        return cat.name
+    }
+
     // MARK: - Counts
 
     private func countTransactions(using category: Category) -> Int {
         do {
-            let categoryId = category.id
+            let categoryUUID = category.uuid
             let descriptor = FetchDescriptor<Transaction>(
-                predicate: #Predicate { tx in tx.category.id == categoryId }
+                predicate: #Predicate { tx in
+                    tx.category.uuid == categoryUUID
+                }
             )
             return try modelContext.fetchCount(descriptor)
         } catch {
@@ -180,9 +208,11 @@ struct CategoriesSourcesView: View {
 
     private func countTransactions(using source: Source) -> Int {
         do {
-            let sourceId = source.id
+            let sourceUUID = source.uuid
             let descriptor = FetchDescriptor<Transaction>(
-                predicate: #Predicate { tx in tx.source?.id == sourceId }
+                predicate: #Predicate { tx in
+                    tx.source?.uuid == sourceUUID
+                }
             )
             return try modelContext.fetchCount(descriptor)
         } catch {
@@ -193,6 +223,38 @@ struct CategoriesSourcesView: View {
     private func saveContext() {
         do { try modelContext.save() }
         catch { print("Save failed: \(error)") }
+    }
+}
+
+// MARK: - Rows
+
+private struct SourceRow: View {
+    let source: Source
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(source.name).font(.headline)
+
+            if let note = source.note, !note.isEmpty {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct CategoryRow: View {
+    let category: Category
+
+    var body: some View {
+        HStack(spacing: 10) {
+            if let icon = category.icon, !icon.isEmpty {
+                Image(systemName: icon)
+                    .foregroundStyle(.secondary)
+            }
+            Text(LocalizedStringKey(category.displayKeyOrName))
+        }
     }
 }
 
@@ -208,21 +270,26 @@ private struct AddSourceSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("cs.source_sheet.section") {
+                Section {
                     TextField("cs.source_sheet.name.placeholder", text: $name)
                     TextField("cs.source_sheet.note.placeholder", text: $note)
+                } header: {
+                    Text("cs.source_sheet.section")
                 }
             }
             .navigationTitle("cs.source_sheet.title")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { Button("common.cancel") { dismiss() } }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("common.cancel") { dismiss() }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("common.add") {
                         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
 
+                        let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
                         let source = Source(name: trimmed, note: noteTrimmed.isEmpty ? nil : noteTrimmed)
+
                         modelContext.insert(source)
                         try? modelContext.save()
                         dismiss()
@@ -248,7 +315,7 @@ private struct AddCategorySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("cs.category_sheet.section") {
+                Section {
                     TextField("cs.category_sheet.name.placeholder", text: $name)
 
                     Picker("add.type.picker.title", selection: $typeRaw) {
@@ -260,33 +327,41 @@ private struct AddCategorySheet: View {
                     TextField("cs.category_sheet.icon.placeholder", text: $icon)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                } header: {
+                    Text("cs.category_sheet.section")
                 }
             }
             .navigationTitle("cs.category_sheet.title")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { Button("common.cancel") { dismiss() } }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("common.cancel") { dismiss() }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("common.add") {
-                        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-
-                        let iconTrimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
-
-                        let category = Category(
-                            name: trimmed,
-                            kindRaw: typeRaw,
-                            icon: iconTrimmed.isEmpty ? nil : iconTrimmed,
-                            order: nextOrder
-                        )
-
-                        modelContext.insert(category)
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("common.add") { create() }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
+    }
+
+    private func create() {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let iconTrimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
+
+        let category = Category(
+            name: trimmed,
+            kindRaw: typeRaw,
+            icon: iconTrimmed.isEmpty ? nil : iconTrimmed,
+            order: nextOrder,
+            nameKey: nil,
+            nameCustom: trimmed
+        )
+
+        modelContext.insert(category)
+        try? modelContext.save()
+        dismiss()
     }
 }

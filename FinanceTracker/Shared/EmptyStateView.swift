@@ -17,9 +17,11 @@ struct EmptyStateView: View {
             Image(systemName: systemImage)
                 .font(.system(size: 44, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             Text(title)
                 .font(.title3.weight(.semibold))
+                .multilineTextAlignment(.center)
 
             Text(message)
                 .font(.body)
@@ -29,11 +31,13 @@ struct EmptyStateView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 280)
         .padding(.vertical, 16)
-        .accessibilityElement(children: .contain)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("empty_state_view")
     }
 }
 
-#Preview("Empty State (localized keys)") {
+#Preview("Empty State") {
     EmptyStateView(
         systemImage: "tray",
         title: "empty.noTransactions",

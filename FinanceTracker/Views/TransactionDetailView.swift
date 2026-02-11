@@ -9,36 +9,35 @@ import SwiftUI
 import SwiftData
 
 struct TransactionDetailView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var showEdit = false
-
     let tx: Transaction
 
     var body: some View {
         List {
-            Section("Summary") {
-                row("Type", tx.typeRaw.capitalized)
-                row("Amount", formatMoney(cents: tx.amountCents, currency: tx.currency))
-                row("Date", formattedDate(tx.date))
+            Section("tx_detail.section.summary") {
+                row("tx_detail.type", tx.typeRaw.capitalized)
+                row("tx_detail.amount", formatMoney(cents: tx.amountCents, currency: tx.currency))
+                row("tx_detail.date", formattedDate(tx.date))
             }
 
-            Section("Category") {
-                row("Category", tx.category.name)
+            Section("tx_detail.section.category") {
+                // ✅ показываем как в UI (key/custom)
+                row("tx_detail.category", tx.category.displayName())
             }
 
-            Section("Source") {
-                row("Source", tx.source?.name ?? "—")
+            Section("tx_detail.section.source") {
+                row("tx_detail.source", tx.source?.name ?? "—")
             }
 
-            Section("Note") {
+            Section("tx_detail.section.note") {
                 Text(tx.note ?? "—")
                     .foregroundStyle(tx.note == nil ? .secondary : .primary)
             }
         }
-        .navigationTitle("Details")
+        .navigationTitle("tx_detail.title")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") { showEdit = true }
+                Button("common.edit") { showEdit = true }
             }
         }
         .sheet(isPresented: $showEdit) {
@@ -46,9 +45,9 @@ struct TransactionDetailView: View {
         }
     }
 
-    private func row(_ title: String, _ value: String) -> some View {
+    private func row(_ titleKey: LocalizedStringKey, _ value: String) -> some View {
         HStack {
-            Text(title)
+            Text(titleKey)
             Spacer()
             Text(value)
                 .foregroundStyle(.secondary)

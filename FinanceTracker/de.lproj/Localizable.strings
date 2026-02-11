@@ -12,26 +12,48 @@
 "tab.analytics" = "Analyse";
 "tab.settings" = "Einstellungen";
 
-/* Titles */
+/* Navigation titles */
 "title.dashboard" = "Übersicht";
 "title.transactions" = "Transaktionen";
 "title.add" = "Hinzufügen";
 "title.analytics" = "Analyse";
 "title.settings" = "Einstellungen";
 
-/* Onboarding – Language */
-"onboarding.language.title" = "Sprache auswählen";
+/* Common */
+"common.ok" = "OK";
+"common.cancel" = "Abbrechen";
+"common.close" = "Schließen";
+"common.add" = "Hinzufügen";
+"common.edit" = "Bearbeiten";
+"common.delete" = "Löschen";
+"common.none" = "Keine";
+"common.select" = "Auswählen…";
+"common.today" = "Heute";
+"common.yesterday" = "Gestern";
+"common.unknown" = "Unbekannt";
+"common.error" = "Fehler";
+
+/* Scope */
+"scope.picker.title" = "Zeitraum";
+"scope.month" = "Dieser Monat";
+"scope.all" = "Alle";
+
+/* Empty states */
+"empty.noData" = "Noch keine Daten";
+"empty.noTransactions" = "Keine Transaktionen";
+"empty.addFirstTransaction" = "Füge deine erste Transaktion hinzu.";
+
+/* Onboarding */
+"onboarding.language.title" = "Sprache wählen";
 "onboarding.language.subtitle" = "Du kannst dies jederzeit in den Einstellungen ändern.";
 "onboarding.language.picker" = "Sprache";
 
-/* Onboarding – Currency */
-"onboarding.currency.title" = "Währung auswählen";
-"onboarding.currency.subtitle" = "Diese wird standardmäßig für neue Transaktionen verwendet.";
+"onboarding.currency.title" = "Währung wählen";
+"onboarding.currency.subtitle" = "Wird standardmäßig für neue Transaktionen verwendet.";
 "onboarding.currency.picker" = "Währung";
 
-/* Onboarding – Actions */
 "onboarding.next" = "Weiter";
-"onboarding.start" = "Starten";
+"onboarding.start" = "Start";
 "onboarding.back" = "Zurück";
 
 /* Settings */
@@ -42,103 +64,34 @@
 "settings.categories" = "Kategorien & Quellen";
 "settings.about" = "Über die App";
 
-/* Premium */
-"premium.status.active" = "Aktiv";
-"premium.status.free" = "Kostenlos";
-
-/* General Settings */
-"settings.general.title" = "Allgemein";
-"settings.general.preferences" = "Einstellungen";
-"settings.general.currency" = "Währung";
-"settings.general.language" = "Sprache";
-"settings.general.maintenance" = "Wartung";
-"settings.general.clearCache" = "Cache leeren";
-"settings.general.restartOnboarding" = "Einrichtung neu starten";
-"settings.general.resetTransactions" = "Transaktionen zurücksetzen";
-"settings.general.account" = "Konto";
-"settings.general.signOut" = "Abmelden";
-
-/* General (New keys) */
+/* General */
 "general.title" = "Allgemein";
-
 "general.section.preferences" = "Einstellungen";
 "general.section.maintenance" = "Wartung";
 "general.section.account" = "Konto";
 
 "general.currency" = "Währung";
 "general.language" = "Sprache";
-
-"general.language_hint" = "Der Sprachwechsel wird vollständig verfügbar sein, sobald alle Lokalisierungsschlüssel hinzugefügt wurden.";
+"general.language_hint" = "Der Sprachwechsel wird verfügbar, sobald alle Übersetzungen hinzugefügt sind.";
 
 "general.clear_cache" = "Cache leeren";
-"general.cache.message" = "Derzeit gibt es keinen Cache zum Leeren. Diese Funktion wird nützlich sein, sobald Offline-Caching verfügbar ist.";
+"general.cache.message" = "Es gibt derzeit keinen Cache zum Leeren.";
 
-"general.restart_onboarding" = "Einrichtung neu starten";
+"general.restart_onboarding" = "Onboarding neu starten";
 "general.reset_transactions" = "Transaktionen zurücksetzen";
-"general.reset_hint" = "Beim Zurücksetzen der Transaktionen werden alle Transaktionen gelöscht, Kategorien und Quellen bleiben erhalten.";
+"general.reset_hint" = "Transaktionen werden gelöscht, Kategorien bleiben erhalten.";
 
 "general.sign_out" = "Abmelden";
-"general.signout.message" = "Die Abmeldung wird verfügbar sein, sobald Konten hinzugefügt werden (iCloud / Anmeldung).";
+"general.signout.message" = "Abmelden wird verfügbar, sobald Konten hinzugefügt werden.";
 
 /* Alerts */
-"general.alert.info.title" = "Information";
-"general.alert.ok" = "OK";
-
-"general.alert.cancel" = "Abbrechen";
-"general.alert.reset" = "Zurücksetzen";
-"general.alert.restart" = "Neustarten";
-
+"general.alert.info.title" = "Info";
 "general.alert.reset_tx.title" = "Transaktionen zurücksetzen?";
-"general.alert.reset_tx.message" = "Alle Transaktionen auf diesem Gerät werden dauerhaft gelöscht.";
+"general.alert.reset_tx.message" = "Alle Transaktionen werden dauerhaft gelöscht.";
+"general.alert.restart_onboarding.title" = "Onboarding neu starten?";
+"general.alert.restart_onboarding.message" = "Die Ersteinrichtung wird erneut angezeigt.";
 
-"general.alert.restart_onboarding.title" = "Einrichtung neu starten?";
-"general.alert.restart_onboarding.message" = "Die Sprach- und Währungseinrichtung wird erneut angezeigt. Deine Transaktionen bleiben erhalten.";
-
-"general.reset_success.message" = "Transaktionen wurden erfolgreich gelöscht.";
-"general.reset_failed.message" = "Zurücksetzen fehlgeschlagen.";
-"general.info.default" = "OK.";
-
-/* Common */
-"common.cancel" = "Abbrechen";
-"common.ok" = "OK";
-"common.delete" = "Löschen";
-"common.edit" = "Bearbeiten";
-"common.today" = "Heute";
-"common.yesterday" = "Gestern";
-
-/* Empty states */
-"empty.noData" = "Noch keine Daten";
-"empty.noTransactions" = "Keine Transaktionen";
-"empty.addFirstTransaction" = "Füge deine erste Transaktion hinzu, um zu starten.";
-
-/* Data */
-"data.title" = "Daten";
-
-"data.section.export" = "Exportieren";
-"data.section.import" = "Importieren";
-
-"data.export.csv.month" = "CSV exportieren (diesen Monat)";
-"data.export.csv.all" = "CSV exportieren (alle Daten)";
-
-"data.export.pdf.month" = "PDF exportieren (diesen Monat)";
-"data.export.pdf.all" = "PDF exportieren (alle Daten)";
-
-"data.export.excel.month" = "Excel/Numbers exportieren (diesen Monat)";
-"data.export.excel.all" = "Excel/Numbers exportieren (alle Daten)";
-
-"data.export.share_last.format" = "Letzten Export teilen (%@)";
-
-"data.import.csv" = "CSV importieren";
-"data.premium_hint" = "Premium schaltet den CSV-Import und den Export aller Daten frei.";
-
-"data.alert.import_result.title" = "Import-Ergebnis";
-"data.alert.export_error.title" = "Exportfehler";
-
-"data.import.result.imported.format" = "Importiert: %d";
-"data.import.result.skipped.format" = "Übersprungen: %d";
-"data.import.result.created_categories.format" = "Erstellte Kategorien: %d";
-"data.import.result.created_sources.format" = "Erstellte Quellen: %d";
-"data.import.result.first_error.format" = "Erster Fehler: %@";
-
-"data.import.failed.format" = "Import fehlgeschlagen: %@";
-"data.export.failed.format" = "Export fehlgeschlagen: %@";
+/* Transactions */
+"transactions.search.prompt" = "Suchen";
+"transactions.empty.month" = "Füge eine Transaktion hinzu, um sie hier zu sehen.";
+"transactions.empty.all" = "Füge eine Transaktion hinzu, um sie hier zu sehen.";

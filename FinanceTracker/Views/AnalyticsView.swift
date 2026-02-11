@@ -10,6 +10,8 @@ import SwiftData
 import Charts
 
 struct AnalyticsView: View {
+    @Environment(\.locale) private var locale
+    
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
@@ -48,14 +50,14 @@ struct AnalyticsView: View {
         NavigationStack {
             List {
                 Section {
-                    Picker("scope.picker.title", selection: $scope) {
+                    Picker(LocalizedStringKey("scope.picker.title"), selection: $scope) {
                         ForEach(Scope.allCases) { s in
                             Text(s.titleKey).tag(s)
                         }
                     }
                     .pickerStyle(.segmented)
 
-                    Picker("analytics.chart.picker.title", selection: $chartKind) {
+                    Picker(LocalizedStringKey("analytics.chart.picker.title"), selection: $chartKind) {
                         ForEach(ChartKind.allCases) { k in
                             Text(k.titleKey).tag(k)
                         }
@@ -76,7 +78,7 @@ struct AnalyticsView: View {
                     breakdownIncomeBySourceSection
                 }
             }
-            .navigationTitle("title.analytics")
+            .navigationTitle(LocalizedStringKey("title.analytics"))
             .listStyle(.insetGrouped)
         }
     }
@@ -85,7 +87,7 @@ struct AnalyticsView: View {
 
     @ViewBuilder
     private var combinedSection: some View {
-        Section("analytics.section.combined.title") {
+        Section(LocalizedStringKey("analytics.section.combined.title")) {
 
             switch chartKind {
             case .bars:
@@ -97,7 +99,8 @@ struct AnalyticsView: View {
             }
 
             HStack {
-                Text("analytics.label.income").foregroundStyle(.secondary)
+                Text(LocalizedStringKey("analytics.label.income"))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.incomeCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
@@ -105,7 +108,8 @@ struct AnalyticsView: View {
             .font(.footnote)
 
             HStack {
-                Text("analytics.label.expense").foregroundStyle(.secondary)
+                Text(LocalizedStringKey("analytics.label.expense"))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.expenseCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
@@ -113,7 +117,8 @@ struct AnalyticsView: View {
             .font(.footnote)
 
             HStack {
-                Text("analytics.label.net").foregroundStyle(.secondary)
+                Text(LocalizedStringKey("analytics.label.net"))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Text(formatCents(periodSummary.netCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
@@ -201,9 +206,9 @@ struct AnalyticsView: View {
 
     @ViewBuilder
     private var breakdownExpensesByCategorySection: some View {
-        Section("analytics.section.expenses_by_category.title") {
+        Section(LocalizedStringKey("analytics.section.expenses_by_category.title")) {
             if expenseByCategory.isEmpty {
-                Text("analytics.empty.no_expenses")
+                Text(LocalizedStringKey("analytics.empty.no_expenses"))
                     .foregroundStyle(.secondary)
             } else {
                 Chart(expenseByCategory) { row in
@@ -218,7 +223,7 @@ struct AnalyticsView: View {
 
                 ForEach(expenseByCategory) { row in
                     HStack {
-                        Text(row.name)
+                        Text(LocalizedStringKey(row.name))
                         Spacer()
                         Text(formatCents(row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
@@ -231,9 +236,9 @@ struct AnalyticsView: View {
 
     @ViewBuilder
     private var breakdownIncomeBySourceSection: some View {
-        Section("analytics.section.income_by_source.title") {
+        Section(LocalizedStringKey("analytics.section.income_by_source.title")) {
             if incomeBySource.isEmpty {
-                Text("analytics.empty.no_income")
+                Text(LocalizedStringKey("analytics.empty.no_income"))
                     .foregroundStyle(.secondary)
             } else {
                 Chart(incomeBySource) { row in
@@ -405,7 +410,7 @@ struct AnalyticsView: View {
     private func xAxisLabel(for date: Date?) -> String {
         guard let date else { return "" }
         let df = DateFormatter()
-        df.locale = .current
+        df.locale = locale
 
         switch scope {
         case .month: df.dateFormat = "d MMM"
@@ -420,11 +425,35 @@ struct AnalyticsView: View {
         let list = filteredTransactions.filter { $0.typeRaw == "expense" }
         guard let currency = list.first?.currency else { return [] }
 
-        var sums: [String: Int] = [:]
-        for tx in list { sums[tx.category.name, default: 0] += tx.amountCents }
+        struct Acc {
+            var nameKeyOrName: String
+            var cents: Int
+        }
+
+        // ✅ ключ = внешний стабильный UUID
+        var sums: [UUID: Acc] = [:]
+
+        for tx in list {
+            let cat = tx.category
+            let id = cat.uuid
+            let display = cat.displayKeyOrName
+
+            var cur = sums[id] ?? Acc(nameKeyOrName: display, cents: 0)
+            cur.cents += tx.amountCents
+            cur.nameKeyOrName = display
+            sums[id] = cur
+        }
 
         return sums
-            .map { (name, cents) in ChartRow(name: name, amount: Double(cents) / 100.0, amountCents: cents, currency: currency) }
+            .map { (id, acc) in
+                ChartRow(
+                    id: id.uuidString,
+                    name: acc.nameKeyOrName,
+                    amount: Double(acc.cents) / 100.0,
+                    amountCents: acc.cents,
+                    currency: currency
+                )
+            }
             .sorted { $0.amountCents > $1.amountCents }
     }
 
@@ -439,7 +468,15 @@ struct AnalyticsView: View {
         }
 
         return sums
-            .map { (name, cents) in ChartRow(name: name, amount: Double(cents) / 100.0, amountCents: cents, currency: currency) }
+            .map { (name, cents) in
+                ChartRow(
+                    id: name,
+                    name: name,
+                    amount: Double(cents) / 100.0,
+                    amountCents: cents,
+                    currency: currency
+                )
+            }
             .sorted { $0.amountCents > $1.amountCents }
     }
 
@@ -451,14 +488,6 @@ struct AnalyticsView: View {
         let amount: Double
         let amountCents: Int
         let currency: String
-
-        init(name: String, amount: Double, amountCents: Int, currency: String) {
-            self.id = name
-            self.name = name
-            self.amount = amount
-            self.amountCents = amountCents
-            self.currency = currency
-        }
     }
 
     private struct SeriesValue: Identifiable {
@@ -542,16 +571,38 @@ struct AnalyticsView: View {
         return max(base, CGFloat(rows) * extraPerRow)
     }
 
-    private static let formatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        return f
-    }()
-
     private func formatCents(_ cents: Int, currencyCode: String) -> String {
         let amount = Decimal(cents) / 100
-        Self.formatter.currencyCode = currencyCode
-        return Self.formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
+        return MoneyFormatter.shared.string(amount: amount, currencyCode: currencyCode)
+    }
+}
+
+// MARK: - Money formatter (currency-safe cache)
+
+private final class MoneyFormatter {
+    static let shared = MoneyFormatter()
+
+    private var cache: [String: NumberFormatter] = [:]
+    private let lock = NSLock()
+
+    private init() {}
+
+    func string(amount: Decimal, currencyCode: String) -> String {
+        let f = formatter(for: currencyCode)
+        return f.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
+    }
+
+    private func formatter(for currencyCode: String) -> NumberFormatter {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let f = cache[currencyCode] { return f }
+
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = currencyCode
+        cache[currencyCode] = f
+        return f
     }
 }
 

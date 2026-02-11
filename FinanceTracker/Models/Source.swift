@@ -10,18 +10,21 @@ import SwiftData
 
 @Model
 final class Source {
-    var id: UUID
+
+    /// ✅ Стабильный внешний идентификатор
+    var uuid: UUID
+
     var name: String
     var note: String?
     var isActive: Bool
 
     init(
-        id: UUID = UUID(),
+        uuid: UUID = UUID(),
         name: String,
         note: String? = nil,
         isActive: Bool = true
     ) {
-        self.id = id
+        self.uuid = uuid
         self.name = name
         self.note = note
         self.isActive = isActive

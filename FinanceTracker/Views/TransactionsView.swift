@@ -18,7 +18,6 @@ struct TransactionsView: View {
     @State private var scope: Scope = .month
     @State private var searchText: String = ""
 
-    // Navigation to edit (tap + swipe edit)
     @State private var editTx: Transaction?
 
     enum Scope: String, CaseIterable, Identifiable {
@@ -33,7 +32,6 @@ struct TransactionsView: View {
             }
         }
 
-        /// Empty state subtitle key depends on scope
         var emptyMessageKey: LocalizedStringKey {
             switch self {
             case .month: "transactions.empty.month"
@@ -42,11 +40,10 @@ struct TransactionsView: View {
         }
     }
 
-    // MARK: - Derived data
+    // MARK: - Derived
 
     private var filtered: [Transaction] {
         let base: [Transaction]
-
         switch scope {
         case .all:
             base = transactions
@@ -62,12 +59,17 @@ struct TransactionsView: View {
         let lower = q.lowercased()
         return base.filter { tx in
             let merchant = (tx.merchant ?? "").lowercased()
-            let category = tx.category.name.lowercased()
+
+            // ✅ Search should match what user sees
+            let categoryVisible = tx.category.displayName().lowercased()
+            let categoryLegacy = tx.category.name.lowercased()
+
             let source = (tx.source?.name ?? "").lowercased()
             let note = (tx.note ?? "").lowercased()
 
             return merchant.contains(lower)
-            || category.contains(lower)
+            || categoryVisible.contains(lower)
+            || categoryLegacy.contains(lower)
             || source.contains(lower)
             || note.contains(lower)
         }
@@ -83,8 +85,6 @@ struct TransactionsView: View {
     private var sortedDays: [Date] {
         grouped.keys.sorted(by: >)
     }
-
-    // MARK: - Body
 
     var body: some View {
         List {
@@ -112,8 +112,6 @@ struct TransactionsView: View {
         }
     }
 
-    // MARK: - UI pieces
-
     private var emptyStateRow: some View {
         EmptyStateView(
             systemImage: "list.bullet.rectangle",
@@ -139,37 +137,27 @@ struct TransactionsView: View {
             let dayItems = grouped[day] ?? []
 
             ForEach(dayItems) { tx in
-                Button {
-                    editTx = tx
-                } label: {
+                Button { editTx = tx } label: {
                     TransactionRow(tx: tx)
                 }
                 .buttonStyle(.plain)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
 
-                    Button(role: .destructive) {
-                        delete(tx)
-                    } label: {
+                    Button(role: .destructive) { delete(tx) } label: {
                         Label("common.delete", systemImage: "trash")
                     }
 
-                    Button {
-                        editTx = tx
-                    } label: {
+                    Button { editTx = tx } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
                     .tint(.blue)
                 }
                 .contextMenu {
-                    Button {
-                        editTx = tx
-                    } label: {
+                    Button { editTx = tx } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
 
-                    Button(role: .destructive) {
-                        delete(tx)
-                    } label: {
+                    Button(role: .destructive) { delete(tx) } label: {
                         Label("common.delete", systemImage: "trash")
                     }
                 }
@@ -182,15 +170,11 @@ struct TransactionsView: View {
     private func sectionHeader(for day: Date) -> Text {
         let cal = Calendar.current
 
-        if cal.isDateInToday(day) {
-            return Text("common.today")
-        }
-        if cal.isDateInYesterday(day) {
-            return Text("common.yesterday")
-        }
+        if cal.isDateInToday(day) { return Text("common.today") }
+        if cal.isDateInYesterday(day) { return Text("common.yesterday") }
 
         let df = DateFormatter()
-        df.locale = locale     // ✅ respect selected app language
+        df.locale = locale
         df.dateStyle = .medium
         df.timeStyle = .none
 
@@ -199,11 +183,8 @@ struct TransactionsView: View {
 
     private func delete(_ tx: Transaction) {
         modelContext.delete(tx)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to delete transaction: \(error)")
-        }
+        do { try modelContext.save() }
+        catch { print("Failed to delete transaction: \(error)") }
     }
 }
 
@@ -219,7 +200,8 @@ private struct TransactionRow: View {
                     .font(.headline)
 
                 HStack(spacing: 6) {
-                    Text(tx.category.name)
+                    // ✅ Localized display (key or custom)
+                    Text(LocalizedStringKey(tx.category.displayKeyOrName))
 
                     if let sourceName = tx.source?.name, !sourceName.isEmpty {
                         Text("•")
@@ -243,32 +225,46 @@ private struct TransactionRow: View {
 
     private var primaryTitle: String {
         let merchant = (tx.merchant ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return merchant.isEmpty ? tx.category.name : merchant
+        if !merchant.isEmpty { return merchant }
+
+        // ✅ если merchant пуст — показываем видимое имя категории
+        return tx.category.displayName()
     }
 
-    private var isIncome: Bool {
-        tx.typeRaw == "income"
-    }
+    private var isIncome: Bool { tx.typeRaw == "income" }
 
     private var formattedAmount: String {
         MoneyFormatter.shared.string(cents: tx.amountCents, currencyCode: tx.currency)
     }
 }
 
-// MARK: - Money formatter (cached)
+// MARK: - Money formatter (currency-safe cache)
 
 private final class MoneyFormatter {
     static let shared = MoneyFormatter()
-    private let formatter = NumberFormatter()
 
-    private init() {
-        formatter.numberStyle = .currency
-    }
+    private var cache: [String: NumberFormatter] = [:]
+    private let lock = NSLock()
+
+    private init() {}
 
     func string(cents: Int, currencyCode: String) -> String {
         let amount = Decimal(cents) / 100
-        formatter.currencyCode = currencyCode
+        let formatter = formatter(for: currencyCode)
         return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
+    }
+
+    private func formatter(for currencyCode: String) -> NumberFormatter {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let f = cache[currencyCode] { return f }
+
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = currencyCode
+        cache[currencyCode] = f
+        return f
     }
 }
 

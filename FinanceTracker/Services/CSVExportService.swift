@@ -17,7 +17,6 @@ struct CSVExportService {
     static func makeCSV(modelContext: ModelContext, scope: CSVExportScope) throws -> (data: Data, filename: String) {
         let txs = try fetchTransactions(modelContext: modelContext, scope: scope)
 
-        // Заголовок CSV
         var lines: [String] = []
         lines.append("date,type,amount,currency,category,source,tax,note,merchant")
 
@@ -35,7 +34,8 @@ struct CSVExportService {
             let amount = centsToString(tx.amountCents, formatter: moneyFormatter)
             let currency = tx.currency
 
-            let category = escape(tx.category.name)
+            // ✅ Экспортируем видимое имя категории по нашей логике локализации
+            let category = escape(tx.category.displayName())
             let source = escape(tx.source?.name ?? "")
             let tax = tx.taxCents.map { centsToString($0, formatter: moneyFormatter) } ?? ""
             let note = escape(tx.note ?? "")
@@ -55,8 +55,9 @@ struct CSVExportService {
     // MARK: - Fetch
 
     private static func fetchTransactions(modelContext: ModelContext, scope: CSVExportScope) throws -> [Transaction] {
-        let descriptor = FetchDescriptor<Transaction>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-
+        let descriptor = FetchDescriptor<Transaction>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
         let all = try modelContext.fetch(descriptor)
 
         switch scope {
@@ -76,7 +77,6 @@ struct CSVExportService {
         return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
     }
 
-    /// Экранируем CSV: если есть запятая/кавычка/перенос строки — берём в кавычки и удваиваем кавычки.
     private static func escape(_ value: String) -> String {
         if value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r") {
             let doubled = value.replacingOccurrences(of: "\"", with: "\"\"")

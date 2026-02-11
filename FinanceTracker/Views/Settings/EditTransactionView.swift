@@ -28,18 +28,30 @@ struct EditTransactionView: View {
     @State private var note: String = ""
     @State private var date: Date = Date()
 
-    @State private var selectedCategory: Category?
-    @State private var selectedSource: Source?
+    // ✅ Best practice: selection держим как UUID?
+    @State private var selectedCategoryUUID: UUID? = nil
+    @State private var selectedSourceUUID: UUID? = nil
 
     @State private var showError = false
-    @State private var errorMessage: String = ""
+    @State private var errorMessageKey: String = "edit.error.unknown"
+    @State private var errorExtra: String? = nil
 
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
     }
 
+    private var selectedCategory: Category? {
+        guard let id = selectedCategoryUUID else { return nil }
+        return categories.first { $0.uuid == id }
+    }
+
+    private var selectedSource: Source? {
+        guard let id = selectedSourceUUID else { return nil }
+        return sources.first { $0.uuid == id }
+    }
+
     private var canSave: Bool {
-        parseCents(from: amountText) != nil && selectedCategory != nil
+        parseCents(from: amountText) != nil && selectedCategoryUUID != nil
     }
 
     var body: some View {
@@ -53,60 +65,70 @@ struct EditTransactionView: View {
             dateSection
             noteSection
         }
-        .navigationTitle("Edit")
+        .navigationTitle("edit.title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") { save() }
+                Button("common.save") { save() }
                     .disabled(!canSave)
             }
         }
         .onAppear { loadFromTransaction() }
         .onChange(of: typeRaw) { _, _ in
-            // Если сменили тип — категория должна соответствовать типу
+            // если сменили тип — выбранная категория должна соответствовать
             if let current = selectedCategory, current.kindRaw != typeRaw {
-                selectedCategory = filteredCategories.first
+                selectedCategoryUUID = filteredCategories.first?.uuid
             }
-            // Если это expense — source можно оставить optional, но обычно чистим
-            if typeRaw != "income" { selectedSource = nil }
+
+            // если это expense — source чистим (у тебя так задумано)
+            if typeRaw != "income" {
+                selectedSourceUUID = nil
+            }
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) {}
+        .alert("common.error", isPresented: $showError) {
+            Button("common.ok", role: .cancel) {
+                errorExtra = nil
+            }
         } message: {
-            Text(errorMessage)
+            if let extra = errorExtra, !extra.isEmpty {
+                Text(LocalizedStringKey(errorMessageKey)) + Text("\n\n") + Text(extra)
+            } else {
+                Text(LocalizedStringKey(errorMessageKey))
+            }
         }
     }
 
     // MARK: - Sections
 
     private var typeSection: some View {
-        Section {
-            Picker("Type", selection: $typeRaw) {
-                Text("Expense").tag("expense")
-                Text("Income").tag("income")
+        Section("edit.section.type") {
+            Picker("edit.type.picker", selection: $typeRaw) {
+                Text("add.type.expense").tag("expense")
+                Text("add.type.income").tag("income")
             }
             .pickerStyle(.segmented)
         }
     }
 
     private var amountSection: some View {
-        Section("Amount") {
-            TextField("0.00", text: $amountText)
+        Section("edit.section.amount") {
+            TextField("edit.amount.placeholder", text: $amountText)
                 .keyboardType(.decimalPad)
                 .onChange(of: amountText) { _, newValue in
                     amountText = sanitizeMoneyInput(newValue)
                 }
 
-            TextField("Tax (optional)", text: $taxText)
+            TextField("edit.tax.placeholder", text: $taxText)
                 .keyboardType(.decimalPad)
                 .onChange(of: taxText) { _, newValue in
                     taxText = sanitizeMoneyInput(newValue)
                 }
         }
     }
+
     private var currencySection: some View {
-        Section("Currency") {
-            Picker("Currency", selection: $currencyCode) {
+        Section("edit.section.currency") {
+            Picker("edit.currency.picker", selection: $currencyCode) {
                 ForEach(SupportedCurrency.allCases) { c in
                     Text("\(c.flag) \(c.code) — \(c.name)")
                         .tag(c.code)
@@ -116,21 +138,24 @@ struct EditTransactionView: View {
     }
 
     private var titleSection: some View {
-        Section("Title (optional)") {
-            TextField("e.g., Starbucks, Rent, Salary", text: $merchantText)
+        Section("edit.section.merchant") {
+            TextField("edit.merchant.placeholder", text: $merchantText)
         }
     }
 
     private var categorySection: some View {
-        Section("Category") {
+        Section("edit.section.category") {
             if filteredCategories.isEmpty {
-                Text(typeRaw == "income" ? "No income categories yet." : "No expense categories yet.")
+                Text(typeRaw == "income" ? "add.category.empty_income" : "add.category.empty_expense")
                     .foregroundStyle(.secondary)
             } else {
-                Picker("Category", selection: $selectedCategory) {
-                    Text("Select…").tag(Optional<Category>.none)
-                    ForEach(filteredCategories) { category in
-                        Text(category.name).tag(Optional(category))
+                Picker("edit.category.picker", selection: $selectedCategoryUUID) {
+                    Text("common.select")
+                        .tag(Optional<UUID>.none)
+
+                    ForEach(filteredCategories, id: \.uuid) { category in
+                        Text(LocalizedStringKey(category.displayKeyOrName))
+                            .tag(Optional(category.uuid))
                     }
                 }
             }
@@ -138,16 +163,19 @@ struct EditTransactionView: View {
     }
 
     private var sourceSection: some View {
-        Section(typeRaw == "income" ? "Source" : "Source (optional)") {
-            Picker("Source", selection: $selectedSource) {
-                Text("None").tag(Optional<Source>.none)
-                ForEach(sources) { source in
-                    Text(source.name).tag(Optional(source))
+        Section(typeRaw == "income" ? "add.section.source" : "add.section.source_optional") {
+            Picker("edit.source.picker", selection: $selectedSourceUUID) {
+                Text("common.none")
+                    .tag(Optional<UUID>.none)
+
+                ForEach(sources, id: \.uuid) { source in
+                    Text(source.name)
+                        .tag(Optional(source.uuid))
                 }
             }
 
             if typeRaw == "income" {
-                Text("Tip: Use Source to track where income comes from (job, client, etc.).")
+                Text("add.source.tip")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -155,14 +183,14 @@ struct EditTransactionView: View {
     }
 
     private var dateSection: some View {
-        Section("Date") {
-            DatePicker("Date", selection: $date, displayedComponents: [.date])
+        Section("edit.section.date") {
+            DatePicker("edit.date.picker", selection: $date, displayedComponents: [.date])
         }
     }
 
     private var noteSection: some View {
-        Section("Note (optional)") {
-            TextField("Comment", text: $note, axis: .vertical)
+        Section("edit.section.note") {
+            TextField("edit.note.placeholder", text: $note, axis: .vertical)
                 .lineLimit(2...4)
         }
     }
@@ -178,22 +206,27 @@ struct EditTransactionView: View {
         note = transaction.note ?? ""
         date = transaction.date
 
-        selectedCategory = transaction.category
-        selectedSource = transaction.source
+        // ✅ Важно: сохраняем uuid связей
+        selectedCategoryUUID = transaction.category.uuid
+        selectedSourceUUID = transaction.source?.uuid
 
-        // если категория не совпадает с типом (вдруг данные грязные) — подправим
+        // если категория не совпадает с типом — подправим
         if let cat = selectedCategory, cat.kindRaw != typeRaw {
-            selectedCategory = filteredCategories.first
+            selectedCategoryUUID = filteredCategories.first?.uuid
+        }
+
+        if typeRaw != "income" {
+            selectedSourceUUID = nil
         }
     }
 
     private func save() {
         guard let newCategory = selectedCategory else {
-            fail("Please select a category.")
+            fail(key: "edit.error.select_category", extra: nil)
             return
         }
         guard let amountCents = parseCents(from: amountText) else {
-            fail("Invalid amount.")
+            fail(key: "edit.error.invalid_amount", extra: nil)
             return
         }
 
@@ -211,6 +244,7 @@ struct EditTransactionView: View {
         transaction.date = date
         transaction.category = newCategory
         transaction.source = (typeRaw == "income") ? selectedSource : nil
+        transaction.updatedAt = Date()
 
         do {
             try modelContext.save()
@@ -219,12 +253,13 @@ struct EditTransactionView: View {
             #endif
             dismiss()
         } catch {
-            fail("Save failed: \(error.localizedDescription)")
+            fail(key: "edit.error.save_failed", extra: error.localizedDescription)
         }
     }
 
-    private func fail(_ message: String) {
-        errorMessage = message
+    private func fail(key: String, extra: String?) {
+        errorMessageKey = key
+        errorExtra = extra
         showError = true
     }
 
@@ -249,15 +284,11 @@ struct EditTransactionView: View {
         let amount = Decimal(cents) / 100
         return NSDecimalNumber(decimal: amount).stringValue
     }
-    
-    private func sanitizeMoneyInput(_ input: String) -> String {
-        // 1) заменяем запятую на точку
-        var s = input.replacingOccurrences(of: ",", with: ".")
 
-        // 2) оставляем только цифры и точки
+    private func sanitizeMoneyInput(_ input: String) -> String {
+        var s = input.replacingOccurrences(of: ",", with: ".")
         s = s.filter { $0.isNumber || $0 == "." }
 
-        // 3) разрешаем только одну точку
         if let firstDot = s.firstIndex(of: ".") {
             let afterFirst = s.index(after: firstDot)
             let prefix = s[..<afterFirst]
@@ -265,7 +296,6 @@ struct EditTransactionView: View {
             s = String(prefix) + suffix
         }
 
-        // 4) максимум 2 знака после точки
         if let dot = s.firstIndex(of: ".") {
             let afterDot = s.index(after: dot)
             let decimals = s[afterDot...]

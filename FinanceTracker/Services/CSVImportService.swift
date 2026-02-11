@@ -18,20 +18,18 @@ struct CSVImportResult {
 
 struct CSVImportService {
 
-    /// Импортирует CSV в формате нашего экспорта.
-    /// Ожидаемые колонки:
-    /// date,type,amount,currency,category,source,tax,note,merchant
     static func importCSV(modelContext: ModelContext, data: Data) throws -> CSVImportResult {
         var result = CSVImportResult()
 
         guard let content = String(data: data, encoding: .utf8) else {
-            throw NSError(domain: "CSVImport", code: 1, userInfo: [NSLocalizedDescriptionKey: "File is not valid UTF-8 text"])
+            throw NSError(domain: "CSVImport", code: 1, userInfo: [
+                NSLocalizedDescriptionKey: "File is not valid UTF-8 text"
+            ])
         }
 
         let rows = splitCSVRows(content)
         guard !rows.isEmpty else { return result }
 
-        // Пропускаем header, если он похож на наш
         var startIndex = 0
         if rows[0].lowercased().contains("date,type,amount") {
             startIndex = 1
@@ -40,22 +38,26 @@ struct CSVImportService {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withFullDate]
 
-        // Кэш, чтобы не делать лишних fetch'ей
+        // Кэш по “имени из CSV” (lowercased)
         var categoryCache: [String: Category] = [:]
         var sourceCache: [String: Source] = [:]
 
-        // Подтягиваем существующие категории/источники в кеш (по имени)
+        // Подтягиваем существующие категории/источники в кеш
         do {
             let existingCategories = try modelContext.fetch(FetchDescriptor<Category>())
             for c in existingCategories {
-                categoryCache[c.name.lowercased()] = c
+                let visible = (c.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+                    ? c.nameCustom!
+                    : c.name
+                categoryCache[visible.lowercased()] = c
             }
+
             let existingSources = try modelContext.fetch(FetchDescriptor<Source>())
             for s in existingSources {
                 sourceCache[s.name.lowercased()] = s
             }
         } catch {
-            // Не критично, импорт всё равно попробуем
+            // не критично
         }
 
         for i in startIndex..<rows.count {
@@ -67,8 +69,6 @@ struct CSVImportService {
 
             do {
                 let cols = parseCSVLine(rawLine)
-
-                // Должно быть минимум 9 колонок
                 guard cols.count >= 9 else {
                     result.skipped += 1
                     continue
@@ -98,16 +98,14 @@ struct CSVImportService {
 
                 let taxCents = parseMoneyToCents(taxStr)
 
-                // Category: обязателен
                 let category = try getOrCreateCategory(
                     modelContext: modelContext,
                     cache: &categoryCache,
-                    name: categoryName,
-                    kindRaw: typeRaw == "income" ? "income" : "expense",
+                    nameFromCSV: categoryName,
+                    kindRaw: typeRaw,
                     createdCount: &result.createdCategories
                 )
 
-                // Source: optional
                 let source: Source? = try getOrCreateSourceIfNeeded(
                     modelContext: modelContext,
                     cache: &sourceCache,
@@ -115,7 +113,6 @@ struct CSVImportService {
                     createdCount: &result.createdSources
                 )
 
-                // Создаём транзакцию
                 let tx = Transaction(
                     typeRaw: typeRaw,
                     amountCents: amountCents,
@@ -139,7 +136,6 @@ struct CSVImportService {
             }
         }
 
-        // Один save на всё — быстрее и надёжнее
         try modelContext.save()
         return result
     }
@@ -149,23 +145,34 @@ struct CSVImportService {
     private static func getOrCreateCategory(
         modelContext: ModelContext,
         cache: inout [String: Category],
-        name: String,
+        nameFromCSV: String,
         kindRaw: String,
         createdCount: inout Int
     ) throws -> Category {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = nameFromCSV.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw NSError(domain: "CSVImport", code: 2, userInfo: [NSLocalizedDescriptionKey: "Missing category name"])
+            throw NSError(domain: "CSVImport", code: 2, userInfo: [
+                NSLocalizedDescriptionKey: "Missing category name"
+            ])
         }
 
         let key = trimmed.lowercased()
         if let existing = cache[key] { return existing }
 
-        // order: ставим в конец
+        // order: ставим в конец в рамках типа
         let all = try modelContext.fetch(FetchDescriptor<Category>())
-        let nextOrder = (all.map(\.order).max() ?? 0) + 1
+        let nextOrder = (all.filter { $0.kindRaw == kindRaw }.map(\.order).max() ?? 0) + 1
 
-        let new = Category(name: trimmed, kindRaw: kindRaw, icon: nil, order: nextOrder)
+        // ✅ Импортированная категория = user-defined
+        let new = Category(
+            name: trimmed,
+            kindRaw: kindRaw,
+            icon: nil,
+            order: nextOrder,
+            nameKey: nil,
+            nameCustom: trimmed
+        )
+
         modelContext.insert(new)
         cache[key] = new
         createdCount += 1
@@ -191,7 +198,6 @@ struct CSVImportService {
         return new
     }
 
-    /// Простейший split на строки (подходит для нашего экспортируемого CSV)
     private static func splitCSVRows(_ content: String) -> [String] {
         content
             .replacingOccurrences(of: "\r\n", with: "\n")
@@ -199,12 +205,11 @@ struct CSVImportService {
             .components(separatedBy: "\n")
     }
 
-    /// Парсер одной CSV строки: поддерживает кавычки и удвоенные кавычки.
     private static func parseCSVLine(_ line: String) -> [String] {
         var result: [String] = []
         var current = ""
         var inQuotes = false
-        var chars = Array(line)
+        let chars = Array(line)
 
         var i = 0
         while i < chars.count {
@@ -212,7 +217,6 @@ struct CSVImportService {
 
             if c == "\"" {
                 if inQuotes, i + 1 < chars.count, chars[i + 1] == "\"" {
-                    // "" внутри кавычек -> "
                     current.append("\"")
                     i += 2
                     continue
@@ -238,7 +242,6 @@ struct CSVImportService {
         return result.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
 
-    /// "12.34" -> 1234 cents. Поддерживаем запятую как разделитель.
     private static func parseMoneyToCents(_ text: String) -> Int? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return nil }
@@ -251,6 +254,8 @@ struct CSVImportService {
     }
 
     private static func makeLineError(_ lineIndex: Int, _ message: String) -> NSError {
-        NSError(domain: "CSVImport", code: 3, userInfo: [NSLocalizedDescriptionKey: "Line \(lineIndex + 1): \(message)"])
+        NSError(domain: "CSVImport", code: 3, userInfo: [
+            NSLocalizedDescriptionKey: "Line \(lineIndex + 1): \(message)"
+        ])
     }
 }

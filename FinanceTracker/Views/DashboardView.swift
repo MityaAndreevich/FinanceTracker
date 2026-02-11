@@ -78,11 +78,10 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Summary computation
+    // MARK: - Summary
 
     private func computeSummary() -> DashboardSummary {
         let filtered = filteredTransactions()
-
         let currency = filtered.first?.currency ?? "USD"
 
         var incomeCents = 0
@@ -98,7 +97,9 @@ struct DashboardView: View {
                 incomeMap[key, default: 0] += tx.amountCents
             } else {
                 expenseCents += tx.amountCents
-                let key = tx.category.name
+
+                // ✅ группируем по видимому имени категории
+                let key = tx.category.displayName()
                 expenseMap[key, default: 0] += tx.amountCents
             }
         }
@@ -152,7 +153,7 @@ private struct DashboardSummary {
     let hasAnyData: Bool
 }
 
-// MARK: - UI Components
+// MARK: - UI Components (без изменений)
 
 private struct SummaryCards: View {
     let incomeCents: Int

@@ -21,8 +21,11 @@ struct AddTransactionView: View {
     @State private var typeRaw: String = "expense"
     @State private var amountText: String = ""
     @State private var merchantText: String = ""
-    @State private var selectedCategory: Category?
-    @State private var selectedSource: Source?
+
+    /// ✅ Best practice: selection по нашему внешнему стабильному uuid
+    @State private var selectedCategoryUUID: UUID? = nil
+    @State private var selectedSourceUUID: UUID? = nil
+
     @State private var date: Date = Date()
     @State private var note: String = ""
     @State private var taxText: String = ""
@@ -33,94 +36,36 @@ struct AddTransactionView: View {
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
 
+    // MARK: - Derived
+
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
     }
 
+    private var selectedCategory: Category? {
+        guard let u = selectedCategoryUUID else { return nil }
+        return categories.first { $0.uuid == u }
+    }
+
+    private var selectedSource: Source? {
+        guard let u = selectedSourceUUID else { return nil }
+        return sources.first { $0.uuid == u }
+    }
+
     private var canAdd: Bool {
-        parseCents(from: amountText) != nil && selectedCategory != nil
+        parseCents(from: amountText) != nil && selectedCategoryUUID != nil
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Picker("add.type.picker.title", selection: $typeRaw) {
-                        Text("add.type.expense").tag("expense")
-                        Text("add.type.income").tag("income")
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                Section("add.section.amount") {
-                    TextField("add.amount.placeholder", text: $amountText)
-                        .keyboardType(.decimalPad)
-                        .onChange(of: amountText) { _, newValue in
-                            amountText = sanitizeMoneyInput(newValue)
-                        }
-
-                    TextField("add.tax.placeholder", text: $taxText)
-                        .keyboardType(.decimalPad)
-                        .onChange(of: taxText) { _, newValue in
-                            taxText = sanitizeMoneyInput(newValue)
-                        }
-                }
-
-                Section("add.section.title") {
-                    TextField("add.title.placeholder", text: $merchantText)
-                }
-
-                Section("add.section.category") {
-                    if filteredCategories.isEmpty {
-                        Text(typeRaw == "income"
-                             ? "add.category.empty_income"
-                             : "add.category.empty_expense")
-                        .foregroundStyle(.secondary)
-
-                        Button { showAddCategorySheet = true } label: {
-                            Label("add.category.add", systemImage: "plus.circle")
-                        }
-                    } else {
-                        Picker("add.category.picker.title", selection: $selectedCategory) {
-                            Text("add.select.placeholder").tag(Optional<Category>.none)
-                            ForEach(filteredCategories) { category in
-                                Text(category.name).tag(Optional(category))
-                            }
-                        }
-
-                        Button { showAddCategorySheet = true } label: {
-                            Label("add.category.add", systemImage: "plus.circle")
-                        }
-                    }
-                }
-
-                Section(typeRaw == "income" ? "add.section.source" : "add.section.source_optional") {
-                    Picker("add.source.picker.title", selection: $selectedSource) {
-                        Text("add.source.none").tag(Optional<Source>.none)
-                        ForEach(sources) { source in
-                            Text(source.name).tag(Optional(source))
-                        }
-                    }
-
-                    if typeRaw == "income" {
-                        Button { showAddSourceSheet = true } label: {
-                            Label("add.source.add", systemImage: "plus.circle")
-                        }
-
-                        Text("add.source.tip")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Section("add.section.date") {
-                    DatePicker("add.date.picker.title", selection: $date, displayedComponents: [.date])
-                }
-
-                Section("add.section.note") {
-                    TextField("add.note.placeholder", text: $note, axis: .vertical)
-                        .lineLimit(2...4)
-                }
+                typeSection
+                amountSection
+                titleSection
+                categorySection
+                sourceSection
+                dateSection
+                noteSection
             }
             .navigationTitle("title.add")
             .toolbar {
@@ -143,26 +88,148 @@ struct AddTransactionView: View {
             }
             .onAppear { ensureValidCategorySelection() }
             .onChange(of: typeRaw) { _, _ in
-                if typeRaw != "income" { selectedSource = nil }
+                if typeRaw != "income" { selectedSourceUUID = nil }
                 ensureValidCategorySelection()
             }
             .alert("common.error", isPresented: $showError) {
                 Button("common.ok", role: .cancel) {}
             } message: {
-                Text(errorMessageKey)
+                Text(LocalizedStringKey(errorMessageKey))
             }
             .sheet(isPresented: $showAddCategorySheet) {
                 AddCategorySheet(
                     kindRaw: typeRaw,
                     existingMaxOrder: (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0),
-                    onCreated: { newCat in selectedCategory = newCat }
+                    onCreated: { newCat in
+                        selectedCategoryUUID = newCat.uuid
+                    }
                 )
                 .presentationDetents([.medium])
             }
             .sheet(isPresented: $showAddSourceSheet) {
-                AddSourceSheet { newSource in selectedSource = newSource }
-                    .presentationDetents([.medium])
+                AddSourceSheet { newSource in
+                    selectedSourceUUID = newSource.uuid
+                }
+                .presentationDetents([.medium])
             }
+        }
+    }
+
+    // MARK: - Sections
+
+    @ViewBuilder private var typeSection: some View {
+        Section {
+            Picker("add.type.picker.title", selection: $typeRaw) {
+                Text("add.type.expense").tag("expense")
+                Text("add.type.income").tag("income")
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    @ViewBuilder private var amountSection: some View {
+        Section {
+            TextField("add.amount.placeholder", text: $amountText)
+                .keyboardType(.decimalPad)
+                .onChange(of: amountText) { _, newValue in
+                    amountText = sanitizeMoneyInput(newValue)
+                }
+
+            TextField("add.tax.placeholder", text: $taxText)
+                .keyboardType(.decimalPad)
+                .onChange(of: taxText) { _, newValue in
+                    taxText = sanitizeMoneyInput(newValue)
+                }
+        } header: {
+            Text("add.section.amount")
+        }
+    }
+
+    @ViewBuilder private var titleSection: some View {
+        Section {
+            TextField("add.title.placeholder", text: $merchantText)
+        } header: {
+            Text("add.section.title")
+        }
+    }
+
+    @ViewBuilder private var categorySection: some View {
+        Section {
+            if filteredCategories.isEmpty {
+                Text(typeRaw == "income" ? "add.category.empty_income" : "add.category.empty_expense")
+                    .foregroundStyle(.secondary)
+
+                Button { showAddCategorySheet = true } label: {
+                    Label("add.category.add", systemImage: "plus.circle")
+                }
+            } else {
+                Picker("", selection: $selectedCategoryUUID) {
+                    Text("common.select")
+                        .tag(Optional<UUID>.none)
+
+                    ForEach(filteredCategories, id: \.uuid) { category in
+                        Text(LocalizedStringKey(category.displayKeyOrName))
+                            .tag(Optional(category.uuid))
+                    }
+                }
+                .labelsHidden()
+
+                Button { showAddCategorySheet = true } label: {
+                    Label("add.category.add", systemImage: "plus.circle")
+                }
+            }
+        } header: {
+            Text("add.section.category")
+        }
+    }
+
+    @ViewBuilder private var sourceSection: some View {
+        Section {
+            Picker("", selection: $selectedSourceUUID) {
+                Text("common.none")
+                    .tag(Optional<UUID>.none)
+
+                ForEach(sources, id: \.uuid) { source in
+                    Text(source.name)
+                        .tag(Optional(source.uuid))
+                }
+            }
+            .labelsHidden()
+            .disabled(typeRaw != "income") // ✅ вот сюда
+
+            if typeRaw == "income" {
+                Button { showAddSourceSheet = true } label: {
+                    Label("add.source.add", systemImage: "plus.circle")
+                }
+
+                Text("add.source.tip")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("add.source.expense_disabled_hint")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text(typeRaw == "income" ? "add.section.source" : "add.section.source_optional")
+        }
+    }
+    
+    @ViewBuilder private var dateSection: some View {
+        Section {
+            DatePicker("", selection: $date, displayedComponents: [.date])
+                .labelsHidden()
+        } header: {
+            Text("add.section.date")
+        }
+    }
+
+    @ViewBuilder private var noteSection: some View {
+        Section {
+            TextField("add.note.placeholder", text: $note, axis: .vertical)
+                .lineLimit(2...4)
+        } header: {
+            Text("add.section.note")
         }
     }
 
@@ -191,7 +258,7 @@ struct AddTransactionView: View {
             currency: defaultCurrencyCode,
             date: date,
             category: category,
-            source: selectedSource,
+            source: (typeRaw == "income") ? selectedSource : nil,   // ✅
             taxCents: taxCents,
             note: cleanNote.isEmpty ? nil : cleanNote,
             merchant: merchant.isEmpty ? nil : merchant
@@ -208,8 +275,6 @@ struct AddTransactionView: View {
 
             resetFormKeepType()
         } catch {
-            // Динамический текст нельзя как LocalizedStringKey-ключом с подстановкой без String(localized:)
-            // Поэтому делаем общий ключ.
             showErrorKey("add.error.save_failed")
             print("Save failed: \(error.localizedDescription)")
         }
@@ -218,12 +283,14 @@ struct AddTransactionView: View {
     private func ensureValidCategorySelection() {
         let subset = filteredCategories
 
-        if let current = selectedCategory, current.kindRaw != typeRaw {
-            selectedCategory = nil
+        if let u = selectedCategoryUUID,
+           let current = categories.first(where: { $0.uuid == u }),
+           current.kindRaw != typeRaw {
+            selectedCategoryUUID = nil
         }
 
-        if selectedCategory == nil {
-            selectedCategory = subset.first
+        if selectedCategoryUUID == nil {
+            selectedCategoryUUID = subset.first?.uuid
         }
     }
 
@@ -237,7 +304,7 @@ struct AddTransactionView: View {
         ensureValidCategorySelection()
 
         if typeRaw != "income" {
-            selectedSource = nil
+            selectedSourceUUID = nil
         }
     }
 
@@ -245,6 +312,8 @@ struct AddTransactionView: View {
         errorMessageKey = key
         showError = true
     }
+
+    // MARK: - Money helpers
 
     private func parseCents(from text: String) -> Int? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -257,7 +326,9 @@ struct AddTransactionView: View {
         guard let decimal = Decimal(string: normalized) else { return nil }
 
         let centsDecimal = decimal * 100
-        let rounded = NSDecimalNumber(decimal: centsDecimal).rounding(accordingToBehavior: nil).intValue
+        let rounded = NSDecimalNumber(decimal: centsDecimal)
+            .rounding(accordingToBehavior: nil)
+            .intValue
         return rounded
     }
 
@@ -285,7 +356,7 @@ struct AddTransactionView: View {
     }
 }
 
-// MARK: - Add Category Sheet
+// MARK: - Sheets
 
 private struct AddCategorySheet: View {
     @Environment(\.modelContext) private var modelContext
@@ -301,7 +372,7 @@ private struct AddCategorySheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("add.category_sheet.section.title") {
+                Section {
                     TextField("add.category_sheet.name.placeholder", text: $name)
 
                     TextField("add.category_sheet.icon.placeholder", text: $icon)
@@ -311,6 +382,8 @@ private struct AddCategorySheet: View {
                     Text(kindRaw == "income" ? "add.category_sheet.type_income" : "add.category_sheet.type_expense")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                } header: {
+                    Text("add.category_sheet.section.title")
                 }
             }
             .navigationTitle("add.category_sheet.nav_title")
@@ -337,7 +410,9 @@ private struct AddCategorySheet: View {
             name: cleanName,
             kindRaw: kindRaw,
             icon: cleanIcon.isEmpty ? nil : cleanIcon,
-            order: nextOrder
+            order: nextOrder,
+            nameKey: nil,
+            nameCustom: cleanName
         )
 
         modelContext.insert(category)
@@ -352,8 +427,6 @@ private struct AddCategorySheet: View {
     }
 }
 
-// MARK: - Add Source Sheet
-
 private struct AddSourceSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -366,9 +439,11 @@ private struct AddSourceSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("add.source_sheet.section.title") {
+                Section {
                     TextField("add.source_sheet.name.placeholder", text: $name)
                     TextField("add.source_sheet.note.placeholder", text: $note)
+                } header: {
+                    Text("add.source_sheet.section.title")
                 }
             }
             .navigationTitle("add.source_sheet.nav_title")

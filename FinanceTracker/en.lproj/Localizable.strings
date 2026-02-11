@@ -173,6 +173,7 @@
 "add.section.note" = "Note (optional)";
 "add.note.placeholder" = "Comment";
 "add.keyboard.hide" = "Hide Keyboard";
+"add.source.expense_disabled_hint" = "Source is available only for income transactions.";
 
 /* ======================================================
    Premium / Paywall
@@ -212,3 +213,5 @@
 "about.app" = "App";
 "about.version" = "Version";
 "about.privacy_hint" = "Privacy Policy and Terms will be added before App Store release.";
+
+

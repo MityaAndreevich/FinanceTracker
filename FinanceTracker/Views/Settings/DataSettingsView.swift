@@ -34,25 +34,38 @@ struct DataSettingsView: View {
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showPaywall) { PaywallView() }
 
+        // На всякий случай обновляем статус, когда экран открывается
+        .task {
+            await pm.refreshStatus()
+        }
+
         .fileImporter(
             isPresented: $showImporter,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowedContentTypes: allowedImportTypes,
             allowsMultipleSelection: false
         ) { result in
             handleImport(result: result)
         }
 
         .alert("data.alert.import_result.title", isPresented: $showImportResult) {
-            Button("general.alert.ok", role: .cancel) {}
+            Button("common.ok", role: .cancel) {}
         } message: {
             Text(importResultMessage)
         }
 
         .alert("data.alert.export_error.title", isPresented: $showExportError) {
-            Button("general.alert.ok", role: .cancel) {}
+            Button("common.ok", role: .cancel) {}
         } message: {
             Text(exportErrorMessage)
         }
+    }
+
+    // MARK: - Import types
+
+    private var allowedImportTypes: [UTType] {
+        // CSV иногда приходит как plainText в зависимости от источника (Google Sheets, etc.)
+        // Поэтому оставляем и .plainText как fallback.
+        [.commaSeparatedText, .plainText]
     }
 
     // MARK: - Sections
@@ -69,10 +82,8 @@ struct DataSettingsView: View {
             Button {
                 gatePremiumOr { exportCSV(scope: .all) }
             } label: {
-                Label(
-                    "data.export.csv.all",
-                    systemImage: pm.isPremium ? "square.and.arrow.up" : "lock"
-                )
+                Label("data.export.csv.all",
+                      systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
             }
 
             Button {
@@ -84,10 +95,8 @@ struct DataSettingsView: View {
             Button {
                 gatePremiumOr { exportPDF(scope: .all) }
             } label: {
-                Label(
-                    "data.export.pdf.all",
-                    systemImage: pm.isPremium ? "doc.richtext" : "lock"
-                )
+                Label("data.export.pdf.all",
+                      systemImage: pm.isPremium ? "doc.richtext" : "lock")
             }
 
             Button {
@@ -99,20 +108,18 @@ struct DataSettingsView: View {
             Button {
                 gatePremiumOr { exportTSV(scope: .all) }
             } label: {
-                Label(
-                    "data.export.excel.all",
-                    systemImage: pm.isPremium ? "tablecells" : "lock"
-                )
+                Label("data.export.excel.all",
+                      systemImage: pm.isPremium ? "tablecells" : "lock")
             }
 
             if let url = exportURL {
                 ShareLink(item: url) {
-                    // Тут оставляем filename динамическим — это нормально.
-                    Label(
-                        String(format: NSLocalizedString("data.export.share_last.format", comment: ""),
-                               exportFilename),
-                        systemImage: "square.and.arrow.up"
+                    // Здесь exportFilename динамический — это правильно.
+                    let title = String(
+                        format: NSLocalizedString("data.export.share_last.format", comment: ""),
+                        exportFilename
                     )
+                    Label(title, systemImage: "square.and.arrow.up")
                 }
             }
         }
@@ -124,10 +131,8 @@ struct DataSettingsView: View {
             Button {
                 gatePremiumOr { showImporter = true }
             } label: {
-                Label(
-                    "data.import.csv",
-                    systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock"
-                )
+                Label("data.import.csv",
+                      systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
             }
 
             if !pm.isPremium {
@@ -161,7 +166,7 @@ struct DataSettingsView: View {
             let data = try Data(contentsOf: url)
             let importResult = try CSVImportService.importCSV(modelContext: modelContext, data: data)
 
-            // Формируем многострочный отчёт (MVP-логика)
+            // Многострочный отчёт (MVP-логика)
             var lines: [String] = []
             lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
             lines.append(String(format: NSLocalizedString("data.import.result.skipped.format", comment: ""), importResult.skipped))
@@ -175,7 +180,10 @@ struct DataSettingsView: View {
             importResultMessage = lines.joined(separator: "\n")
             showImportResult = true
         } catch {
-            importResultMessage = String(format: NSLocalizedString("data.import.failed.format", comment: ""), error.localizedDescription)
+            importResultMessage = String(
+                format: NSLocalizedString("data.import.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showImportResult = true
         }
     }
@@ -189,7 +197,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = String(format: NSLocalizedString("data.export.failed.format", comment: ""), error.localizedDescription)
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }
@@ -201,7 +212,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = String(format: NSLocalizedString("data.export.failed.format", comment: ""), error.localizedDescription)
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }
@@ -213,7 +227,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = String(format: NSLocalizedString("data.export.failed.format", comment: ""), error.localizedDescription)
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }

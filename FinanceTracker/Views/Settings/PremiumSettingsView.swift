@@ -14,12 +14,20 @@ struct PremiumSettingsView: View {
     @State private var showPaywall = false
 
     var body: some View {
-        List {
+        let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
+
+        return List {
             Section("premium.section.status") {
                 HStack {
-                    Label("settings.premium", systemImage: "crown")
+                    Label {
+                        Text("settings.premium")
+                    } icon: {
+                        Image(systemName: "crown")
+                    }
+
                     Spacer()
-                    Text(pm.isPremium ? "premium.status.active" : "premium.status.free")
+
+                    Text(statusKey)
                         .foregroundStyle(pm.isPremium ? .green : .secondary)
                 }
 
@@ -31,7 +39,6 @@ struct PremiumSettingsView: View {
             }
 
             Section("premium.section.manage") {
-
                 if pm.hasSubscriptionProducts {
                     Button {
                         openManageSubscriptions()
@@ -53,29 +60,48 @@ struct PremiumSettingsView: View {
                 }
             }
 
-            Section {
-                Text("premium.redeem_hint")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            // Подсказка про redeem имеет смысл только когда есть подписки/коды
+            if pm.hasSubscriptionProducts {
+                Section {
+                    Text("premium.redeem_hint")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .navigationTitle("settings.premium")
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showPaywall) { PaywallView() }
+        .task {
+            // При заходе на экран — перечитать entitlement
+            await pm.refreshStatus()
+        }
     }
 
+    // MARK: - Manage subscription
+
     private func openManageSubscriptions() {
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        guard let scene = activeWindowScene else { return }
         Task { try? await AppStore.showManageSubscriptions(in: scene) }
     }
 
     private func redeemOfferCode() {
-        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else { return }
+        guard let scene = activeWindowScene else { return }
 
         if #available(iOS 18.0, *) {
             Task { try? await AppStore.presentOfferCodeRedeemSheet(in: scene) }
         } else {
+            // iOS 14–17 fallback (deprecated, but works)
             SKPaymentQueue.default().presentCodeRedemptionSheet()
         }
+    }
+
+    private var activeWindowScene: UIWindowScene? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        ?? UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first
     }
 }
