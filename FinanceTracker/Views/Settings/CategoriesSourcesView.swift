@@ -47,7 +47,7 @@ struct CategoriesSourcesView: View {
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showAddSource) { AddSourceSheet() }
         .sheet(isPresented: $showAddCategory) { AddCategorySheet() }
-        .alert(Text("cs.alert.cant_delete.title"), isPresented: $showBlockedDeleteAlert) {
+        .alert("cs.alert.cant_delete.title", isPresented: $showBlockedDeleteAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
             Text(blockedDeleteMessage)
@@ -113,6 +113,10 @@ struct CategoriesSourcesView: View {
                 .onDelete { offsets in
                     deleteCategories(from: incomeCategories, at: offsets)
                 }
+            }
+
+            Button { showAddCategory = true } label: {
+                Label("cs.categories.add", systemImage: "plus")
             }
         } header: {
             Text("cs.section.income_categories")
@@ -186,7 +190,10 @@ struct CategoriesSourcesView: View {
 
     private func visibleCategoryNameForAlerts(_ cat: Category) -> String {
         if let custom = cat.nameCustom, !custom.isEmpty { return custom }
-        if let k = cat.nameKey, !k.isEmpty { return NSLocalizedString(k, comment: "") }
+        if let k = cat.nameKey, !k.isEmpty {
+            let v = NSLocalizedString(k, comment: "")
+            return v == k ? k : v
+        }
         return cat.name
     }
 
@@ -298,6 +305,7 @@ private struct AddSourceSheet: View {
                 }
             }
         }
+        .presentationDetents([.medium])
     }
 }
 
@@ -312,6 +320,8 @@ private struct AddCategorySheet: View {
     @State private var typeRaw = "expense"
     @State private var icon = ""
 
+    @State private var showIconPicker = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -324,9 +334,40 @@ private struct AddCategorySheet: View {
                     }
                     .pickerStyle(.segmented)
 
-                    TextField("cs.category_sheet.icon.placeholder", text: $icon)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                    // ✅ Icon selector row
+                    HStack(spacing: 12) {
+                        Image(systemName: icon.isEmpty ? "questionmark.square.dashed" : icon)
+                            .font(.system(size: 22, weight: .semibold))
+                            .frame(width: 34, height: 34)
+                            .foregroundStyle(.secondary)
+
+                        Button {
+                            showIconPicker = true
+                        } label: {
+                            HStack {
+                                if icon.isEmpty {
+                                    Text("cs.category_sheet.icon.placeholder")
+                                        .foregroundStyle(.secondary)
+                                } else {
+                                    Image(systemName: icon)
+                                    Text(icon)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        Button {
+                            showIconPicker = true
+                        } label: {
+                            Text("common.choose")
+                        }
+                    }
+
+                    Text("cs.category_sheet.icon_hint")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 } header: {
                     Text("cs.category_sheet.section")
                 }
@@ -341,7 +382,11 @@ private struct AddCategorySheet: View {
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .sheet(isPresented: $showIconPicker) {
+                SFSymbolPicker(selected: $icon)
+            }
         }
+        .presentationDetents([.medium, .large])
     }
 
     private func create() {
@@ -365,3 +410,8 @@ private struct AddCategorySheet: View {
         dismiss()
     }
 }
+
+// MARK: - Icon Picker
+
+
+

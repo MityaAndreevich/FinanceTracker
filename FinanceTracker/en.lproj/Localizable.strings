@@ -23,6 +23,7 @@
 "common.cancel" = "Cancel";
 "common.close" = "Close";
 "common.add" = "Add";
+"common.save" = "Save";
 "common.edit" = "Edit";
 "common.delete" = "Delete";
 "common.none" = "None";
@@ -52,10 +53,12 @@
 "onboarding.language.title" = "Choose language";
 "onboarding.language.subtitle" = "You can change this anytime in Settings.";
 "onboarding.language.picker" = "Language";
+"onboarding.search.languages" = "Search languages";
 
 "onboarding.currency.title" = "Choose currency";
 "onboarding.currency.subtitle" = "This will be used by default for new transactions.";
 "onboarding.currency.picker" = "Currency";
+"onboarding.search.currencies" = "Search currencies";
 
 "onboarding.next" = "Next";
 "onboarding.start" = "Start";
@@ -87,19 +90,25 @@
 "general.clear_cache" = "Clear Cache";
 "general.cache.message" = "There’s no cache to clear yet. This will be useful when offline caching is added.";
 
-"general.restart_onboarding" = "Restart Onboarding";
+"general.restart_onboarding" = "Restart onboarding";
 "general.reset_transactions" = "Reset Transactions";
 "general.reset_hint" = "Reset Transactions removes all transactions but keeps your categories and sources.";
 
 "general.sign_out" = "Sign Out";
 "general.signout.message" = "Sign out will be available when we add accounts (iCloud sync / login).";
 
-/* Alerts */
+/* Alerts / buttons */
 "general.alert.info.title" = "Info";
+"general.alert.ok" = "OK";
+"general.alert.cancel" = "Cancel";
+
 "general.alert.reset_tx.title" = "Reset Transactions?";
 "general.alert.reset_tx.message" = "This will permanently delete all transactions on this device.";
+"general.alert.reset" = "Reset";
+
 "general.alert.restart_onboarding.title" = "Restart onboarding?";
 "general.alert.restart_onboarding.message" = "You’ll see the language & currency setup again. Your transactions will stay intact.";
+"general.alert.restart" = "Restart";
 
 /* ======================================================
    Transactions
@@ -145,6 +154,10 @@
 "analytics.empty.no_expenses" = "No expenses in this period.";
 "analytics.empty.no_income" = "No income in this period.";
 
+/* chart legend (у тебя именно это светится ключами) */
+"analytics.legend.income" = "Income";
+"analytics.legend.expense" = "Expense";
+
 /* ======================================================
    Add Transaction
    ====================================================== */
@@ -168,16 +181,63 @@
 "add.section.source_optional" = "Source (optional)";
 "add.source.add" = "Add Source";
 "add.source.tip" = "Tip: Use Source to track where income comes from (job, client, etc.).";
+"add.source.expense_disabled_hint" = "Source is available only for income transactions.";
 
 "add.section.date" = "Date";
 "add.section.note" = "Note (optional)";
 "add.note.placeholder" = "Comment";
 "add.keyboard.hide" = "Hide Keyboard";
-"add.source.expense_disabled_hint" = "Source is available only for income transactions.";
+
+/* Add Category Sheet (из скринов ключи вылезают) */
+"add.category_sheet.nav_title" = "Add Category";
+"add.category_sheet.section.title" = "Category";
+"add.category_sheet.name.placeholder" = "Category name";
+"add.category_sheet.icon.placeholder" = "SF Symbol (optional)";
+"add.category_sheet.type_income" = "Income category";
+"add.category_sheet.type_expense" = "Expense category";
+
+/* Add Source Sheet (из скринов ключи вылезают) */
+"add.source_sheet.nav_title" = "Add Source";
+"add.source_sheet.section.title" = "Source";
+"add.source_sheet.name.placeholder" = "Source name";
+"add.source_sheet.note.placeholder" = "Note (optional)";
+
+/* ======================================================
+   Edit Transaction (минимум чтобы не было ключей)
+   ====================================================== */
+"edit.title" = "Edit";
+"edit.section.type" = "Type";
+"edit.type.picker" = "Type";
+
+"edit.section.amount" = "Amount";
+"edit.amount.placeholder" = "0.00";
+"edit.tax.placeholder" = "Tax (optional)";
+
+"edit.section.currency" = "Currency";
+"edit.currency.picker" = "Currency";
+
+"edit.section.merchant" = "Title (optional)";
+"edit.merchant.placeholder" = "e.g., Starbucks, Rent, Salary";
+
+"edit.section.category" = "Category";
+"edit.category.picker" = "Category";
+
+"edit.source.picker" = "Source";
+"edit.section.date" = "Date";
+"edit.date.picker" = "Date";
+"edit.section.note" = "Note (optional)";
+"edit.note.placeholder" = "Comment";
+
+/* errors (если используешь) */
+"edit.error.unknown" = "Something went wrong.";
+"edit.error.select_category" = "Please select a category.";
+"edit.error.invalid_amount" = "Invalid amount.";
+"edit.error.save_failed" = "Failed to save.";
 
 /* ======================================================
    Premium / Paywall
    ====================================================== */
+"premium.section.status" = "Status";
 "premium.status.active" = "Active";
 "premium.status.free" = "Free";
 
@@ -191,6 +251,42 @@
 "paywall.subtitle" = "Unlock import & full export, and future power features.";
 "paywall.loading" = "Loading plans…";
 "paywall.best_value" = "Best value";
+
+/* Paywall features/plan text (у тебя это светится ключами) */
+"paywall.feature.import_csv" = "Import from CSV";
+"paywall.feature.export_all" = "Full export (all data)";
+"paywall.feature.multicurrency_coming" = "Multi-currency (coming soon)";
+"paywall.feature.future_features" = "Future premium features";
+
+/* Plans */
+"paywall.plan.yearly" = "Yearly";
+"paywall.plan.yearly.subtitle" = "Save vs monthly";
+"paywall.plan.monthly" = "Monthly";
+"paywall.plan.monthly.subtitle" = "Billed monthly";
+"paywall.plan.lifetime" = "Lifetime";
+"paywall.plan.lifetime.subtitle" = "One-time purchase";
+
+/* Period labels */
+"paywall.period.year" = "per year";
+"paywall.period.month" = "per month";
+"paywall.period.once" = "one-time";
+
+/* ======================================================
+   Data (экран Data у тебя полностью ключами светится)
+   ====================================================== */
+"data.title" = "Data";
+
+"data.section.export" = "Export";
+"data.export.csv.month" = "Export CSV (this month)";
+"data.export.csv.all" = "Export CSV (all)";
+"data.export.pdf.month" = "Export PDF (this month)";
+"data.export.pdf.all" = "Export PDF (all)";
+"data.export.excel.month" = "Export Excel (this month)";
+"data.export.excel.all" = "Export Excel (all)";
+
+"data.section.import" = "Import";
+"data.import.csv" = "Import CSV";
+"data.premium_hint" = "Available in Premium.";
 
 /* ======================================================
    Categories & Sources
@@ -206,12 +302,57 @@
 "cs.alert.cant_delete.title" = "Can’t delete";
 "cs.alert.used_in_transactions.format" = "“%@” is used in %d transaction(s).";
 
+/* CS sheets (в Settings → Categories & Sources у тебя это светится ключами) */
+"cs.source_sheet.title" = "Add Source";
+"cs.source_sheet.section" = "Source";
+"cs.source_sheet.name.placeholder" = "Source name";
+"cs.source_sheet.note.placeholder" = "Note (optional)";
+
+"cs.category_sheet.title" = "Add Category";
+"cs.category_sheet.section" = "Category";
+"cs.category_sheet.name.placeholder" = "Category name";
+"cs.category_sheet.icon.placeholder" = "SF Symbol (optional)";
+"cs.category_sheet.type.expense" = "Expense";
+"cs.category_sheet.type.income" = "Income";
+
 /* ======================================================
    About
    ====================================================== */
 "about.title" = "About";
 "about.app" = "App";
+"about.app_name" = "FinanceTracker";
 "about.version" = "Version";
 "about.privacy_hint" = "Privacy Policy and Terms will be added before App Store release.";
 
+/* ======================================================
+   System categories (чтобы не показывало category.food ключом)
+   ====================================================== */
+"category.food" = "Food";
+"category.gas" = "Gas";
+"category.rent" = "Rent";
+"category.supplies" = "Supplies";
+"category.other" = "Other";
+"category.income" = "Income";
 
+"common.choose" = "Choose";
+"icons.title" = "Choose icon";
+"icons.search" = "Search symbols";
+"icons.clear" = "No icon";
+
+"cs.expense.empty" = "No expense categories yet";
+"cs.income.empty" = "No income categories yet";
+
+"cs.source_sheet.section" = "Source";
+"cs.source_sheet.title" = "Add Source";
+"cs.source_sheet.name.placeholder" = "Source name";
+"cs.source_sheet.note.placeholder" = "Note (optional)";
+
+"cs.category_sheet.section" = "Category";
+"cs.category_sheet.title" = "Add Category";
+"cs.category_sheet.name.placeholder" = "Category name";
+"cs.category_sheet.icon.placeholder" = "SF Symbol (optional)";
+"cs.category_sheet.icon_hint" = "Tip: Choose an icon to make categories easier to scan.";
+
+"icons.title" = "Choose icon";
+"icons.search" = "Search symbols";
+"icons.clear" = "No icon";
