@@ -21,11 +21,11 @@ struct PaywallView: View {
                         .font(.system(size: 44, weight: .semibold))
                         .foregroundStyle(.tint)
 
-                    Text("Go Premium")
+                    Text("paywall.title")
                         .font(.title2)
                         .fontWeight(.semibold)
 
-                    Text("Unlock import & full export, and future power features.")
+                    Text("paywall.subtitle")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
@@ -33,10 +33,10 @@ struct PaywallView: View {
                 .padding(.top, 12)
 
                 VStack(alignment: .leading, spacing: 10) {
-                    FeatureRow(text: "Import CSV from Files")
-                    FeatureRow(text: "Export all transactions")
-                    FeatureRow(text: "Multi-currency & default currency (coming next)")
-                    FeatureRow(text: "Recurring transactions, App Lock, OCR (v1.1)")
+                    FeatureRow(textKey: "paywall.feature.import_csv")
+                    FeatureRow(textKey: "paywall.feature.export_all")
+                    FeatureRow(textKey: "paywall.feature.multicurrency_coming")
+                    FeatureRow(textKey: "paywall.feature.future_features")
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -44,20 +44,20 @@ struct PaywallView: View {
                 Spacer()
 
                 if pm.products.isEmpty {
-                    ProgressView("Loading plans…")
+                    ProgressView("paywall.loading")
                         .padding(.bottom, 8)
                 } else {
                     VStack(spacing: 10) {
                         ForEach(pm.products, id: \.id) { product in
                             Button {
-                                    Task { await pm.purchase(product) }
-                                } label: {
-                                    PaywallProductRow(product: product)
-                                }
-                                .buttonStyle(.plain)
+                                Task { await pm.purchase(product) }
+                            } label: {
+                                PaywallProductRow(product: product)
+                            }
+                            .buttonStyle(.plain)
                         }
 
-                        Button("Restore Purchases") {
+                        Button("premium.restore") {
                             Task { await pm.restorePurchases() }
                         }
                         .font(.footnote)
@@ -68,18 +68,17 @@ struct PaywallView: View {
                 }
 
                 if let msg = pm.lastErrorMessage {
-                    Text(msg)
+                    Text(msg) // это системная ошибка, можно оставить как есть
                         .font(.footnote)
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
                 }
-
             }
-            .navigationTitle("Premium")
+            .navigationTitle("settings.premium")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") { dismiss() }
+                    Button("common.close") { dismiss() }
                 }
             }
         }
@@ -87,13 +86,12 @@ struct PaywallView: View {
 }
 
 private struct FeatureRow: View {
-    let text: String
+    let textKey: LocalizedStringKey
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "checkmark.seal.fill")
                 .foregroundStyle(.green)
-            Text(text)
-                .foregroundStyle(.primary)
+            Text(textKey)
             Spacer()
         }
     }
@@ -102,19 +100,19 @@ private struct FeatureRow: View {
 private struct PaywallProductRow: View {
     let product: Product
 
-    private var isYearly: Bool {
-        product.id.contains("yearly")
+    private var kind: ProductKind {
+        ProductKind(productID: product.id)
     }
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Text(isYearly ? "Yearly" : "Monthly")
+                    Text(kind.titleKey)
                         .font(.headline)
 
-                    if isYearly {
-                        Text("Best value")
+                    if kind == .yearly {
+                        Text("paywall.best_value")
                             .font(.caption2)
                             .fontWeight(.semibold)
                             .padding(.horizontal, 8)
@@ -124,7 +122,7 @@ private struct PaywallProductRow: View {
                     }
                 }
 
-                Text(isYearly ? "Full access for 1 year" : "Full access billed monthly")
+                Text(kind.subtitleKey)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -135,7 +133,7 @@ private struct PaywallProductRow: View {
                 Text(product.displayPrice)
                     .font(.headline)
 
-                Text(isYearly ? "/ year" : "/ month")
+                Text(kind.periodSuffixKey)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -150,6 +148,45 @@ private struct PaywallProductRow: View {
     }
 }
 
-#Preview {
-    PaywallView()
+private enum ProductKind: Equatable {
+    case monthly
+    case yearly
+    case lifetime
+    case unknown
+
+    init(productID: String) {
+        switch productID {
+        case PurchaseManager.ProductID.premiumMonthly.rawValue: self = .monthly
+        case PurchaseManager.ProductID.premiumYearly.rawValue: self = .yearly
+        case PurchaseManager.ProductID.premiumLifetime.rawValue: self = .lifetime
+        default: self = .unknown
+        }
+    }
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .monthly: "paywall.plan.monthly"
+        case .yearly: "paywall.plan.yearly"
+        case .lifetime: "paywall.plan.lifetime"
+        case .unknown: "paywall.plan.unknown"
+        }
+    }
+
+    var subtitleKey: LocalizedStringKey {
+        switch self {
+        case .monthly: "paywall.plan.monthly.subtitle"
+        case .yearly: "paywall.plan.yearly.subtitle"
+        case .lifetime: "paywall.plan.lifetime.subtitle"
+        case .unknown: "paywall.plan.unknown.subtitle"
+        }
+    }
+
+    var periodSuffixKey: LocalizedStringKey {
+        switch self {
+        case .monthly: "paywall.period.month"
+        case .yearly: "paywall.period.year"
+        case .lifetime: "paywall.period.once"
+        case .unknown: "paywall.period.unknown"
+        }
+    }
 }

@@ -1,0 +1,365 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* ======================================================
+   Tabs
+   ====================================================== */
+"tab.dashboard" = "Обзор";
+"tab.transactions" = "Транзакции";
+"tab.add" = "Добавить";
+"tab.analytics" = "Аналитика";
+"tab.settings" = "Настройки";
+
+/* ======================================================
+   Navigation titles
+   ====================================================== */
+"title.dashboard" = "Обзор";
+"title.transactions" = "Транзакции";
+"title.add" = "Добавить";
+"title.analytics" = "Аналитика";
+"title.settings" = "Настройки";
+
+/* ======================================================
+   Common
+   ====================================================== */
+"common.ok" = "ОК";
+"common.cancel" = "Отмена";
+"common.close" = "Закрыть";
+"common.add" = "Добавить";
+"common.save" = "Сохранить";
+"common.edit" = "Изменить";
+"common.delete" = "Удалить";
+"common.none" = "Нет";
+"common.select" = "Выбрать…";
+"common.today" = "Сегодня";
+"common.yesterday" = "Вчера";
+"common.unknown" = "Неизвестно";
+"common.error" = "Ошибка";
+
+/* ======================================================
+   Scope / Period
+   ====================================================== */
+"scope.picker.title" = "Период";
+"scope.month" = "Этот месяц";
+"scope.all" = "Все";
+
+/* ======================================================
+   Empty states
+   ====================================================== */
+"empty.noData" = "Данных пока нет";
+"empty.noTransactions" = "Нет транзакций";
+"empty.addFirstTransaction" = "Добавьте первую транзакцию, чтобы начать.";
+
+/* ======================================================
+   Onboarding
+   ====================================================== */
+"onboarding.language.title" = "Выбор языка";
+"onboarding.language.subtitle" = "Вы сможете изменить его позже в настройках.";
+"onboarding.language.picker" = "Язык";
+"onboarding.search.languages" = "Поиск языков";
+
+"onboarding.currency.title" = "Выбор валюты";
+"onboarding.currency.subtitle" = "Будет использоваться по умолчанию для новых транзакций.";
+"onboarding.currency.picker" = "Валюта";
+"onboarding.search.currencies" = "Поиск валют";
+
+"onboarding.next" = "Далее";
+"onboarding.start" = "Начать";
+"onboarding.back" = "Назад";
+
+/* ======================================================
+   Settings (root)
+   ====================================================== */
+"settings.title" = "Настройки";
+"settings.general" = "Основные";
+"settings.premium" = "Премиум";
+"settings.data" = "Данные";
+"settings.categories" = "Категории и источники";
+"settings.about" = "О приложении";
+
+/* ======================================================
+   General settings
+   ====================================================== */
+"general.title" = "Основные";
+
+"general.section.preferences" = "Параметры";
+"general.section.maintenance" = "Обслуживание";
+"general.section.account" = "Аккаунт";
+
+"general.currency" = "Валюта";
+"general.language" = "Язык";
+"general.language_hint" = "Переключение языка станет полностью доступно после добавления всех переводов.";
+
+"general.clear_cache" = "Очистить кэш";
+"general.cache.message" = "Кэш пока пуст. Эта функция пригодится для офлайн-режима.";
+
+"general.restart_onboarding" = "Перезапустить онбординг";
+"general.reset_transactions" = "Сбросить транзакции";
+"general.reset_hint" = "Транзакции будут удалены, категории и источники сохранятся.";
+
+"general.sign_out" = "Выйти";
+"general.signout.message" = "Выход будет доступен после добавления аккаунтов (iCloud / вход).";
+
+/* Alerts / buttons */
+"general.alert.info.title" = "Информация";
+"general.alert.ok" = "ОК";
+"general.alert.cancel" = "Отмена";
+
+"general.alert.reset_tx.title" = "Сбросить транзакции?";
+"general.alert.reset_tx.message" = "Все транзакции на этом устройстве будут удалены.";
+"general.alert.reset" = "Сбросить";
+
+"general.alert.restart_onboarding.title" = "Перезапустить онбординг?";
+"general.alert.restart_onboarding.message" = "Вы снова увидите настройку языка и валюты. Транзакции сохранятся.";
+"general.alert.restart" = "Перезапустить";
+
+/* ======================================================
+   Transactions
+   ====================================================== */
+"transactions.search.prompt" = "Поиск";
+"transactions.empty.month" = "Добавьте транзакцию, чтобы она появилась здесь.";
+"transactions.empty.all" = "Добавьте транзакцию, чтобы она появилась здесь.";
+
+/* ======================================================
+   Dashboard
+   ====================================================== */
+"dashboard.summary.income" = "Доходы";
+"dashboard.summary.expenses" = "Расходы";
+"dashboard.summary.net" = "Итого";
+
+"dashboard.insights.top_expenses.title" = "Основные расходы";
+"dashboard.insights.top_expenses.subtitle" = "Помогает понять, куда уходят деньги.";
+
+"dashboard.insights.top_income_sources.title" = "Основные источники дохода";
+"dashboard.insights.top_income_sources.subtitle" = "Полезно при нескольких источниках.";
+
+"dashboard.unknown_source" = "Неизвестный источник";
+
+/* ======================================================
+   Analytics
+   ====================================================== */
+"analytics.title" = "Аналитика";
+"analytics.chart.picker.title" = "График";
+"analytics.chart.pie" = "Круг";
+"analytics.chart.bars" = "Столбцы";
+"analytics.chart.line" = "Линия";
+
+"analytics.empty.message" = "Добавьте транзакции, чтобы увидеть аналитику.";
+
+"analytics.section.combined.title" = "Доходы • Расходы";
+"analytics.section.expenses_by_category.title" = "Расходы по категориям";
+"analytics.section.income_by_source.title" = "Доходы по источникам";
+
+"analytics.label.income" = "Доход";
+"analytics.label.expense" = "Расход";
+"analytics.label.net" = "Итого";
+
+"analytics.empty.no_expenses" = "Нет расходов за период.";
+"analytics.empty.no_income" = "Нет доходов за период.";
+
+/* chart legend */
+"analytics.legend.income" = "Доход";
+"analytics.legend.expense" = "Расход";
+
+/* ======================================================
+   Add Transaction
+   ====================================================== */
+"add.type.picker.title" = "Тип";
+"add.type.expense" = "Расход";
+"add.type.income" = "Доход";
+
+"add.section.amount" = "Сумма";
+"add.amount.placeholder" = "0,00";
+"add.tax.placeholder" = "Налог (необязательно)";
+
+"add.section.title" = "Название (необязательно)";
+"add.title.placeholder" = "Напр., Starbucks, Аренда, Зарплата";
+
+"add.section.category" = "Категория";
+"add.category.add" = "Добавить категорию";
+"add.category.empty_income" = "Категории доходов отсутствуют.";
+"add.category.empty_expense" = "Категории расходов отсутствуют.";
+
+"add.section.source" = "Источник";
+"add.section.source_optional" = "Источник (необязательно)";
+"add.source.add" = "Добавить источник";
+"add.source.tip" = "Совет: используйте источник, чтобы понимать, откуда приходят доходы.";
+"add.source.expense_disabled_hint" = "Источник доступен только для доходов.";
+
+"add.section.date" = "Дата";
+"add.section.note" = "Комментарий (необязательно)";
+"add.note.placeholder" = "Комментарий";
+"add.keyboard.hide" = "Скрыть клавиатуру";
+
+/* Add Category Sheet */
+"add.category_sheet.nav_title" = "Добавить категорию";
+"add.category_sheet.section.title" = "Категория";
+"add.category_sheet.name.placeholder" = "Название категории";
+"add.category_sheet.icon.placeholder" = "SF Symbol (необязательно)";
+"add.category_sheet.type_income" = "Категория доходов";
+"add.category_sheet.type_expense" = "Категория расходов";
+
+/* Add Source Sheet */
+"add.source_sheet.nav_title" = "Добавить источник";
+"add.source_sheet.section.title" = "Источник";
+"add.source_sheet.name.placeholder" = "Название источника";
+"add.source_sheet.note.placeholder" = "Комментарий (необязательно)";
+
+/* ======================================================
+   Edit Transaction
+   ====================================================== */
+"edit.title" = "Изменить";
+"edit.section.type" = "Тип";
+"edit.type.picker" = "Тип";
+
+"edit.section.amount" = "Сумма";
+"edit.amount.placeholder" = "0,00";
+"edit.tax.placeholder" = "Налог (необязательно)";
+
+"edit.section.currency" = "Валюта";
+"edit.currency.picker" = "Валюта";
+
+"edit.section.merchant" = "Название (необязательно)";
+"edit.merchant.placeholder" = "Напр., Starbucks, Аренда, Зарплата";
+
+"edit.section.category" = "Категория";
+"edit.category.picker" = "Категория";
+
+"edit.source.picker" = "Источник";
+"edit.section.date" = "Дата";
+"edit.date.picker" = "Дата";
+"edit.section.note" = "Комментарий (необязательно)";
+"edit.note.placeholder" = "Комментарий";
+
+"edit.error.unknown" = "Что-то пошло не так.";
+"edit.error.select_category" = "Выберите категорию.";
+"edit.error.invalid_amount" = "Некорректная сумма.";
+"edit.error.save_failed" = "Не удалось сохранить.";
+
+/* ======================================================
+   Premium / Paywall
+   ====================================================== */
+"premium.section.status" = "Статус";
+"premium.status.active" = "Активен";
+"premium.status.free" = "Бесплатно";
+
+"premium.upgrade" = "Перейти на Премиум";
+"premium.manage_subscription" = "Управление подпиской";
+"premium.redeem_code" = "Активировать код";
+"premium.restore" = "Восстановить покупки";
+"premium.redeem_hint" = "Используйте код, если у вас есть промокод.";
+
+/* Paywall */
+"paywall.title" = "Премиум";
+"paywall.subtitle" = "Откройте импорт и полный экспорт, и будущие расширенные функции.";
+"paywall.loading" = "Загружаем планы…";
+"paywall.best_value" = "Выгоднее";
+
+/* Paywall features/plan text */
+"paywall.feature.import_csv" = "Импорт из CSV";
+"paywall.feature.export_all" = "Полный экспорт (все данные)";
+"paywall.feature.multicurrency_coming" = "Мультивалютность (скоро)";
+"paywall.feature.future_features" = "Будущие премиум-функции";
+
+/* Plans */
+"paywall.plan.yearly" = "Годовой";
+"paywall.plan.yearly.subtitle" = "Экономия по сравнению с помесячным";
+"paywall.plan.monthly" = "Месячный";
+"paywall.plan.monthly.subtitle" = "Оплата каждый месяц";
+"paywall.plan.lifetime" = "Навсегда";
+"paywall.plan.lifetime.subtitle" = "Разовая покупка";
+
+/* Period labels */
+"paywall.period.year" = "в год";
+"paywall.period.month" = "в месяц";
+"paywall.period.once" = "один раз";
+
+/* ======================================================
+   Data
+   ====================================================== */
+"data.title" = "Данные";
+
+"data.section.export" = "Экспорт";
+"data.export.csv.month" = "Экспорт CSV (этот месяц)";
+"data.export.csv.all" = "Экспорт CSV (все)";
+"data.export.pdf.month" = "Экспорт PDF (этот месяц)";
+"data.export.pdf.all" = "Экспорт PDF (все)";
+"data.export.excel.month" = "Экспорт Excel (этот месяц)";
+"data.export.excel.all" = "Экспорт Excel (все)";
+
+"data.section.import" = "Импорт";
+"data.import.csv" = "Импорт CSV";
+"data.premium_hint" = "Доступно в Премиум.";
+
+/* ======================================================
+   Categories & Sources
+   ====================================================== */
+"cs.section.sources" = "Источники";
+"cs.section.expense_categories" = "Категории расходов";
+"cs.section.income_categories" = "Категории доходов";
+
+"cs.sources.empty" = "Источников пока нет";
+"cs.sources.add" = "Добавить источник";
+"cs.categories.add" = "Добавить категорию";
+
+"cs.alert.cant_delete.title" = "Нельзя удалить";
+"cs.alert.used_in_transactions.format" = "«%@» используется в %d транзакциях.";
+
+/* CS sheets */
+"cs.source_sheet.title" = "Добавить источник";
+"cs.source_sheet.section" = "Источник";
+"cs.source_sheet.name.placeholder" = "Название источника";
+"cs.source_sheet.note.placeholder" = "Комментарий (необязательно)";
+
+"cs.category_sheet.title" = "Добавить категорию";
+"cs.category_sheet.section" = "Категория";
+"cs.category_sheet.name.placeholder" = "Название категории";
+"cs.category_sheet.icon.placeholder" = "SF Symbol (необязательно)";
+"cs.category_sheet.type.expense" = "Расход";
+"cs.category_sheet.type.income" = "Доход";
+
+/* ======================================================
+   About
+   ====================================================== */
+"about.title" = "О приложении";
+"about.app" = "Приложение";
+"about.app_name" = "FinanceTracker";
+"about.version" = "Версия";
+"about.privacy_hint" = "Политика конфиденциальности и условия будут добавлены перед релизом.";
+
+/* ======================================================
+   System categories
+   ====================================================== */
+"category.food" = "Еда";
+"category.gas" = "Топливо";
+"category.rent" = "Аренда";
+"category.supplies" = "Покупки";
+"category.other" = "Другое";
+"category.income" = "Доход";
+
+"common.choose" = "Выбрать";
+"icons.title" = "Выбор значка";
+"icons.search" = "Поиск значков";
+"icons.clear" = "Без значка";
+
+"cs.expense.empty" = "Категорий расходов пока нет";
+"cs.income.empty" = "Категорий доходов пока нет";
+
+"cs.source_sheet.section" = "Источник";
+"cs.source_sheet.title" = "Добавить источник";
+"cs.source_sheet.name.placeholder" = "Название источника";
+"cs.source_sheet.note.placeholder" = "Комментарий (необязательно)";
+
+"cs.category_sheet.section" = "Категория";
+"cs.category_sheet.title" = "Добавить категорию";
+"cs.category_sheet.name.placeholder" = "Название категории";
+"cs.category_sheet.icon.placeholder" = "SF Symbol (необязательно)";
+"cs.category_sheet.icon_hint" = "Совет: выберите значок, чтобы быстрее находить категории.";
+
+"icons.title" = "Выбор значка";
+"icons.search" = "Поиск значков";
+"icons.clear" = "Без значка";

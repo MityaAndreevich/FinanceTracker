@@ -1,0 +1,71 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Přehled";
+"tab.transactions" = "Transakce";
+"tab.add" = "Přidat";
+"tab.analytics" = "Analýza";
+"tab.settings" = "Nastavení";
+
+/* Titles */
+"title.dashboard" = "Přehled";
+"title.transactions" = "Transakce";
+"title.add" = "Přidat";
+"title.analytics" = "Analýza";
+"title.settings" = "Nastavení";
+
+/* Onboarding */
+"onboarding.language.title" = "Vyberte jazyk";
+"onboarding.language.subtitle" = "Toto nastavení můžete kdykoliv změnit v nastavení.";
+"onboarding.language.picker" = "Jazyk";
+
+"onboarding.currency.title" = "Vyberte měnu";
+"onboarding.currency.subtitle" = "Tato měna bude výchozí pro nové transakce.";
+"onboarding.currency.picker" = "Měna";
+
+"onboarding.next" = "Další";
+"onboarding.start" = "Začít";
+"onboarding.back" = "Zpět";
+
+/* Settings */
+"settings.title" = "Nastavení";
+"settings.general" = "Obecné";
+"settings.premium" = "Premium";
+"settings.data" = "Data";
+"settings.categories" = "Kategorie a zdroje";
+"settings.about" = "O aplikaci";
+
+/* Premium */
+"premium.status.active" = "Aktivní";
+"premium.status.free" = "Zdarma";
+
+/* General */
+"general.title" = "Obecné";
+
+"general.section.preferences" = "Předvolby";
+"general.section.maintenance" = "Údržba";
+"general.section.account" = "Účet";
+
+"general.currency" = "Měna";
+"general.language" = "Jazyk";
+
+"general.language_hint" = "Plná podpora jazyka bude dostupná po přidání všech překladů.";
+
+"general.clear_cache" = "Vymazat mezipaměť";
+"general.cache.message" = "Momentálně není žádná mezipaměť k vymazání.";
+
+"general.restart_onboarding" = "Znovu spustit úvodní nastavení";
+"general.reset_transactions" = "Resetovat transakce";
+
+/* Common */
+"common.cancel" = "Zrušit";
+"common.ok" = "OK";
+"common.delete" = "Smazat";
+"common.edit" = "Upravit";
+"common.today" = "Dnes";
+"common.yesterday" = "Včera";

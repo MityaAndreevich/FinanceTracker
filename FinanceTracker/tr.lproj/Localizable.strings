@@ -1,0 +1,82 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Gösterge Paneli";
+"tab.transactions" = "İşlemler";
+"tab.add" = "Ekle";
+"tab.analytics" = "Analiz";
+"tab.settings" = "Ayarlar";
+
+/* Titles */
+"title.dashboard" = "Gösterge Paneli";
+"title.transactions" = "İşlemler";
+"title.add" = "Ekle";
+"title.analytics" = "Analiz";
+"title.settings" = "Ayarlar";
+
+/* Onboarding */
+"onboarding.language.title" = "Dil seçin";
+"onboarding.language.subtitle" = "Bunu daha sonra Ayarlar’dan değiştirebilirsiniz.";
+"onboarding.language.picker" = "Dil";
+
+"onboarding.currency.title" = "Para birimi seçin";
+"onboarding.currency.subtitle" = "Yeni işlemler için varsayılan olarak kullanılacaktır.";
+"onboarding.currency.picker" = "Para birimi";
+
+"onboarding.next" = "İleri";
+"onboarding.start" = "Başla";
+"onboarding.back" = "Geri";
+
+/* Settings */
+"settings.title" = "Ayarlar";
+"settings.general" = "Genel";
+"settings.premium" = "Premium";
+"settings.data" = "Veriler";
+"settings.categories" = "Kategoriler ve Kaynaklar";
+"settings.about" = "Hakkında";
+
+/* Premium */
+"premium.status.active" = "Aktif";
+"premium.status.free" = "Ücretsiz";
+
+/* General */
+"general.title" = "Genel";
+
+"general.section.preferences" = "Tercihler";
+"general.section.maintenance" = "Bakım";
+"general.section.account" = "Hesap";
+
+"general.currency" = "Para birimi";
+"general.language" = "Dil";
+
+"general.language_hint" = "Tüm çeviriler eklendiğinde dil değişimi tamamen aktif olacaktır.";
+
+"general.clear_cache" = "Önbelleği temizle";
+"general.cache.message" = "Şu anda temizlenecek bir önbellek yok.";
+
+"general.restart_onboarding" = "Kurulumu yeniden başlat";
+"general.reset_transactions" = "İşlemleri sıfırla";
+"general.reset_hint" = "Tüm işlemler silinir, ancak kategoriler ve kaynaklar korunur.";
+
+"general.sign_out" = "Çıkış yap";
+"general.signout.message" = "Hesaplar eklendiğinde çıkış yapılabilir olacak.";
+
+/* Alerts */
+"general.alert.info.title" = "Bilgi";
+"general.alert.ok" = "Tamam";
+"general.alert.cancel" = "İptal";
+"general.alert.reset" = "Sıfırla";
+"general.alert.restart" = "Yeniden başlat";
+
+/* Common */
+"common.cancel" = "İptal";
+"common.ok" = "Tamam";
+"common.delete" = "Sil";
+"common.edit" = "Düzenle";
+"common.today" = "Bugün";
+"common.yesterday" = "Dün";

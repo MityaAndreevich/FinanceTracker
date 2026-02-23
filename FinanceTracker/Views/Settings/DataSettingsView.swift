@@ -27,83 +27,119 @@ struct DataSettingsView: View {
 
     var body: some View {
         List {
-            Section("Export") {
-                Button {
-                    exportCSV(scope: .month)
-                } label: {
-                    Label("Export CSV (This Month)", systemImage: "square.and.arrow.up")
-                }
-
-                Button {
-                    gatePremiumOr { exportCSV(scope: .all) }
-                } label: {
-                    Label("Export CSV (All)", systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
-                }
-
-                Button {
-                    exportPDF(scope: .month)
-                } label: {
-                    Label("Export PDF (This Month)", systemImage: "doc.richtext")
-                }
-
-                Button {
-                    gatePremiumOr { exportPDF(scope: .all) }
-                } label: {
-                    Label("Export PDF (All)", systemImage: pm.isPremium ? "doc.richtext" : "lock")
-                }
-
-                Button {
-                    exportTSV(scope: .month)
-                } label: {
-                    Label("Export Excel/Numbers (This Month)", systemImage: "tablecells")
-                }
-
-                Button {
-                    gatePremiumOr { exportTSV(scope: .all) }
-                } label: {
-                    Label("Export Excel/Numbers (All)", systemImage: pm.isPremium ? "tablecells" : "lock")
-                }
-
-                if let url = exportURL {
-                    ShareLink(item: url) {
-                        Label("Share last export (\(exportFilename))", systemImage: "square.and.arrow.up")
-                    }
-                }
-            }
-
-            Section("Import") {
-                Button {
-                    gatePremiumOr { showImporter = true }
-                } label: {
-                    Label("Import CSV", systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
-                }
-
-                if !pm.isPremium {
-                    Text("Premium unlocks Import CSV and Export All.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            exportSection
+            importSection
         }
-        .navigationTitle("Data")
+        .navigationTitle("data.title")
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showPaywall) { PaywallView() }
+
+        // На всякий случай обновляем статус, когда экран открывается
+        .task {
+            await pm.refreshStatus()
+        }
+
         .fileImporter(
             isPresented: $showImporter,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
+            allowedContentTypes: allowedImportTypes,
             allowsMultipleSelection: false
         ) { result in
             handleImport(result: result)
         }
-        .alert("Import result", isPresented: $showImportResult) {
-            Button("OK", role: .cancel) {}
+
+        .alert("data.alert.import_result.title", isPresented: $showImportResult) {
+            Button("common.ok", role: .cancel) {}
         } message: {
             Text(importResultMessage)
         }
-        .alert("Export error", isPresented: $showExportError) {
-            Button("OK", role: .cancel) {}
+
+        .alert("data.alert.export_error.title", isPresented: $showExportError) {
+            Button("common.ok", role: .cancel) {}
         } message: {
             Text(exportErrorMessage)
+        }
+    }
+
+    // MARK: - Import types
+
+    private var allowedImportTypes: [UTType] {
+        // CSV иногда приходит как plainText в зависимости от источника (Google Sheets, etc.)
+        // Поэтому оставляем и .plainText как fallback.
+        [.commaSeparatedText, .plainText]
+    }
+
+    // MARK: - Sections
+
+    private var exportSection: some View {
+        Section("data.section.export") {
+
+            Button {
+                exportCSV(scope: .month)
+            } label: {
+                Label("data.export.csv.month", systemImage: "square.and.arrow.up")
+            }
+
+            Button {
+                gatePremiumOr { exportCSV(scope: .all) }
+            } label: {
+                Label("data.export.csv.all",
+                      systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
+            }
+
+            Button {
+                exportPDF(scope: .month)
+            } label: {
+                Label("data.export.pdf.month", systemImage: "doc.richtext")
+            }
+
+            Button {
+                gatePremiumOr { exportPDF(scope: .all) }
+            } label: {
+                Label("data.export.pdf.all",
+                      systemImage: pm.isPremium ? "doc.richtext" : "lock")
+            }
+
+            Button {
+                exportTSV(scope: .month)
+            } label: {
+                Label("data.export.excel.month", systemImage: "tablecells")
+            }
+
+            Button {
+                gatePremiumOr { exportTSV(scope: .all) }
+            } label: {
+                Label("data.export.excel.all",
+                      systemImage: pm.isPremium ? "tablecells" : "lock")
+            }
+
+            if let url = exportURL {
+                ShareLink(item: url) {
+                    // Здесь exportFilename динамический — это правильно.
+                    let title = String(
+                        format: NSLocalizedString("data.export.share_last.format", comment: ""),
+                        exportFilename
+                    )
+                    Label(title, systemImage: "square.and.arrow.up")
+                }
+            }
+        }
+    }
+
+    private var importSection: some View {
+        Section("data.section.import") {
+
+            Button {
+                gatePremiumOr { showImporter = true }
+            } label: {
+                Label("data.import.csv",
+                      systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
+            }
+
+            if !pm.isPremium {
+                Text("data.premium_hint")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -130,19 +166,24 @@ struct DataSettingsView: View {
             let data = try Data(contentsOf: url)
             let importResult = try CSVImportService.importCSV(modelContext: modelContext, data: data)
 
+            // Многострочный отчёт (MVP-логика)
             var lines: [String] = []
-            lines.append("Imported: \(importResult.imported)")
-            lines.append("Skipped: \(importResult.skipped)")
-            lines.append("Created categories: \(importResult.createdCategories)")
-            lines.append("Created sources: \(importResult.createdSources)")
+            lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
+            lines.append(String(format: NSLocalizedString("data.import.result.skipped.format", comment: ""), importResult.skipped))
+            lines.append(String(format: NSLocalizedString("data.import.result.created_categories.format", comment: ""), importResult.createdCategories))
+            lines.append(String(format: NSLocalizedString("data.import.result.created_sources.format", comment: ""), importResult.createdSources))
+
             if let first = importResult.firstError {
-                lines.append("First error: \(first)")
+                lines.append(String(format: NSLocalizedString("data.import.result.first_error.format", comment: ""), first))
             }
 
             importResultMessage = lines.joined(separator: "\n")
             showImportResult = true
         } catch {
-            importResultMessage = "Import failed: \(error.localizedDescription)"
+            importResultMessage = String(
+                format: NSLocalizedString("data.import.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showImportResult = true
         }
     }
@@ -156,7 +197,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }
@@ -168,7 +212,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }
@@ -180,7 +227,10 @@ struct DataSettingsView: View {
             exportURL = url
             exportFilename = result.filename
         } catch {
-            exportErrorMessage = "Export failed: \(error.localizedDescription)"
+            exportErrorMessage = String(
+                format: NSLocalizedString("data.export.failed.format", comment: ""),
+                error.localizedDescription
+            )
             showExportError = true
         }
     }

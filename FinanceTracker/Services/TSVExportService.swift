@@ -15,11 +15,9 @@ struct TSVExportResult {
 
 enum TSVExportService {
 
-    /// TSV = tab-separated values. Excel/Numbers open it perfectly.
     static func makeTSV(modelContext: ModelContext, scope: CSVExportScope) throws -> TSVExportResult {
         let txs = try fetchTransactions(modelContext: modelContext, scope: scope)
 
-        // Header row
         var lines: [String] = []
         lines.append([
             "Date",
@@ -39,9 +37,11 @@ enum TSVExportService {
         for tx in txs {
             let date = df.string(from: tx.date)
             let type = tx.typeRaw
-            let amount = formatDecimal(cents: tx.amountCents) // 12.34
+            let amount = formatDecimal(cents: tx.amountCents)
             let currency = tx.currency
-            let category = safe(tx.category.name)
+
+            // ✅ displayName()
+            let category = safe(tx.category.displayName())
             let source = safe(tx.source?.name ?? "")
             let merchant = safe(tx.merchant ?? "")
             let note = safe(tx.note ?? "")
@@ -88,15 +88,11 @@ enum TSVExportService {
 
     // MARK: - Helpers
 
-    /// Excel loves "12.34" format
     private static func formatDecimal(cents: Int) -> String {
         let value = Decimal(cents) / 100
-        // Force dot decimal separator to keep Excel happy
-        let ns = NSDecimalNumber(decimal: value)
-        return ns.stringValue
+        return NSDecimalNumber(decimal: value).stringValue
     }
 
-    /// Clean fields for TSV: remove tabs/newlines, trim.
     private static func safe(_ s: String) -> String {
         s
             .replacingOccurrences(of: "\t", with: " ")

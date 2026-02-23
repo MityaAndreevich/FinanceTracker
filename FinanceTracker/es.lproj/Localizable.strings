@@ -1,0 +1,97 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Panel";
+"tab.transactions" = "Transacciones";
+"tab.add" = "Añadir";
+"tab.analytics" = "Análisis";
+"tab.settings" = "Ajustes";
+
+/* Navigation titles */
+"title.dashboard" = "Panel";
+"title.transactions" = "Transacciones";
+"title.add" = "Añadir";
+"title.analytics" = "Análisis";
+"title.settings" = "Ajustes";
+
+/* Common */
+"common.ok" = "Aceptar";
+"common.cancel" = "Cancelar";
+"common.close" = "Cerrar";
+"common.add" = "Añadir";
+"common.edit" = "Editar";
+"common.delete" = "Eliminar";
+"common.none" = "Ninguno";
+"common.select" = "Seleccionar…";
+"common.today" = "Hoy";
+"common.yesterday" = "Ayer";
+"common.unknown" = "Desconocido";
+"common.error" = "Error";
+
+/* Scope */
+"scope.picker.title" = "Periodo";
+"scope.month" = "Este mes";
+"scope.all" = "Todo";
+
+/* Empty states */
+"empty.noData" = "Aún no hay datos";
+"empty.noTransactions" = "No hay transacciones";
+"empty.addFirstTransaction" = "Añade tu primera transacción para empezar.";
+
+/* Onboarding */
+"onboarding.language.title" = "Elige idioma";
+"onboarding.language.subtitle" = "Puedes cambiarlo en Ajustes en cualquier momento.";
+"onboarding.language.picker" = "Idioma";
+
+"onboarding.currency.title" = "Elige moneda";
+"onboarding.currency.subtitle" = "Se usará por defecto para nuevas transacciones.";
+"onboarding.currency.picker" = "Moneda";
+
+"onboarding.next" = "Siguiente";
+"onboarding.start" = "Empezar";
+"onboarding.back" = "Atrás";
+
+/* Settings */
+"settings.title" = "Ajustes";
+"settings.general" = "General";
+"settings.premium" = "Premium";
+"settings.data" = "Datos";
+"settings.categories" = "Categorías y fuentes";
+"settings.about" = "Acerca de";
+
+/* General */
+"general.title" = "General";
+"general.section.preferences" = "Preferencias";
+"general.section.maintenance" = "Mantenimiento";
+"general.section.account" = "Cuenta";
+
+"general.currency" = "Moneda";
+"general.language" = "Idioma";
+"general.language_hint" = "El cambio de idioma estará disponible cuando se completen las traducciones.";
+
+"general.clear_cache" = "Borrar caché";
+"general.cache.message" = "Aún no hay caché que borrar.";
+
+"general.restart_onboarding" = "Reiniciar onboarding";
+"general.reset_transactions" = "Restablecer transacciones";
+"general.reset_hint" = "Se eliminarán las transacciones, pero se mantendrán categorías y fuentes.";
+
+"general.sign_out" = "Cerrar sesión";
+"general.signout.message" = "El cierre de sesión estará disponible cuando añadamos cuentas.";
+
+/* Alerts */
+"general.alert.info.title" = "Información";
+"general.alert.reset_tx.title" = "¿Restablecer transacciones?";
+"general.alert.reset_tx.message" = "Esto eliminará permanentemente todas las transacciones.";
+"general.alert.restart_onboarding.title" = "¿Reiniciar onboarding?";
+"general.alert.restart_onboarding.message" = "Verás de nuevo la configuración inicial.";
+
+/* Transactions */
+"transactions.search.prompt" = "Buscar";
+"transactions.empty.month" = "Añade una transacción para verla aquí.";
+"transactions.empty.all" = "Añade una transacción para verla aquí.";

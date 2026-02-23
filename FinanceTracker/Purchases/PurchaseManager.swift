@@ -26,8 +26,23 @@ final class PurchaseManager: ObservableObject {
         case premiumLifetime = "ft_premium_lifetime"
     }
 
+    /// Все наши продукты (и подписки, и lifetime)
     private var productIDs: [String] {
-        ProductID.allCases.map { $0.rawValue }
+        ProductID.allCases.map(\.rawValue)
+    }
+
+    /// Только подписочные продукты (Monthly/Yearly)
+    private var subscriptionIDs: Set<String> {
+        [
+            ProductID.premiumMonthly.rawValue,
+            ProductID.premiumYearly.rawValue
+        ]
+    }
+
+    /// Используется в UI: показывать ли Manage Subscription / Redeem Code
+    /// Это должно зависеть от того, что реально загружено из StoreKit.
+    var hasSubscriptionProducts: Bool {
+        products.contains(where: { subscriptionIDs.contains($0.id) })
     }
 
     // MARK: - Published state
@@ -48,10 +63,8 @@ final class PurchaseManager: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
-        // Загружаем продукты
+        // Загружаем продукты + обновляем премиум-статус
         Task { await loadProducts() }
-
-        // Проверяем статус premium при запуске
         Task { await refreshPremiumStatus() }
 
         // Слушаем обновления транзакций (renewals, refunds, upgrades, etc.)
@@ -68,14 +81,10 @@ final class PurchaseManager: ObservableObject {
     func loadProducts() async {
         do {
             let storeProducts = try await Product.products(for: productIDs)
-
-            // Порядок показа в paywall: yearly (best value), monthly, lifetime (pay once)
-            self.products = orderProducts(storeProducts)
-
-            // Если всё ок — чистим прошлые ошибки
-            self.lastErrorMessage = nil
+            products = orderProducts(storeProducts)
+            lastErrorMessage = nil
         } catch {
-            self.lastErrorMessage = "Failed to load products: \(error.localizedDescription)"
+            lastErrorMessage = "Failed to load products: \(error.localizedDescription)"
         }
     }
 
@@ -102,7 +111,7 @@ final class PurchaseManager: ObservableObject {
                 let transaction = try verified(verification)
                 await transaction.finish()
                 await refreshPremiumStatus()
-                self.lastErrorMessage = nil
+                lastErrorMessage = nil
 
             case .userCancelled:
                 break
@@ -115,7 +124,7 @@ final class PurchaseManager: ObservableObject {
                 break
             }
         } catch {
-            self.lastErrorMessage = "Purchase failed: \(error.localizedDescription)"
+            lastErrorMessage = "Purchase failed: \(error.localizedDescription)"
         }
     }
 
@@ -124,9 +133,9 @@ final class PurchaseManager: ObservableObject {
         do {
             try await AppStore.sync()
             await refreshPremiumStatus()
-            self.lastErrorMessage = nil
+            lastErrorMessage = nil
         } catch {
-            self.lastErrorMessage = "Restore failed: \(error.localizedDescription)"
+            lastErrorMessage = "Restore failed: \(error.localizedDescription)"
         }
     }
 
@@ -142,14 +151,10 @@ final class PurchaseManager: ObservableObject {
                 let transaction = try verified(result)
 
                 // 1) Игнорируем отозванные/рефанднутые
-                if transaction.revocationDate != nil {
-                    continue
-                }
+                if transaction.revocationDate != nil { continue }
 
                 // 2) Признаём premium только по нашим Product IDs
-                guard productIDs.contains(transaction.productID) else {
-                    continue
-                }
+                guard productIDs.contains(transaction.productID) else { continue }
 
                 // Этого достаточно: если есть активное entitlement — premium true
                 premium = true
@@ -159,7 +164,13 @@ final class PurchaseManager: ObservableObject {
             }
         }
 
-        self.isPremium = premium
+        isPremium = premium
+    }
+
+    /// Удобный метод для экранов (и для .task / pull-to-refresh)
+    func refreshStatus() async {
+        await refreshPremiumStatus()
+        // При желании позже можно добавить: await loadProducts()
     }
 
     // MARK: - Transaction updates
@@ -189,14 +200,5 @@ final class PurchaseManager: ObservableObject {
         case .verified(let safe):
             return safe
         }
-    }
-    
-    @MainActor
-    func refreshStatus() async {
-        // 1) На будущее можно тут ещё обновлять products
-        // await loadProducts()
-        
-        // 2) Сейчас главное — перечитать энтитлменты
-        await refreshPremiumStatus()
     }
 }

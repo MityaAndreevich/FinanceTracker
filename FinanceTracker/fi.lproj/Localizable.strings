@@ -1,0 +1,63 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Yleiskatsaus";
+"tab.transactions" = "Tapahtumat";
+"tab.add" = "Lisää";
+"tab.analytics" = "Analytiikka";
+"tab.settings" = "Asetukset";
+
+/* Titles */
+"title.dashboard" = "Yleiskatsaus";
+"title.transactions" = "Tapahtumat";
+"title.add" = "Lisää";
+"title.analytics" = "Analytiikka";
+"title.settings" = "Asetukset";
+
+/* Onboarding */
+"onboarding.language.title" = "Valitse kieli";
+"onboarding.language.subtitle" = "Voit muuttaa tätä myöhemmin asetuksissa.";
+"onboarding.language.picker" = "Kieli";
+
+"onboarding.currency.title" = "Valitse valuutta";
+"onboarding.currency.subtitle" = "Tätä valuuttaa käytetään oletuksena uusille tapahtumille.";
+"onboarding.currency.picker" = "Valuutta";
+
+"onboarding.next" = "Seuraava";
+"onboarding.start" = "Aloita";
+"onboarding.back" = "Takaisin";
+
+/* Settings */
+"settings.title" = "Asetukset";
+"settings.general" = "Yleiset";
+"settings.premium" = "Premium";
+"settings.data" = "Tiedot";
+"settings.categories" = "Kategoriat ja lähteet";
+"settings.about" = "Tietoja";
+
+/* Premium */
+"premium.status.active" = "Aktiivinen";
+"premium.status.free" = "Ilmainen";
+
+/* General */
+"general.title" = "Yleiset";
+
+"general.section.preferences" = "Asetukset";
+"general.section.maintenance" = "Ylläpito";
+"general.section.account" = "Tili";
+
+"general.currency" = "Valuutta";
+"general.language" = "Kieli";
+
+/* Common */
+"common.cancel" = "Peruuta";
+"common.ok" = "OK";
+"common.delete" = "Poista";
+"common.edit" = "Muokkaa";
+"common.today" = "Tänään";
+"common.yesterday" = "Eilen";

@@ -10,7 +10,10 @@ import SwiftData
 
 @Model
 final class Transaction {
-    var id: UUID
+
+    /// ✅ Стабильный внешний идентификатор (не SwiftData PersistentIdentifier)
+    var uuid: UUID
+
     var typeRaw: String           // "income" or "expense"
     var amountCents: Int          // ВАЖНО: храним деньги как Int (центы)
     var currency: String          // "USD"
@@ -27,7 +30,7 @@ final class Transaction {
     var updatedAt: Date
 
     init(
-        id: UUID = UUID(),
+        uuid: UUID = UUID(),
         typeRaw: String,
         amountCents: Int,
         currency: String = "USD",
@@ -40,7 +43,7 @@ final class Transaction {
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
-        self.id = id
+        self.uuid = uuid
         self.typeRaw = typeRaw
         self.amountCents = amountCents
         self.currency = currency

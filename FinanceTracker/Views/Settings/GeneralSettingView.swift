@@ -13,75 +13,135 @@ struct GeneralSettingsView: View {
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
-    @State private var showResetAlert = false
+    @State private var showResetTransactionsAlert = false
+    @State private var showRestartOnboardingAlert = false
+
+    // Универсальный Info Alert
     @State private var showInfoAlert = false
-    @State private var infoMessage = ""
+    @State private var infoTitleKey: String = "general.alert.info.title"
+    @State private var infoMessageKey: String = "general.info.default"
+    @State private var infoExtra: String? = nil // для опциональной детали (например, ошибка)
 
     var body: some View {
         List {
-            Section("Preferences") {
-
-                Picker("Currency", selection: $defaultCurrencyCode) {
-                    ForEach(SupportedCurrency.allCases) { c in
-                        Text("\(c.flag) \(c.code) — \(c.name)").tag(c.code)
-                    }
-                }
-
-                Picker("Language", selection: $appLanguageCode) {
-                    Text("System").tag("system")
-                    Text("English").tag("en")
-                    Text("Русский").tag("ru")
-                }
-
-                Text("Language switching will be fully enabled when localization keys are added.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Maintenance") {
-                Button {
-                    infoMessage = "There’s no cache to clear yet. This will be useful when offline caching is added."
-                    showInfoAlert = true
-                } label: {
-                    Label("Clear Cache", systemImage: "wand.and.stars") // вместо broom
-                }
-
-                Button(role: .destructive) {
-                    showResetAlert = true
-                } label: {
-                    Label("Reset Transactions", systemImage: "trash")
-                }
-
-                Text("Reset Transactions removes all transactions but keeps your categories and sources.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Account") {
-                Button {
-                    infoMessage = "Sign out will be available when we add accounts (iCloud sync / login)."
-                    showInfoAlert = true
-                } label: {
-                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                }
-            }
+            preferencesSection
+            maintenanceSection
+            accountSection
         }
-        .navigationTitle("General")
+        .navigationTitle("general.title")
         .listStyle(.insetGrouped)
-        .alert("Info", isPresented: $showInfoAlert) {
-            Button("OK", role: .cancel) {}
+        .onAppear { normalizeStoredValuesIfNeeded() }
+        .onChange(of: appLanguageCode) { _, _ in normalizeStoredValuesIfNeeded() }
+        .onChange(of: defaultCurrencyCode) { _, _ in normalizeStoredValuesIfNeeded() }
+
+        // Info alert
+        .alert(infoTitleKey, isPresented: $showInfoAlert) {
+            Button("general.alert.ok", role: .cancel) { infoExtra = nil }
         } message: {
-            Text(infoMessage)
-        }
-        .alert("Reset Transactions?", isPresented: $showResetAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                resetTransactions()
+            if let infoExtra, !infoExtra.isEmpty {
+                // Сообщение по ключу + деталь отдельной строкой
+                Text(infoMessageKey) + Text("\n\n") + Text(infoExtra)
+            } else {
+                Text(infoMessageKey)
             }
-        } message: {
-            Text("This will permanently delete all transactions on this device.")
         }
+
+        // Reset transactions confirm
+        .alert("general.alert.reset_tx.title", isPresented: $showResetTransactionsAlert) {
+            Button("general.alert.cancel", role: .cancel) {}
+            Button("general.alert.reset", role: .destructive) { resetTransactions() }
+        } message: {
+            Text("general.alert.reset_tx.message")
+        }
+
+        // Restart onboarding confirm
+        .alert("general.alert.restart_onboarding.title", isPresented: $showRestartOnboardingAlert) {
+            Button("general.alert.cancel", role: .cancel) {}
+            Button("general.alert.restart", role: .destructive) { restartOnboarding() }
+        } message: {
+            Text("general.alert.restart_onboarding.message")
+        }
+    }
+
+    // MARK: - Sections
+
+    private var preferencesSection: some View {
+        Section("general.section.preferences") {
+
+            Picker("general.currency", selection: $defaultCurrencyCode) {
+                ForEach(SupportedCurrency.allCases) { c in
+                    Text("\(c.flag) \(c.code) — \(c.name)")
+                        .tag(c.code)
+                }
+            }
+            .pickerStyle(.navigationLink)
+
+            Picker("general.language", selection: $appLanguageCode) {
+                ForEach(SupportedLanguage.allCases) { l in
+                    Text("\(l.flag) \(l.title)")
+                        .tag(l.id)
+                }
+            }
+            .pickerStyle(.navigationLink)
+
+            Text("general.language_hint")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var maintenanceSection: some View {
+        Section("general.section.maintenance") {
+
+            Button {
+                showInfo(
+                    titleKey: "general.alert.info.title",
+                    messageKey: "general.cache.message",
+                    extra: nil
+                )
+            } label: {
+                Label("general.clear_cache", systemImage: "wand.and.stars")
+            }
+
+            Button {
+                showRestartOnboardingAlert = true
+            } label: {
+                Label("general.restart_onboarding", systemImage: "arrow.counterclockwise")
+            }
+
+            Button(role: .destructive) {
+                showResetTransactionsAlert = true
+            } label: {
+                Label("general.reset_transactions", systemImage: "trash")
+            }
+
+            Text("general.reset_hint")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var accountSection: some View {
+        Section("general.section.account") {
+            Button {
+                showInfo(
+                    titleKey: "general.alert.info.title",
+                    messageKey: "general.signout.message",
+                    extra: nil
+                )
+            } label: {
+                Label("general.sign_out", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func restartOnboarding() {
+        // Данные не трогаем. Просто возвращаем онбординг.
+        hasCompletedOnboarding = false
     }
 
     private func resetTransactions() {
@@ -89,9 +149,40 @@ struct GeneralSettingsView: View {
             let all = try modelContext.fetch(FetchDescriptor<Transaction>())
             all.forEach { modelContext.delete($0) }
             try modelContext.save()
+
+            showInfo(
+                titleKey: "general.alert.info.title",
+                messageKey: "general.reset_success.message",
+                extra: nil
+            )
         } catch {
-            infoMessage = "Reset failed: \(error.localizedDescription)"
-            showInfoAlert = true
+            // Локализованный текст + опционально деталь (на английском, как приходит от системы)
+            showInfo(
+                titleKey: "general.alert.info.title",
+                messageKey: "general.reset_failed.message",
+                extra: error.localizedDescription
+            )
+            print("Reset failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func showInfo(titleKey: String, messageKey: String, extra: String?) {
+        infoTitleKey = titleKey
+        infoMessageKey = messageKey
+        infoExtra = extra
+        showInfoAlert = true
+    }
+
+    private func normalizeStoredValuesIfNeeded() {
+        if SupportedLanguage(rawValue: appLanguageCode) == nil {
+            appLanguageCode = "system"
+        }
+
+        let codes = Set(SupportedCurrency.allCases.map { $0.code })
+        if codes.contains(defaultCurrencyCode) == false {
+            defaultCurrencyCode = "USD"
         }
     }
 }

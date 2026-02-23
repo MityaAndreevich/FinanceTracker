@@ -1,0 +1,97 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Übersicht";
+"tab.transactions" = "Transaktionen";
+"tab.add" = "Hinzufügen";
+"tab.analytics" = "Analyse";
+"tab.settings" = "Einstellungen";
+
+/* Navigation titles */
+"title.dashboard" = "Übersicht";
+"title.transactions" = "Transaktionen";
+"title.add" = "Hinzufügen";
+"title.analytics" = "Analyse";
+"title.settings" = "Einstellungen";
+
+/* Common */
+"common.ok" = "OK";
+"common.cancel" = "Abbrechen";
+"common.close" = "Schließen";
+"common.add" = "Hinzufügen";
+"common.edit" = "Bearbeiten";
+"common.delete" = "Löschen";
+"common.none" = "Keine";
+"common.select" = "Auswählen…";
+"common.today" = "Heute";
+"common.yesterday" = "Gestern";
+"common.unknown" = "Unbekannt";
+"common.error" = "Fehler";
+
+/* Scope */
+"scope.picker.title" = "Zeitraum";
+"scope.month" = "Dieser Monat";
+"scope.all" = "Alle";
+
+/* Empty states */
+"empty.noData" = "Noch keine Daten";
+"empty.noTransactions" = "Keine Transaktionen";
+"empty.addFirstTransaction" = "Füge deine erste Transaktion hinzu.";
+
+/* Onboarding */
+"onboarding.language.title" = "Sprache wählen";
+"onboarding.language.subtitle" = "Du kannst dies jederzeit in den Einstellungen ändern.";
+"onboarding.language.picker" = "Sprache";
+
+"onboarding.currency.title" = "Währung wählen";
+"onboarding.currency.subtitle" = "Wird standardmäßig für neue Transaktionen verwendet.";
+"onboarding.currency.picker" = "Währung";
+
+"onboarding.next" = "Weiter";
+"onboarding.start" = "Start";
+"onboarding.back" = "Zurück";
+
+/* Settings */
+"settings.title" = "Einstellungen";
+"settings.general" = "Allgemein";
+"settings.premium" = "Premium";
+"settings.data" = "Daten";
+"settings.categories" = "Kategorien & Quellen";
+"settings.about" = "Über die App";
+
+/* General */
+"general.title" = "Allgemein";
+"general.section.preferences" = "Einstellungen";
+"general.section.maintenance" = "Wartung";
+"general.section.account" = "Konto";
+
+"general.currency" = "Währung";
+"general.language" = "Sprache";
+"general.language_hint" = "Der Sprachwechsel wird verfügbar, sobald alle Übersetzungen hinzugefügt sind.";
+
+"general.clear_cache" = "Cache leeren";
+"general.cache.message" = "Es gibt derzeit keinen Cache zum Leeren.";
+
+"general.restart_onboarding" = "Onboarding neu starten";
+"general.reset_transactions" = "Transaktionen zurücksetzen";
+"general.reset_hint" = "Transaktionen werden gelöscht, Kategorien bleiben erhalten.";
+
+"general.sign_out" = "Abmelden";
+"general.signout.message" = "Abmelden wird verfügbar, sobald Konten hinzugefügt werden.";
+
+/* Alerts */
+"general.alert.info.title" = "Info";
+"general.alert.reset_tx.title" = "Transaktionen zurücksetzen?";
+"general.alert.reset_tx.message" = "Alle Transaktionen werden dauerhaft gelöscht.";
+"general.alert.restart_onboarding.title" = "Onboarding neu starten?";
+"general.alert.restart_onboarding.message" = "Die Ersteinrichtung wird erneut angezeigt.";
+
+/* Transactions */
+"transactions.search.prompt" = "Suchen";
+"transactions.empty.month" = "Füge eine Transaktion hinzu, um sie hier zu sehen.";
+"transactions.empty.all" = "Füge eine Transaktion hinzu, um sie hier zu sehen.";

@@ -1,0 +1,144 @@
+//
+//  Localizable.strings
+//  FinanceTracker
+//
+//  Created by Dmitry Logachev (USA) on 15.01.2026.
+//
+
+/* Tabs */
+"tab.dashboard" = "Панель";
+"tab.transactions" = "Транзакції";
+"tab.add" = "Додати";
+"tab.analytics" = "Аналітика";
+"tab.settings" = "Налаштування";
+
+/* Titles */
+"title.dashboard" = "Панель";
+"title.transactions" = "Транзакції";
+"title.add" = "Додати";
+"title.analytics" = "Аналітика";
+"title.settings" = "Налаштування";
+
+/* Onboarding – Language */
+"onboarding.language.title" = "Оберіть мову";
+"onboarding.language.subtitle" = "Ви зможете змінити її пізніше в налаштуваннях.";
+"onboarding.language.picker" = "Мова";
+
+/* Onboarding – Currency */
+"onboarding.currency.title" = "Оберіть валюту";
+"onboarding.currency.subtitle" = "Вона використовуватиметься за замовчуванням для нових транзакцій.";
+"onboarding.currency.picker" = "Валюта";
+
+/* Onboarding – Actions */
+"onboarding.next" = "Далі";
+"onboarding.start" = "Почати";
+"onboarding.back" = "Назад";
+
+/* Settings */
+"settings.title" = "Налаштування";
+"settings.general" = "Загальні";
+"settings.premium" = "Преміум";
+"settings.data" = "Дані";
+"settings.categories" = "Категорії та джерела";
+"settings.about" = "Про додаток";
+
+/* Premium */
+"premium.status.active" = "Активний";
+"premium.status.free" = "Безкоштовно";
+
+/* General Settings */
+"settings.general.title" = "Загальні";
+"settings.general.preferences" = "Параметри";
+"settings.general.currency" = "Валюта";
+"settings.general.language" = "Мова";
+"settings.general.maintenance" = "Обслуговування";
+"settings.general.clearCache" = "Очистити кеш";
+"settings.general.restartOnboarding" = "Перезапустити налаштування";
+"settings.general.resetTransactions" = "Скинути транзакції";
+"settings.general.account" = "Обліковий запис";
+"settings.general.signOut" = "Вийти";
+
+/* General (New keys) */
+"general.title" = "Загальні";
+
+"general.section.preferences" = "Параметри";
+"general.section.maintenance" = "Обслуговування";
+"general.section.account" = "Обліковий запис";
+
+"general.currency" = "Валюта";
+"general.language" = "Мова";
+
+"general.language_hint" = "Перемикання мови буде повністю доступне після додавання ключів локалізації.";
+
+"general.clear_cache" = "Очистити кеш";
+"general.cache.message" = "Наразі немає кешу для очищення. Ця функція стане корисною після додавання офлайн-кешування.";
+
+"general.restart_onboarding" = "Перезапустити налаштування";
+"general.reset_transactions" = "Скинути транзакції";
+"general.reset_hint" = "Скидання транзакцій видаляє всі транзакції, але зберігає категорії та джерела.";
+
+"general.sign_out" = "Вийти";
+"general.signout.message" = "Вихід буде доступний після додавання облікових записів (iCloud / вхід).";
+
+/* Alerts */
+"general.alert.info.title" = "Інформація";
+"general.alert.ok" = "OK";
+
+"general.alert.cancel" = "Скасувати";
+"general.alert.reset" = "Скинути";
+"general.alert.restart" = "Перезапустити";
+
+"general.alert.reset_tx.title" = "Скинути транзакції?";
+"general.alert.reset_tx.message" = "Це остаточно видалить усі транзакції на цьому пристрої.";
+
+"general.alert.restart_onboarding.title" = "Перезапустити налаштування?";
+"general.alert.restart_onboarding.message" = "Ви знову побачите налаштування мови та валюти. Транзакції буде збережено.";
+
+"general.reset_success.message" = "Транзакції успішно видалено.";
+"general.reset_failed.message" = "Помилка скидання.";
+"general.info.default" = "OK.";
+
+/* Common */
+"common.cancel" = "Скасувати";
+"common.ok" = "OK";
+"common.delete" = "Видалити";
+"common.edit" = "Редагувати";
+"common.today" = "Сьогодні";
+"common.yesterday" = "Вчора";
+
+/* Empty states */
+"empty.noData" = "Даних ще немає";
+"empty.noTransactions" = "Транзакцій немає";
+"empty.addFirstTransaction" = "Додайте першу транзакцію, щоб розпочати.";
+
+/* Data */
+"data.title" = "Дані";
+
+"data.section.export" = "Експорт";
+"data.section.import" = "Імпорт";
+
+"data.export.csv.month" = "Експорт CSV (цього місяця)";
+"data.export.csv.all" = "Експорт CSV (усі дані)";
+
+"data.export.pdf.month" = "Експорт PDF (цього місяця)";
+"data.export.pdf.all" = "Експорт PDF (усі дані)";
+
+"data.export.excel.month" = "Експорт Excel/Numbers (цього місяця)";
+"data.export.excel.all" = "Експорт Excel/Numbers (усі дані)";
+
+"data.export.share_last.format" = "Поділитися останнім експортом (%@)";
+
+"data.import.csv" = "Імпорт CSV";
+"data.premium_hint" = "Преміум відкриває імпорт CSV та експорт усіх даних.";
+
+"data.alert.import_result.title" = "Результат імпорту";
+"data.alert.export_error.title" = "Помилка експорту";
+
+"data.import.result.imported.format" = "Імпортовано: %d";
+"data.import.result.skipped.format" = "Пропущено: %d";
+"data.import.result.created_categories.format" = "Створено категорій: %d";
+"data.import.result.created_sources.format" = "Створено джерел: %d";
+"data.import.result.first_error.format" = "Перша помилка: %@";
+
+"data.import.failed.format" = "Помилка імпорту: %@";
+"data.export.failed.format" = "Помилка експорту: %@";

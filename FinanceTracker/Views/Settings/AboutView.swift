@@ -12,14 +12,14 @@ struct AboutView: View {
         List {
             Section {
                 HStack {
-                    Text("App")
+                    Text("about.app")
                     Spacer()
-                    Text("FinanceTracker")
+                    Text("about.app_name") // можно и ключом, и Bundle display name
                         .foregroundStyle(.secondary)
                 }
 
                 HStack {
-                    Text("Version")
+                    Text("about.version")
                     Spacer()
                     Text(appVersionString)
                         .foregroundStyle(.secondary)
@@ -27,12 +27,12 @@ struct AboutView: View {
             }
 
             Section {
-                Text("Privacy Policy and Terms will be added before App Store release.")
+                Text("about.privacy_hint")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("About")
+        .navigationTitle("settings.about")
         .listStyle(.insetGrouped)
     }
 
@@ -41,8 +41,4 @@ struct AboutView: View {
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
         return "\(v) (\(b))"
     }
-}
-
-#Preview {
-    NavigationStack { AboutView() }
 }

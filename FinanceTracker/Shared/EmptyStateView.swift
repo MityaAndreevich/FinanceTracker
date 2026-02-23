@@ -9,18 +9,19 @@ import SwiftUI
 
 struct EmptyStateView: View {
     let systemImage: String
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
 
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.system(size: 44, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             Text(title)
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.title3.weight(.semibold))
+                .multilineTextAlignment(.center)
 
             Text(message)
                 .font(.body)
@@ -30,13 +31,17 @@ struct EmptyStateView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 280)
         .padding(.vertical, 16)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("empty_state_view")
     }
 }
 
-#Preview {
+#Preview("Empty State") {
     EmptyStateView(
         systemImage: "tray",
-        title: "No transactions yet",
-        message: "Add your first income or expense to see analytics and dashboard insights."
+        title: "empty.noTransactions",
+        message: "empty.addFirstTransaction"
     )
+    .padding()
 }

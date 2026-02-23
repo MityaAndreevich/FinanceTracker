@@ -10,23 +10,94 @@ import SwiftData
 
 @Model
 final class Category {
-    var id: UUID
+
+    /// ✅ Стабильный внешний идентификатор (для UI-selection, экспорта/импорта, синка в будущем).
+    /// НЕ путать с Category.ID (это PersistentIdentifier SwiftData).
+    var uuid: UUID
+
+    /// Legacy / fallback (оставляем, чтобы не ломать старые данные и миграции)
     var name: String
+
+    /// Localization key для системных категорий (например "category.food")
+    var nameKey: String?
+
+    /// Если юзер создал категорию руками — храним его текст отдельно
+    var nameCustom: String?
+
+    /// "expense" | "income"
     var kindRaw: String
+
+    /// SF Symbol name
     var icon: String?
+
+    /// Sort order
     var order: Int
 
     init(
-        id: UUID = UUID(),
+        uuid: UUID = UUID(),
         name: String,
         kindRaw: String,
         icon: String? = nil,
-        order: Int = 0
+        order: Int = 0,
+        nameKey: String? = nil,
+        nameCustom: String? = nil
     ) {
-        self.id = id
+        self.uuid = uuid
         self.name = name
         self.kindRaw = kindRaw
         self.icon = icon
         self.order = order
+        self.nameKey = nameKey
+        self.nameCustom = nameCustom
+    }
+}
+
+// MARK: - Helpers
+
+extension Category {
+
+    /// Есть ли валидный key для локализации
+    var hasNameKey: Bool {
+        !(nameKey?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+    }
+
+    /// Пользовательская ли категория (введена руками)
+    var isUserDefined: Bool {
+        !(nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+    }
+
+    /// Возвращает именно “человеческое” имя категории:
+    /// 1) user-defined text
+    /// 2) localized by key (если ключ есть и реально найден)
+    /// 3) fallback: legacy name
+    func displayName(locale: Locale = .current) -> String {
+        if let custom = nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !custom.isEmpty {
+            return custom
+        }
+
+        if let key = nameKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !key.isEmpty {
+            let localized = NSLocalizedString(key, comment: "")
+            if localized != key { return localized }
+        }
+
+        return name
+    }
+
+    /// Ключ/текст для `Text(LocalizedStringKey(...))`
+    /// 1) custom text (покажется как есть)
+    /// 2) localization key (локализуется через Localizable.strings)
+    /// 3) legacy name
+    var displayKeyOrName: String {
+        if let custom = nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !custom.isEmpty {
+            return custom
+        }
+        if let key = nameKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !key.isEmpty {
+            return key
+        }
+        return name
     }
 }

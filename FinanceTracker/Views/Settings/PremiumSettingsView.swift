@@ -14,82 +14,94 @@ struct PremiumSettingsView: View {
     @State private var showPaywall = false
 
     var body: some View {
-        List {
-            Section("Status") {
+        let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
+
+        return List {
+            Section("premium.section.status") {
                 HStack {
-                    Label("Premium", systemImage: "crown")
+                    Label {
+                        Text("settings.premium")
+                    } icon: {
+                        Image(systemName: "crown")
+                    }
+
                     Spacer()
-                    Text(pm.isPremium ? "Active" : "Free")
+
+                    Text(statusKey)
                         .foregroundStyle(pm.isPremium ? .green : .secondary)
                 }
 
                 if !pm.isPremium {
-                    Button {
-                        showPaywall = true
-                    } label: {
-                        Label("Upgrade to Premium", systemImage: "star.circle.fill")
+                    Button { showPaywall = true } label: {
+                        Label("premium.upgrade", systemImage: "star.circle.fill")
                     }
                 }
             }
 
-            Section("Manage") {
-                Button {
-                    openManageSubscriptions()
-                } label: {
-                    Label("Manage Subscription", systemImage: "gearshape")
-                }
+            Section("premium.section.manage") {
+                if pm.hasSubscriptionProducts {
+                    Button {
+                        openManageSubscriptions()
+                    } label: {
+                        Label("premium.manage_subscription", systemImage: "gearshape")
+                    }
 
-                Button {
-                    redeemOfferCode()
-                } label: {
-                    Label("Redeem Code", systemImage: "qrcode")
+                    Button {
+                        redeemOfferCode()
+                    } label: {
+                        Label("premium.redeem_code", systemImage: "qrcode")
+                    }
                 }
 
                 Button {
                     Task { await pm.restorePurchases() }
                 } label: {
-                    Label("Restore Purchases", systemImage: "arrow.clockwise")
+                    Label("premium.restore", systemImage: "arrow.clockwise")
                 }
             }
 
-            Section {
-                Text("Use “Redeem Code” if you have a promo code for Premium.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            // Подсказка про redeem имеет смысл только когда есть подписки/коды
+            if pm.hasSubscriptionProducts {
+                Section {
+                    Text("premium.redeem_hint")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .navigationTitle("Premium")
+        .navigationTitle("settings.premium")
         .listStyle(.insetGrouped)
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
+        .sheet(isPresented: $showPaywall) { PaywallView() }
+        .task {
+            // При заходе на экран — перечитать entitlement
+            await pm.refreshStatus()
         }
     }
 
     // MARK: - Manage subscription
 
     private func openManageSubscriptions() {
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-        Task {
-            try? await AppStore.showManageSubscriptions(in: scene)
-        }
+        guard let scene = activeWindowScene else { return }
+        Task { try? await AppStore.showManageSubscriptions(in: scene) }
     }
 
     private func redeemOfferCode() {
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first else { return }
+        guard let scene = activeWindowScene else { return }
 
         if #available(iOS 18.0, *) {
-            Task {
-                try? await AppStore.presentOfferCodeRedeemSheet(in: scene)
-            }
+            Task { try? await AppStore.presentOfferCodeRedeemSheet(in: scene) }
         } else {
             // iOS 14–17 fallback (deprecated, but works)
             SKPaymentQueue.default().presentCodeRedemptionSheet()
         }
     }
-}
 
-#Preview {
-    NavigationStack { PremiumSettingsView() }
+    private var activeWindowScene: UIWindowScene? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        ?? UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first
+    }
 }
