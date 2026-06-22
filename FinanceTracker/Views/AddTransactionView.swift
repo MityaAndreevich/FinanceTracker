@@ -390,7 +390,7 @@ private struct AddCategorySheet: View {
             onCreated(category)
             dismiss()
         } catch {
-            print("Failed to create category: \(error)")
+            print("Failed to create category: \(error.localizedDescription)")
         }
     }
 }
@@ -445,7 +445,7 @@ private struct AddSourceSheet: View {
             onCreated(source)
             dismiss()
         } catch {
-            print("Failed to create source: \(error)")
+            print("Failed to create source: \(error.localizedDescription)")
         }
     }
 }
