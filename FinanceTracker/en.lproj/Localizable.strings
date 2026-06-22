@@ -34,6 +34,17 @@
 "common.error" = "Error";
 
 /* ======================================================
+   Authentication / Lock screen
+   ====================================================== */
+"auth.required.title" = "App Locked";
+"auth.required.message" = "Authenticate to access your financial data.";
+"auth.retry" = "Try Again";
+"auth.setting.title" = "Require Authentication";
+"auth.setting.always" = "Always";
+"auth.setting.after_5min" = "After 5 Minutes";
+"auth.setting.never" = "Never";
+
+/* ======================================================
    Scope / Period
    ====================================================== */
 "scope.picker.title" = "Scope";

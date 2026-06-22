@@ -13,7 +13,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if hasCompletedOnboarding {
-                ContentView()
+                AuthGateView()
             } else {
                 OnboardingView()
             }
