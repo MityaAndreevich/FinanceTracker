@@ -13,10 +13,9 @@ struct PaywallView: View {
     @StateObject private var pm = PurchaseManager.shared
 
     // MARK: - Legal URLs
-    // NOTE: Replace these placeholders with your real published URLs before App Store submission.
-    // Apple's standard EULA can be used in App Store Connect if you don't want a custom one.
     private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    private static let privacyURL = URL(string: "https://example.com/financetracker/privacy")!
+    // TODO: replace with published GitHub Pages URL once docs/ site is live.
+    private static let privacyURL = URL(string: "https://github.com/MityaAndreevich/FinanceTracker/blob/main/docs/PRIVACY_POLICY.md")!
 
     var body: some View {
         NavigationStack {
