@@ -22,3 +22,8 @@ CLAUDE.md
 .cursor/
 .aider*
 .aiderignore
+
+# Internal strategy / planning docs (not for public repo)
+PRODUCT_SPEC.md
+MARKET_ANALYSIS.md
+SECURITY_THREAT_MODEL.md
