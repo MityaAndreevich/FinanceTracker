@@ -15,63 +15,34 @@ struct TransactionsView: View {
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    @State private var scope: Scope = .month
+    @State private var scope: PeriodScope = .currentMonth
     @State private var searchText: String = ""
 
     @State private var editTx: Transaction?
 
-    enum Scope: String, CaseIterable, Identifiable {
-        case month
-        case all
-        var id: String { rawValue }
-
-        var titleKey: LocalizedStringKey {
-            switch self {
-            case .month: "scope.month"
-            case .all: "scope.all"
-            }
-        }
-
-        var emptyMessageKey: LocalizedStringKey {
-            switch self {
-            case .month: "transactions.empty.month"
-            case .all: "transactions.empty.all"
-            }
-        }
-    }
-
     // MARK: - Derived
 
     private var filtered: [Transaction] {
-        let base: [Transaction]
-        switch scope {
-        case .all:
-            base = transactions
-        case .month:
-            let cal = Calendar.current
-            let now = Date()
-            base = transactions.filter { cal.isDate($0.date, equalTo: now, toGranularity: .month) }
-        }
+        let base = scope.filter(transactions)
 
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return base }
 
-        let lower = q.lowercased()
+        // Diacritic-insensitive, case-insensitive match.
+        // "Cafe" should match "Café", "Senor" should match "Señor".
+        let needle = q.folded()
         return base.filter { tx in
-            let merchant = (tx.merchant ?? "").lowercased()
+            let merchant = (tx.merchant ?? "").folded()
+            let categoryVisible = tx.category.displayName().folded()
+            let categoryLegacy = tx.category.name.folded()
+            let source = (tx.source?.name ?? "").folded()
+            let note = (tx.note ?? "").folded()
 
-            // ✅ Search should match what user sees
-            let categoryVisible = tx.category.displayName().lowercased()
-            let categoryLegacy = tx.category.name.lowercased()
-
-            let source = (tx.source?.name ?? "").lowercased()
-            let note = (tx.note ?? "").lowercased()
-
-            return merchant.contains(lower)
-            || categoryVisible.contains(lower)
-            || categoryLegacy.contains(lower)
-            || source.contains(lower)
-            || note.contains(lower)
+            return merchant.contains(needle)
+            || categoryVisible.contains(needle)
+            || categoryLegacy.contains(needle)
+            || source.contains(needle)
+            || note.contains(needle)
         }
     }
 
@@ -88,6 +59,13 @@ struct TransactionsView: View {
 
     var body: some View {
         List {
+            Section {
+                PeriodSelector(scope: $scope)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 4, trailing: 12))
+            }
+
             if filtered.isEmpty {
                 emptyStateRow
             } else {
@@ -98,7 +76,6 @@ struct TransactionsView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("title.transactions")
-        .toolbar { scopeToolbar }
         .searchable(
             text: $searchText,
             placement: .navigationBarDrawer(displayMode: .automatic),
@@ -116,20 +93,9 @@ struct TransactionsView: View {
         EmptyStateView(
             systemImage: "list.bullet.rectangle",
             title: "empty.noTransactions",
-            message: scope.emptyMessageKey
+            message: scope.isMonth ? "transactions.empty.month" : "transactions.empty.all"
         )
         .listRowBackground(Color.clear)
-    }
-
-    private var scopeToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            Picker("scope.picker.title", selection: $scope) {
-                ForEach(Scope.allCases) { s in
-                    Text(s.titleKey).tag(s)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
     }
 
     private func daySection(for day: Date) -> some View {
@@ -200,7 +166,6 @@ private struct TransactionRow: View {
                     .font(.headline)
 
                 HStack(spacing: 6) {
-                    // ✅ Localized display (key or custom)
                     Text(LocalizedStringKey(tx.category.displayKeyOrName))
 
                     if let sourceName = tx.source?.name, !sourceName.isEmpty {
@@ -214,10 +179,23 @@ private struct TransactionRow: View {
 
             Spacer()
 
-            Text(formattedAmount)
-                .font(.headline)
-                .foregroundStyle(isIncome ? .green : .red)
-                .monospacedDigit()
+            // ✅ Color-blind safe: explicit sign + arrow icon, color is decorative.
+            HStack(spacing: 4) {
+                Image(systemName: tx.isIncome ? "arrow.down.left" : "arrow.up.right")
+                    .font(.caption.weight(.bold))
+                    .accessibilityHidden(true)
+
+                Text(signedAmount)
+                    .font(.headline)
+                    .monospacedDigit()
+            }
+            .foregroundStyle(tx.isIncome ? .green : .red)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")
+                + Text(", ")
+                + Text(Money.format(cents: tx.amountCents, currencyCode: tx.currency))
+            )
         }
         .contentShape(Rectangle())
         .padding(.vertical, 4)
@@ -226,45 +204,24 @@ private struct TransactionRow: View {
     private var primaryTitle: String {
         let merchant = (tx.merchant ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !merchant.isEmpty { return merchant }
-
-        // ✅ если merchant пуст — показываем видимое имя категории
         return tx.category.displayName()
     }
 
-    private var isIncome: Bool { tx.typeRaw == "income" }
-
-    private var formattedAmount: String {
-        MoneyFormatter.shared.string(cents: tx.amountCents, currencyCode: tx.currency)
+    private var signedAmount: String {
+        Money.formatSigned(
+            cents: tx.amountCents,
+            isPositive: tx.isIncome,
+            currencyCode: tx.currency
+        )
     }
 }
 
-// MARK: - Money formatter (currency-safe cache)
+// MARK: - String folding helper
 
-private final class MoneyFormatter {
-    static let shared = MoneyFormatter()
-
-    private var cache: [String: NumberFormatter] = [:]
-    private let lock = NSLock()
-
-    private init() {}
-
-    func string(cents: Int, currencyCode: String) -> String {
-        let amount = Decimal(cents) / 100
-        let formatter = formatter(for: currencyCode)
-        return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
-    }
-
-    private func formatter(for currencyCode: String) -> NumberFormatter {
-        lock.lock()
-        defer { lock.unlock() }
-
-        if let f = cache[currencyCode] { return f }
-
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = currencyCode
-        cache[currencyCode] = f
-        return f
+private extension String {
+    /// Lowercase + strip diacritics for substring search.
+    func folded() -> String {
+        folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
     }
 }
 

@@ -11,25 +11,14 @@ import Charts
 
 struct AnalyticsView: View {
     @Environment(\.locale) private var locale
-    
+
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    @State private var scope: Scope = .month
+    @State private var scope: PeriodScope = .currentMonth
     @State private var chartKind: ChartKind = .line
-
-    enum Scope: String, CaseIterable, Identifiable {
-        case month
-        case all
-        var id: String { rawValue }
-
-        var titleKey: LocalizedStringKey {
-            switch self {
-            case .month: "scope.month"
-            case .all: "scope.all"
-            }
-        }
-    }
 
     enum ChartKind: String, CaseIterable, Identifiable {
         case pie
@@ -47,40 +36,33 @@ struct AnalyticsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Picker(LocalizedStringKey("scope.picker.title"), selection: $scope) {
-                        ForEach(Scope.allCases) { s in
-                            Text(s.titleKey).tag(s)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+        List {
+            Section {
+                PeriodSelector(scope: $scope)
 
-                    Picker(LocalizedStringKey("analytics.chart.picker.title"), selection: $chartKind) {
-                        ForEach(ChartKind.allCases) { k in
-                            Text(k.titleKey).tag(k)
-                        }
+                Picker(LocalizedStringKey("analytics.chart.picker.title"), selection: $chartKind) {
+                    ForEach(ChartKind.allCases) { k in
+                        Text(k.titleKey).tag(k)
                     }
-                    .pickerStyle(.segmented)
                 }
-
-                if filteredTransactions.isEmpty {
-                    EmptyStateView(
-                        systemImage: "chart.bar.xaxis",
-                        title: "empty.noData",
-                        message: "analytics.empty.message"
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    combinedSection
-                    breakdownExpensesByCategorySection
-                    breakdownIncomeBySourceSection
-                }
+                .pickerStyle(.segmented)
             }
-            .navigationTitle(LocalizedStringKey("title.analytics"))
-            .listStyle(.insetGrouped)
+
+            if filteredTransactions.isEmpty {
+                EmptyStateView(
+                    systemImage: "chart.bar.xaxis",
+                    title: "empty.noData",
+                    message: "analytics.empty.message"
+                )
+                .listRowBackground(Color.clear)
+            } else {
+                combinedSection
+                breakdownExpensesByCategorySection
+                breakdownIncomeBySourceSection
+            }
         }
+        .navigationTitle(LocalizedStringKey("title.analytics"))
+        .listStyle(.insetGrouped)
     }
 
     // MARK: - Combined
@@ -102,8 +84,9 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.income"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.incomeCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: periodSummary.incomeCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
             .font(.footnote)
 
@@ -111,8 +94,9 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.expense"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.expenseCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: periodSummary.expenseCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
             .font(.footnote)
 
@@ -120,8 +104,9 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.net"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.netCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: periodSummary.netCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
+                    .monospacedDigit()
             }
             .font(.footnote)
         }
@@ -225,8 +210,9 @@ struct AnalyticsView: View {
                     HStack {
                         Text(LocalizedStringKey(row.name))
                         Spacer()
-                        Text(formatCents(row.amountCents, currencyCode: row.currency))
+                        Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
+                            .monospacedDigit()
                     }
                     .font(.footnote)
                 }
@@ -255,8 +241,9 @@ struct AnalyticsView: View {
                     HStack {
                         Text(row.name)
                         Spacer()
-                        Text(formatCents(row.amountCents, currencyCode: row.currency))
+                        Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
+                            .monospacedDigit()
                     }
                     .font(.footnote)
                 }
@@ -267,14 +254,7 @@ struct AnalyticsView: View {
     // MARK: - Filtering
 
     private var filteredTransactions: [Transaction] {
-        switch scope {
-        case .all:
-            return transactions
-        case .month:
-            let cal = Calendar.current
-            let now = Date()
-            return transactions.filter { cal.isDate($0.date, equalTo: now, toGranularity: .month) }
-        }
+        scope.filter(transactions)
     }
 
     // MARK: - Series
@@ -294,15 +274,15 @@ struct AnalyticsView: View {
     private var seriesValues: [SeriesValue] {
         let list = filteredTransactions
         let cal = Calendar.current
-        let currency = list.first?.currency ?? "USD"
+        let currency = defaultCurrencyCode
 
-        let bucket: (Date) -> Date = {
+        let bucket: (Date) -> Date = { date in
             switch scope {
             case .month:
-                return cal.startOfDay(for: $0)
+                return cal.startOfDay(for: date)
             case .all:
-                let comps = cal.dateComponents([.year, .month], from: $0)
-                return cal.date(from: comps) ?? cal.startOfDay(for: $0)
+                let comps = cal.dateComponents([.year, .month], from: date)
+                return cal.date(from: comps) ?? cal.startOfDay(for: date)
             }
         }
 
@@ -310,7 +290,7 @@ struct AnalyticsView: View {
         for tx in list {
             let key = bucket(tx.date)
             var cur = dict[key] ?? (0, 0)
-            if tx.typeRaw == "income" { cur.income += tx.amountCents }
+            if tx.isIncome { cur.income += tx.amountCents }
             else { cur.expense += tx.amountCents }
             dict[key] = cur
         }
@@ -345,12 +325,12 @@ struct AnalyticsView: View {
 
     private var periodSummary: PeriodSummary {
         let list = filteredTransactions
-        let currency = list.first?.currency ?? "USD"
+        let currency = defaultCurrencyCode
 
         var income = 0
         var expense = 0
         for tx in list {
-            if tx.typeRaw == "income" { income += tx.amountCents }
+            if tx.isIncome { income += tx.amountCents }
             else { expense += tx.amountCents }
         }
 
@@ -422,15 +402,14 @@ struct AnalyticsView: View {
     // MARK: - Breakdown Data
 
     private var expenseByCategory: [ChartRow] {
-        let list = filteredTransactions.filter { $0.typeRaw == "expense" }
-        guard let currency = list.first?.currency else { return [] }
+        let list = filteredTransactions.filter { $0.isExpense }
+        let currency = defaultCurrencyCode
 
         struct Acc {
             var nameKeyOrName: String
             var cents: Int
         }
 
-        // ✅ ключ = внешний стабильный UUID
         var sums: [UUID: Acc] = [:]
 
         for tx in list {
@@ -458,8 +437,8 @@ struct AnalyticsView: View {
     }
 
     private var incomeBySource: [ChartRow] {
-        let list = filteredTransactions.filter { $0.typeRaw == "income" }
-        guard let currency = list.first?.currency else { return [] }
+        let list = filteredTransactions.filter { $0.isIncome }
+        let currency = defaultCurrencyCode
 
         var sums: [String: Int] = [:]
         for tx in list {
@@ -569,40 +548,6 @@ struct AnalyticsView: View {
         let base: CGFloat = 160
         let extraPerRow: CGFloat = 24
         return max(base, CGFloat(rows) * extraPerRow)
-    }
-
-    private func formatCents(_ cents: Int, currencyCode: String) -> String {
-        let amount = Decimal(cents) / 100
-        return MoneyFormatter.shared.string(amount: amount, currencyCode: currencyCode)
-    }
-}
-
-// MARK: - Money formatter (currency-safe cache)
-
-private final class MoneyFormatter {
-    static let shared = MoneyFormatter()
-
-    private var cache: [String: NumberFormatter] = [:]
-    private let lock = NSLock()
-
-    private init() {}
-
-    func string(amount: Decimal, currencyCode: String) -> String {
-        let f = formatter(for: currencyCode)
-        return f.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
-    }
-
-    private func formatter(for currencyCode: String) -> NumberFormatter {
-        lock.lock()
-        defer { lock.unlock() }
-
-        if let f = cache[currencyCode] { return f }
-
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = currencyCode
-        cache[currencyCode] = f
-        return f
     }
 }
 

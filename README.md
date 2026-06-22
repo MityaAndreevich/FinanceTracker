@@ -1,118 +1,112 @@
 # FinanceTracker
 
-FinanceTracker is a lightweight personal finance tracking app built with **SwiftUI** and **SwiftData**.
-The app focuses on simplicity, clarity, and data ownership: all financial data is stored locally on the user’s device.
+A lightweight personal finance tracker for iOS, built with **SwiftUI** and **SwiftData**.
+Focus on simplicity, clarity, and data ownership — every financial record stays on the user's device.
 
-This project is designed as a production-ready MVP following iOS best practices.
+> For implementation details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ---
 
 ## Features
 
-### Core
-- Add income and expense transactions
-- Categorize transactions (expense / income categories)
-- Optional income sources (salary, freelance, gig work, etc.)
-- Monthly dashboard:
-  - Total income
-  - Total expenses
-  - Net balance
-- Transactions list:
-  - Income highlighted in green
-  - Expenses highlighted in red
-  - Filter: This Month / All
-  - Transaction details screen
-  - Edit existing transactions
+### Tracking
+- Add income and expense transactions with optional tax, merchant, and free-form note
+- Categorize transactions with seeded defaults or custom categories (custom SF Symbol icon)
+- Track which account/card paid for each transaction (Cash, Visa, Chase, etc.)
+- Edit and delete from the transactions list with swipe actions and a context menu
+
+### Dashboard
+- Monthly summary cards: income, expenses, net balance
+- Top-5 expense categories and top-5 income accounts at a glance
+- Month-by-month navigation (previous month / next month / all time)
 
 ### Analytics
-- Monthly expenses grouped by category
-- Monthly income grouped by source
-- Net income grouped by source
+- Line, bar, and pie charts powered by Swift Charts
+- Expenses grouped by category, income grouped by account
+- Diacritic-insensitive search across merchant / category / account / note
 
-### Data Safety
-- Prevent deletion of categories or sources that are already used by transactions
-- All data stored locally using SwiftData
+### Export & Import
+- CSV, TSV (Excel-friendly), and PDF export for the current month
+- Full all-time export under Premium
+- CSV import with automatic category/account deduplication and a per-row error report
+- All data leaves and re-enters the device through the system Share Sheet — never via the network
 
-### CSV Import / Export
-- Export transactions as CSV:
-  - This month
-  - All data
-- Share CSV via the system Share Sheet
-- Import CSV from Files
-- Automatic creation of missing categories and sources during import
-- Import summary with imported / skipped rows and errors
-
----
-
-## Tech Stack
-
-- SwiftUI
-- SwiftData
-- iOS 17+
-- Swift Charts (planned)
-- StoreKit 2 (planned)
-
----
-
-## CSV Format
-
-Exported CSV columns:
-### Column details
-- `date`: ISO format (`YYYY-MM-DD`)
-- `type`: `income` or `expense`
-- `amount`: decimal number (e.g. `12.34`)
-- `currency`: ISO currency code (e.g. `USD`)
-- `category`: category name (required)
-- `source`: income source (optional)
-- `tax`: decimal number (optional)
-- `note`: free text (optional)
-- `merchant`: free text (optional)
-
----
-
-## Data & Privacy
-
-- FinanceTracker does **not** collect or transmit any personal data
+### Privacy
 - No analytics SDKs, no tracking, no ads
-- All data is stored locally on the device
-- CSV import/export is handled entirely on-device
+- All data lives in a local SwiftData store
+- Ships with Apple's privacy manifest (`PrivacyInfo.xcprivacy`)
+
+### Premium (StoreKit 2)
+- Monthly, yearly, and lifetime tiers
+- Paywall includes Apple-required auto-renewal disclosure and Terms / Privacy links
+- Restore Purchases supported
+
+### Localization
+- 28 languages out of the box
+- Currency selection per user; transactions are denominated in the user's chosen currency
+- RTL-aware layout handling for Arabic and Hebrew
 
 ---
 
-## Getting Started
+## Tech stack
 
-1. Clone the repository
-2. Open `FinanceTracker.xcodeproj` in Xcode
-3. Select an iOS Simulator or a real device
-4. Build and run the app
+- **iOS 17+**, Swift 5.9+
+- **SwiftUI** for all UI
+- **SwiftData** for persistence
+- **Swift Charts** for analytics
+- **StoreKit 2** for in-app purchases
+- **No third-party dependencies** — native APIs only
 
 ---
 
-## Project Goals
+## CSV format
 
-- Simple and intuitive personal finance tracking
-- Clean UX following iOS Human Interface Guidelines
-- Full user control over financial data
-- Reliable import/export without vendor lock-in
+```
+date,type,amount,currency,category,source,tax,note,merchant
+```
+
+| Column   | Description                                       |
+|----------|---------------------------------------------------|
+| `date`   | ISO format (`YYYY-MM-DD`)                         |
+| `type`   | `income` or `expense`                             |
+| `amount` | Decimal (e.g. `12.34`)                            |
+| `currency` | ISO currency code (e.g. `USD`)                  |
+| `category` | Category name (required)                        |
+| `source` | Account name (optional)                           |
+| `tax`    | Decimal tax amount (optional)                     |
+| `note`   | Free text (optional)                              |
+| `merchant` | Free text (optional)                            |
+
+Parser is RFC 4180 compliant — quoted commas, embedded quotes, and multiline cells are handled.
+
+---
+
+## Getting started
+
+```bash
+git clone https://github.com/<user>/FinanceTracker.git
+cd FinanceTracker
+open FinanceTracker.xcodeproj
+```
+
+Pick an iOS Simulator (iPhone 15+ recommended), build and run.
 
 ---
 
 ## Roadmap
 
-### Short-term
-- UI polish for production release
-- Localization (multiple languages)
-- Currency formatting and default currency settings
-- Unit tests for CSV import/export
-- App Store release
+### Pre-launch
+- App icon set (iOS 18 light / dark / tinted)
+- Real published Privacy Policy and Terms URLs
+- StoreKit Connect product setup
+- ASO assets — screenshots, subtitle, keywords, description
 
-### Post-release
-- Charts and visual analytics
-- Receipt scanning (OCR, on-device)
-- Recurring transactions
-- Face ID / app lock
-- iCloud sync
-- Premium features and subscriptions
+### Post-launch
+- Biometric lock (Face ID / Touch ID) on app open
+- iCloud sync via SwiftData + CloudKit
+- Recurring transactions and per-category budgets
+- Receipt OCR with Vision framework
+- Lock Screen and Home Screen widgets
 
 ---
 

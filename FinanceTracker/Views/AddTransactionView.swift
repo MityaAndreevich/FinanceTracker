@@ -18,11 +18,11 @@ struct AddTransactionView: View {
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
     @Query(sort: \Source.name, order: .forward) private var sources: [Source]
 
-    @State private var typeRaw: String = "expense"
+    @State private var typeRaw: String = TransactionType.expense.raw
     @State private var amountText: String = ""
     @State private var merchantText: String = ""
 
-    /// ✅ Best practice: selection по нашему внешнему стабильному uuid
+    /// Selection by stable external uuid.
     @State private var selectedCategoryUUID: UUID? = nil
     @State private var selectedSourceUUID: UUID? = nil
 
@@ -53,7 +53,7 @@ struct AddTransactionView: View {
     }
 
     private var canAdd: Bool {
-        parseCents(from: amountText) != nil && selectedCategoryUUID != nil
+        Money.parseCents(from: amountText) != nil && selectedCategoryUUID != nil
     }
 
     var body: some View {
@@ -63,7 +63,7 @@ struct AddTransactionView: View {
                 amountSection
                 titleSection
                 categorySection
-                sourceSection
+                accountSection
                 dateSection
                 noteSection
             }
@@ -88,7 +88,6 @@ struct AddTransactionView: View {
             }
             .onAppear { ensureValidCategorySelection() }
             .onChange(of: typeRaw) { _, _ in
-                if typeRaw != "income" { selectedSourceUUID = nil }
                 ensureValidCategorySelection()
             }
             .alert("common.error", isPresented: $showError) {
@@ -120,8 +119,8 @@ struct AddTransactionView: View {
     @ViewBuilder private var typeSection: some View {
         Section {
             Picker("add.type.picker.title", selection: $typeRaw) {
-                Text("add.type.expense").tag("expense")
-                Text("add.type.income").tag("income")
+                Text("add.type.expense").tag(TransactionType.expense.raw)
+                Text("add.type.income").tag(TransactionType.income.raw)
             }
             .pickerStyle(.segmented)
         }
@@ -132,13 +131,13 @@ struct AddTransactionView: View {
             TextField("add.amount.placeholder", text: $amountText)
                 .keyboardType(.decimalPad)
                 .onChange(of: amountText) { _, newValue in
-                    amountText = sanitizeMoneyInput(newValue)
+                    amountText = Money.sanitizeInput(newValue)
                 }
 
             TextField("add.tax.placeholder", text: $taxText)
                 .keyboardType(.decimalPad)
                 .onChange(of: taxText) { _, newValue in
-                    taxText = sanitizeMoneyInput(newValue)
+                    taxText = Money.sanitizeInput(newValue)
                 }
         } header: {
             Text("add.section.amount")
@@ -156,7 +155,7 @@ struct AddTransactionView: View {
     @ViewBuilder private var categorySection: some View {
         Section {
             if filteredCategories.isEmpty {
-                Text(typeRaw == "income" ? "add.category.empty_income" : "add.category.empty_expense")
+                Text(typeRaw == TransactionType.income.raw ? "add.category.empty_income" : "add.category.empty_expense")
                     .foregroundStyle(.secondary)
 
                 Button { showAddCategorySheet = true } label: {
@@ -183,7 +182,8 @@ struct AddTransactionView: View {
         }
     }
 
-    @ViewBuilder private var sourceSection: some View {
+    /// Renamed UI label "Source" → "Account". Now available for BOTH income and expense.
+    @ViewBuilder private var accountSection: some View {
         Section {
             Picker("", selection: $selectedSourceUUID) {
                 Text("common.none")
@@ -195,26 +195,19 @@ struct AddTransactionView: View {
                 }
             }
             .labelsHidden()
-            .disabled(typeRaw != "income") // ✅ вот сюда
 
-            if typeRaw == "income" {
-                Button { showAddSourceSheet = true } label: {
-                    Label("add.source.add", systemImage: "plus.circle")
-                }
-
-                Text("add.source.tip")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("add.source.expense_disabled_hint")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            Button { showAddSourceSheet = true } label: {
+                Label("add.source.add", systemImage: "plus.circle")
             }
+
+            Text("add.source.tip")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         } header: {
-            Text(typeRaw == "income" ? "add.section.source" : "add.section.source_optional")
+            Text("add.section.source_optional")
         }
     }
-    
+
     @ViewBuilder private var dateSection: some View {
         Section {
             DatePicker("", selection: $date, displayedComponents: [.date])
@@ -242,12 +235,12 @@ struct AddTransactionView: View {
             showErrorKey("add.error.select_category")
             return
         }
-        guard let amountCents = parseCents(from: amountText) else {
+        guard let amountCents = Money.parseCents(from: amountText) else {
             showErrorKey("add.error.invalid_amount")
             return
         }
 
-        let taxCents = parseCents(from: taxText)
+        let taxCents = Money.parseCents(from: taxText)
 
         let merchant = merchantText.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -255,10 +248,10 @@ struct AddTransactionView: View {
         let tx = Transaction(
             typeRaw: typeRaw,
             amountCents: amountCents,
-            currency: defaultCurrencyCode,
+            currency: defaultCurrencyCode,        // Currency is locked to app default.
             date: date,
             category: category,
-            source: (typeRaw == "income") ? selectedSource : nil,   // ✅
+            source: selectedSource,               // Account available for both income and expense.
             taxCents: taxCents,
             note: cleanNote.isEmpty ? nil : cleanNote,
             merchant: merchant.isEmpty ? nil : merchant
@@ -302,57 +295,13 @@ struct AddTransactionView: View {
         date = Date()
 
         ensureValidCategorySelection()
-
-        if typeRaw != "income" {
-            selectedSourceUUID = nil
-        }
+        // Account selection is preserved across rapid entries — this is desired
+        // when the user is logging multiple expenses from the same card.
     }
 
     private func showErrorKey(_ key: String) {
         errorMessageKey = key
         showError = true
-    }
-
-    // MARK: - Money helpers
-
-    private func parseCents(from text: String) -> Int? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-
-        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
-        let allowed = CharacterSet(charactersIn: "0123456789.")
-        guard normalized.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
-
-        guard let decimal = Decimal(string: normalized) else { return nil }
-
-        let centsDecimal = decimal * 100
-        let rounded = NSDecimalNumber(decimal: centsDecimal)
-            .rounding(accordingToBehavior: nil)
-            .intValue
-        return rounded
-    }
-
-    private func sanitizeMoneyInput(_ input: String) -> String {
-        var s = input.replacingOccurrences(of: ",", with: ".")
-        s = s.filter { $0.isNumber || $0 == "." }
-
-        if let firstDot = s.firstIndex(of: ".") {
-            let afterFirst = s.index(after: firstDot)
-            let prefix = s[..<afterFirst]
-            let suffix = s[afterFirst...].replacingOccurrences(of: ".", with: "")
-            s = String(prefix) + suffix
-        }
-
-        if let dot = s.firstIndex(of: ".") {
-            let afterDot = s.index(after: dot)
-            let decimals = s[afterDot...]
-            if decimals.count > 2 {
-                let end = s.index(afterDot, offsetBy: 2)
-                s = String(s[..<end])
-            }
-        }
-
-        return s
     }
 }
 
@@ -379,7 +328,7 @@ private struct AddCategorySheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
-                    Text(kindRaw == "income" ? "add.category_sheet.type_income" : "add.category_sheet.type_expense")
+                    Text(kindRaw == TransactionType.income.raw ? "add.category_sheet.type_income" : "add.category_sheet.type_expense")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 } header: {

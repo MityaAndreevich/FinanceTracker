@@ -12,67 +12,79 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var pm = PurchaseManager.shared
 
+    // MARK: - Legal URLs
+    // NOTE: Replace these placeholders with your real published URLs before App Store submission.
+    // Apple's standard EULA can be used in App Store Connect if you don't want a custom one.
+    private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+    private static let privacyURL = URL(string: "https://example.com/financetracker/privacy")!
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
+            ScrollView {
+                VStack(spacing: 16) {
 
-                VStack(spacing: 8) {
-                    Image(systemName: "star.circle.fill")
-                        .font(.system(size: 44, weight: .semibold))
-                        .foregroundStyle(.tint)
+                    VStack(spacing: 8) {
+                        Image(systemName: "star.circle.fill")
+                            .font(.system(size: 44, weight: .semibold))
+                            .foregroundStyle(.tint)
 
-                    Text("paywall.title")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        Text("paywall.title")
+                            .font(.title2)
+                            .fontWeight(.semibold)
 
-                    Text("paywall.subtitle")
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                }
-                .padding(.top, 12)
+                        Text("paywall.subtitle")
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+                    .padding(.top, 12)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    FeatureRow(textKey: "paywall.feature.import_csv")
-                    FeatureRow(textKey: "paywall.feature.export_all")
-                    FeatureRow(textKey: "paywall.feature.multicurrency_coming")
-                    FeatureRow(textKey: "paywall.feature.future_features")
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
-
-                Spacer()
-
-                if pm.products.isEmpty {
-                    ProgressView("paywall.loading")
-                        .padding(.bottom, 8)
-                } else {
-                    VStack(spacing: 10) {
-                        ForEach(pm.products, id: \.id) { product in
-                            Button {
-                                Task { await pm.purchase(product) }
-                            } label: {
-                                PaywallProductRow(product: product)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        Button("premium.restore") {
-                            Task { await pm.restorePurchases() }
-                        }
-                        .font(.footnote)
-                        .padding(.top, 4)
+                    VStack(alignment: .leading, spacing: 10) {
+                        FeatureRow(textKey: "paywall.feature.import_csv")
+                        FeatureRow(textKey: "paywall.feature.export_all")
+                        FeatureRow(textKey: "paywall.feature.multicurrency_coming")
+                        FeatureRow(textKey: "paywall.feature.future_features")
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
-                }
+                    .padding(.top, 6)
 
-                if let msg = pm.lastErrorMessage {
-                    Text(msg) // это системная ошибка, можно оставить как есть
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
+                    if pm.products.isEmpty {
+                        ProgressView("paywall.loading")
+                            .padding(.bottom, 8)
+                    } else {
+                        VStack(spacing: 10) {
+                            ForEach(pm.products, id: \.id) { product in
+                                Button {
+                                    Task { await pm.purchase(product) }
+                                } label: {
+                                    PaywallProductRow(product: product)
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            Button("premium.restore") {
+                                Task { await pm.restorePurchases() }
+                            }
+                            .font(.footnote)
+                            .padding(.top, 4)
+                        }
                         .padding(.horizontal, 16)
+                        .padding(.bottom, 10)
+                    }
+
+                    if let msg = pm.lastErrorMessage {
+                        Text(msg)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
+
+                    // MARK: - Required legal disclosures
+                    legalSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 20)
                 }
             }
             .navigationTitle("settings.premium")
@@ -81,6 +93,37 @@ struct PaywallView: View {
                     Button("common.close") { dismiss() }
                 }
             }
+        }
+    }
+
+    // MARK: - Legal
+
+    private var legalSection: some View {
+        VStack(spacing: 8) {
+            Text("paywall.legal.auto_renew")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 4) {
+                Link(destination: Self.termsURL) {
+                    Text("paywall.legal.terms")
+                        .font(.caption2)
+                        .underline()
+                }
+
+                Text("paywall.legal.and")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                Link(destination: Self.privacyURL) {
+                    Text("paywall.legal.privacy")
+                        .font(.caption2)
+                        .underline()
+                }
+            }
+            .accessibilityElement(children: .contain)
         }
     }
 }

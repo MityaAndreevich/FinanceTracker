@@ -15,3 +15,10 @@ DerivedData/
 # Xcode workspace/user data
 **/*.xcuserdatad/
 **/xcuserdata/
+
+# Local development tooling (private to this machine)
+CLAUDE.md
+.claude/
+.cursor/
+.aider*
+.aiderignore

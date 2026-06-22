@@ -8,29 +8,12 @@
 import SwiftUI
 import SwiftData
 
+/// Root tab view. Onboarding is gated upstream by RootView, so by the time
+/// this view appears we know `hasCompletedOnboarding == true`.
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
-    // Onboarding flag
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-
     var body: some View {
-        Group {
-            if hasCompletedOnboarding {
-                mainApp
-            } else {
-                OnboardingView()
-            }
-        }
-        .task {
-            // Seed должен отработать и до, и после онбординга (на случай если нужны категории для выбора)
-            SeedService.seedIfNeeded(modelContext: modelContext)
-        }
-    }
-
-    // MARK: - Main App
-
-    private var mainApp: some View {
         TabView {
             NavigationStack {
                 DashboardView()
@@ -56,6 +39,10 @@ struct ContentView: View {
                 SettingsView()
             }
             .tabItem { Label("tab.settings", systemImage: "gear") }
+        }
+        .task {
+            // Seed default categories on first launch. Idempotent — safe to call again.
+            SeedService.seedIfNeeded(modelContext: modelContext)
         }
     }
 }

@@ -9,80 +9,64 @@ import SwiftUI
 import SwiftData
 
 struct DashboardView: View {
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    @State private var scope: Scope = .month
-
-    enum Scope: String, CaseIterable, Identifiable {
-        case month
-        case all
-        var id: String { rawValue }
-
-        var titleKey: LocalizedStringKey {
-            switch self {
-            case .month: "scope.month"
-            case .all: "scope.all"
-            }
-        }
-    }
+    @State private var scope: PeriodScope = .currentMonth
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    let summary = computeSummary()
+        ScrollView {
+            VStack(spacing: 16) {
+                PeriodSelector(scope: $scope)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
-                    if summary.hasAnyData == false {
-                        EmptyStateView(
-                            systemImage: "creditcard",
-                            title: "empty.noData",
-                            message: "empty.addFirstTransaction"
-                        )
-                        .padding(.top, 24)
-                        .padding(.horizontal, 16)
-                    } else {
-                        SummaryCards(
-                            incomeCents: summary.incomeCents,
-                            expenseCents: summary.expenseCents,
-                            netCents: summary.netCents,
-                            currency: summary.currency
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                let summary = computeSummary()
 
-                        QuickInsights(
-                            expenseByCategory: summary.expenseByCategory,
-                            incomeBySource: summary.incomeBySource,
-                            currency: summary.currency
-                        )
-                        .padding(.horizontal, 16)
-                    }
+                if !summary.hasAnyData {
+                    EmptyStateView(
+                        systemImage: "creditcard",
+                        title: "empty.noData",
+                        message: "empty.addFirstTransaction"
+                    )
+                    .padding(.top, 24)
+                    .padding(.horizontal, 16)
+                } else {
+                    SummaryCards(
+                        incomeCents: summary.incomeCents,
+                        expenseCents: summary.expenseCents,
+                        netCents: summary.netCents,
+                        currency: summary.currency
+                    )
+                    .padding(.horizontal, 16)
 
-                    Spacer(minLength: 20)
+                    QuickInsights(
+                        expenseByCategory: summary.expenseByCategory,
+                        incomeBySource: summary.incomeBySource,
+                        currency: summary.currency
+                    )
+                    .padding(.horizontal, 16)
                 }
-                .padding(.vertical, 12)
+
+                Spacer(minLength: 20)
             }
-            .navigationTitle("title.dashboard")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Picker("scope.picker.title", selection: $scope) {
-                        ForEach(Scope.allCases) { s in
-                            Text(s.titleKey).tag(s)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 260)
-                }
-            }
+            .padding(.vertical, 12)
         }
+        .navigationTitle("title.dashboard")
     }
 
     // MARK: - Summary
 
     private func computeSummary() -> DashboardSummary {
-        let filtered = filteredTransactions()
-        let currency = filtered.first?.currency ?? "USD"
+        let filtered = scope.filter(transactions)
+
+        // Currency is locked app-wide to the user's default. We deliberately do not
+        // peek at transaction.currency anymore — historical transactions from a
+        // previous default still report the user's CURRENT preferred currency for
+        // the rollup. This is a known trade-off documented in the App Store review.
+        let currency = defaultCurrencyCode
 
         var incomeCents = 0
         var expenseCents = 0
@@ -91,14 +75,12 @@ struct DashboardView: View {
         var incomeMap: [String: Int] = [:]
 
         for tx in filtered {
-            if tx.typeRaw == "income" {
+            if tx.isIncome {
                 incomeCents += tx.amountCents
                 let key = tx.source?.name ?? String(localized: "dashboard.unknown_source")
                 incomeMap[key, default: 0] += tx.amountCents
             } else {
                 expenseCents += tx.amountCents
-
-                // ✅ группируем по видимому имени категории
                 let key = tx.category.displayName()
                 expenseMap[key, default: 0] += tx.amountCents
             }
@@ -128,17 +110,6 @@ struct DashboardView: View {
             hasAnyData: !filtered.isEmpty
         )
     }
-
-    private func filteredTransactions() -> [Transaction] {
-        switch scope {
-        case .all:
-            return transactions
-        case .month:
-            let calendar = Calendar.current
-            let now = Date()
-            return transactions.filter { calendar.isDate($0.date, equalTo: now, toGranularity: .month) }
-        }
-    }
 }
 
 // MARK: - Models
@@ -153,7 +124,7 @@ private struct DashboardSummary {
     let hasAnyData: Bool
 }
 
-// MARK: - UI Components (без изменений)
+// MARK: - UI Components
 
 private struct SummaryCards: View {
     let incomeCents: Int
@@ -166,14 +137,14 @@ private struct SummaryCards: View {
             HStack(spacing: 12) {
                 SummaryCard(
                     titleKey: "dashboard.summary.income",
-                    value: formatMoney(cents: incomeCents, currency: currency),
+                    value: Money.format(cents: incomeCents, currencyCode: currency),
                     systemImage: "arrow.down.circle.fill",
                     accent: .green
                 )
 
                 SummaryCard(
                     titleKey: "dashboard.summary.expenses",
-                    value: formatMoney(cents: expenseCents, currency: currency),
+                    value: Money.format(cents: expenseCents, currencyCode: currency),
                     systemImage: "arrow.up.circle.fill",
                     accent: .red
                 )
@@ -181,19 +152,11 @@ private struct SummaryCards: View {
 
             SummaryCard(
                 titleKey: "dashboard.summary.net",
-                value: formatMoney(cents: netCents, currency: currency),
+                value: Money.format(cents: netCents, currencyCode: currency),
                 systemImage: "equal.circle.fill",
                 accent: netCents >= 0 ? .green : .red
             )
         }
-    }
-
-    private func formatMoney(cents: Int, currency: String) -> String {
-        let amount = Decimal(cents) / 100
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
     }
 }
 
@@ -290,9 +253,10 @@ private struct InsightCard: View {
                         Text(row.0)
                             .lineLimit(1)
                         Spacer()
-                        Text(formatMoney(cents: row.1, currency: currency))
+                        Text(Money.format(cents: row.1, currencyCode: currency))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .monospacedDigit()
                     }
                 }
             }
@@ -304,14 +268,6 @@ private struct InsightCard: View {
                 .strokeBorder(.separator, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private func formatMoney(cents: Int, currency: String) -> String {
-        let amount = Decimal(cents) / 100
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        return formatter.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
     }
 }
 

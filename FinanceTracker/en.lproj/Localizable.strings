@@ -71,7 +71,7 @@
 "settings.general" = "General";
 "settings.premium" = "Premium";
 "settings.data" = "Data";
-"settings.categories" = "Categories & Sources";
+"settings.categories" = "Categories & Accounts";
 "settings.about" = "About";
 
 /* ======================================================
@@ -127,10 +127,15 @@
 "dashboard.insights.top_expenses.title" = "Top expenses";
 "dashboard.insights.top_expenses.subtitle" = "This helps you spot where money leaks.";
 
-"dashboard.insights.top_income_sources.title" = "Top income sources";
+"dashboard.insights.top_income_sources.title" = "Top income accounts";
 "dashboard.insights.top_income_sources.subtitle" = "Useful when you have multiple streams.";
 
-"dashboard.unknown_source" = "Unknown source";
+"dashboard.unknown_source" = "Unknown account";
+
+/* Month navigation */
+"scope.previous_month" = "Previous month";
+"scope.next_month" = "Next month";
+"scope.this_month_button" = "Today";
 
 /* ======================================================
    Analytics
@@ -145,7 +150,7 @@
 
 "analytics.section.combined.title" = "Income • Expense";
 "analytics.section.expenses_by_category.title" = "Expenses by Category";
-"analytics.section.income_by_source.title" = "Income by Source";
+"analytics.section.income_by_source.title" = "Income by Account";
 
 "analytics.label.income" = "Income";
 "analytics.label.expense" = "Expense";
@@ -177,11 +182,11 @@
 "add.category.empty_income" = "No income categories yet.";
 "add.category.empty_expense" = "No expense categories yet.";
 
-"add.section.source" = "Source";
-"add.section.source_optional" = "Source (optional)";
-"add.source.add" = "Add Source";
-"add.source.tip" = "Tip: Use Source to track where income comes from (job, client, etc.).";
-"add.source.expense_disabled_hint" = "Source is available only for income transactions.";
+"add.section.source" = "Account";
+"add.section.source_optional" = "Account (optional)";
+"add.source.add" = "Add Account";
+"add.source.tip" = "Use Account to track which card, bank or wallet was used.";
+"add.source.expense_disabled_hint" = "Account is available only for income transactions.";
 
 "add.section.date" = "Date";
 "add.section.note" = "Note (optional)";
@@ -196,10 +201,10 @@
 "add.category_sheet.type_income" = "Income category";
 "add.category_sheet.type_expense" = "Expense category";
 
-/* Add Source Sheet (из скринов ключи вылезают) */
-"add.source_sheet.nav_title" = "Add Source";
-"add.source_sheet.section.title" = "Source";
-"add.source_sheet.name.placeholder" = "Source name";
+/* Add Account Sheet */
+"add.source_sheet.nav_title" = "Add Account";
+"add.source_sheet.section.title" = "Account";
+"add.source_sheet.name.placeholder" = "Account name";
 "add.source_sheet.note.placeholder" = "Note (optional)";
 
 /* ======================================================
@@ -271,6 +276,12 @@
 "paywall.period.month" = "per month";
 "paywall.period.once" = "one-time";
 
+/* Legal disclosure (Apple-required for subscriptions) */
+"paywall.legal.auto_renew" = "Subscriptions auto-renew at the end of each period until cancelled. You can manage or cancel anytime in Settings → Apple ID → Subscriptions. Payment is charged to your Apple ID account at confirmation of purchase.";
+"paywall.legal.terms" = "Terms of Use";
+"paywall.legal.privacy" = "Privacy Policy";
+"paywall.legal.and" = " and ";
+
 /* ======================================================
    Data (экран Data у тебя полностью ключами светится)
    ====================================================== */
@@ -287,25 +298,27 @@
 "data.section.import" = "Import";
 "data.import.csv" = "Import CSV";
 "data.premium_hint" = "Available in Premium.";
+"data.import.progress.format" = "Importing %d of %d…";
+"data.import.in_progress" = "Importing…";
 
 /* ======================================================
-   Categories & Sources
+   Categories & Accounts
    ====================================================== */
-"cs.section.sources" = "Sources";
+"cs.section.sources" = "Accounts";
 "cs.section.expense_categories" = "Expense categories";
 "cs.section.income_categories" = "Income categories";
 
-"cs.sources.empty" = "No sources yet";
-"cs.sources.add" = "Add Source";
+"cs.sources.empty" = "No accounts yet";
+"cs.sources.add" = "Add Account";
 "cs.categories.add" = "Add Category";
 
 "cs.alert.cant_delete.title" = "Can’t delete";
 "cs.alert.used_in_transactions.format" = "“%@” is used in %d transaction(s).";
 
-/* CS sheets (в Settings → Categories & Sources у тебя это светится ключами) */
-"cs.source_sheet.title" = "Add Source";
-"cs.source_sheet.section" = "Source";
-"cs.source_sheet.name.placeholder" = "Source name";
+/* Add/Edit Account sheets */
+"cs.source_sheet.title" = "Add Account";
+"cs.source_sheet.section" = "Account";
+"cs.source_sheet.name.placeholder" = "Account name";
 "cs.source_sheet.note.placeholder" = "Note (optional)";
 
 "cs.category_sheet.title" = "Add Category";
@@ -339,20 +352,22 @@
 "icons.search" = "Search symbols";
 "icons.clear" = "No icon";
 
+/* ======================================================
+   PDF report
+   ====================================================== */
+"pdf.report.title" = "FinanceTracker Report";
+"pdf.range.month" = "This month";
+"pdf.range.all" = "All time";
+"pdf.label.income" = "Income";
+"pdf.label.expenses" = "Expenses";
+"pdf.label.net" = "Net";
+"pdf.header.date" = "Date";
+"pdf.header.title" = "Title";
+"pdf.header.category" = "Category";
+"pdf.header.amount" = "Amount";
+"pdf.footer.page.format" = "Page %d of %d";
+
 "cs.expense.empty" = "No expense categories yet";
 "cs.income.empty" = "No income categories yet";
 
-"cs.source_sheet.section" = "Source";
-"cs.source_sheet.title" = "Add Source";
-"cs.source_sheet.name.placeholder" = "Source name";
-"cs.source_sheet.note.placeholder" = "Note (optional)";
-
-"cs.category_sheet.section" = "Category";
-"cs.category_sheet.title" = "Add Category";
-"cs.category_sheet.name.placeholder" = "Category name";
-"cs.category_sheet.icon.placeholder" = "SF Symbol (optional)";
 "cs.category_sheet.icon_hint" = "Tip: Choose an icon to make categories easier to scan.";
-
-"icons.title" = "Choose icon";
-"icons.search" = "Search symbols";
-"icons.clear" = "No icon";
