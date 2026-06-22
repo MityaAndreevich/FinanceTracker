@@ -251,6 +251,14 @@
 "edit.error.save_failed" = "Failed to save.";
 
 /* ======================================================
+   Input validation (T-18)
+   ====================================================== */
+"validation.amount.out_of_range" = "Amount must be between 0.01 and 100,000,000,000.00.";
+"validation.merchant.too_long" = "Title must be 200 characters or fewer.";
+"validation.note.too_long" = "Note must be 2,000 characters or fewer.";
+"validation.date.out_of_range" = "Date must be between 1990 and one year from today.";
+
+/* ======================================================
    Premium / Paywall
    ====================================================== */
 "premium.section.status" = "Status";

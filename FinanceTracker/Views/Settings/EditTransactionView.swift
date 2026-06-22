@@ -203,11 +203,30 @@ struct EditTransactionView: View {
             fail(key: "edit.error.invalid_amount", extra: nil)
             return
         }
+        guard amountCents > 0 && amountCents <= 10_000_000_000_000 else {
+            fail(key: "validation.amount.out_of_range", extra: nil)
+            return
+        }
 
         let taxCents = Money.parseCents(from: taxText)
 
         let merchant = merchantText.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard merchant.count <= 200 else {
+            fail(key: "validation.merchant.too_long", extra: nil)
+            return
+        }
+        guard cleanNote.count <= 2_000 else {
+            fail(key: "validation.note.too_long", extra: nil)
+            return
+        }
+        let minDate = Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))!
+        let maxDate = Calendar.current.date(byAdding: .year, value: 1, to: Date())!
+        guard date >= minDate && date <= maxDate else {
+            fail(key: "validation.date.out_of_range", extra: nil)
+            return
+        }
 
         transaction.typeRaw = typeRaw
         transaction.amountCents = amountCents
