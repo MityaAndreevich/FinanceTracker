@@ -317,6 +317,8 @@
 "data.premium_hint" = "Доступно в Премиум.";
 "data.import.progress.format" = "Импортируем %d из %d…";
 "data.import.in_progress" = "Идёт импорт…";
+"csv.import.error.too_many_rows.format" = "В файле %d строк; максимум — 10 000.";
+"csv.import.error.field_too_long.format" = "Строка %d пропущена: поле превышает 1 024 символа.";
 
 /* ======================================================
    Categories & Accounts

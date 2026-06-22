@@ -18,6 +18,10 @@ struct CSVImportResult {
 
 struct CSVImportService {
 
+    // MARK: - Limits (T-10)
+    static let MAX_ROWS = 10_000
+    static let MAX_FIELD_LENGTH = 1_024
+
     // MARK: - Public API
 
     /// Synchronous variant kept for backwards compatibility / unit tests.
@@ -86,6 +90,12 @@ struct CSVImportService {
         }
 
         let totalDataRows = max(0, rows.count - startIndex)
+
+        if totalDataRows > MAX_ROWS {
+            let msg = String(format: NSLocalizedString("csv.import.error.too_many_rows.format", comment: ""), totalDataRows)
+            throw NSError(domain: "CSVImport", code: 4, userInfo: [NSLocalizedDescriptionKey: msg])
+        }
+
         var processed = 0
 
         for i in startIndex..<rows.count {
@@ -101,6 +111,10 @@ struct CSVImportService {
 
             do {
                 let cols = parseCSVLine(rawLine)
+                if cols.contains(where: { $0.count > MAX_FIELD_LENGTH }) {
+                    let msg = String(format: NSLocalizedString("csv.import.error.field_too_long.format", comment: ""), i + 1)
+                    throw NSError(domain: "CSVImport", code: 5, userInfo: [NSLocalizedDescriptionKey: msg])
+                }
                 guard cols.count >= 9 else {
                     result.skipped += 1
                     processed += 1

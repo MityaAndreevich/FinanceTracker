@@ -311,6 +311,8 @@
 "data.premium_hint" = "Available in Premium.";
 "data.import.progress.format" = "Importing %d of %d…";
 "data.import.in_progress" = "Importing…";
+"csv.import.error.too_many_rows.format" = "File contains %d rows; the maximum is 10,000.";
+"csv.import.error.field_too_long.format" = "Line %d skipped: a field exceeds 1,024 characters.";
 
 /* ======================================================
    Categories & Accounts
