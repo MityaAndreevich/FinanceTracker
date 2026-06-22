@@ -11,6 +11,7 @@ A native iOS personal finance tracker built with SwiftUI and SwiftData. Designed
 - **Charts** framework for analytics
 - 28 localizations under `FinanceTracker/<locale>.lproj/Localizable.strings`
 - No external dependencies — native APIs only
+- **Xcode 16 file-system-synchronized project** — `FinanceTracker.xcodeproj` uses `PBXFileSystemSynchronizedRootGroup`, so any `.swift` file dropped into `FinanceTracker/` is auto-discovered and built. No `project.pbxproj` edits are required when adding source files.
 
 ## Project layout
 
