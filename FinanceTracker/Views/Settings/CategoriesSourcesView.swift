@@ -393,6 +393,18 @@ private struct AddCategorySheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        let lowerName = trimmed.lowercased()
+        let isDuplicate = categories.filter { $0.kindRaw == typeRaw }.contains { cat in
+            if let custom = cat.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !custom.isEmpty, custom.lowercased() == lowerName { return true }
+            if let key = cat.nameKey, !key.isEmpty {
+                let loc = NSLocalizedString(key, comment: "").lowercased()
+                return loc != key.lowercased() && loc == lowerName
+            }
+            return false
+        }
+        guard !isDuplicate else { dismiss(); return }
+
         let iconTrimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
         let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
 

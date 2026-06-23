@@ -371,6 +371,22 @@ private struct AddCategorySheet: View {
         let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else { return }
 
+        let lowerName = cleanName.lowercased()
+        let allCats = (try? modelContext.fetch(FetchDescriptor<Category>())) ?? []
+        if let existing = allCats.filter({ $0.kindRaw == kindRaw }).first(where: { cat in
+            if let custom = cat.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !custom.isEmpty, custom.lowercased() == lowerName { return true }
+            if let key = cat.nameKey, !key.isEmpty {
+                let loc = NSLocalizedString(key, comment: "").lowercased()
+                return loc != key.lowercased() && loc == lowerName
+            }
+            return false
+        }) {
+            onCreated(existing)
+            dismiss()
+            return
+        }
+
         let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
         let nextOrder = existingMaxOrder + 1
 
