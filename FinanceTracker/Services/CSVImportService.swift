@@ -147,7 +147,10 @@ struct CSVImportService {
                 }
 
                 let taxCents = Money.parseCents(from: taxStr)
-                let cleanCurrency = currency.isEmpty ? "USD" : currency
+                let rawCode = currency.uppercased()
+                let cleanCurrency = (!rawCode.isEmpty && isValidISO4217(rawCode))
+                    ? rawCode
+                    : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
 
                 let category = try getOrCreateCategory(
                     modelContext: modelContext,
@@ -195,6 +198,10 @@ struct CSVImportService {
     }
 
     // MARK: - Helpers
+
+    static func isValidISO4217(_ code: String) -> Bool {
+        Locale.commonISOCurrencyCodes.contains(code.uppercased())
+    }
 
     private static func getOrCreateCategory(
         modelContext: ModelContext,

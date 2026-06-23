@@ -101,6 +101,23 @@ final class CSVImportServiceTests: XCTestCase {
         XCTAssertNotNil(result.firstError)
     }
 
+    func testImportCSV_InvalidCurrencyFallsBackToDefault() throws {
+        UserDefaults.standard.set("EUR", forKey: "defaultCurrencyCode")
+        defer { UserDefaults.standard.removeObject(forKey: "defaultCurrencyCode") }
+
+        let csv = """
+        date,type,amount,currency,category,source,tax,note,merchant
+        2026-01-20,expense,50.00,INVALID,Food,,0.00,,Grocery
+        """
+
+        let result = try CSVImportService.importCSV(modelContext: context, data: Data(csv.utf8))
+        XCTAssertEqual(result.imported, 1)
+
+        let txs = try context.fetch(FetchDescriptor<Transaction>())
+        XCTAssertEqual(txs.count, 1)
+        XCTAssertEqual(txs[0].currency, "EUR")
+    }
+
     func testImportCSV_ParsesCommaDecimal() throws {
         let csv = """
         date,type,amount,currency,category,source,tax,note,merchant
