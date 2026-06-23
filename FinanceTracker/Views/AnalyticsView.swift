@@ -20,6 +20,15 @@ struct AnalyticsView: View {
     @State private var scope: PeriodScope = .currentMonth
     @State private var chartKind: ChartKind = .line
 
+    // MARK: - Cached derived data (updated via onChange to avoid recompute every body redraw)
+
+    @State private var cachedSeries: [SeriesValue] = []
+    @State private var cachedSummary = PeriodSummary(incomeCents: 0, expenseCents: 0, currency: "USD")
+    @State private var cachedExpenseByCategory: [ChartRow] = []
+    @State private var cachedIncomeBySource: [ChartRow] = []
+    @State private var cachedXDomain: ClosedRange<Date> = Date()...Date()
+    @State private var cachedXAxisTicks: [Date] = []
+
     enum ChartKind: String, CaseIterable, Identifiable {
         case pie
         case bars
@@ -63,6 +72,10 @@ struct AnalyticsView: View {
         }
         .navigationTitle(LocalizedStringKey("title.analytics"))
         .listStyle(.insetGrouped)
+        .onAppear { recompute() }
+        .onChange(of: transactions) { _, _ in recompute() }
+        .onChange(of: scope) { _, _ in recompute() }
+        .onChange(of: defaultCurrencyCode) { _, _ in recompute() }
     }
 
     // MARK: - Combined
@@ -73,18 +86,18 @@ struct AnalyticsView: View {
 
             switch chartKind {
             case .bars:
-                barsChart(values: seriesValues)
+                barsChart(values: cachedSeries)
             case .line:
-                lineChart(values: seriesValues)
+                lineChart(values: cachedSeries)
             case .pie:
-                pieChart(summary: periodSummary)
+                pieChart(summary: cachedSummary)
             }
 
             HStack {
                 Text(LocalizedStringKey("analytics.label.income"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Money.format(cents: periodSummary.incomeCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: cachedSummary.incomeCents, currencyCode: cachedSummary.currency))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
                     .privacySensitive()
@@ -95,7 +108,7 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.expense"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Money.format(cents: periodSummary.expenseCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: cachedSummary.expenseCents, currencyCode: cachedSummary.currency))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
                     .privacySensitive()
@@ -106,8 +119,8 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.net"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Money.format(cents: periodSummary.netCents, currencyCode: periodSummary.currency))
-                    .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
+                Text(Money.format(cents: cachedSummary.netCents, currencyCode: cachedSummary.currency))
+                    .foregroundStyle(cachedSummary.netCents >= 0 ? .green : .red)
                     .monospacedDigit()
                     .privacySensitive()
             }
@@ -159,9 +172,9 @@ struct AnalyticsView: View {
                 .foregroundStyle(by: .value("analytics.axis.type", v.kind.legendName))
             }
         }
-        .chartXScale(domain: xDomain)
+        .chartXScale(domain: cachedXDomain)
         .chartXAxis {
-            AxisMarks(position: .bottom, values: xAxisTicks) { value in
+            AxisMarks(position: .bottom, values: cachedXAxisTicks) { value in
                 AxisGridLine()
                 AxisTick()
                 AxisValueLabel { Text(xAxisLabel(for: value.as(Date.self))) }
@@ -173,7 +186,7 @@ struct AnalyticsView: View {
         .padding(.vertical, 6)
     }
 
-    private var shouldShowPoints: Bool { seriesBucketCount <= 8 }
+    private var shouldShowPoints: Bool { cachedSeries.filter { $0.kind == .income }.count <= 8 }
 
     // MARK: - Pie
 
@@ -195,21 +208,21 @@ struct AnalyticsView: View {
     @ViewBuilder
     private var breakdownExpensesByCategorySection: some View {
         Section(LocalizedStringKey("analytics.section.expenses_by_category.title")) {
-            if expenseByCategory.isEmpty {
+            if cachedExpenseByCategory.isEmpty {
                 Text(LocalizedStringKey("analytics.empty.no_expenses"))
                     .foregroundStyle(.secondary)
             } else {
-                Chart(expenseByCategory) { row in
+                Chart(cachedExpenseByCategory) { row in
                     BarMark(
                         x: .value("analytics.axis.amount", row.amount),
                         y: .value("analytics.axis.category", row.name)
                     )
                 }
                 .chartXAxis { AxisMarks(position: .bottom) }
-                .frame(height: chartHeight(for: expenseByCategory.count))
+                .frame(height: chartHeight(for: cachedExpenseByCategory.count))
                 .padding(.vertical, 6)
 
-                ForEach(expenseByCategory) { row in
+                ForEach(cachedExpenseByCategory) { row in
                     HStack {
                         Text(LocalizedStringKey(row.name))
                         Spacer()
@@ -227,21 +240,21 @@ struct AnalyticsView: View {
     @ViewBuilder
     private var breakdownIncomeBySourceSection: some View {
         Section(LocalizedStringKey("analytics.section.income_by_source.title")) {
-            if incomeBySource.isEmpty {
+            if cachedIncomeBySource.isEmpty {
                 Text(LocalizedStringKey("analytics.empty.no_income"))
                     .foregroundStyle(.secondary)
             } else {
-                Chart(incomeBySource) { row in
+                Chart(cachedIncomeBySource) { row in
                     BarMark(
                         x: .value("analytics.axis.amount", row.amount),
                         y: .value("analytics.axis.source", row.name)
                     )
                 }
                 .chartXAxis { AxisMarks(position: .bottom) }
-                .frame(height: chartHeight(for: incomeBySource.count))
+                .frame(height: chartHeight(for: cachedIncomeBySource.count))
                 .padding(.vertical, 6)
 
-                ForEach(incomeBySource) { row in
+                ForEach(cachedIncomeBySource) { row in
                     HStack {
                         Text(row.name)
                         Spacer()
@@ -262,6 +275,18 @@ struct AnalyticsView: View {
         scope.filter(transactions)
     }
 
+    // MARK: - Cache recomputation
+
+    private func recompute() {
+        let filtered = filteredTransactions
+        cachedSeries = computeSeriesValues(from: filtered)
+        cachedSummary = computePeriodSummary(from: filtered)
+        cachedExpenseByCategory = computeExpenseByCategory(from: filtered)
+        cachedIncomeBySource = computeIncomeBySource(from: filtered)
+        cachedXDomain = computeXDomain(series: cachedSeries)
+        cachedXAxisTicks = computeXAxisTicks(series: cachedSeries)
+    }
+
     // MARK: - Series
 
     private enum SeriesKind {
@@ -276,8 +301,7 @@ struct AnalyticsView: View {
         }
     }
 
-    private var seriesValues: [SeriesValue] {
-        let list = filteredTransactions
+    private func computeSeriesValues(from list: [Transaction]) -> [SeriesValue] {
         let cal = Calendar.current
         let currency = defaultCurrencyCode
 
@@ -322,31 +346,24 @@ struct AnalyticsView: View {
         return out
     }
 
-    private var seriesBucketCount: Int {
-        seriesValues.filter { $0.kind == .income }.count
-    }
-
     // MARK: - Period summary
 
-    private var periodSummary: PeriodSummary {
-        let list = filteredTransactions
+    private func computePeriodSummary(from list: [Transaction]) -> PeriodSummary {
         let currency = defaultCurrencyCode
-
         var income = 0
         var expense = 0
         for tx in list {
             if tx.isIncome { income += tx.amountCents }
             else { expense += tx.amountCents }
         }
-
         return PeriodSummary(incomeCents: income, expenseCents: expense, currency: currency)
     }
 
     // MARK: - X axis
 
-    private var xDomain: ClosedRange<Date> {
+    private func computeXDomain(series: [SeriesValue]) -> ClosedRange<Date> {
         let cal = Calendar.current
-        let dates = seriesValues.map(\.bucketDate)
+        let dates = series.map(\.bucketDate)
         guard let minD = dates.min(), let maxD = dates.max() else {
             let now = Date()
             return now...now
@@ -364,9 +381,9 @@ struct AnalyticsView: View {
         }
     }
 
-    private var xAxisTicks: [Date] {
+    private func computeXAxisTicks(series: [SeriesValue]) -> [Date] {
         let cal = Calendar.current
-        let dates = seriesValues.map(\.bucketDate)
+        let dates = series.map(\.bucketDate)
         guard let minD = dates.min(), let maxD = dates.max() else { return [] }
 
         switch scope {
@@ -406,8 +423,8 @@ struct AnalyticsView: View {
 
     // MARK: - Breakdown Data
 
-    private var expenseByCategory: [ChartRow] {
-        let list = filteredTransactions.filter { $0.isExpense }
+    private func computeExpenseByCategory(from list: [Transaction]) -> [ChartRow] {
+        let expenses = list.filter { $0.isExpense }
         let currency = defaultCurrencyCode
 
         struct Acc {
@@ -417,7 +434,7 @@ struct AnalyticsView: View {
 
         var sums: [UUID: Acc] = [:]
 
-        for tx in list {
+        for tx in expenses {
             let cat = tx.category
             let id = cat.uuid
             let display = cat.displayKeyOrName
@@ -441,12 +458,12 @@ struct AnalyticsView: View {
             .sorted { $0.amountCents > $1.amountCents }
     }
 
-    private var incomeBySource: [ChartRow] {
-        let list = filteredTransactions.filter { $0.isIncome }
+    private func computeIncomeBySource(from list: [Transaction]) -> [ChartRow] {
+        let incomes = list.filter { $0.isIncome }
         let currency = defaultCurrencyCode
 
         var sums: [String: Int] = [:]
-        for tx in list {
+        for tx in incomes {
             let name = tx.source?.name ?? String(localized: "common.unknown")
             sums[name, default: 0] += tx.amountCents
         }
