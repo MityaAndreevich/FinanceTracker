@@ -188,9 +188,9 @@ private struct TransactionRow: View {
                 Text(signedAmount)
                     .font(.headline)
                     .monospacedDigit()
+                    .privacySensitive(true)
             }
             .foregroundStyle(tx.isIncome ? .green : .red)
-            .privacySensitive()
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
                 Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")
