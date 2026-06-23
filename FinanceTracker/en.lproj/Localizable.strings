@@ -392,3 +392,10 @@
 "cs.income.empty" = "No income categories yet";
 
 "cs.category_sheet.icon_hint" = "Tip: Choose an icon to make categories easier to scan.";
+
+/* Demo-mode categories */
+"category.coffee" = "Coffee";
+"category.transit" = "Transit";
+"category.subscriptions" = "Subscriptions";
+"category.entertainment" = "Entertainment";
+"category.health" = "Health";

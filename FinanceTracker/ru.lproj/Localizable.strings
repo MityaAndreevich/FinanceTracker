@@ -402,3 +402,10 @@
 "pdf.header.category" = "Категория";
 "pdf.header.amount" = "Сумма";
 "pdf.footer.page.format" = "Страница %d из %d";
+
+/* Demo-mode categories */
+"category.coffee" = "Кофе";
+"category.transit" = "Транспорт";
+"category.subscriptions" = "Подписки";
+"category.entertainment" = "Развлечения";
+"category.health" = "Здоровье";
