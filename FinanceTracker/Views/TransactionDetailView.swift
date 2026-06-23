@@ -20,6 +20,7 @@ struct TransactionDetailView: View {
                     ? String(localized: "add.type.income")
                     : String(localized: "add.type.expense"))
                 row("tx_detail.amount", Money.format(cents: tx.amountCents, currencyCode: tx.currency))
+                    .privacySensitive()
                 row("tx_detail.date", formattedDate(tx.date))
             }
 

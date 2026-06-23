@@ -190,6 +190,7 @@ private struct TransactionRow: View {
                     .monospacedDigit()
             }
             .foregroundStyle(tx.isIncome ? .green : .red)
+            .privacySensitive()
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
                 Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")

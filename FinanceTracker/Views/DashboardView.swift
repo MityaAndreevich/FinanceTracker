@@ -182,6 +182,7 @@ private struct SummaryCard: View {
             Text(value)
                 .font(.title3.weight(.semibold))
                 .minimumScaleFactor(0.8)
+                .privacySensitive()
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -257,6 +258,7 @@ private struct InsightCard: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
+                            .privacySensitive()
                     }
                 }
             }

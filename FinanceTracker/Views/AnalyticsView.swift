@@ -87,6 +87,7 @@ struct AnalyticsView: View {
                 Text(Money.format(cents: periodSummary.incomeCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
 
@@ -97,6 +98,7 @@ struct AnalyticsView: View {
                 Text(Money.format(cents: periodSummary.expenseCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
 
@@ -107,6 +109,7 @@ struct AnalyticsView: View {
                 Text(Money.format(cents: periodSummary.netCents, currencyCode: periodSummary.currency))
                     .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
                     .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
         }
@@ -213,6 +216,7 @@ struct AnalyticsView: View {
                         Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
+                            .privacySensitive()
                     }
                     .font(.footnote)
                 }
@@ -244,6 +248,7 @@ struct AnalyticsView: View {
                         Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
+                            .privacySensitive()
                     }
                     .font(.footnote)
                 }
