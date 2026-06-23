@@ -14,8 +14,7 @@ struct PaywallView: View {
 
     // MARK: - Legal URLs
     private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    // TODO: replace with published GitHub Pages URL once docs/ site is live.
-    private static let privacyURL = URL(string: "https://github.com/MityaAndreevich/FinanceTracker/blob/main/docs/PRIVACY_POLICY.md")!
+    private static let privacyURL = URL(string: "https://dmitrylogachev.github.io/FinanceTracker/PRIVACY_POLICY.html")!
 
     var body: some View {
         NavigationStack {
