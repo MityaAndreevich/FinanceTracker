@@ -41,8 +41,15 @@ struct ContentView: View {
             .tabItem { Label("tab.settings", systemImage: "gear") }
         }
         .task {
-            // Seed default categories on first launch. Idempotent — safe to call again.
-            SeedService.seedIfNeeded(modelContext: modelContext)
+            // --demo-mode launch arg (used by simctl during App Store screenshot capture)
+            // resets all user data and seeds a deterministic, HIG-compliant dataset.
+            // See DemoSeeder for the full rationale and the seed contents.
+            if DemoSeeder.isDemoMode {
+                DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
+            } else {
+                // Seed default categories on first launch. Idempotent — safe to call again.
+                SeedService.seedIfNeeded(modelContext: modelContext)
+            }
         }
     }
 }
