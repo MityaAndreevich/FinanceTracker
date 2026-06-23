@@ -70,19 +70,22 @@ enum DemoSeeder {
     // MARK: - Wipe
 
     private static func wipeAll(modelContext: ModelContext) throws {
-        // Order matters because Transaction.category uses .deny rule —
-        // delete transactions first, sources second (nullify), categories last.
+        // Order matters: Transaction.category uses .deny — delete transactions
+        // first so categories have no referencing objects at save time.
         let allTransactions = try modelContext.fetch(FetchDescriptor<Transaction>())
         allTransactions.forEach { modelContext.delete($0) }
-        try modelContext.save()
 
         let allSources = try modelContext.fetch(FetchDescriptor<Source>())
         allSources.forEach { modelContext.delete($0) }
-        try modelContext.save()
 
         let allCategories = try modelContext.fetch(FetchDescriptor<Category>())
         allCategories.forEach { modelContext.delete($0) }
+
         try modelContext.save()
+
+        #if DEBUG
+        print("[DemoSeeder] ✓ wipeAll complete — \(allTransactions.count) tx, \(allSources.count) sources, \(allCategories.count) categories cleared")
+        #endif
     }
 
     // MARK: - Categories
