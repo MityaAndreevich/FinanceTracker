@@ -321,6 +321,10 @@
 "paywall.legal.privacy" = "Privacy Policy";
 "paywall.legal.and" = " and ";
 
+"purchase.restored" = "Your purchases have been restored.";
+"purchase.no_previous_purchases" = "No previous purchases found.";
+"purchase.pending_approval" = "Your purchase is pending approval. You'll be notified when it's complete.";
+
 /* ======================================================
    Data (экран Data у тебя полностью ключами светится)
    ====================================================== */
