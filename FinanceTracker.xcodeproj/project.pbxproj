@@ -232,7 +232,7 @@
 				cs,
 				fi,
 				vi,
-				"pt-PT",
+				"pt-BR",
 				"es-419",
 				pl,
 				da,
