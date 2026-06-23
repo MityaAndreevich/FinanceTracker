@@ -6,6 +6,8 @@
 
 > 🔧 **v2 update 2026-06-23 — incorporates explicit Apple HIG citations** from NotebookLM `ff5e0abc` (UX & Mobile Design) which now has full HIG indexed (Onboarding, Inclusion, Typography, Color, Layout, SF Symbols, Charts, Dark Mode). Every primary design decision now has an HIG source. Specific hex values and finance-app A/B data remain craft-based and will harden in v3 after launch metrics arrive. Sections marked 🔬 still need post-research validation.
 
+> 🔗 **Companion delta (internal-only):** `DESIGN_REVIEW_v2_DELTA.md` (gitignored) documents per-view design decisions that supersede earlier internal drafts. Refer to it for: paywall ordering (Yearly default), Dashboard hero metric ("Spent this month" not "Net"), Day-0 educational card behavior, Frame 1 marketing-hero composition for screenshots, Pure StoreKit 2 architecture decision, defensible privacy copy. When in doubt: tokens defined here, decisions defined there.
+
 ## 0. Source-of-truth hierarchy
 
 When two recommendations conflict, apply in this order:
