@@ -32,7 +32,13 @@ enum DemoSeeder {
     /// Used by `ContentView` to decide whether to reset + seed demo data
     /// or run the regular `SeedService.seedIfNeeded`.
     static var isDemoMode: Bool {
-        CommandLine.arguments.contains("--demo-mode")
+        #if DEBUG
+        return CommandLine.arguments.contains("--demo-mode")
+        #else
+        // Production Release builds MUST NOT process --demo-mode (catastrophic data loss).
+        // Guard prevents accidental scheme misconfiguration from wiping user data.
+        return false
+        #endif
     }
 
     /// Wipes ALL existing user data and replaces it with the canonical demo
