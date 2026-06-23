@@ -84,6 +84,23 @@
 "settings.data" = "Data";
 "settings.categories" = "Categories & Accounts";
 "settings.about" = "About";
+"settings.privacy" = "Privacy";
+
+/* ======================================================
+   Privacy Settings
+   ====================================================== */
+"settings.privacy.title" = "Your Data Stays on Your Device";
+"settings.privacy.subtitle" = "FinanceTracker is built with privacy by design. No cloud account. No data sharing. Everything stays on your iPhone.";
+"privacy.section.ondevice" = "ON-DEVICE PROTECTION";
+"privacy.section.whatwedonot" = "WHAT WE DON'T DO";
+"privacy.claim.no_bank_login" = "No bank login required";
+"privacy.claim.no_cloud_account" = "No cloud account required";
+"privacy.claim.no_data_uploaded" = "No data uploaded to our servers";
+"privacy.claim.no_data_sold" = "No data sold or shared";
+"privacy.claim.no_ad_tracking" = "No ad tracking";
+"privacy.claim.no_sdk" = "No third-party analytics or ad SDKs";
+"privacy.policy.link" = "Privacy Policy";
+"privacy.policy.hint" = "Read our full privacy policy to learn how your data is protected.";
 
 /* ======================================================
    General settings

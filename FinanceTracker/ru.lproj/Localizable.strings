@@ -95,6 +95,23 @@
 "settings.data" = "Данные";
 "settings.categories" = "Категории и счета";
 "settings.about" = "О приложении";
+"settings.privacy" = "Конфиденциальность";
+
+/* ======================================================
+   Privacy Settings
+   ====================================================== */
+"settings.privacy.title" = "Ваши данные остаются на устройстве";
+"settings.privacy.subtitle" = "FinanceTracker создан с учётом приватности. Без облачного аккаунта. Без передачи данных. Всё остаётся на вашем iPhone.";
+"privacy.section.ondevice" = "ЗАЩИТА НА УСТРОЙСТВЕ";
+"privacy.section.whatwedonot" = "ЧТО МЫ НЕ ДЕЛАЕМ";
+"privacy.claim.no_bank_login" = "Не требуем доступа к банку";
+"privacy.claim.no_cloud_account" = "Не требуем облачного аккаунта";
+"privacy.claim.no_data_uploaded" = "Не загружаем данные на серверы";
+"privacy.claim.no_data_sold" = "Не продаём и не передаём данные";
+"privacy.claim.no_ad_tracking" = "Не отслеживаем в рекламных целях";
+"privacy.claim.no_sdk" = "Нет сторонней аналитики и рекламных SDK";
+"privacy.policy.link" = "Политика конфиденциальности";
+"privacy.policy.hint" = "Ознакомьтесь с нашей политикой конфиденциальности, чтобы узнать, как защищены ваши данные.";
 
 /* ======================================================
    General settings

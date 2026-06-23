@@ -36,6 +36,12 @@ struct SettingsView: View {
                 } label: {
                     Label("settings.categories", systemImage: "square.grid.2x2")
                 }
+
+                NavigationLink {
+                    PrivacySettingsView()
+                } label: {
+                    Label("settings.privacy", systemImage: "lock.shield")
+                }
             }
 
             Section {

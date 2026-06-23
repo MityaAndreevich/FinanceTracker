@@ -14,7 +14,6 @@ struct GeneralSettingsView: View {
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-    @AppStorage("requireAuthMode") private var requireAuthMode: RequireAuthMode = .always
 
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
@@ -84,13 +83,6 @@ struct GeneralSettingsView: View {
                     Text("\(l.flag) \(l.title)")
                         .tag(l.id)
                 }
-            }
-            .pickerStyle(.navigationLink)
-
-            Picker("auth.setting.title", selection: $requireAuthMode) {
-                Text("auth.setting.always").tag(RequireAuthMode.always)
-                Text("auth.setting.after_5min").tag(RequireAuthMode.after5min)
-                Text("auth.setting.never").tag(RequireAuthMode.never)
             }
             .pickerStyle(.navigationLink)
 
