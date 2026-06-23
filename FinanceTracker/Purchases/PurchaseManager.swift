@@ -72,10 +72,6 @@ final class PurchaseManager: ObservableObject {
         updatesTask = Task { await listenForTransactionUpdates() }
     }
 
-    deinit {
-        updatesTask?.cancel()
-    }
-
     // MARK: - Products
 
     func loadProducts() async {
