@@ -156,7 +156,7 @@ struct TransactionsView: View {
 
 // MARK: - Row
 
-private struct TransactionRow: View {
+struct TransactionRow: View {
     let tx: Transaction
 
     var body: some View {

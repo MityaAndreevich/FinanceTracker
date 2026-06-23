@@ -160,6 +160,16 @@
 
 "dashboard.unknown_source" = "Unknown account";
 
+"dashboard.spent_this_month" = "Spent this month";
+"dashboard.income_caption" = "+ %@ income";
+"dashboard.based_on_tracked" = "Based on tracked transactions";
+"dashboard.this_week" = "This week";
+
+"dashboard.day0.title" = "Smart insights coming soon";
+"dashboard.day0.message.singular" = "Add 1 more transaction to see your first insight.";
+"dashboard.day0.message.plural" = "Add %d more transactions to see your first insight.";
+"dashboard.day0.cta" = "Add transaction →";
+
 /* Month navigation */
 "scope.previous_month" = "Previous month";
 "scope.next_month" = "Next month";

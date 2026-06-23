@@ -171,6 +171,16 @@
 
 "dashboard.unknown_source" = "Неизвестный счёт";
 
+"dashboard.spent_this_month" = "Потрачено в этом месяце";
+"dashboard.income_caption" = "+ %@ доходов";
+"dashboard.based_on_tracked" = "На основе отслеживаемых транзакций";
+"dashboard.this_week" = "На этой неделе";
+
+"dashboard.day0.title" = "Умные подсказки скоро появятся";
+"dashboard.day0.message.singular" = "Добавьте ещё 1 транзакцию, чтобы увидеть первую подсказку.";
+"dashboard.day0.message.plural" = "Добавьте ещё %d транзакций, чтобы увидеть первую подсказку.";
+"dashboard.day0.cta" = "Добавить транзакцию →";
+
 /* ======================================================
    Analytics
    ====================================================== */
