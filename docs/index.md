@@ -13,6 +13,7 @@ A privacy-first personal finance tracker for iOS — built with SwiftUI and Swif
 ## Documents
 
 - [Privacy Policy](./PRIVACY_POLICY.html) — what we collect (nothing), how iOS-level protections work, your rights under GDPR / CCPA.
+- [Support & FAQ](./support.html) — common questions, contact email, and a 24-hour reply commitment.
 
 ---
 
