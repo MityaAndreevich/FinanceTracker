@@ -120,21 +120,14 @@
 
 "general.section.preferences" = "Параметры";
 "general.section.maintenance" = "Обслуживание";
-"general.section.account" = "Аккаунт";
 
 "general.currency" = "Валюта";
 "general.language" = "Язык";
 "general.language_hint" = "Переключение языка станет полностью доступно после добавления всех переводов.";
 
-"general.clear_cache" = "Очистить кэш";
-"general.cache.message" = "Кэш пока пуст. Эта функция пригодится для офлайн-режима.";
-
 "general.restart_onboarding" = "Перезапустить онбординг";
 "general.reset_transactions" = "Сбросить транзакции";
 "general.reset_hint" = "Транзакции будут удалены, категории и счета сохранятся.";
-
-"general.sign_out" = "Выйти";
-"general.signout.message" = "Выход будет доступен после добавления аккаунтов (iCloud / вход).";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Информация";

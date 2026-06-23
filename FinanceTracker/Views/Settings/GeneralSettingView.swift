@@ -28,7 +28,6 @@ struct GeneralSettingsView: View {
         List {
             preferencesSection
             maintenanceSection
-            accountSection
         }
         .navigationTitle("general.title")
         .listStyle(.insetGrouped)
@@ -96,16 +95,6 @@ struct GeneralSettingsView: View {
         Section("general.section.maintenance") {
 
             Button {
-                showInfo(
-                    titleKey: "general.alert.info.title",
-                    messageKey: "general.cache.message",
-                    extra: nil
-                )
-            } label: {
-                Label("general.clear_cache", systemImage: "wand.and.stars")
-            }
-
-            Button {
                 showRestartOnboardingAlert = true
             } label: {
                 Label("general.restart_onboarding", systemImage: "arrow.counterclockwise")
@@ -120,20 +109,6 @@ struct GeneralSettingsView: View {
             Text("general.reset_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-        }
-    }
-
-    private var accountSection: some View {
-        Section("general.section.account") {
-            Button {
-                showInfo(
-                    titleKey: "general.alert.info.title",
-                    messageKey: "general.signout.message",
-                    extra: nil
-                )
-            } label: {
-                Label("general.sign_out", systemImage: "rectangle.portrait.and.arrow.right")
-            }
         }
     }
 

@@ -109,21 +109,14 @@
 
 "general.section.preferences" = "Preferences";
 "general.section.maintenance" = "Maintenance";
-"general.section.account" = "Account";
 
 "general.currency" = "Currency";
 "general.language" = "Language";
 "general.language_hint" = "Language switching will be fully enabled when localization keys are added.";
 
-"general.clear_cache" = "Clear Cache";
-"general.cache.message" = "There’s no cache to clear yet. This will be useful when offline caching is added.";
-
 "general.restart_onboarding" = "Restart onboarding";
 "general.reset_transactions" = "Reset Transactions";
 "general.reset_hint" = "Reset Transactions removes all transactions but keeps your categories and sources.";
-
-"general.sign_out" = "Sign Out";
-"general.signout.message" = "Sign out will be available when we add accounts (iCloud sync / login).";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Info";
