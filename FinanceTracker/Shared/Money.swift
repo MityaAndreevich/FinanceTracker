@@ -110,6 +110,7 @@ final class MoneyFormatterCache: @unchecked Sendable {
         let f = NumberFormatter()
         f.numberStyle = .currency
         f.currencyCode = currencyCode
+        f.locale = .autoupdatingCurrent
         cache[currencyCode] = f
         return f
     }
