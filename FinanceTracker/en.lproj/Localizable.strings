@@ -294,26 +294,25 @@
 "paywall.title" = "Go Premium";
 "paywall.subtitle" = "Unlock import & full export, and future power features.";
 "paywall.loading" = "Loading plans…";
-"paywall.best_value" = "Best value";
-
-/* Paywall features/plan text (у тебя это светится ключами) */
-"paywall.feature.import_csv" = "Import from CSV";
-"paywall.feature.export_all" = "Full export (all data)";
-"paywall.feature.multicurrency_coming" = "Multi-currency (coming soon)";
-"paywall.feature.future_features" = "Future premium features";
+/* Paywall features */
+"paywall.features.header" = "Every plan includes";
+"paywall.feature.unlimited_transactions" = "Unlimited transactions";
+"paywall.feature.unlimited_csv" = "Unlimited CSV import";
+"paywall.feature.custom_fields" = "Custom fields";
+"paywall.feature.advanced_filters" = "Advanced filters";
 
 /* Plans */
 "paywall.plan.yearly" = "Yearly";
-"paywall.plan.yearly.subtitle" = "Save vs monthly";
+"paywall.plan.yearly.subtitle" = "7-day free trial · Cancel anytime in Settings";
 "paywall.plan.monthly" = "Monthly";
-"paywall.plan.monthly.subtitle" = "Billed monthly";
+"paywall.plan.monthly.subtitle" = "Cancel anytime";
 "paywall.plan.lifetime" = "Lifetime";
-"paywall.plan.lifetime.subtitle" = "One-time purchase";
+"paywall.plan.lifetime.subtitle" = "One-time, no subscription";
 
-/* Period labels */
-"paywall.period.year" = "per year";
-"paywall.period.month" = "per month";
-"paywall.period.once" = "one-time";
+/* CTAs */
+"paywall.cta.yearly" = "Start free trial";
+"paywall.cta.lifetime" = "Get Lifetime";
+"paywall.cta.monthly" = "Subscribe monthly";
 
 /* Legal disclosure (Apple-required for subscriptions) */
 "paywall.legal.auto_renew" = "Subscriptions auto-renew at the end of each period until cancelled. You can manage or cancel anytime in Settings → Apple ID → Subscriptions. Payment is charged to your Apple ID account at confirmation of purchase.";

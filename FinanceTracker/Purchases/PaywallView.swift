@@ -8,66 +8,27 @@
 import SwiftUI
 import StoreKit
 
+private let paywallMint = Color(red: 0.239, green: 0.863, blue: 0.592) // #3DDC97
+
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var pm = PurchaseManager.shared
 
-    // MARK: - Legal URLs
     private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     private static let privacyURL = URL(string: "https://dmitrylogachev.github.io/FinanceTracker/PRIVACY_POLICY.html")!
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-
-                    VStack(spacing: 8) {
-                        Image(systemName: "star.circle.fill")
-                            .font(.system(size: 44, weight: .semibold))
-                            .foregroundStyle(.tint)
-
-                        Text("paywall.title")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-
-                        Text("paywall.subtitle")
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
-                    }
-                    .padding(.top, 12)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        FeatureRow(textKey: "paywall.feature.import_csv")
-                        FeatureRow(textKey: "paywall.feature.export_all")
-                        FeatureRow(textKey: "paywall.feature.multicurrency_coming")
-                        FeatureRow(textKey: "paywall.feature.future_features")
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 6)
+                VStack(spacing: 20) {
+                    headerSection
+                        .padding(.top, 12)
 
                     if pm.products.isEmpty {
                         ProgressView("paywall.loading")
-                            .padding(.bottom, 8)
+                            .padding(.vertical, 8)
                     } else {
-                        VStack(spacing: 10) {
-                            ForEach(pm.products, id: \.id) { product in
-                                Button {
-                                    Task { await pm.purchase(product) }
-                                } label: {
-                                    PaywallProductRow(product: product)
-                                }
-                                .buttonStyle(.plain)
-                            }
-
-                            Button("premium.restore") {
-                                Task { await pm.restorePurchases() }
-                            }
-                            .font(.footnote)
-                            .padding(.top, 4)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 10)
+                        planCardsSection
                     }
 
                     if let msg = pm.lastErrorMessage {
@@ -75,15 +36,14 @@ struct PaywallView: View {
                             .font(.footnote)
                             .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 16)
                     }
 
-                    // MARK: - Required legal disclosures
-                    legalSection
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .padding(.bottom, 20)
+                    featureSection
+
+                    footerSection
+                        .padding(.bottom, 24)
                 }
+                .padding(.horizontal, 16)
             }
             .navigationTitle("settings.premium")
             .toolbar {
@@ -94,9 +54,50 @@ struct PaywallView: View {
         }
     }
 
-    // MARK: - Legal
+    // MARK: - Sections
 
-    private var legalSection: some View {
+    private var headerSection: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "star.circle.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(.tint)
+
+            Text("paywall.title")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            Text("paywall.subtitle")
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+    }
+
+    private var planCardsSection: some View {
+        VStack(spacing: 12) {
+            ForEach(sortedProducts(), id: \.id) { product in
+                planCard(product: product, kind: ProductKind(productID: product.id))
+            }
+        }
+    }
+
+    private var featureSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("paywall.features.header")
+                .font(.footnote)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            FeatureRow(textKey: "paywall.feature.unlimited_transactions")
+            FeatureRow(textKey: "paywall.feature.unlimited_csv")
+            FeatureRow(textKey: "paywall.feature.custom_fields")
+            FeatureRow(textKey: "paywall.feature.advanced_filters")
+        }
+        .padding(.top, 4)
+    }
+
+    private var footerSection: some View {
         VStack(spacing: 8) {
             Text("paywall.legal.auto_renew")
                 .font(.caption2)
@@ -104,82 +105,157 @@ struct PaywallView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 4) {
-                Link(destination: Self.termsURL) {
-                    Text("paywall.legal.terms")
-                        .font(.caption2)
-                        .underline()
+            HStack(spacing: 6) {
+                Button {
+                    Task { await pm.restorePurchases() }
+                } label: {
+                    Text("premium.restore")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.plain)
 
-                Text("paywall.legal.and")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Text("·")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
 
                 Link(destination: Self.privacyURL) {
                     Text("paywall.legal.privacy")
-                        .font(.caption2)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .underline()
+                }
+
+                Text("·")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
+
+                Link(destination: Self.termsURL) {
+                    Text("paywall.legal.terms")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
                         .underline()
                 }
             }
             .accessibilityElement(children: .contain)
         }
     }
-}
 
-private struct FeatureRow: View {
-    let textKey: LocalizedStringKey
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.seal.fill")
-                .foregroundStyle(.green)
-            Text(textKey)
-            Spacer()
+    // MARK: - Helpers
+
+    @ViewBuilder
+    private func planCard(product: Product, kind: ProductKind) -> some View {
+        switch kind {
+        case .yearly:
+            YearlyPlanCard(product: product) {
+                Task { await pm.purchase(product) }
+            }
+        case .lifetime:
+            LifetimePlanCard(product: product) {
+                Task { await pm.purchase(product) }
+            }
+        case .monthly:
+            MonthlyPlanCard(product: product) {
+                Task { await pm.purchase(product) }
+            }
+        case .unknown:
+            EmptyView()
+        }
+    }
+
+    private func sortedProducts() -> [Product] {
+        let order: [ProductKind] = [.yearly, .lifetime, .monthly]
+        return pm.products.sorted {
+            let ai = order.firstIndex(of: ProductKind(productID: $0.id)) ?? 99
+            let bi = order.firstIndex(of: ProductKind(productID: $1.id)) ?? 99
+            return ai < bi
         }
     }
 }
 
-private struct PaywallProductRow: View {
-    let product: Product
+// MARK: - Plan Cards
 
-    private var kind: ProductKind {
-        ProductKind(productID: product.id)
-    }
+private struct YearlyPlanCard: View {
+    let product: Product
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(kind.titleKey)
-                        .font(.headline)
-
-                    if kind == .yearly {
-                        Text("paywall.best_value")
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.thinMaterial)
-                            .clipShape(Capsule())
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("paywall.plan.yearly")
+                            .font(.headline)
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(paywallMint)
+                            .font(.system(size: 16, weight: .medium))
                     }
+                    Text("paywall.plan.yearly.subtitle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-
-                Text(kind.subtitleKey)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
+                Spacer()
                 Text(product.displayPrice)
                     .font(.headline)
-
-                Text(kind.periodSuffixKey)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
+
+            Button(action: action) {
+                Text("paywall.cta.yearly")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(paywallMint)
+                    .foregroundStyle(.black)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
-        .padding(14)
+        .padding(16)
+        .background(.thinMaterial)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(paywallMint, lineWidth: 1.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+private struct LifetimePlanCard: View {
+    let product: Product
+    let action: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("paywall.plan.lifetime")
+                        .font(.headline)
+                    Text("paywall.plan.lifetime.subtitle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(product.displayPrice)
+                    .font(.headline)
+                    .monospacedDigit()
+            }
+
+            Button(action: action) {
+                Text("paywall.cta.lifetime")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(.primary, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
         .background(.thinMaterial)
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -189,6 +265,68 @@ private struct PaywallProductRow: View {
     }
 }
 
+private struct MonthlyPlanCard: View {
+    let product: Product
+    let action: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("paywall.plan.monthly")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text("paywall.plan.monthly.subtitle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(product.displayPrice)
+                .font(.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            Button(action: action) {
+                Text("paywall.cta.monthly")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(.secondary.opacity(0.6), lineWidth: 0.75)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.thinMaterial)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+// MARK: - Supporting Views
+
+private struct FeatureRow: View {
+    let textKey: LocalizedStringKey
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+            Text(textKey)
+                .font(.subheadline)
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Product Classification
+
 private enum ProductKind: Equatable {
     case monthly
     case yearly
@@ -197,37 +335,10 @@ private enum ProductKind: Equatable {
 
     init(productID: String) {
         switch productID {
-        case PurchaseManager.ProductID.premiumMonthly.rawValue: self = .monthly
-        case PurchaseManager.ProductID.premiumYearly.rawValue: self = .yearly
+        case PurchaseManager.ProductID.premiumMonthly.rawValue:  self = .monthly
+        case PurchaseManager.ProductID.premiumYearly.rawValue:   self = .yearly
         case PurchaseManager.ProductID.premiumLifetime.rawValue: self = .lifetime
-        default: self = .unknown
-        }
-    }
-
-    var titleKey: LocalizedStringKey {
-        switch self {
-        case .monthly: "paywall.plan.monthly"
-        case .yearly: "paywall.plan.yearly"
-        case .lifetime: "paywall.plan.lifetime"
-        case .unknown: "paywall.plan.unknown"
-        }
-    }
-
-    var subtitleKey: LocalizedStringKey {
-        switch self {
-        case .monthly: "paywall.plan.monthly.subtitle"
-        case .yearly: "paywall.plan.yearly.subtitle"
-        case .lifetime: "paywall.plan.lifetime.subtitle"
-        case .unknown: "paywall.plan.unknown.subtitle"
-        }
-    }
-
-    var periodSuffixKey: LocalizedStringKey {
-        switch self {
-        case .monthly: "paywall.period.month"
-        case .yearly: "paywall.period.year"
-        case .lifetime: "paywall.period.once"
-        case .unknown: "paywall.period.unknown"
+        default:                                                  self = .unknown
         }
     }
 }

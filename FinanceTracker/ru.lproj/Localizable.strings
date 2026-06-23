@@ -300,26 +300,25 @@
 "paywall.title" = "Премиум";
 "paywall.subtitle" = "Откройте импорт и полный экспорт, и будущие расширенные функции.";
 "paywall.loading" = "Загружаем планы…";
-"paywall.best_value" = "Выгоднее";
-
 /* Paywall features */
-"paywall.feature.import_csv" = "Импорт из CSV";
-"paywall.feature.export_all" = "Полный экспорт (все данные)";
-"paywall.feature.multicurrency_coming" = "Мультивалютность (скоро)";
-"paywall.feature.future_features" = "Будущие премиум-функции";
+"paywall.features.header" = "В каждый план входит";
+"paywall.feature.unlimited_transactions" = "Без лимита транзакций";
+"paywall.feature.unlimited_csv" = "Неограниченный импорт CSV";
+"paywall.feature.custom_fields" = "Настраиваемые поля";
+"paywall.feature.advanced_filters" = "Расширенные фильтры";
 
 /* Plans */
 "paywall.plan.yearly" = "Годовой";
-"paywall.plan.yearly.subtitle" = "Экономия по сравнению с помесячным";
+"paywall.plan.yearly.subtitle" = "7 дней бесплатно · Отмена в Настройках";
 "paywall.plan.monthly" = "Месячный";
-"paywall.plan.monthly.subtitle" = "Оплата каждый месяц";
+"paywall.plan.monthly.subtitle" = "Отмена в любое время";
 "paywall.plan.lifetime" = "Навсегда";
-"paywall.plan.lifetime.subtitle" = "Разовая покупка";
+"paywall.plan.lifetime.subtitle" = "Разовая оплата, без подписки";
 
-/* Period labels */
-"paywall.period.year" = "в год";
-"paywall.period.month" = "в месяц";
-"paywall.period.once" = "один раз";
+/* CTAs */
+"paywall.cta.yearly" = "Начать бесплатный период";
+"paywall.cta.lifetime" = "Купить навсегда";
+"paywall.cta.monthly" = "Подписаться помесячно";
 
 /* Legal disclosure (Apple-required for subscriptions) */
 "paywall.legal.auto_renew" = "Подписка автоматически продлевается в конце каждого периода, если отмена не произведена не позднее чем за 24 часа до его окончания. Управлять подпиской и отменить её можно в любое время: Настройки → Apple ID → Подписки. Оплата списывается с учётной записи Apple ID при подтверждении покупки.";
