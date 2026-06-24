@@ -181,7 +181,7 @@ struct TransactionRow: View {
 
             // ✅ Color-blind safe: explicit sign + arrow icon, color is decorative.
             HStack(spacing: 4) {
-                Image(systemName: tx.isIncome ? "arrow.down.left" : "arrow.up.right")
+                Image(systemName: tx.isIncome ? "arrow.up.right" : "arrow.down.right")
                     .font(.caption.weight(.bold))
                     .accessibilityHidden(true)
 
