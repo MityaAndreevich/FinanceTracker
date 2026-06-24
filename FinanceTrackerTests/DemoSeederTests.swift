@@ -43,10 +43,11 @@ final class DemoSeederTests: XCTestCase {
         XCTAssertFalse(txs.contains { $0.merchant == "SHOULD_BE_GONE" }, "Pre-existing transaction survived wipeAll")
     }
 
-    func testSeed_creates_11_categories() throws {
+    func testSeed_creates_13_categories() throws {
         DemoSeeder.resetAndSeedDemoData(modelContext: context)
         let cats = try context.fetch(FetchDescriptor<FinanceTracker.Category>())
-        XCTAssertEqual(cats.count, 11)
+        // 6 primary expense + 1 primary income + 6 secondary expense = 13
+        XCTAssertEqual(cats.count, 13)
     }
 
     func testSeed_creates_3_sources() throws {
@@ -64,19 +65,22 @@ final class DemoSeederTests: XCTestCase {
         let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
         let anomalies = txs.filter { tx in
             tx.isExpense &&
-            tx.category.nameKey == "category.food" &&
+            tx.category.nameKey == "category.food_drink" &&
             tx.date >= sevenDaysAgo &&
             tx.amountCents > 10_000
         }
-        XCTAssertFalse(anomalies.isEmpty, "Expected a Food anomaly > $100 in the last 7 days")
+        XCTAssertFalse(anomalies.isEmpty, "Expected a Food & Drink anomaly > $100 in the last 7 days")
     }
 
     func testSeed_no_affluence_amounts() throws {
         DemoSeeder.resetAndSeedDemoData(modelContext: context)
         let txs = try context.fetch(FetchDescriptor<Transaction>())
 
-        let nonRentExpenses = txs.filter { $0.isExpense && $0.category.nameKey != "category.rent" }
-        for tx in nonRentExpenses {
+        // Housing (rent) is allowed to exceed $200 — all others should not
+        let nonHousingExpenses = txs.filter {
+            $0.isExpense && $0.category.nameKey != "category.housing"
+        }
+        for tx in nonHousingExpenses {
             XCTAssertLessThanOrEqual(
                 tx.amountCents, 20_000,
                 "Expense \(tx.amountCents)¢ exceeds $200 (category: \(tx.category.name), merchant: \(tx.merchant ?? "-"))"

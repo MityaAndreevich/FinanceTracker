@@ -22,7 +22,8 @@ struct QuickAddParserTests {
         #expect(result?.amountCents == 550)
         #expect(result?.typeRaw == "expense")
         #expect(result?.merchant == "Starbucks")
-        #expect(result?.suggestedCategoryName == "Coffee")
+        // Starbucks is a coffee brand now mapped to the consolidated Food & Drink category
+        #expect(result?.suggestedCategoryName == "Food & Drink")
     }
 
     @Test func parse_income_with_plus_sign() {
