@@ -103,3 +103,31 @@
 "category.subscriptions" = "Abonnements";
 "category.entertainment" = "Loisirs";
 "category.health" = "Santé";
+
+/* Nouvelle taxonomie — catégories principales */
+"category.food" = "Nourriture";
+"category.gas" = "Carburant";
+"category.rent" = "Loyer";
+"category.supplies" = "Courses";
+"category.other" = "Autres";
+"category.income" = "Revenus";
+"category.food_drink" = "Nourriture et Boissons";
+"category.transport" = "Transport";
+"category.housing" = "Logement";
+"category.shopping" = "Achats";
+
+/* Nouvelle taxonomie — catégories secondaires */
+"category.travel" = "Voyages";
+"category.personal_care" = "Soins personnels";
+"category.utilities" = "Charges";
+
+/* Sélecteur à divulgation progressive */
+"category.show_all" = "Tout afficher";
+"category.show_fewer" = "Réduire";
+"category.auto_detected" = "Détecté : %@";
+"category.tip_pick_other" = "Choisis une catégorie pour de meilleures analyses";
+
+/* Réglages — interrupteur isPrimary */
+"cs.category.shown_by_default" = "Affiché par défaut";
+"cs.category.primary_label" = "Affiché par défaut";
+"cs.category.secondary_label" = "Sous « Tout afficher »";

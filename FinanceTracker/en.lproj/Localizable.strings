@@ -425,12 +425,34 @@
 
 "cs.category_sheet.icon_hint" = "Tip: Choose an icon to make categories easier to scan.";
 
-/* Demo-mode categories */
+/* Demo-mode categories (legacy keys kept for backwards compat) */
 "category.coffee" = "Coffee";
 "category.transit" = "Transit";
 "category.subscriptions" = "Subscriptions";
 "category.entertainment" = "Entertainment";
 "category.health" = "Health";
+
+/* New taxonomy — primary categories */
+"category.food_drink" = "Food & Drink";
+"category.transport" = "Transport";
+"category.housing" = "Housing";
+"category.shopping" = "Shopping";
+
+/* New taxonomy — secondary categories */
+"category.travel" = "Travel";
+"category.personal_care" = "Personal Care";
+"category.utilities" = "Utilities";
+
+/* Progressive disclosure picker */
+"category.show_all" = "Show all";
+"category.show_fewer" = "Show fewer";
+"category.auto_detected" = "Auto-detected: %@";
+"category.tip_pick_other" = "Pick a category for better insights";
+
+/* CategoriesSourcesView — isPrimary toggle */
+"cs.category.shown_by_default" = "Shown by default";
+"cs.category.primary_label" = "Shown by default";
+"cs.category.secondary_label" = "Under “Show all”";
 
 /* ======================================================
    Recurring transactions

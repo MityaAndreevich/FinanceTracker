@@ -148,3 +148,31 @@
 "category.subscriptions" = "订阅";
 "category.entertainment" = "娱乐";
 "category.health" = "健康";
+
+/* 新分类 — 主要类别 */
+"category.food" = "餐饮";
+"category.gas" = "油费";
+"category.rent" = "租金";
+"category.supplies" = "购物";
+"category.other" = "其他";
+"category.income" = "收入";
+"category.food_drink" = "餐饮";
+"category.transport" = "交通";
+"category.housing" = "住房";
+"category.shopping" = "购物";
+
+/* 新分类 — 次要类别 */
+"category.travel" = "旅行";
+"category.personal_care" = "个人护理";
+"category.utilities" = "水电费";
+
+/* 渐进式分类选择器 */
+"category.show_all" = "显示全部";
+"category.show_fewer" = "收起";
+"category.auto_detected" = "已识别：%@";
+"category.tip_pick_other" = "选择分类以获得更好的分析";
+
+/* 设置 — isPrimary开关 */
+"cs.category.shown_by_default" = "默认显示";
+"cs.category.primary_label" = "默认显示";
+"cs.category.secondary_label" = "在「显示全部」中";

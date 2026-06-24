@@ -442,6 +442,28 @@
 "category.entertainment" = "Развлечения";
 "category.health" = "Здоровье";
 
+/* Новая таксономия — основные категории */
+"category.food_drink" = "Еда и напитки";
+"category.transport" = "Транспорт";
+"category.housing" = "Жильё";
+"category.shopping" = "Покупки";
+
+/* Новая таксономия — вторичные категории */
+"category.travel" = "Путешествия";
+"category.personal_care" = "Уход за собой";
+"category.utilities" = "Коммунальные услуги";
+
+/* Прогрессивное раскрытие списка категорий */
+"category.show_all" = "Показать все";
+"category.show_fewer" = "Свернуть";
+"category.auto_detected" = "Определено: %@";
+"category.tip_pick_other" = "Выберите категорию для лучшей аналитики";
+
+/* CategoriesSourcesView — переключатель isPrimary */
+"cs.category.shown_by_default" = "Показывать по умолчанию";
+"cs.category.primary_label" = "Показывается по умолчанию";
+"cs.category.secondary_label" = "В разделе «Показать все»";
+
 /* ======================================================
    Recurring transactions
    ====================================================== */

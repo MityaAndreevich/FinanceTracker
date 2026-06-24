@@ -141,3 +141,31 @@
 "category.subscriptions" = "サブスク";
 "category.entertainment" = "娯楽";
 "category.health" = "健康";
+
+/* 新しい分類 — 主要カテゴリ */
+"category.food" = "食事";
+"category.gas" = "ガソリン";
+"category.rent" = "家賃";
+"category.supplies" = "買い物";
+"category.other" = "その他";
+"category.income" = "収入";
+"category.food_drink" = "食事と飲み物";
+"category.transport" = "交通";
+"category.housing" = "住居";
+"category.shopping" = "買い物";
+
+/* 新しい分類 — サブカテゴリ */
+"category.travel" = "旅行";
+"category.personal_care" = "ケア";
+"category.utilities" = "光熱費";
+
+/* プログレッシブ開示ピッカー */
+"category.show_all" = "すべて表示";
+"category.show_fewer" = "折りたたむ";
+"category.auto_detected" = "自動検出: %@";
+"category.tip_pick_other" = "より良い分析のためにカテゴリを選んでください";
+
+/* 設定 — isPrimaryトグル */
+"cs.category.shown_by_default" = "デフォルトで表示";
+"cs.category.primary_label" = "デフォルトで表示中";
+"cs.category.secondary_label" = "「すべて表示」の中に";
