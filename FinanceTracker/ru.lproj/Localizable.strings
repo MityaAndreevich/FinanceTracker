@@ -168,6 +168,10 @@
 "dashboard.spent_this_month" = "Потрачено в этом месяце";
 "dashboard.income_caption" = "+ %@ доходов";
 "dashboard.based_on_tracked" = "На основе отслеживаемых транзакций";
+"dashboard.net_this_month" = "Итог за месяц";
+"dashboard.spent_earned_caption" = "Расходы: %@ · Доходы: %@";
+"dashboard.spent_more" = "Расходы превышают доходы";
+"dashboard.earned_more" = "Доходы превышают расходы";
 "dashboard.this_week" = "На этой неделе";
 
 "dashboard.day0.title" = "Умные подсказки скоро появятся";

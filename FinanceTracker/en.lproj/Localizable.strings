@@ -157,6 +157,10 @@
 "dashboard.spent_this_month" = "Spent this month";
 "dashboard.income_caption" = "+ %@ income";
 "dashboard.based_on_tracked" = "Based on tracked transactions";
+"dashboard.net_this_month" = "Net this month";
+"dashboard.spent_earned_caption" = "Spent %@ · Earned %@";
+"dashboard.spent_more" = "Spent more than earned";
+"dashboard.earned_more" = "Earned more than spent";
 "dashboard.this_week" = "This week";
 
 "dashboard.day0.title" = "Smart insights coming soon";

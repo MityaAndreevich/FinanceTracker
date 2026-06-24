@@ -28,6 +28,8 @@ struct DashboardView: View {
         currentMonthTransactions.filter { $0.isIncome }.reduce(0) { $0 + $1.amountCents }
     }
 
+    private var netCents: Int { incomeCents - expenseCents }
+
     private var recentTransactions: [Transaction] {
         Array(transactions.prefix(5))
     }
@@ -60,22 +62,37 @@ struct DashboardView: View {
 
     private var heroSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("dashboard.spent_this_month")
+            Text("dashboard.net_this_month")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            Text(Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode))
-                .font(.system(size: 40, weight: .bold))
-                .monospacedDigit()
-                .privacySensitive(true)
+            // Sign + direction arrow + amount — redundant cues required by WCAG/HIG for CVD safety.
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: netCents >= 0 ? "arrow.up.right" : "arrow.down.right")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(netCents >= 0 ? Color.green : Color.red)
+
+                Text((netCents >= 0 ? "+" : "−") + "\u{00A0}" +
+                     Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode))
+                    .font(.system(size: 40, weight: .bold))
+                    .monospacedDigit()
+                    .foregroundStyle(netCents >= 0 ? Color.green : Color.red)
+                    .privacySensitive(true)
+            }
 
             Text(String(
-                format: String(localized: "dashboard.income_caption"),
+                format: String(localized: "dashboard.spent_earned_caption"),
+                Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
                 Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
             ))
-            .font(.subheadline)
+            .font(.system(size: 13))
+            .monospacedDigit()
             .foregroundStyle(.secondary)
             .privacySensitive(true)
+
+            Text(netCents < 0 ? "dashboard.spent_more" : "dashboard.earned_more")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             Text("dashboard.based_on_tracked")
                 .font(.caption2)
