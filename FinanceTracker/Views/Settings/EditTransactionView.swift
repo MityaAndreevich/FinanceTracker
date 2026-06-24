@@ -242,6 +242,13 @@ struct EditTransactionView: View {
 
         do {
             try modelContext.save()
+
+            MerchantLearningService.record(
+                merchant: merchant.isEmpty ? nil : merchant,
+                categoryName: newCategory.name,
+                in: modelContext
+            )
+
             #if os(iOS)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             #endif

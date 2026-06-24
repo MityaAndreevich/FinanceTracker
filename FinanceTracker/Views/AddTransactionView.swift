@@ -483,6 +483,12 @@ struct AddTransactionView: View {
         do {
             try modelContext.save()
 
+            MerchantLearningService.record(
+                merchant: merchant.isEmpty ? nil : merchant,
+                categoryName: category.name,
+                in: modelContext
+            )
+
             if isRecurring {
                 RecurrenceService.scheduleNotification(for: tx)
             }
