@@ -444,6 +444,7 @@
 "addtx.recurring.weekly" = "Weekly";
 "addtx.recurring.monthly" = "Monthly";
 "addtx.recurring.yearly" = "Yearly";
+"addtx.suggestion.pill" = "Suggested: %@ — tap to confirm or change";
 
 "recurring.prompt.title" = "Recurring charge due";
 "recurring.prompt.add" = "Add this period's %@ (%@)?";

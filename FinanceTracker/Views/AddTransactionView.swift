@@ -52,6 +52,11 @@ struct AddTransactionView: View {
     @State private var isRecurring: Bool = false
     @State private var recurrenceType: RecurrenceType = .monthly
 
+    // On-device category suggestion
+    @State private var suggestedCategoryName: String?
+    @State private var categoryManuallyChosen: Bool = false
+    @State private var suggestTask: Task<Void, Never>?
+
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
 
@@ -113,6 +118,8 @@ struct AddTransactionView: View {
             }
             .onChange(of: typeRaw) { _, _ in
                 ensureValidCategorySelection()
+                suggestedCategoryName = nil
+                scheduleSuggestion()
             }
             .alert("common.error", isPresented: $showError) {
                 Button("common.ok", role: .cancel) {}
@@ -171,6 +178,9 @@ struct AddTransactionView: View {
     @ViewBuilder private var titleSection: some View {
         Section {
             TextField("add.title.placeholder", text: $merchantText)
+                .onChange(of: merchantText) { _, _ in
+                    scheduleSuggestion()
+                }
         } header: {
             Text("add.section.title")
         }
@@ -186,7 +196,11 @@ struct AddTransactionView: View {
                     Label("add.category.add", systemImage: "plus.circle")
                 }
             } else {
-                Picker("", selection: $selectedCategoryUUID) {
+                if let suggested = suggestedCategoryName {
+                    suggestionPill(suggested)
+                }
+
+                Picker("", selection: categoryPickerBinding) {
                     Text("common.select")
                         .tag(Optional<UUID>.none)
 
@@ -204,6 +218,44 @@ struct AddTransactionView: View {
         } header: {
             Text("add.section.category")
         }
+    }
+
+    /// Custom binding so a *user* pick is distinguishable from a programmatic
+    /// one: this setter only fires on direct UI interaction, never on our own
+    /// assignments (suggestion / prefill / auto-select).
+    private var categoryPickerBinding: Binding<UUID?> {
+        Binding(
+            get: { selectedCategoryUUID },
+            set: { newValue in
+                selectedCategoryUUID = newValue
+                categoryManuallyChosen = true
+                suggestedCategoryName = nil
+            }
+        )
+    }
+
+    private func suggestionPill(_ name: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkles")
+                .foregroundStyle(Color.accentColor)
+
+            Text(String(format: String(localized: "addtx.suggestion.pill"), name))
+                .font(.footnote)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Button {
+                suggestedCategoryName = nil
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.tertiary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("common.close"))
+        }
+        .padding(.vertical, 4)
+        .listRowBackground(Color.accentColor.opacity(0.10))
     }
 
     /// Renamed UI label "Source" → "Account". Now available for BOTH income and expense.
@@ -368,6 +420,48 @@ struct AddTransactionView: View {
         if let rec = p.recurrence {
             isRecurring = true
             recurrenceType = rec
+        }
+        // A prefilled category is an explicit choice — don't let suggestion override it.
+        if p.categoryUUID != nil {
+            categoryManuallyChosen = true
+        }
+    }
+
+    // MARK: - On-device category suggestion (Task B)
+
+    private func scheduleSuggestion() {
+        suggestTask?.cancel()
+        let merchant = merchantText
+        suggestTask = Task {
+            try? await Task.sleep(nanoseconds: 300_000_000)   // 300ms debounce
+            if Task.isCancelled { return }
+            await MainActor.run { applySuggestion(for: merchant) }
+        }
+    }
+
+    private func applySuggestion(for merchant: String) {
+        guard !categoryManuallyChosen else { return }
+        guard let suggestedName = CategorySuggestionService.suggest(forMerchant: merchant),
+              let match = matchCategory(named: suggestedName) else {
+            suggestedCategoryName = nil
+            return
+        }
+        selectedCategoryUUID = match.uuid          // programmatic — keeps manual flag false
+        suggestedCategoryName = match.displayName()
+    }
+
+    /// Match a canonical suggested name against the user's categories for the
+    /// current type (legacy name, localized name, or display name).
+    private func matchCategory(named name: String) -> Category? {
+        let target = name.lowercased()
+        return filteredCategories.first { cat in
+            if cat.name.lowercased() == target { return true }
+            if cat.displayName().lowercased() == target { return true }
+            if let key = cat.nameKey {
+                let loc = NSLocalizedString(key, comment: "").lowercased()
+                if loc == target { return true }
+            }
+            return false
         }
     }
 

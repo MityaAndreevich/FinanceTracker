@@ -454,6 +454,7 @@
 "addtx.recurring.weekly" = "Еженедельно";
 "addtx.recurring.monthly" = "Ежемесячно";
 "addtx.recurring.yearly" = "Ежегодно";
+"addtx.suggestion.pill" = "Подсказка: %@ — нажмите, чтобы подтвердить или изменить";
 
 "recurring.prompt.title" = "Пора записать платёж";
 "recurring.prompt.add" = "Добавить %@ за этот период (%@)?";
