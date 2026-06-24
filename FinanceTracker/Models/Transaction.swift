@@ -25,6 +25,10 @@ final class Transaction {
     var note: String?
     var merchant: String?
 
+    /// nil = one-time transaction. Otherwise "weekly" | "monthly" | "yearly".
+    /// Optional with no default → SwiftData lightweight migration handles existing stores.
+    var recurrenceRaw: String?
+
     // Relationships
     // .deny: if you try to delete a Category that still has transactions, SwiftData throws.
     // CategoriesSourcesView already blocks deletion UX-side; this is a safety net.
@@ -47,6 +51,7 @@ final class Transaction {
         taxCents: Int? = nil,
         note: String? = nil,
         merchant: String? = nil,
+        recurrenceRaw: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -60,6 +65,7 @@ final class Transaction {
         self.taxCents = taxCents
         self.note = note
         self.merchant = merchant
+        self.recurrenceRaw = recurrenceRaw
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -77,6 +83,14 @@ extension Transaction {
 
     var isIncome: Bool { type == .income }
     var isExpense: Bool { type == .expense }
+
+    /// Strongly-typed view over `recurrenceRaw`. nil == one-time.
+    var recurrence: RecurrenceType? {
+        get { RecurrenceType.from(recurrenceRaw) }
+        set { recurrenceRaw = newValue?.raw }
+    }
+
+    var isRecurring: Bool { recurrence != nil }
 
     /// Signed amount in cents. Income is positive, expense is negative.
     var signedAmountCents: Int {

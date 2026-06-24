@@ -431,3 +431,30 @@
 "category.subscriptions" = "Subscriptions";
 "category.entertainment" = "Entertainment";
 "category.health" = "Health";
+
+/* ======================================================
+   Recurring transactions
+   ====================================================== */
+"settings.recurring" = "Recurring";
+
+"addtx.recurring.header" = "RECURRING";
+"addtx.recurring.toggle" = "Repeat this transaction";
+"addtx.recurring.frequency" = "Frequency";
+"addtx.recurring.footer" = "We'll remind you each period to log this charge.";
+"addtx.recurring.weekly" = "Weekly";
+"addtx.recurring.monthly" = "Monthly";
+"addtx.recurring.yearly" = "Yearly";
+
+"recurring.prompt.title" = "Recurring charge due";
+"recurring.prompt.add" = "Add this period's %@ (%@)?";
+"recurring.prompt.add_button" = "Add";
+"recurring.prompt.skip_button" = "Skip";
+"recurring.prompt.edit_button" = "Edit";
+
+"recurring.notif.title" = "Upcoming recurring charge";
+"recurring.notif.body" = "%@ (%@) is due tomorrow.";
+"recurring.notif.fallback_merchant" = "Recurring charge";
+
+"recurring.settings.empty" = "No recurring transactions yet.";
+"recurring.settings.footer" = "Swipe left on an item to stop it recurring. The original transaction is kept.";
+"recurring.settings.stop" = "Stop";

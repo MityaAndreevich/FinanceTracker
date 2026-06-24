@@ -9,11 +9,26 @@ import SwiftUI
 import SwiftData
 import UIKit
 
+/// Optional initial values, used when re-opening the form to edit a due
+/// recurring charge (see RecurringPromptSheet → "Edit").
+struct AddTransactionPrefill {
+    var typeRaw: String
+    var amountText: String
+    var merchant: String
+    var categoryUUID: UUID?
+    var sourceUUID: UUID?
+    var recurrence: RecurrenceType?
+}
+
 struct AddTransactionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
+    /// Non-nil only when the form is opened to edit a recurring charge.
+    var prefill: AddTransactionPrefill? = nil
+    @State private var didApplyPrefill = false
 
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
     @Query(sort: \Source.name, order: .forward) private var sources: [Source]
@@ -32,6 +47,10 @@ struct AddTransactionView: View {
 
     @State private var errorMessageKey: String = "add.error.unknown"
     @State private var showError: Bool = false
+
+    // Recurring
+    @State private var isRecurring: Bool = false
+    @State private var recurrenceType: RecurrenceType = .monthly
 
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
@@ -66,6 +85,7 @@ struct AddTransactionView: View {
                 accountSection
                 dateSection
                 noteSection
+                recurringSection
                 saveSection
             }
             .navigationTitle("title.add")
@@ -87,7 +107,10 @@ struct AddTransactionView: View {
                         .disabled(!canAdd)
                 }
             }
-            .onAppear { ensureValidCategorySelection() }
+            .onAppear {
+                applyPrefillIfNeeded()
+                ensureValidCategorySelection()
+            }
             .onChange(of: typeRaw) { _, _ in
                 ensureValidCategorySelection()
             }
@@ -227,6 +250,29 @@ struct AddTransactionView: View {
         }
     }
 
+    @ViewBuilder private var recurringSection: some View {
+        Section {
+            Toggle("addtx.recurring.toggle", isOn: $isRecurring)
+                .onChange(of: isRecurring) { _, on in
+                    if on { RecurrenceService.requestAuthorizationIfNeeded() }
+                }
+
+            if isRecurring {
+                Picker("addtx.recurring.frequency", selection: $recurrenceType) {
+                    ForEach(RecurrenceType.allCases) { type in
+                        Text(LocalizedStringKey(type.labelKey)).tag(type)
+                    }
+                }
+            }
+        } header: {
+            Text("addtx.recurring.header")
+        } footer: {
+            if isRecurring {
+                Text("addtx.recurring.footer")
+            }
+        }
+    }
+
     @ViewBuilder private var saveSection: some View {
         Section {
             Button(action: add) {
@@ -286,13 +332,18 @@ struct AddTransactionView: View {
             source: selectedSource,               // Account available for both income and expense.
             taxCents: taxCents,
             note: cleanNote.isEmpty ? nil : cleanNote,
-            merchant: merchant.isEmpty ? nil : merchant
+            merchant: merchant.isEmpty ? nil : merchant,
+            recurrenceRaw: isRecurring ? recurrenceType.raw : nil
         )
 
         modelContext.insert(tx)
 
         do {
             try modelContext.save()
+
+            if isRecurring {
+                RecurrenceService.scheduleNotification(for: tx)
+            }
 
             #if os(iOS)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -302,6 +353,21 @@ struct AddTransactionView: View {
         } catch {
             showErrorKey("add.error.save_failed")
             print("Save failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func applyPrefillIfNeeded() {
+        guard let p = prefill, !didApplyPrefill else { return }
+        didApplyPrefill = true
+
+        typeRaw = p.typeRaw
+        amountText = p.amountText
+        merchantText = p.merchant
+        selectedCategoryUUID = p.categoryUUID
+        selectedSourceUUID = p.sourceUUID
+        if let rec = p.recurrence {
+            isRecurring = true
+            recurrenceType = rec
         }
     }
 

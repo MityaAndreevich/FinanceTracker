@@ -9,12 +9,19 @@ import SwiftUI
 import SwiftData
 
 struct DashboardView: View {
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
     @State private var showAddTransaction = false
+
+    // Recurring prompt
+    @State private var duePrompts: [RecurrencePrompt] = []
+    @State private var showRecurringPrompt = false
+    @State private var editPrefill: AddTransactionPrefill?
+    @State private var showEditPrefill = false
 
     private var currentMonthTransactions: [Transaction] {
         PeriodScope.currentMonth.filter(transactions)
@@ -55,6 +62,53 @@ struct DashboardView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddTransaction) {
             NavigationStack { AddTransactionView() }
+        }
+        .sheet(isPresented: $showRecurringPrompt) {
+            RecurringPromptSheet(prompts: duePrompts) { prompt in
+                handleEditRecurring(prompt)
+            }
+        }
+        .sheet(isPresented: $showEditPrefill) {
+            if let editPrefill {
+                NavigationStack { AddTransactionView(prefill: editPrefill) }
+            }
+        }
+        .task {
+            loadDueRecurring()
+        }
+    }
+
+    // MARK: - Recurring
+
+    private func loadDueRecurring() {
+        let due = RecurrenceService.checkAndPromptDueRecurring(modelContext: modelContext)
+        guard !due.isEmpty else { return }
+        duePrompts = due
+        RecurrenceService.markPromptedToday()
+        showRecurringPrompt = true
+    }
+
+    /// "Edit" on a due prompt: mark the period handled (so it won't re-prompt),
+    /// then open the Add form prefilled with the template's values for a one-off entry.
+    private func handleEditRecurring(_ prompt: RecurrencePrompt) {
+        RecurrenceService.skip(prompt, modelContext: modelContext)
+
+        let uuid = prompt.id
+        let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.uuid == uuid })
+        guard let template = try? modelContext.fetch(descriptor).first else { return }
+
+        editPrefill = AddTransactionPrefill(
+            typeRaw: template.typeRaw,
+            amountText: String(format: "%.2f", Double(template.amountCents) / 100),
+            merchant: template.merchant ?? "",
+            categoryUUID: template.category.uuid,
+            sourceUUID: template.source?.uuid,
+            recurrence: nil
+        )
+
+        // Let the prompt sheet finish dismissing before presenting the editor.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            showEditPrefill = true
         }
     }
 

@@ -38,6 +38,12 @@ struct SettingsView: View {
                 }
 
                 NavigationLink {
+                    RecurringSettingsView()
+                } label: {
+                    Label("settings.recurring", systemImage: "arrow.triangle.2.circlepath")
+                }
+
+                NavigationLink {
                     PrivacySettingsView()
                 } label: {
                     Label("settings.privacy", systemImage: "lock.shield")

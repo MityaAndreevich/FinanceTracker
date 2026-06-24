@@ -1,0 +1,197 @@
+//
+//  RecurrenceService.swift
+//  FinanceTracker
+//
+//  Drives recurring transactions. A recurring transaction is a normal saved
+//  Transaction whose `recurrenceRaw` is set — it counts as the FIRST occurrence.
+//  Each subsequent period we surface a prompt offering to log that period's
+//  charge; confirming creates a concrete (non-recurring) instance.
+//
+//  Period bookkeeping lives in UserDefaults (one key per template uuid) so the
+//  only schema change is the single optional `recurrenceRaw` attribute.
+//
+
+import Foundation
+import SwiftData
+import UserNotifications
+
+/// A due recurring charge awaiting the user's decision.
+struct RecurrencePrompt: Identifiable {
+    let id: UUID            // template uuid
+    let merchant: String
+    let amountCents: Int
+    let currency: String
+    let recurrence: RecurrenceType
+    let dueDate: Date
+}
+
+enum RecurrenceService {
+
+    private static let handledPrefix = "recurring.handled."      // + uuid → Double (epoch seconds)
+    private static let lastPromptDayKey = "recurring.lastPromptDay"
+    static let notifAuthRequestedKey = "recurring.notifAuthRequested"   // one-shot
+
+    // MARK: - Launch entry point
+
+    /// Called quietly on app launch (Dashboard `.task`). Respects a once-per-day
+    /// throttle so the user isn't re-prompted repeatedly the same day.
+    static func checkAndPromptDueRecurring(modelContext: ModelContext) -> [RecurrencePrompt] {
+        guard shouldPromptToday() else { return [] }
+        return dueRecurring(modelContext: modelContext)
+    }
+
+    /// All recurring templates whose next occurrence is now due (ignores the daily throttle).
+    static func dueRecurring(modelContext: ModelContext, now: Date = Date()) -> [RecurrencePrompt] {
+        let descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate { $0.recurrenceRaw != nil }
+        )
+        let templates = (try? modelContext.fetch(descriptor)) ?? []
+
+        return templates.compactMap { tx -> RecurrencePrompt? in
+            guard let rec = tx.recurrence else { return nil }
+            let due = nextDueDate(for: tx, recurrence: rec)
+            guard now >= due else { return nil }
+            return RecurrencePrompt(
+                id: tx.uuid,
+                merchant: tx.merchant ?? "",
+                amountCents: tx.amountCents,
+                currency: tx.currency,
+                recurrence: rec,
+                dueDate: due
+            )
+        }
+        .sorted { $0.dueDate < $1.dueDate }
+    }
+
+    /// The next occurrence date that has not yet been handled. The saved
+    /// transaction's own date is the first occurrence, so the first *prompt*
+    /// lands one full period after it (or after the last handled period).
+    static func nextDueDate(for tx: Transaction, recurrence: RecurrenceType) -> Date {
+        let lastBoundary = handledDate(for: tx.uuid) ?? tx.date
+        return recurrence.nextDate(after: lastBoundary)
+    }
+
+    // MARK: - User actions on a prompt
+
+    /// Create this period's concrete transaction (non-recurring) and advance the
+    /// template's handled boundary so it won't re-prompt until next period.
+    static func confirm(_ prompt: RecurrencePrompt, modelContext: ModelContext) {
+        guard let template = fetchTemplate(prompt.id, modelContext: modelContext) else { return }
+
+        let instance = Transaction(
+            typeRaw: template.typeRaw,
+            amountCents: template.amountCents,
+            currency: template.currency,
+            date: prompt.dueDate,
+            category: template.category,
+            source: template.source,
+            taxCents: template.taxCents,
+            note: template.note,
+            merchant: template.merchant,
+            recurrenceRaw: nil               // concrete occurrence, not a new template
+        )
+        modelContext.insert(instance)
+        setHandledDate(prompt.dueDate, for: prompt.id)
+        try? modelContext.save()
+        scheduleNotification(for: template)
+    }
+
+    /// Dismiss this period without logging a charge; still advances the boundary.
+    static func skip(_ prompt: RecurrencePrompt, modelContext: ModelContext) {
+        setHandledDate(prompt.dueDate, for: prompt.id)
+        if let template = fetchTemplate(prompt.id, modelContext: modelContext) {
+            scheduleNotification(for: template)
+        }
+    }
+
+    /// Stop a series entirely (Settings → Recurring → delete). Keeps the historical
+    /// transaction but clears its recurrence flag and cancels its notification.
+    static func stopRecurrence(for tx: Transaction, modelContext: ModelContext) {
+        tx.recurrence = nil
+        clearHandled(for: tx.uuid)
+        cancelNotification(for: tx.uuid)
+        try? modelContext.save()
+    }
+
+    // MARK: - Notifications
+
+    /// One-shot authorization request, fired the first time the user enables Recurring.
+    static func requestAuthorizationIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: notifAuthRequestedKey) else { return }
+        defaults.set(true, forKey: notifAuthRequestedKey)
+        UNUserNotificationCenter.current()
+            .requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
+    }
+
+    /// Schedule a local notification 1 day before the next occurrence. Local
+    /// notifications need no special entitlement; silently no-ops if not authorized.
+    static func scheduleNotification(for tx: Transaction) {
+        guard let rec = tx.recurrence else { return }
+        let center = UNUserNotificationCenter.current()
+        let identifier = notificationID(for: tx.uuid)
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+
+        let due = nextDueDate(for: tx, recurrence: rec)
+        guard let fireDate = Calendar.current.date(byAdding: .day, value: -1, to: due),
+              fireDate > Date() else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "recurring.notif.title")
+        let merchant = (tx.merchant?.isEmpty == false) ? tx.merchant! : String(localized: "recurring.notif.fallback_merchant")
+        let amount = Money.format(cents: tx.amountCents, currencyCode: tx.currency)
+        content.body = String(format: String(localized: "recurring.notif.body"), merchant, amount)
+        content.sound = .default
+
+        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+    }
+
+    static func cancelNotification(for uuid: UUID) {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [notificationID(for: uuid)])
+    }
+
+    // MARK: - Throttle
+
+    static func shouldPromptToday() -> Bool {
+        UserDefaults.standard.string(forKey: lastPromptDayKey) != todayKey()
+    }
+
+    static func markPromptedToday() {
+        UserDefaults.standard.set(todayKey(), forKey: lastPromptDayKey)
+    }
+
+    // MARK: - Internals
+
+    private static func fetchTemplate(_ uuid: UUID, modelContext: ModelContext) -> Transaction? {
+        let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.uuid == uuid })
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private static func handledDate(for uuid: UUID) -> Date? {
+        let t = UserDefaults.standard.double(forKey: handledPrefix + uuid.uuidString)
+        return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }
+
+    private static func setHandledDate(_ date: Date, for uuid: UUID) {
+        UserDefaults.standard.set(date.timeIntervalSince1970, forKey: handledPrefix + uuid.uuidString)
+    }
+
+    private static func clearHandled(for uuid: UUID) {
+        UserDefaults.standard.removeObject(forKey: handledPrefix + uuid.uuidString)
+    }
+
+    private static func notificationID(for uuid: UUID) -> String {
+        "recurring-\(uuid.uuidString)"
+    }
+
+    private static func todayKey() -> String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+}

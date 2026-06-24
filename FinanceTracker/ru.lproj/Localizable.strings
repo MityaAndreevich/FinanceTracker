@@ -441,3 +441,30 @@
 "category.subscriptions" = "Подписки";
 "category.entertainment" = "Развлечения";
 "category.health" = "Здоровье";
+
+/* ======================================================
+   Recurring transactions
+   ====================================================== */
+"settings.recurring" = "Повторяющиеся";
+
+"addtx.recurring.header" = "ПОВТОР";
+"addtx.recurring.toggle" = "Повторять эту транзакцию";
+"addtx.recurring.frequency" = "Периодичность";
+"addtx.recurring.footer" = "Будем напоминать вам записывать этот платёж каждый период.";
+"addtx.recurring.weekly" = "Еженедельно";
+"addtx.recurring.monthly" = "Ежемесячно";
+"addtx.recurring.yearly" = "Ежегодно";
+
+"recurring.prompt.title" = "Пора записать платёж";
+"recurring.prompt.add" = "Добавить %@ за этот период (%@)?";
+"recurring.prompt.add_button" = "Добавить";
+"recurring.prompt.skip_button" = "Пропустить";
+"recurring.prompt.edit_button" = "Изменить";
+
+"recurring.notif.title" = "Скоро повторяющийся платёж";
+"recurring.notif.body" = "%@ (%@) спишется завтра.";
+"recurring.notif.fallback_merchant" = "Повторяющийся платёж";
+
+"recurring.settings.empty" = "Пока нет повторяющихся транзакций.";
+"recurring.settings.footer" = "Смахните влево, чтобы остановить повтор. Исходная транзакция сохранится.";
+"recurring.settings.stop" = "Остановить";
