@@ -8,12 +8,10 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    // Source of truth
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    // UI state
     @State private var step: Step = .language
     @State private var selectedLanguage: SupportedLanguage = .system
     @State private var selectedCurrency: SupportedCurrency = .usd
@@ -38,22 +36,57 @@ struct OnboardingView: View {
         var progressText: String {
             self == .language ? "1/2" : "2/2"
         }
+
+        var heroSymbol: String {
+            self == .language ? "globe" : "dollarsign.circle"
+        }
+
+        var searchPromptKey: LocalizedStringKey {
+            self == .language ? "onboarding.search.languages" : "onboarding.search.currencies"
+        }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                header
+            VStack(spacing: 0) {
+                // MARK: Hero icon — Task A
+                Image(systemName: step.heroSymbol)
+                    .font(.system(size: 48))
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.top, 24)
+                    .animation(.spring(duration: 0.3), value: step)
 
-                // Main content
-                Group {
+                // MARK: Title + subtitle — Task B
+                VStack(spacing: 8) {
+                    Text(step.titleKey)
+                        .font(.system(size: 34, weight: .bold))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+
+                    Text(step.subtitleKey)
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                }
+                .padding(.bottom, 20)
+
+                // MARK: Elevated card — Tasks C, D, E
+                VStack(spacing: 0) {
+                    searchBar
+
+                    Color(.tertiarySystemFill).frame(height: 0.5)
+
                     if step == .language {
                         languageList
                     } else {
                         currencyList
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
                 .padding(.horizontal, 16)
 
                 Spacer(minLength: 6)
@@ -62,95 +95,110 @@ struct OnboardingView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
-            .padding(.top, 10)
             .navigationBarBackButtonHidden(step == .language)
             .toolbar { topToolbar }
             .onAppear(perform: preloadFromStorage)
-            .onChange(of: step) { _, _ in
-                // очищаем поиск при переходе шага (приятнее)
-                searchText = ""
-            }
+            .onChange(of: step) { _, _ in searchText = "" }
         }
     }
 
-    // MARK: - Header
+    // MARK: - Search bar — Task C
 
-    private var header: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Text(step.progressText)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-            }
-            .padding(.horizontal, 16)
-
-            Text(step.titleKey)
-                .font(.largeTitle.weight(.semibold))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
-
-            Text(step.subtitleKey)
-                .font(.callout)
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+                .font(.system(size: 16))
+
+            TextField(step.searchPromptKey, text: $searchText)
+                .font(.system(size: 17))
+
+            if !searchText.isEmpty {
+                Button { searchText = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(.bottom, 6)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
-    // MARK: - Lists
+    // MARK: - Lists — Tasks E, F
 
     private var languageList: some View {
-        List {
-            ForEach(filteredLanguages) { l in
-                selectRow(
-                    title: "\(l.flag) \(l.title)",
-                    isSelected: l == selectedLanguage
-                ) {
-                    selectedLanguage = l
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(filteredLanguages.enumerated()), id: \.element.id) { idx, l in
+                    selectRow(
+                        flag: l.flag,
+                        title: l.title,
+                        isSelected: l == selectedLanguage
+                    ) {
+                        selectedLanguage = l
+                    }
+                    if idx < filteredLanguages.count - 1 {
+                        Color(.tertiarySystemFill)
+                            .frame(height: 0.5)
+                            .padding(.leading, 16)
+                    }
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .searchable(text: $searchText, prompt: Text("onboarding.search.languages"))
-        .frame(maxHeight: 520)
+        .frame(maxHeight: 420)
+        .animation(.spring(duration: 0.25), value: selectedLanguage)
     }
 
     private var currencyList: some View {
-        List {
-            ForEach(filteredCurrencies) { c in
-                selectRow(
-                    title: "\(c.flag) \(c.code) — \(c.name)",
-                    isSelected: c == selectedCurrency
-                ) {
-                    selectedCurrency = c
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(filteredCurrencies.enumerated()), id: \.element.id) { idx, c in
+                    selectRow(
+                        flag: c.flag,
+                        title: "\(c.code) — \(c.name)",
+                        isSelected: c == selectedCurrency
+                    ) {
+                        selectedCurrency = c
+                    }
+                    if idx < filteredCurrencies.count - 1 {
+                        Color(.tertiarySystemFill)
+                            .frame(height: 0.5)
+                            .padding(.leading, 16)
+                    }
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .searchable(text: $searchText, prompt: Text("onboarding.search.currencies"))
-        .frame(maxHeight: 520)
+        .frame(maxHeight: 420)
+        .animation(.spring(duration: 0.25), value: selectedCurrency)
     }
 
-    private func selectRow(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    // MARK: - Row — Tasks E, F
+
+    private func selectRow(flag: String, title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Text(title)
-                    .foregroundStyle(.primary)
+                Text(flag)
+                    .font(.system(size: 22))
 
-                Spacer()
+                Text(title)
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(minHeight: 56)
             .contentShape(Rectangle())
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.accentColor, lineWidth: 1.5)
+                    .stroke(Color.accentColor, lineWidth: 2)
                     .opacity(isSelected ? 1 : 0)
             )
         }
@@ -164,7 +212,6 @@ struct OnboardingView: View {
             if step == .language {
                 step = .currency
             } else {
-                // Save + finish
                 appLanguageCode = selectedLanguage.id
                 defaultCurrencyCode = selectedCurrency.code
                 hasCompletedOnboarding = true
@@ -178,23 +225,26 @@ struct OnboardingView: View {
         .tint(.accentColor)
     }
 
-    // MARK: - Toolbar
+    // MARK: - Toolbar — Task B (progress top-trailing, back top-leading)
 
+    @ToolbarContentBuilder
     private var topToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if step == .currency {
                 Button("onboarding.back") { step = .language }
             }
         }
+        ToolbarItem(placement: .topBarTrailing) {
+            Text(step.progressText)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(.secondary)
+        }
     }
 
     // MARK: - Storage preload
 
     private func preloadFromStorage() {
-        // язык
         selectedLanguage = SupportedLanguage(rawValue: appLanguageCode) ?? .system
-
-        // валюта
         selectedCurrency = SupportedCurrency(rawValue: defaultCurrencyCode) ?? .usd
     }
 
@@ -203,7 +253,6 @@ struct OnboardingView: View {
     private var filteredLanguages: [SupportedLanguage] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return SupportedLanguage.allCases }
-
         return SupportedLanguage.allCases.filter { l in
             l.title.lowercased().contains(q) || l.id.lowercased().contains(q)
         }
@@ -212,10 +261,8 @@ struct OnboardingView: View {
     private var filteredCurrencies: [SupportedCurrency] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !q.isEmpty else { return SupportedCurrency.allCases }
-
         return SupportedCurrency.allCases.filter { c in
-            c.code.lowercased().contains(q) ||
-            c.name.lowercased().contains(q)
+            c.code.lowercased().contains(q) || c.name.lowercased().contains(q)
         }
     }
 }
@@ -223,5 +270,3 @@ struct OnboardingView: View {
 #Preview {
     OnboardingView()
 }
-
-
