@@ -28,6 +28,8 @@ struct AddTransactionView: View {
 
     /// Non-nil only when the form is opened to edit a recurring charge.
     var prefill: AddTransactionPrefill? = nil
+    /// Raw text from QuickEntryView "Use detailed form" path. Parsed on appear.
+    var prefillText: String? = nil
     @State private var didApplyPrefill = false
 
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
@@ -505,24 +507,34 @@ struct AddTransactionView: View {
     }
 
     private func applyPrefillIfNeeded() {
-        guard let p = prefill, !didApplyPrefill else { return }
+        guard !didApplyPrefill else { return }
         didApplyPrefill = true
 
-        typeRaw = p.typeRaw
-        amountText = p.amountText
-        merchantText = p.merchant
-        selectedCategoryUUID = p.categoryUUID
-        selectedSourceUUID = p.sourceUUID
-        if let rec = p.recurrence {
-            isRecurring = true
-            recurrenceType = rec
-        }
-        // A prefilled category is an explicit choice — don't let inline suggestion override it.
-        if let uuid = p.categoryUUID {
-            categoryManuallyChosen = true
-            showPickCategoryTip = false
-            // Show "Auto-detected: [name] ✓" chip instead of full picker
-            prefillDetectedCategoryName = categories.first { $0.uuid == uuid }?.displayName()
+        if let p = prefill {
+            typeRaw = p.typeRaw
+            amountText = p.amountText
+            merchantText = p.merchant
+            selectedCategoryUUID = p.categoryUUID
+            selectedSourceUUID = p.sourceUUID
+            if let rec = p.recurrence {
+                isRecurring = true
+                recurrenceType = rec
+            }
+            // A prefilled category is an explicit choice — don't let inline suggestion override it.
+            if let uuid = p.categoryUUID {
+                categoryManuallyChosen = true
+                showPickCategoryTip = false
+                // Show "Auto-detected: [name] ✓" chip instead of full picker
+                prefillDetectedCategoryName = categories.first { $0.uuid == uuid }?.displayName()
+            }
+        } else if let text = prefillText {
+            if let p = QuickAddParser.parse(text) {
+                typeRaw = p.typeRaw
+                amountText = Money.plainDecimalString(cents: p.amountCents)
+                merchantText = p.merchant ?? ""
+            } else {
+                merchantText = text
+            }
         }
     }
 
