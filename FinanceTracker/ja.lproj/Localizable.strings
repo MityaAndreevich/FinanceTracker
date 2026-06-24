@@ -190,3 +190,13 @@
 "quick_entry.voice.unavailable" = "この言語では音声入力が利用できません";
 "quick_entry.voice.fail_start" = "開始できませんでした — もう一度お試しください";
 "quick_entry.voice.settings" = "設定";
+
+/* Quick Entry accessibility (Brief 23C) */
+"quick_entry.a11y.input_label" = "取引入力欄";
+"quick_entry.a11y.input_hint" = "金額と店舗を入力または口述";
+"quick_entry.a11y.input_empty" = "空";
+"quick_entry.a11y.mic_listening" = "音声入力中、タップで停止";
+"quick_entry.a11y.mic_idle" = "音声入力を開始";
+"quick_entry.a11y.mic_hint" = "端末内ディクテーション";
+"quick_entry.a11y.save_dynamic" = "%@を%@に保存";
+"quick_entry.a11y.privacy_chip" = "プライバシー：データはiPhone内に保存";

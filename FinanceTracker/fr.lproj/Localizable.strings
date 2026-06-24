@@ -152,3 +152,13 @@
 "quick_entry.voice.unavailable" = "Voix non disponible pour cette langue";
 "quick_entry.voice.fail_start" = "Échec du démarrage — réessayer";
 "quick_entry.voice.settings" = "Réglages";
+
+/* Quick Entry accessibility (Brief 23C) */
+"quick_entry.a11y.input_label" = "Saisie de transaction";
+"quick_entry.a11y.input_hint" = "Saisis ou dicte un montant et un commerçant";
+"quick_entry.a11y.input_empty" = "Vide";
+"quick_entry.a11y.mic_listening" = "Voix active, appuyer pour arrêter";
+"quick_entry.a11y.mic_idle" = "Démarrer la voix";
+"quick_entry.a11y.mic_hint" = "Dictée sur l'appareil";
+"quick_entry.a11y.save_dynamic" = "Enregistrer %@ dans %@";
+"quick_entry.a11y.privacy_chip" = "Confidentialité : les données restent sur ton iPhone";

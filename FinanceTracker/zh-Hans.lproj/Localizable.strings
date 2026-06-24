@@ -197,3 +197,13 @@
 "quick_entry.voice.unavailable" = "此语言不支持语音输入";
 "quick_entry.voice.fail_start" = "启动失败 — 请重试";
 "quick_entry.voice.settings" = "设置";
+
+/* Quick Entry accessibility (Brief 23C) */
+"quick_entry.a11y.input_label" = "交易输入框";
+"quick_entry.a11y.input_hint" = "输入或口述金额和商家";
+"quick_entry.a11y.input_empty" = "空";
+"quick_entry.a11y.mic_listening" = "语音输入中，点击停止";
+"quick_entry.a11y.mic_idle" = "开始语音输入";
+"quick_entry.a11y.mic_hint" = "设备内听写";
+"quick_entry.a11y.save_dynamic" = "保存 %@ 到 %@";
+"quick_entry.a11y.privacy_chip" = "隐私：数据仅存于您的 iPhone";

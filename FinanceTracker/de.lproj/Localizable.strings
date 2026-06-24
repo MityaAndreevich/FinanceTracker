@@ -152,3 +152,13 @@
 "quick_entry.voice.unavailable" = "Spracheingabe für diese Sprache nicht verfügbar";
 "quick_entry.voice.fail_start" = "Sprachstart fehlgeschlagen — erneut versuchen";
 "quick_entry.voice.settings" = "Einstellungen";
+
+/* Quick Entry accessibility (Brief 23C) */
+"quick_entry.a11y.input_label" = "Transaktionseingabe";
+"quick_entry.a11y.input_hint" = "Betrag und Händler tippen oder diktieren";
+"quick_entry.a11y.input_empty" = "Leer";
+"quick_entry.a11y.mic_listening" = "Spracheingabe aktiv, tippen zum Stoppen";
+"quick_entry.a11y.mic_idle" = "Spracheingabe starten";
+"quick_entry.a11y.mic_hint" = "Diktat auf dem Gerät";
+"quick_entry.a11y.save_dynamic" = "%@ in %@ speichern";
+"quick_entry.a11y.privacy_chip" = "Datenschutz: Daten bleiben auf deinem iPhone";

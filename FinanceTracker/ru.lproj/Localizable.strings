@@ -519,3 +519,13 @@
 "quick_entry.voice.unavailable" = "Голосовой ввод недоступен для этого языка";
 "quick_entry.voice.fail_start" = "Не удалось запустить — попробуйте ещё раз";
 "quick_entry.voice.settings" = "Настройки";
+
+/* Quick Entry accessibility (Brief 23C) */
+"quick_entry.a11y.input_label" = "Поле ввода транзакции";
+"quick_entry.a11y.input_hint" = "Введите или продиктуйте сумму и продавца";
+"quick_entry.a11y.input_empty" = "Пусто";
+"quick_entry.a11y.mic_listening" = "Голосовой ввод активен, нажмите чтобы остановить";
+"quick_entry.a11y.mic_idle" = "Начать голосовой ввод";
+"quick_entry.a11y.mic_hint" = "Распознавание на устройстве";
+"quick_entry.a11y.save_dynamic" = "Сохранить %@ в %@";
+"quick_entry.a11y.privacy_chip" = "Конфиденциальность: данные остаются на iPhone";
