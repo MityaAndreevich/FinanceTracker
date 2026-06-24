@@ -2,73 +2,218 @@
 //  CategorySuggestionService.swift
 //  FinanceTracker
 //
-//  On-device merchant → category suggestion. v1.0 is a static lookup table with
-//  case-insensitive substring matching. NO data leaves the device; no network,
-//  no analytics. The returned value is a canonical English category NAME — the
-//  caller is responsible for matching it against the user's actual categories.
+//  On-device merchant → category suggestion. All logic stays on device; no network,
+//  no analytics. Returns the canonical English category NAME so the caller can
+//  match it against the user's actual seeded categories.
 //
-//  TODO: v1.1: replace lookup table with trained Core ML NLClassifier model
+//  Match priority:
+//  1. Word-boundary bare-word match (handles "gas", "lunch", "кофе")
+//  2. Brand substring match (handles "Starbucks", "Shell", "Netflix")
+//
+//  TODO: v1.1 — replace lookup tables with trained Core ML NLClassifier model
 //
 
 import Foundation
 
 enum CategorySuggestionService {
 
-    /// Suggest a canonical category name for a merchant string, or nil if no
-    /// confident match. Case-insensitive substring match against known merchants.
+    /// Returns a canonical category name (English) or nil if no confident match.
     static func suggest(forMerchant merchant: String) -> String? {
         let needle = merchant
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
-        guard needle.count >= 2 else { return nil }
+        guard !needle.isEmpty else { return nil }
 
+        // 1. Bare-word match — word-boundary aware, handles "gas", "lunch", "кофе"
+        for (keyword, category) in shortKeywords where containsWord(needle, keyword) {
+            return category
+        }
+
+        // 2. Brand substring match (longer keywords sorted first to avoid false partials)
+        guard needle.count >= 2 else { return nil }
         for (keyword, category) in lookup where needle.contains(keyword) {
             return category
         }
+
         return nil
     }
 
-    /// Merchant keyword (lowercased) → canonical category name.
-    /// Ordered longest-first so more specific keywords win over generic substrings.
+    // MARK: - Word-boundary helper
+
+    /// True when `word` appears in `haystack` as a whole word (not part of a longer word).
+    /// "gas" matches in "67 gas" and "gas station" but NOT in "gassed" or "gaslight".
+    private static func containsWord(_ haystack: String, _ word: String) -> Bool {
+        let pattern = "\\b\(NSRegularExpression.escapedPattern(for: word))\\b"
+        return haystack.range(of: pattern,
+                              options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
+    // MARK: - Bare-word table (checked before brand table)
+
+    private static let shortKeywords: [(String, String)] = [
+
+        // ── Food & Drink ────────────────────────────────────────────────────────
+        // EN — meals & eating out
+        ("lunch", "Food & Drink"), ("dinner", "Food & Drink"), ("breakfast", "Food & Drink"),
+        ("brunch", "Food & Drink"), ("food", "Food & Drink"), ("meal", "Food & Drink"),
+        ("snack", "Food & Drink"),
+        // EN — coffee & drinks
+        ("coffee", "Food & Drink"), ("latte", "Food & Drink"), ("espresso", "Food & Drink"),
+        ("cappuccino", "Food & Drink"), ("tea", "Food & Drink"),
+        // EN — groceries & market
+        ("groceries", "Food & Drink"), ("grocery", "Food & Drink"),
+        ("market", "Food & Drink"), ("supermarket", "Food & Drink"),
+        // EN — alcohol & bars
+        ("beer", "Food & Drink"), ("wine", "Food & Drink"), ("bar", "Food & Drink"),
+        ("drinks", "Food & Drink"), ("cocktail", "Food & Drink"), ("pub", "Food & Drink"),
+        // EN — restaurants & delivery
+        ("restaurant", "Food & Drink"), ("delivery", "Food & Drink"),
+        ("pizza", "Food & Drink"), ("burger", "Food & Drink"), ("sushi", "Food & Drink"),
+        // RU
+        ("еда", "Food & Drink"), ("обед", "Food & Drink"), ("ужин", "Food & Drink"),
+        ("завтрак", "Food & Drink"), ("кофе", "Food & Drink"), ("чай", "Food & Drink"),
+        ("продукты", "Food & Drink"), ("магазин", "Food & Drink"),
+        ("пиво", "Food & Drink"), ("вино", "Food & Drink"), ("бар", "Food & Drink"),
+        ("ресторан", "Food & Drink"), ("кафе", "Food & Drink"), ("доставка", "Food & Drink"),
+        ("пицца", "Food & Drink"), ("суши", "Food & Drink"),
+
+        // ── Transport ───────────────────────────────────────────────────────────
+        // EN — fuel
+        ("gas", "Transport"), ("fuel", "Transport"), ("gasoline", "Transport"),
+        ("petrol", "Transport"), ("diesel", "Transport"),
+        // EN — car maintenance
+        ("parking", "Transport"), ("toll", "Transport"),
+        ("mechanic", "Transport"), ("tires", "Transport"),
+        // EN — rideshare & transit
+        ("taxi", "Transport"), ("cab", "Transport"), ("ride", "Transport"),
+        ("bus", "Transport"), ("train", "Transport"), ("subway", "Transport"),
+        ("metro", "Transport"), ("flight", "Transport"),
+        // EN — travel
+        ("hotel", "Transport"), ("airbnb", "Transport"),
+        ("trip", "Transport"), ("vacation", "Transport"),
+        // RU
+        ("бензин", "Transport"), ("заправка", "Transport"), ("азс", "Transport"),
+        ("такси", "Transport"), ("автобус", "Transport"), ("метро", "Transport"),
+        ("шиномонтаж", "Transport"), ("парковка", "Transport"),
+        ("отель", "Transport"), ("гостиница", "Transport"), ("перелёт", "Transport"),
+
+        // ── Housing ─────────────────────────────────────────────────────────────
+        ("rent", "Housing"), ("mortgage", "Housing"), ("landlord", "Housing"),
+        ("electric", "Housing"), ("electricity", "Housing"), ("water", "Housing"),
+        ("internet", "Housing"), ("wifi", "Housing"),
+        ("аренда", "Housing"), ("квартплата", "Housing"), ("ипотека", "Housing"),
+        ("свет", "Housing"), ("вода", "Housing"), ("интернет", "Housing"),
+        ("коммуналка", "Housing"),
+
+        // ── Shopping ────────────────────────────────────────────────────────────
+        ("clothes", "Shopping"), ("clothing", "Shopping"),
+        ("shirt", "Shopping"), ("shoes", "Shopping"), ("boots", "Shopping"),
+        ("books", "Shopping"), ("electronics", "Shopping"), ("gift", "Shopping"),
+        ("одежда", "Shopping"), ("обувь", "Shopping"), ("подарок", "Shopping"),
+
+        // ── Entertainment ───────────────────────────────────────────────────────
+        ("movie", "Entertainment"), ("cinema", "Entertainment"),
+        ("concert", "Entertainment"), ("game", "Entertainment"),
+        ("ticket", "Entertainment"), ("show", "Entertainment"),
+        ("кино", "Entertainment"), ("концерт", "Entertainment"),
+        ("билет", "Entertainment"),
+
+        // ── Health ──────────────────────────────────────────────────────────────
+        ("doctor", "Health"), ("dentist", "Health"),
+        ("medicine", "Health"), ("pills", "Health"), ("pharmacy", "Health"),
+        ("gym", "Health"), ("fitness", "Health"), ("haircut", "Health"),
+        ("врач", "Health"), ("аптека", "Health"), ("лекарства", "Health"),
+        ("спортзал", "Health"), ("стрижка", "Health"),
+
+        // ── Subscriptions ───────────────────────────────────────────────────────
+        ("subscription", "Subscriptions"), ("подписка", "Subscriptions"),
+
+        // ── Income ──────────────────────────────────────────────────────────────
+        ("salary", "Income"), ("paycheck", "Income"), ("freelance", "Income"),
+        ("bonus", "Income"), ("refund", "Income"), ("dividend", "Income"),
+        ("зарплата", "Income"), ("аванс", "Income"), ("гонорар", "Income"),
+    ]
+
+    // MARK: - Brand lookup table (sorted longest-first to prefer specific keywords)
+
     private static let lookup: [(String, String)] = rawLookup
         .sorted { $0.0.count > $1.0.count }
 
     private static let rawLookup: [(String, String)] = [
-        // Coffee
-        ("starbucks", "Coffee"), ("blue bottle", "Coffee"), ("peet's", "Coffee"),
-        ("peets", "Coffee"), ("dunkin", "Coffee"), ("philz", "Coffee"),
-        ("costa coffee", "Coffee"), ("tim hortons", "Coffee"), ("caribou coffee", "Coffee"),
 
-        // Food / groceries / restaurants
-        ("whole foods", "Food"), ("trader joe's", "Food"), ("trader joes", "Food"),
-        ("kroger", "Food"), ("sweetgreen", "Food"), ("safeway", "Food"),
-        ("aldi", "Food"), ("costco", "Food"), ("publix", "Food"),
-        ("wegmans", "Food"), ("chipotle", "Food"), ("mcdonald", "Food"),
-        ("burger king", "Food"), ("wendy's", "Food"), ("wendys", "Food"),
-        ("taco bell", "Food"), ("panera", "Food"), ("doordash", "Food"),
-        ("grubhub", "Food"), ("instacart", "Food"), ("kfc", "Food"),
-        ("pizza", "Food"), ("domino", "Food"), ("five guys", "Food"),
-        ("shake shack", "Food"), ("popeyes", "Food"), ("in-n-out", "Food"),
-        ("albertsons", "Food"), ("food lion", "Food"), ("h-e-b", "Food"),
-        ("heb", "Food"), ("ralphs", "Food"),
+        // Food & Drink — coffee brands
+        ("starbucks", "Food & Drink"), ("blue bottle", "Food & Drink"),
+        ("peet's", "Food & Drink"), ("peets", "Food & Drink"),
+        ("dunkin", "Food & Drink"), ("philz", "Food & Drink"),
+        ("costa coffee", "Food & Drink"), ("tim hortons", "Food & Drink"),
+        ("caribou coffee", "Food & Drink"),
 
-        // Gas / fuel
-        ("shell", "Gas"), ("chevron", "Gas"), ("exxon", "Gas"),
-        ("mobil", "Gas"), ("bp ", "Gas"), ("texaco", "Gas"),
-        ("valero", "Gas"), ("arco", "Gas"), ("76 ", "Gas"),
-        ("circle k", "Gas"), ("speedway", "Gas"), ("marathon", "Gas"),
-        ("sunoco", "Gas"), ("citgo", "Gas"), ("phillips 66", "Gas"),
+        // Food & Drink — groceries
+        ("whole foods", "Food & Drink"), ("trader joe's", "Food & Drink"),
+        ("trader joes", "Food & Drink"), ("kroger", "Food & Drink"),
+        ("safeway", "Food & Drink"), ("aldi", "Food & Drink"),
+        ("costco", "Food & Drink"), ("publix", "Food & Drink"),
+        ("wegmans", "Food & Drink"), ("albertsons", "Food & Drink"),
+        ("food lion", "Food & Drink"), ("h-e-b", "Food & Drink"),
+        ("heb", "Food & Drink"), ("ralphs", "Food & Drink"),
+        ("instacart", "Food & Drink"),
 
-        // Transit / rideshare / travel
-        ("uber", "Transit"), ("lyft", "Transit"), ("subway transit", "Transit"),
-        ("metro", "Transit"), ("amtrak", "Transit"), ("bart", "Transit"),
-        ("mta", "Transit"), ("caltrain", "Transit"), ("transit", "Transit"),
-        ("parking", "Transit"), ("toll", "Transit"), ("delta air", "Transit"),
-        ("united airlines", "Transit"), ("american airlines", "Transit"),
-        ("southwest air", "Transit"), ("turo", "Transit"), ("hertz", "Transit"),
-        ("enterprise rent", "Transit"),
+        // Food & Drink — restaurants & delivery
+        ("sweetgreen", "Food & Drink"), ("chipotle", "Food & Drink"),
+        ("mcdonald", "Food & Drink"), ("burger king", "Food & Drink"),
+        ("wendy's", "Food & Drink"), ("wendys", "Food & Drink"),
+        ("taco bell", "Food & Drink"), ("panera", "Food & Drink"),
+        ("doordash", "Food & Drink"), ("grubhub", "Food & Drink"),
+        ("kfc", "Food & Drink"), ("domino", "Food & Drink"),
+        ("five guys", "Food & Drink"), ("shake shack", "Food & Drink"),
+        ("popeyes", "Food & Drink"), ("in-n-out", "Food & Drink"),
 
-        // Subscriptions / digital
+        // Transport — fuel stations
+        ("shell", "Transport"), ("chevron", "Transport"), ("exxon", "Transport"),
+        ("mobil", "Transport"), ("bp ", "Transport"), ("texaco", "Transport"),
+        ("valero", "Transport"), ("arco", "Transport"), ("76 ", "Transport"),
+        ("circle k", "Transport"), ("speedway", "Transport"), ("marathon", "Transport"),
+        ("sunoco", "Transport"), ("citgo", "Transport"), ("phillips 66", "Transport"),
+
+        // Transport — rideshare & transit
+        ("uber", "Transport"), ("lyft", "Transport"),
+        ("subway transit", "Transport"), ("amtrak", "Transport"),
+        ("bart", "Transport"), ("mta", "Transport"), ("caltrain", "Transport"),
+        ("delta air", "Transport"), ("united airlines", "Transport"),
+        ("american airlines", "Transport"), ("southwest air", "Transport"),
+        ("turo", "Transport"), ("hertz", "Transport"), ("enterprise rent", "Transport"),
+
+        // Housing — utilities & landlord
+        ("comcast", "Housing"), ("xfinity", "Housing"),
+        ("at&t", "Housing"), ("verizon", "Housing"), ("t-mobile", "Housing"),
+        ("pg&e", "Housing"), ("con edison", "Housing"),
+        ("water bill", "Housing"), ("apartments", "Housing"),
+
+        // Shopping
+        ("amazon", "Shopping"), ("walmart", "Shopping"), ("target", "Shopping"),
+        ("best buy", "Shopping"), ("home depot", "Shopping"),
+        ("lowe's", "Shopping"), ("lowes", "Shopping"), ("ikea", "Shopping"),
+        ("staples", "Shopping"), ("office depot", "Shopping"),
+        ("etsy", "Shopping"), ("ebay", "Shopping"), ("apple store", "Shopping"),
+
+        // Entertainment
+        ("amc", "Entertainment"), ("regal", "Entertainment"),
+        ("cinemark", "Entertainment"), ("bookstore", "Entertainment"),
+        ("barnes & noble", "Entertainment"), ("ticketmaster", "Entertainment"),
+        ("stubhub", "Entertainment"), ("steam", "Entertainment"),
+        ("playstation", "Entertainment"), ("xbox", "Entertainment"),
+        ("nintendo", "Entertainment"), ("fandango", "Entertainment"),
+        ("eventbrite", "Entertainment"), ("dave & buster", "Entertainment"),
+
+        // Health
+        ("walgreens", "Health"), ("cvs", "Health"), ("rite aid", "Health"),
+        ("planet fitness", "Health"), ("equinox", "Health"),
+        ("la fitness", "Health"), ("24 hour fitness", "Health"),
+        ("pharmacy", "Health"), ("gnc", "Health"), ("walgreen", "Health"),
+        ("crunch fitness", "Health"), ("orangetheory", "Health"),
+        ("dental", "Health"), ("clinic", "Health"), ("hospital", "Health"),
+
+        // Subscriptions
         ("spotify", "Subscriptions"), ("netflix", "Subscriptions"),
         ("youtube premium", "Subscriptions"), ("apple one", "Subscriptions"),
         ("icloud", "Subscriptions"), ("hulu", "Subscriptions"),
@@ -82,35 +227,5 @@ enum CategorySuggestionService {
         ("openai", "Subscriptions"), ("chatgpt", "Subscriptions"),
         ("twitch", "Subscriptions"), ("paramount+", "Subscriptions"),
         ("peacock", "Subscriptions"), ("apple music", "Subscriptions"),
-
-        // Entertainment
-        ("amc", "Entertainment"), ("regal", "Entertainment"),
-        ("cinemark", "Entertainment"), ("bookstore", "Entertainment"),
-        ("barnes & noble", "Entertainment"), ("ticketmaster", "Entertainment"),
-        ("stubhub", "Entertainment"), ("steam", "Entertainment"),
-        ("playstation", "Entertainment"), ("xbox", "Entertainment"),
-        ("nintendo", "Entertainment"), ("fandango", "Entertainment"),
-        ("eventbrite", "Entertainment"), ("dave & buster", "Entertainment"),
-
-        // Health / pharmacy / fitness
-        ("walgreens", "Health"), ("cvs", "Health"), ("rite aid", "Health"),
-        ("gym", "Health"), ("planet fitness", "Health"), ("equinox", "Health"),
-        ("la fitness", "Health"), ("24 hour fitness", "Health"),
-        ("pharmacy", "Health"), ("gnc", "Health"), ("walgreen", "Health"),
-        ("crunch fitness", "Health"), ("orangetheory", "Health"),
-        ("dental", "Health"), ("clinic", "Health"), ("hospital", "Health"),
-
-        // Shopping / supplies
-        ("amazon", "Supplies"), ("walmart", "Supplies"), ("target", "Supplies"),
-        ("best buy", "Supplies"), ("home depot", "Supplies"),
-        ("lowe's", "Supplies"), ("lowes", "Supplies"), ("ikea", "Supplies"),
-        ("staples", "Supplies"), ("office depot", "Supplies"),
-        ("etsy", "Supplies"), ("ebay", "Supplies"), ("apple store", "Supplies"),
-
-        // Housing / utilities / rent
-        ("rent", "Rent"), ("landlord", "Rent"), ("apartments", "Rent"),
-        ("comcast", "Rent"), ("xfinity", "Rent"), ("at&t", "Rent"),
-        ("verizon", "Rent"), ("t-mobile", "Rent"), ("pg&e", "Rent"),
-        ("con edison", "Rent"), ("water bill", "Rent"), ("electric", "Rent"),
     ]
 }
