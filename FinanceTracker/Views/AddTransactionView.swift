@@ -57,6 +57,14 @@ struct AddTransactionView: View {
     @State private var categoryManuallyChosen: Bool = false
     @State private var suggestTask: Task<Void, Never>?
 
+    // Progressive disclosure picker
+    @State private var showAllCategories = false
+    // True when auto-defaulted to "Other" and user hasn't manually picked
+    @State private var showPickCategoryTip = false
+    // Non-nil when opened from Quick Add with a pre-detected category
+    @State private var prefillDetectedCategoryName: String? = nil
+    @State private var showCategoryPickerOverride = false
+
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
 
@@ -64,6 +72,25 @@ struct AddTransactionView: View {
 
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
+    }
+
+    /// Categories shown in the picker: primary only unless expanded or selected is secondary.
+    private var displayedCategories: [Category] {
+        let filtered = filteredCategories
+        if showAllCategories { return filtered }
+        var primary = filtered.filter { $0.isPrimary }
+        // Always reveal the currently selected category even if it is secondary
+        if let sel = selectedCategoryUUID,
+           !primary.contains(where: { $0.uuid == sel }),
+           let selectedCat = filtered.first(where: { $0.uuid == sel }) {
+            primary.append(selectedCat)
+            primary.sort { $0.order < $1.order }
+        }
+        return primary
+    }
+
+    private var hasSecondaryCategories: Bool {
+        filteredCategories.contains { !$0.isPrimary }
     }
 
     private var selectedCategory: Category? {
@@ -117,6 +144,8 @@ struct AddTransactionView: View {
                 ensureValidCategorySelection()
             }
             .onChange(of: typeRaw) { _, _ in
+                showAllCategories = false
+                showPickCategoryTip = false
                 ensureValidCategorySelection()
                 suggestedCategoryName = nil
                 scheduleSuggestion()
@@ -191,25 +220,57 @@ struct AddTransactionView: View {
             if filteredCategories.isEmpty {
                 Text(typeRaw == TransactionType.income.raw ? "add.category.empty_income" : "add.category.empty_expense")
                     .foregroundStyle(.secondary)
-
+                Button { showAddCategorySheet = true } label: {
+                    Label("add.category.add", systemImage: "plus.circle")
+                }
+            } else if let detectedName = prefillDetectedCategoryName, !showCategoryPickerOverride {
+                // Quick Add pre-fill path — show chip instead of full picker
+                autoDetectedPill(detectedName)
                 Button { showAddCategorySheet = true } label: {
                     Label("add.category.add", systemImage: "plus.circle")
                 }
             } else {
+                // Inline suggestion (from manual merchant typing)
                 if let suggested = suggestedCategoryName {
                     suggestionPill(suggested)
                 }
 
+                // Progressive disclosure picker
                 Picker("", selection: categoryPickerBinding) {
-                    Text("common.select")
-                        .tag(Optional<UUID>.none)
-
-                    ForEach(filteredCategories, id: \.uuid) { category in
+                    Text("common.select").tag(Optional<UUID>.none)
+                    ForEach(displayedCategories, id: \.uuid) { category in
                         Text(LocalizedStringKey(category.displayKeyOrName))
                             .tag(Optional(category.uuid))
                     }
                 }
                 .labelsHidden()
+
+                // "Show all / Show fewer" toggle for secondary categories
+                if hasSecondaryCategories {
+                    Button {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                            showAllCategories.toggle()
+                        }
+                    } label: {
+                        if showAllCategories {
+                            Text("category.show_fewer")
+                                .font(.footnote)
+                                .foregroundStyle(Color.accentColor)
+                        } else {
+                            Text("\(String(localized: "category.show_all")) (\(filteredCategories.count))")
+                                .font(.footnote)
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Tip shown when "Other" was auto-selected (cleared on first manual pick)
+                if showPickCategoryTip && !categoryManuallyChosen {
+                    Text("category.tip_pick_other")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
 
                 Button { showAddCategorySheet = true } label: {
                     Label("add.category.add", systemImage: "plus.circle")
@@ -230,6 +291,8 @@ struct AddTransactionView: View {
                 selectedCategoryUUID = newValue
                 categoryManuallyChosen = true
                 suggestedCategoryName = nil
+                showPickCategoryTip = false
+                prefillDetectedCategoryName = nil
             }
         )
     }
@@ -253,6 +316,33 @@ struct AddTransactionView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("common.close"))
+        }
+        .padding(.vertical, 4)
+        .listRowBackground(Color.accentColor.opacity(0.10))
+    }
+
+    /// Shown when the view is opened from Quick Add with a pre-detected category.
+    /// Tap the pencil icon to expand the full picker and change the selection.
+    private func autoDetectedPill(_ name: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(Color.accentColor)
+
+            Text(String(format: String(localized: "category.auto_detected"), name))
+                .font(.footnote)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Button {
+                showCategoryPickerOverride = true
+                prefillDetectedCategoryName = nil
+            } label: {
+                Image(systemName: "pencil.circle")
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("edit.category.picker"))
         }
         .padding(.vertical, 4)
         .listRowBackground(Color.accentColor.opacity(0.10))
@@ -421,9 +511,12 @@ struct AddTransactionView: View {
             isRecurring = true
             recurrenceType = rec
         }
-        // A prefilled category is an explicit choice — don't let suggestion override it.
-        if p.categoryUUID != nil {
+        // A prefilled category is an explicit choice — don't let inline suggestion override it.
+        if let uuid = p.categoryUUID {
             categoryManuallyChosen = true
+            showPickCategoryTip = false
+            // Show "Auto-detected: [name] ✓" chip instead of full picker
+            prefillDetectedCategoryName = categories.first { $0.uuid == uuid }?.displayName()
         }
     }
 
@@ -475,7 +568,11 @@ struct AddTransactionView: View {
         }
 
         if selectedCategoryUUID == nil {
-            selectedCategoryUUID = subset.first?.uuid
+            // Prefer "Other" over the first alphabetical/order category —
+            // "Other" is a safe default that doesn't mislead analytics.
+            let other = subset.first { $0.nameKey == "category.other" }
+            selectedCategoryUUID = (other ?? subset.first)?.uuid
+            showPickCategoryTip = other != nil && !categoryManuallyChosen
         }
     }
 

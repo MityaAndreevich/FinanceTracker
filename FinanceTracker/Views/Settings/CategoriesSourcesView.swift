@@ -252,15 +252,26 @@ private struct SourceRow: View {
 }
 
 private struct CategoryRow: View {
-    let category: Category
+    @Bindable var category: Category
 
     var body: some View {
         HStack(spacing: 10) {
             if let icon = category.icon, !icon.isEmpty {
                 Image(systemName: icon)
                     .foregroundStyle(.secondary)
+                    .frame(width: 20)
             }
-            Text(LocalizedStringKey(category.displayKeyOrName))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey(category.displayKeyOrName))
+                Text(LocalizedStringKey(category.isPrimary
+                    ? "cs.category.primary_label"
+                    : "cs.category.secondary_label"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Toggle("cs.category.shown_by_default", isOn: $category.isPrimary)
+                .labelsHidden()
         }
     }
 }
