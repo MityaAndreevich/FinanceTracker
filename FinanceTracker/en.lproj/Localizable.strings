@@ -168,6 +168,10 @@
 "dashboard.day0.message.plural" = "Add %d more transactions to see your first insight.";
 "dashboard.day0.cta" = "Add transaction →";
 
+"dashboard.empty.headline" = "Add your first transaction";
+"dashboard.empty.body" = "Tap + to log income or expense in 3 seconds.";
+"dashboard.empty.cta" = "Get started →";
+
 /* Month navigation */
 "scope.previous_month" = "Previous month";
 "scope.next_month" = "Next month";

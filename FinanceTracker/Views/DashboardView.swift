@@ -104,10 +104,15 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var insightSection: some View {
-        let needed = max(0, 5 - transactions.count)
-        if needed > 0 {
-            Day0EducationalCard(needed: needed, showAddTransaction: $showAddTransaction)
+        if transactions.isEmpty {
+            EmptyStateCard(showAddTransaction: $showAddTransaction)
                 .padding(.horizontal, 16)
+        } else {
+            let needed = max(0, 5 - transactions.count)
+            if needed > 0 {
+                Day0EducationalCard(needed: needed, showAddTransaction: $showAddTransaction)
+                    .padding(.horizontal, 16)
+            }
         }
     }
 
@@ -140,6 +145,49 @@ struct DashboardView: View {
             )
             .padding(.horizontal, 16)
         }
+    }
+}
+
+// MARK: - First-launch empty state
+
+private struct EmptyStateCard: View {
+    @Binding var showAddTransaction: Bool
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(Color.accentColor)
+
+            VStack(spacing: 8) {
+                Text("dashboard.empty.headline")
+                    .font(.system(size: 22, weight: .semibold))
+                    .multilineTextAlignment(.center)
+
+                Text("dashboard.empty.body")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button {
+                showAddTransaction = true
+            } label: {
+                Text("dashboard.empty.cta")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 2)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.accentColor)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(.thinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
     }
 }
 
