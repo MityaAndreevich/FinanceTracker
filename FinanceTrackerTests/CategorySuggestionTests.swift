@@ -4,6 +4,7 @@
 //
 
 import Testing
+import SwiftData
 @testable import FinanceTracker
 
 @Suite("CategorySuggestionService")
@@ -132,5 +133,27 @@ struct CategorySuggestionTests {
 
     @Test func singleCharInput_returnsNil() {
         #expect(CategorySuggestionService.suggest(forMerchant: "x") == nil)
+    }
+
+    // MARK: - Learned priority integration
+
+    @Test func test_suggest_priority_learnedBeatsKeyword() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: MerchantCategoryLearning.self, configurations: config)
+        let ctx = ModelContext(container)
+        MerchantLearningService.record(merchant: "starbucks", categoryName: "Other", in: ctx)
+        let result = CategorySuggestionService.suggest(forMerchant: "starbucks", in: ctx)
+        #expect(result == "Other",
+                "learned mapping must beat brand lookup (brand lookup would return 'Food & Drink')")
+    }
+
+    @Test func test_suggest_priority_learnedBeatsBareword() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: MerchantCategoryLearning.self, configurations: config)
+        let ctx = ModelContext(container)
+        MerchantLearningService.record(merchant: "gas", categoryName: "Other", in: ctx)
+        let result = CategorySuggestionService.suggest(forMerchant: "gas", in: ctx)
+        #expect(result == "Other",
+                "learned mapping must beat shortKeywords bare-word match (which would return 'Transport')")
     }
 }
