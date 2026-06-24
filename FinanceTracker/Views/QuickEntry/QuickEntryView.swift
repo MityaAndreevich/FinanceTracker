@@ -13,6 +13,7 @@ import UIKit
 struct QuickEntryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
     @State private var inputText: String = ""
@@ -21,6 +22,8 @@ struct QuickEntryView: View {
     @State private var saveError = false
     @State private var placeholderIndex = 0
     @State private var parseTask: Task<Void, Never>? = nil
+    @State private var appeared = false
+    @State private var savePulseOn = false
     @FocusState private var isInputFocused: Bool
 
     @StateObject private var voice = VoiceInputService()
@@ -28,6 +31,7 @@ struct QuickEntryView: View {
     @State private var voiceErrorShowSettings = false
     @State private var voiceErrorDismissTask: Task<Void, Never>? = nil
 
+    private let testHookInput: String?
     private let placeholderTimer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
 
     private static let placeholderExamples: [LocalizedStringKey] = [
@@ -37,6 +41,25 @@ struct QuickEntryView: View {
         "quick_entry.placeholder.4",
         "quick_entry.placeholder.5",
     ]
+
+    init(testHookInput: String? = nil) {
+        self.testHookInput = testHookInput
+    }
+
+    private var parsedReady: Bool { parsed != nil && !voice.isListening }
+
+    private var resolvedCategoryName: String? {
+        guard let p = parsed else { return nil }
+        return QuickAddSaveService.resolveCategory(for: p, in: modelContext)?.displayName()
+    }
+
+    private var saveA11yLabel: Text {
+        guard let p = parsed, let catName = resolvedCategoryName else {
+            return Text("quick_entry.save")
+        }
+        let amount = Money.format(cents: p.amountCents, currencyCode: defaultCurrencyCode)
+        return Text(verbatim: String(format: NSLocalizedString("quick_entry.a11y.save_dynamic", comment: ""), amount, catName))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,7 +78,9 @@ struct QuickEntryView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, 32)
                     .transition(
-                        .scale(scale: 0.9).combined(with: .opacity)
+                        reduceMotion
+                            ? .opacity
+                            : .scale(scale: 0.92, anchor: .top).combined(with: .opacity)
                     )
             }
 
@@ -77,16 +102,36 @@ struct QuickEntryView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: parsed != nil)
+        .animation(
+            reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72),
+            value: parsed != nil
+        )
         .animation(.easeInOut(duration: 0.25), value: saveError)
         .animation(.easeInOut(duration: 0.25), value: voiceErrorMessage != nil)
+        .animation(.easeInOut(duration: 0.2), value: voice.isListening)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationBackground(.regularMaterial)
+        // MARK: Haptics (state-driven)
+        .sensoryFeedback(.selection, trigger: appeared)
+        .sensoryFeedback(.impact(weight: .light), trigger: parsed != nil) { old, new in
+            !old && new
+        }
+        .sensoryFeedback(.warning, trigger: saveError) { old, new in
+            !old && new
+        }
+        .sensoryFeedback(.warning, trigger: voiceErrorMessage != nil) { old, new in
+            !old && new
+        }
         .onAppear {
+            if let hookInput = testHookInput {
+                inputText = hookInput
+                parsed = QuickAddParser.parse(hookInput)
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isInputFocused = true
             }
+            appeared = true
         }
         .onDisappear {
             voice.stop()
@@ -114,8 +159,22 @@ struct QuickEntryView: View {
             parseTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 guard !Task.isCancelled else { return }
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                withAnimation(
+                    reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72)
+                ) {
                     parsed = QuickAddParser.parse(newValue)
+                }
+            }
+        }
+        // Save button ready-pulse: starts/stops when parsedReady toggles.
+        .onChange(of: parsedReady, initial: true) { _, newReady in
+            if newReady && !reduceMotion {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    savePulseOn = true
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    savePulseOn = false
                 }
             }
         }
@@ -147,10 +206,13 @@ struct QuickEntryView: View {
             HStack(spacing: 4) {
                 Image(systemName: "lock.iphone")
                     .font(.caption)
+                    .accessibilityHidden(true)
                 Text("quick_entry.privacy_chip")
                     .font(.subheadline)
             }
             .foregroundStyle(.secondary)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("quick_entry.a11y.privacy_chip"))
         }
     }
 
@@ -166,13 +228,20 @@ struct QuickEntryView: View {
                     .foregroundStyle(.tertiary)
                     .allowsHitTesting(false)
                     .transition(.opacity.animation(.easeOut(duration: 0.5)))
+                    .accessibilityHidden(true)
             }
 
             TextField("", text: $inputText, axis: .vertical)
                 .font(.system(size: 32, weight: .medium))
                 .multilineTextAlignment(.center)
+                .lineLimit(3)
                 .tint(.accentColor)
                 .focused($isInputFocused)
+                .accessibilityLabel(Text("quick_entry.a11y.input_label"))
+                .accessibilityHint(Text("quick_entry.a11y.input_hint"))
+                .accessibilityValue(
+                    inputText.isEmpty ? Text("quick_entry.a11y.input_empty") : Text(verbatim: inputText)
+                )
         }
     }
 
@@ -214,6 +283,8 @@ struct QuickEntryView: View {
         .padding(16)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        // Decorative — save button label already voices amount + category for screen readers.
+        .accessibilityHidden(true)
     }
 
     // MARK: - Error banner
@@ -258,8 +329,10 @@ struct QuickEntryView: View {
                         )
                         .clipShape(Capsule())
                         .opacity(parsed == nil ? 0.4 : 1)
+                        .scaleEffect(savePulseOn ? 1.02 : 1.0)
                 }
                 .disabled(parsed == nil)
+                .accessibilityLabel(saveA11yLabel)
             }
 
             Button {
@@ -282,10 +355,15 @@ struct QuickEntryView: View {
             Image(systemName: voice.isListening ? "waveform.circle.fill" : "mic.fill")
                 .font(.system(size: 28, weight: .medium))
                 .foregroundStyle(voice.isListening ? Color.red : Color.secondary)
+                .symbolEffect(.pulse.byLayer, options: .repeating, isActive: voice.isListening)
+                .contentTransition(.symbolEffect(.replace))
                 .frame(width: 56, height: 56)
                 .background(Circle().fill(.thinMaterial))
         }
-        .accessibilityLabel(Text(voice.isListening ? "quick_entry.voice.stop" : "quick_entry.voice.start"))
+        .accessibilityLabel(
+            Text(voice.isListening ? "quick_entry.a11y.mic_listening" : "quick_entry.a11y.mic_idle")
+        )
+        .accessibilityHint(Text("quick_entry.a11y.mic_hint"))
     }
 
     // MARK: - Voice error banner
@@ -326,6 +404,7 @@ struct QuickEntryView: View {
             }
 
             if voice.isListening {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                 voice.stop()
                 return
             }
@@ -335,6 +414,7 @@ struct QuickEntryView: View {
             case .authorized:
                 do {
                     try await voice.start()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } catch {
                     showVoiceError("quick_entry.voice.fail_start", showSettings: false)
                 }
@@ -368,6 +448,8 @@ struct QuickEntryView: View {
 
     private func handleSave() {
         guard let p = parsed else { return }
+        withAnimation(.easeInOut(duration: 0.1)) { savePulseOn = false }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         do {
             _ = try QuickAddSaveService.save(
                 parsed: p,
@@ -377,6 +459,7 @@ struct QuickEntryView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             dismiss()
         } catch {
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             withAnimation {
                 saveError = true
             }
@@ -390,4 +473,10 @@ struct QuickEntryView: View {
             for: [Transaction.self, Category.self, Source.self, MerchantCategoryLearning.self],
             inMemory: true
         )
+}
+
+#Preview("Screenshot — parsed valid") {
+    QuickEntryView(testHookInput: "67 gas")
+        .preferredColorScheme(.dark)
+        .modelContainer(for: [Transaction.self, Category.self, Source.self, MerchantCategoryLearning.self], inMemory: true)
 }
