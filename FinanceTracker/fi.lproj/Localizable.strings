@@ -30,6 +30,7 @@
 
 "onboarding.next" = "Seuraava";
 "onboarding.start" = "Aloita";
+"onboarding.cta.start_tracking" = "Aloita seuranta";
 "onboarding.back" = "Takaisin";
 
 /* Settings */

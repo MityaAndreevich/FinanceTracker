@@ -32,7 +32,7 @@ struct OnboardingView: View {
         }
 
         var primaryButtonKey: LocalizedStringKey {
-            self == .language ? "onboarding.next" : "onboarding.start"
+            self == .language ? "onboarding.next" : "onboarding.cta.start_tracking"
         }
 
         var progressText: String {
@@ -144,10 +144,15 @@ struct OnboardingView: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.tint)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
             .contentShape(Rectangle())
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.accentColor, lineWidth: 1.5)
+                    .opacity(isSelected ? 1 : 0)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -170,6 +175,7 @@ struct OnboardingView: View {
                 .padding(.vertical, 14)
         }
         .buttonStyle(.borderedProminent)
+        .tint(.accentColor)
     }
 
     // MARK: - Toolbar

@@ -27,6 +27,7 @@
 
 "onboarding.next" = "Next";
 "onboarding.start" = "Start";
+"onboarding.cta.start_tracking" = "Bắt đầu theo dõi";
 "onboarding.back" = "Back";
 
 /* Settings */

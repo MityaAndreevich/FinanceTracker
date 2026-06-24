@@ -30,6 +30,7 @@
 
 "onboarding.next" = "Další";
 "onboarding.start" = "Začít";
+"onboarding.cta.start_tracking" = "Začít sledovat";
 "onboarding.back" = "Zpět";
 
 /* Settings */

@@ -30,6 +30,7 @@
 
 "onboarding.next" = "下一步";
 "onboarding.start" = "開始";
+"onboarding.cta.start_tracking" = "開始記帳";
 "onboarding.back" = "返回";
 
 /* Settings */

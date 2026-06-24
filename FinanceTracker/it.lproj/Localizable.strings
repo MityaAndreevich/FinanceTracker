@@ -54,6 +54,7 @@
 
 "onboarding.next" = "Avanti";
 "onboarding.start" = "Inizia";
+"onboarding.cta.start_tracking" = "Inizia tracciamento";
 "onboarding.back" = "Indietro";
 
 /* Settings */

@@ -30,6 +30,7 @@
 
 "onboarding.next" = "التالي";
 "onboarding.start" = "ابدأ";
+"onboarding.cta.start_tracking" = "ابدأ التتبع";
 "onboarding.back" = "رجوع";
 
 /* Settings */

@@ -84,6 +84,7 @@
 
 "onboarding.next" = "Далее";
 "onboarding.start" = "Начать";
+"onboarding.cta.start_tracking" = "Начать учёт";
 "onboarding.back" = "Назад";
 
 /* ======================================================

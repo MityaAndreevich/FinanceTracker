@@ -54,6 +54,7 @@
 
 "onboarding.next" = "Suivant";
 "onboarding.start" = "Commencer";
+"onboarding.cta.start_tracking" = "Commencer le suivi";
 "onboarding.back" = "Retour";
 
 /* Settings */

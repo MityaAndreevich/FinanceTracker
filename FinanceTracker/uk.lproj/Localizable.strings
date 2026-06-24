@@ -32,6 +32,7 @@
 /* Onboarding – Actions */
 "onboarding.next" = "Далі";
 "onboarding.start" = "Почати";
+"onboarding.cta.start_tracking" = "Почати відстеження";
 "onboarding.back" = "Назад";
 
 /* Settings */
