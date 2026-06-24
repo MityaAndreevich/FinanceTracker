@@ -23,6 +23,11 @@ struct QuickEntryView: View {
     @State private var parseTask: Task<Void, Never>? = nil
     @FocusState private var isInputFocused: Bool
 
+    @StateObject private var voice = VoiceInputService()
+    @State private var voiceErrorMessage: LocalizedStringKey? = nil
+    @State private var voiceErrorShowSettings = false
+    @State private var voiceErrorDismissTask: Task<Void, Never>? = nil
+
     private let placeholderTimer = Timer.publish(every: 3, on: .main, in: .common).autoconnect()
 
     private static let placeholderExamples: [LocalizedStringKey] = [
@@ -62,12 +67,19 @@ struct QuickEntryView: View {
                     .padding(.bottom, 8)
             }
 
+            if let voiceErrorMessage {
+                voiceErrorBanner(voiceErrorMessage)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 8)
+            }
+
             bottomBar
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: parsed != nil)
         .animation(.easeInOut(duration: 0.25), value: saveError)
+        .animation(.easeInOut(duration: 0.25), value: voiceErrorMessage != nil)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .presentationBackground(.regularMaterial)
@@ -76,13 +88,27 @@ struct QuickEntryView: View {
                 isInputFocused = true
             }
         }
+        .onDisappear {
+            voice.stop()
+            voiceErrorDismissTask?.cancel()
+        }
         .onReceive(placeholderTimer) { _ in
             guard !(isInputFocused && inputText.isEmpty) else { return }
             withAnimation(.easeOut(duration: 0.5)) {
                 placeholderIndex = (placeholderIndex + 1) % Self.placeholderExamples.count
             }
         }
+        .onChange(of: voice.transcript) { _, newTranscript in
+            // Live-bind the transcript into the hero input while listening.
+            guard voice.isListening, !newTranscript.isEmpty else { return }
+            inputText = newTranscript
+        }
         .onChange(of: inputText) { _, newValue in
+            // Typing wins over voice: if the text diverges from the live transcript
+            // while listening, the user is typing — cancel voice cleanly.
+            if voice.isListening && newValue != voice.transcript {
+                voice.stop()
+            }
             saveError = false
             parseTask?.cancel()
             parseTask = Task { @MainActor in
@@ -210,25 +236,31 @@ struct QuickEntryView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
-            Button {
-                handleSave()
-            } label: {
-                Text("quick_entry.save")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.accentColor, Color.accentColor.opacity(0.82)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            HStack(spacing: 12) {
+                if voice.isAvailable {
+                    micButton
+                }
+
+                Button {
+                    handleSave()
+                } label: {
+                    Text("quick_entry.save")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.accentColor, Color.accentColor.opacity(0.82)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .clipShape(Capsule())
-                    .opacity(parsed == nil ? 0.4 : 1)
+                        .clipShape(Capsule())
+                        .opacity(parsed == nil ? 0.4 : 1)
+                }
+                .disabled(parsed == nil)
             }
-            .disabled(parsed == nil)
 
             Button {
                 showAddTxFallback = true
@@ -238,6 +270,97 @@ struct QuickEntryView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Mic button
+
+    private var micButton: some View {
+        Button {
+            toggleVoice()
+        } label: {
+            Image(systemName: voice.isListening ? "waveform.circle.fill" : "mic.fill")
+                .font(.system(size: 28, weight: .medium))
+                .foregroundStyle(voice.isListening ? Color.red : Color.secondary)
+                .frame(width: 56, height: 56)
+                .background(Circle().fill(.thinMaterial))
+        }
+        .accessibilityLabel(Text(voice.isListening ? "quick_entry.voice.stop" : "quick_entry.voice.start"))
+    }
+
+    // MARK: - Voice error banner
+
+    @ViewBuilder
+    private func voiceErrorBanner(_ message: LocalizedStringKey) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "mic.slash.fill")
+                .font(.caption)
+                .foregroundStyle(.red)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+
+            if voiceErrorShowSettings {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("quick_entry.voice.settings")
+                        .font(.caption.weight(.semibold))
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Voice control
+
+    private func toggleVoice() {
+        Task {
+            voiceErrorDismissTask?.cancel()
+            withAnimation {
+                voiceErrorMessage = nil
+                voiceErrorShowSettings = false
+            }
+
+            if voice.isListening {
+                voice.stop()
+                return
+            }
+
+            let auth = await voice.requestAuthorizationIfNeeded()
+            switch auth {
+            case .authorized:
+                do {
+                    try await voice.start()
+                } catch {
+                    showVoiceError("quick_entry.voice.fail_start", showSettings: false)
+                }
+            case .denied:
+                showVoiceError("quick_entry.voice.denied_open_settings", showSettings: true)
+            case .restricted, .deviceUnavailable:
+                showVoiceError("quick_entry.voice.unavailable", showSettings: false)
+            case .undetermined:
+                break
+            }
+        }
+    }
+
+    private func showVoiceError(_ key: LocalizedStringKey, showSettings: Bool) {
+        voiceErrorDismissTask?.cancel()
+        withAnimation {
+            voiceErrorMessage = key
+            voiceErrorShowSettings = showSettings
+        }
+        voiceErrorDismissTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            guard !Task.isCancelled else { return }
+            withAnimation {
+                voiceErrorMessage = nil
+                voiceErrorShowSettings = false
+            }
         }
     }
 
