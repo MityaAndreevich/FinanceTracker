@@ -66,6 +66,7 @@ struct AddTransactionView: View {
                 accountSection
                 dateSection
                 noteSection
+                saveSection
             }
             .navigationTitle("title.add")
             .toolbar {
@@ -226,6 +227,18 @@ struct AddTransactionView: View {
         }
     }
 
+    @ViewBuilder private var saveSection: some View {
+        Section {
+            Button(action: add) {
+                Text("common.add")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.accentColor)
+            .disabled(!canAdd)
+        }
+    }
+
     // MARK: - Actions
 
     private func add() {
@@ -282,10 +295,10 @@ struct AddTransactionView: View {
             try modelContext.save()
 
             #if os(iOS)
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
 
-            resetFormKeepType()
+            dismiss()
         } catch {
             showErrorKey("add.error.save_failed")
             print("Save failed: \(error.localizedDescription)")

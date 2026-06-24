@@ -13,32 +13,49 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
+    @State private var selectedTab: Int = 0
+    @State private var showAddSheet: Bool = false
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 DashboardView()
             }
             .tabItem { Label("tab.dashboard", systemImage: "house") }
+            .tag(0)
 
             NavigationStack {
                 TransactionsView()
             }
             .tabItem { Label("tab.transactions", systemImage: "list.bullet") }
+            .tag(1)
 
-            NavigationStack {
-                AddTransactionView()
-            }
-            .tabItem { Label("tab.add", systemImage: "plus.circle.fill") }
+            // Center tab: tapping triggers Add sheet rather than navigating.
+            // Per Apple HIG: "Use a tab bar to support navigation, not to provide actions."
+            Color.clear
+                .tabItem { Image(systemName: "plus.circle.fill") }
+                .tag(2)
 
             NavigationStack {
                 AnalyticsView()
             }
             .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
+            .tag(3)
 
             NavigationStack {
                 SettingsView()
             }
             .tabItem { Label("tab.settings", systemImage: "gear") }
+            .tag(4)
+        }
+        .onChange(of: selectedTab) { oldTab, newTab in
+            if newTab == 2 {
+                showAddSheet = true
+                selectedTab = oldTab   // restore: the + tab never "sticks"
+            }
+        }
+        .sheet(isPresented: $showAddSheet) {
+            AddTransactionView()
         }
         .task {
             // --demo-mode launch arg (used by simctl during App Store screenshot capture)
