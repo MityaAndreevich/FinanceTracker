@@ -146,3 +146,9 @@
 "quick_entry.placeholder.3" = "67 gasolina";
 "quick_entry.placeholder.4" = "+2800 salario";
 "quick_entry.placeholder.5" = "corte 25";
+"quick_entry.voice.start" = "Iniciar entrada de voz";
+"quick_entry.voice.stop" = "Detener entrada de voz";
+"quick_entry.voice.denied_open_settings" = "Habilita el micrófono en Ajustes";
+"quick_entry.voice.unavailable" = "Voz no disponible para este idioma";
+"quick_entry.voice.fail_start" = "No se pudo iniciar — inténtalo de nuevo";
+"quick_entry.voice.settings" = "Ajustes";

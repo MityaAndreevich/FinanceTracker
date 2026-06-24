@@ -503,3 +503,9 @@
 "quick_entry.placeholder.3" = "67 gas";
 "quick_entry.placeholder.4" = "+2800 paycheck";
 "quick_entry.placeholder.5" = "haircut 25";
+"quick_entry.voice.start" = "Start voice input";
+"quick_entry.voice.stop" = "Stop voice input";
+"quick_entry.voice.denied_open_settings" = "Enable microphone in Settings";
+"quick_entry.voice.unavailable" = "Voice not available for this language";
+"quick_entry.voice.fail_start" = "Couldn't start voice — try again";
+"quick_entry.voice.settings" = "Settings";

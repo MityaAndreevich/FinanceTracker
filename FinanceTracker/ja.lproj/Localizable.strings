@@ -184,3 +184,9 @@
 "quick_entry.placeholder.3" = "ガソリン 7000";
 "quick_entry.placeholder.4" = "+280000 給料";
 "quick_entry.placeholder.5" = "散髪 3000";
+"quick_entry.voice.start" = "音声入力を開始";
+"quick_entry.voice.stop" = "音声入力を停止";
+"quick_entry.voice.denied_open_settings" = "設定でマイクを有効にしてください";
+"quick_entry.voice.unavailable" = "この言語では音声入力が利用できません";
+"quick_entry.voice.fail_start" = "開始できませんでした — もう一度お試しください";
+"quick_entry.voice.settings" = "設定";

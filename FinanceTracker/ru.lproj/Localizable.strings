@@ -513,3 +513,9 @@
 "quick_entry.placeholder.3" = "3000 бензин";
 "quick_entry.placeholder.4" = "+200000 зарплата";
 "quick_entry.placeholder.5" = "стрижка 1500";
+"quick_entry.voice.start" = "Начать голосовой ввод";
+"quick_entry.voice.stop" = "Остановить голосовой ввод";
+"quick_entry.voice.denied_open_settings" = "Включите микрофон в Настройках";
+"quick_entry.voice.unavailable" = "Голосовой ввод недоступен для этого языка";
+"quick_entry.voice.fail_start" = "Не удалось запустить — попробуйте ещё раз";
+"quick_entry.voice.settings" = "Настройки";

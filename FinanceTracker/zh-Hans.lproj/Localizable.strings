@@ -191,3 +191,9 @@
 "quick_entry.placeholder.3" = "加油 500";
 "quick_entry.placeholder.4" = "+20000 工资";
 "quick_entry.placeholder.5" = "理发 100";
+"quick_entry.voice.start" = "开始语音输入";
+"quick_entry.voice.stop" = "停止语音输入";
+"quick_entry.voice.denied_open_settings" = "请在设置中启用麦克风";
+"quick_entry.voice.unavailable" = "此语言不支持语音输入";
+"quick_entry.voice.fail_start" = "启动失败 — 请重试";
+"quick_entry.voice.settings" = "设置";

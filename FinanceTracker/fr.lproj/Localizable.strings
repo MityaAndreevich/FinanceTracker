@@ -146,3 +146,9 @@
 "quick_entry.placeholder.3" = "67 essence";
 "quick_entry.placeholder.4" = "+2800 salaire";
 "quick_entry.placeholder.5" = "coupe 25";
+"quick_entry.voice.start" = "Démarrer la saisie vocale";
+"quick_entry.voice.stop" = "Arrêter la saisie vocale";
+"quick_entry.voice.denied_open_settings" = "Activer le micro dans Réglages";
+"quick_entry.voice.unavailable" = "Voix non disponible pour cette langue";
+"quick_entry.voice.fail_start" = "Échec du démarrage — réessayer";
+"quick_entry.voice.settings" = "Réglages";

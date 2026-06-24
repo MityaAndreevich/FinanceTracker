@@ -146,3 +146,9 @@
 "quick_entry.placeholder.3" = "67 Tanken";
 "quick_entry.placeholder.4" = "+2800 Gehalt";
 "quick_entry.placeholder.5" = "Haarschnitt 25";
+"quick_entry.voice.start" = "Spracheingabe starten";
+"quick_entry.voice.stop" = "Spracheingabe stoppen";
+"quick_entry.voice.denied_open_settings" = "Mikrofon in Einstellungen aktivieren";
+"quick_entry.voice.unavailable" = "Spracheingabe für diese Sprache nicht verfügbar";
+"quick_entry.voice.fail_start" = "Sprachstart fehlgeschlagen — erneut versuchen";
+"quick_entry.voice.settings" = "Einstellungen";
