@@ -55,7 +55,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAddSheet) {
-            AddTransactionView()
+            QuickEntryView()
         }
         .task {
             // --demo-mode launch arg (used by simctl during App Store screenshot capture)
