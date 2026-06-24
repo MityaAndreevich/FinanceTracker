@@ -76,5 +76,5 @@ struct RecurringSettingsView: View {
 
 #Preview {
     NavigationStack { RecurringSettingsView() }
-        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
+        .modelContainer(for: [Transaction.self, Category.self, Source.self, MerchantCategoryLearning.self], inMemory: true)
 }

@@ -18,7 +18,8 @@ struct FinanceTrackerApp: App {
     private static let schema = Schema([
         Transaction.self,
         Category.self,
-        Source.self
+        Source.self,
+        MerchantCategoryLearning.self
     ])
 
     var sharedModelContainer: ModelContainer = {

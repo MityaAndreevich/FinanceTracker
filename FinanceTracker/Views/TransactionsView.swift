@@ -228,5 +228,5 @@ private extension String {
 
 #Preview {
     NavigationStack { TransactionsView() }
-        .modelContainer(for: [Transaction.self, Category.self, Source.self], inMemory: true)
+        .modelContainer(for: [Transaction.self, Category.self, Source.self, MerchantCategoryLearning.self], inMemory: true)
 }
