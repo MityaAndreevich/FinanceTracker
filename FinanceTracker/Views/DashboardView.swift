@@ -234,49 +234,16 @@ struct DashboardView: View {
     }
 
     private func resolveCategoryForQuickAdd(_ parsed: QuickAddParsedInput) -> Category? {
-        // Try learned mapping first (context-aware), then fall back to parser's static suggestion.
-        let suggestedName = parsed.merchant.flatMap {
-            CategorySuggestionService.suggest(forMerchant: $0, in: modelContext)
-        } ?? parsed.suggestedCategoryName
-        guard let name = suggestedName else { return nil }
-        let target = name.lowercased()
-        let subset = allCategories.filter { $0.kindRaw == parsed.typeRaw }
-        return subset.first { cat in
-            if cat.name.lowercased() == target { return true }
-            if cat.displayName().lowercased() == target { return true }
-            if let key = cat.nameKey {
-                return NSLocalizedString(key, comment: "").lowercased() == target
-            }
-            return false
-        }
+        QuickAddSaveService.resolveCategory(for: parsed, in: modelContext)
     }
 
     private func saveQuickAdd(_ parsed: QuickAddParsedInput, category: Category?) {
-        guard let category else { return }
-
-        let tx = Transaction(
-            typeRaw: parsed.typeRaw,
-            amountCents: parsed.amountCents,
-            currency: defaultCurrencyCode,
-            date: Date(),
-            category: category,
-            source: nil,
-            taxCents: nil,
-            note: nil,
-            merchant: parsed.merchant,
-            recurrenceRaw: nil
-        )
-        modelContext.insert(tx)
-
         do {
-            try modelContext.save()
-
-            MerchantLearningService.record(
-                merchant: parsed.merchant,
-                categoryName: category.name,
-                in: modelContext
+            _ = try QuickAddSaveService.save(
+                parsed: parsed,
+                modelContext: modelContext,
+                defaultCurrencyCode: defaultCurrencyCode
             )
-
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             withAnimation { quickAddParsed = nil }
             quickAddText = ""
