@@ -1,13 +1,13 @@
 # Privacy Policy
 
 **Last updated:** June 22, 2026
-**Effective date:** Upon publication of FinanceTracker version 1.0 on the App Store
+**Effective date:** Upon publication of Vela version 1.0 on the App Store
 
 ---
 
 ## In plain language
 
-FinanceTracker keeps all of your financial data on your device. We have no servers, no cloud database, and no third-party data partners. We do not see, store, or sell your transactions, account names, or any other information you enter.
+Vela keeps all of your financial data on your device. We have no servers, no cloud database, and no third-party data partners. We do not see, store, or sell your transactions, account names, or any other information you enter.
 
 The only network traffic the app generates is to Apple, exclusively for processing in-app purchases through StoreKit and (if you choose to enable it) syncing your data between your own Apple devices via iCloud. We never receive any of that data.
 
@@ -17,7 +17,7 @@ If that is enough for you, you can stop reading here. The rest of this document 
 
 ## 1. Who we are
 
-This Privacy Policy describes how Dmitry Logachev (the "Developer", "we", "our", "us") handles personal information in connection with the FinanceTracker iOS application (the "App").
+This Privacy Policy describes how Dmitry Logachev (the "Developer", "we", "our", "us") handles personal information in connection with the Vela iOS application (the "App").
 
 **Contact:**
 Email: Dmitry.logachev.usa@icloud.com
@@ -28,7 +28,7 @@ Email: Dmitry.logachev.usa@icloud.com
 
 **We do not collect any personal information from you.**
 
-All data you enter into FinanceTracker — including but not limited to transaction amounts, dates, merchants, notes, account names, category names, and currency preferences — is stored exclusively on your device and remains under your sole control. None of this information is transmitted to us, our servers (we have none), or any third party.
+All data you enter into Vela — including but not limited to transaction amounts, dates, merchants, notes, account names, category names, and currency preferences — is stored exclusively on your device and remains under your sole control. None of this information is transmitted to us, our servers (we have none), or any third party.
 
 ### Information processed by Apple, not by us
 
@@ -48,7 +48,7 @@ If you grant the App permission to access the camera (for the optional Receipt O
 
 Because we do not collect any personal information, we do not use it for any purpose.
 
-The information you enter into FinanceTracker is used by the App, on your device, to provide the functionality you have requested: displaying your dashboard, generating analytics charts, exporting reports, and producing optional smart insights based on your usage patterns. All of this processing happens locally on your device.
+The information you enter into Vela is used by the App, on your device, to provide the functionality you have requested: displaying your dashboard, generating analytics charts, exporting reports, and producing optional smart insights based on your usage patterns. All of this processing happens locally on your device.
 
 ---
 
@@ -72,7 +72,7 @@ We do not transfer your information internationally because we do not receive it
 
 ## 7. Data retention
 
-All data you enter into FinanceTracker remains on your device until you choose to delete it. You can:
+All data you enter into Vela remains on your device until you choose to delete it. You can:
 
 - Delete individual transactions, categories, or accounts from within the App at any time.
 - Use **Settings → General → Reset Transactions** to remove all transactions while keeping your categories and accounts.
@@ -119,7 +119,7 @@ These protections rely on your device having a passcode set. We strongly encoura
 
 If you enable iCloud sync, data in transit and at rest in iCloud is encrypted by Apple using end-to-end encryption. Only your devices logged into the same Apple ID can decrypt it.
 
-No security measure is perfect. While we have designed FinanceTracker to be one of the most privacy-respecting finance applications on the App Store, you should always practice good operational security on your device, including keeping iOS up to date and using a unique device passcode.
+No security measure is perfect. While we have designed Vela to be one of the most privacy-respecting finance applications on the App Store, you should always practice good operational security on your device, including keeping iOS up to date and using a unique device passcode.
 
 ---
 

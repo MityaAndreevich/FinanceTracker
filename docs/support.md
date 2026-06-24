@@ -1,14 +1,14 @@
 ---
-title: Support — FinanceTracker
+title: Support — Vela
 ---
 
 # Support
 
-> Need help with FinanceTracker? You've come to the right place.
+> Need help with Vela? You've come to the right place.
 
 **Contact:** [dmitry.logachev.usa@icloud.com](mailto:dmitry.logachev.usa@icloud.com)
 
-**Response time:** Within 24 hours, every day. FinanceTracker is built and supported by a single independent developer, and every email gets a real reply.
+**Response time:** Within 24 hours, every day. Vela is built and supported by a single independent developer, and every email gets a real reply.
 
 When you write in, please include:
 
@@ -26,7 +26,7 @@ Tap the **+ button** at the bottom of the main screen. Pick **Expense** or **Inc
 
 ### Why do I see a paywall after a few transactions?
 
-The free version of FinanceTracker lets you add 10 transactions so you can try the app risk-free with your own data. After that, you can upgrade to Premium for unlimited transactions, advanced analytics, custom fields, and unlimited CSV import.
+The free version of Vela lets you add 10 transactions so you can try the app risk-free with your own data. After that, you can upgrade to Premium for unlimited transactions, advanced analytics, custom fields, and unlimited CSV import.
 
 Premium is available as:
 
@@ -40,30 +40,30 @@ If you've previously bought Premium and need to restore it (after reinstalling t
 
 ### How do I cancel my subscription?
 
-Subscriptions are managed by Apple, not FinanceTracker. To cancel:
+Subscriptions are managed by Apple, not Vela. To cancel:
 
 1. Open the **Settings** app on your iPhone.
 2. Tap **your name** at the top.
 3. Tap **Subscriptions**.
-4. Tap **FinanceTracker**.
+4. Tap **Vela**.
 5. Tap **Cancel Subscription**.
 
 Your subscription will remain active until the end of the current billing period. You can re-subscribe at any time. The **Lifetime** purchase never auto-renews — it's a one-time payment.
 
 ### How do I import data from another finance app?
 
-If your previous app supports CSV export, FinanceTracker can import it.
+If your previous app supports CSV export, Vela can import it.
 
 1. Export the CSV from your previous app.
 2. AirDrop, email, or save the file to your iPhone (Files app).
-3. In FinanceTracker, go to **Settings → Import CSV**.
+3. In Vela, go to **Settings → Import CSV**.
 4. Pick the file. The app will preview the import and let you confirm.
 
 Supported columns: `date, type, amount, currency, category, account, tax, note, merchant` (in that order). Free users can import up to 500 rows once. Premium users have unlimited CSV imports.
 
 ### Why does the app ask me to use Face ID / Touch ID?
 
-If you turn on **App Lock** in Settings, FinanceTracker requires biometric authentication (Face ID, Touch ID, or your iPhone passcode as fallback) every time you open the app. This protects your financial data if someone else picks up your phone.
+If you turn on **App Lock** in Settings, Vela requires biometric authentication (Face ID, Touch ID, or your iPhone passcode as fallback) every time you open the app. This protects your financial data if someone else picks up your phone.
 
 The app never sends your biometrics or passcode anywhere. Authentication is handled entirely by iOS.
 
@@ -83,13 +83,13 @@ Email me at the address above with the details and a screenshot if possible. I r
 
 No. We don't collect any data to sell. The App Store's privacy label confirms this: **Data Not Collected**.
 
-### Will FinanceTracker work without an internet connection?
+### Will Vela work without an internet connection?
 
-Yes. The only reason FinanceTracker uses the network is to verify your purchase with Apple's StoreKit. Adding transactions, viewing analytics, biometric unlock, CSV import — all work offline.
+Yes. The only reason Vela uses the network is to verify your purchase with Apple's StoreKit. Adding transactions, viewing analytics, biometric unlock, CSV import — all work offline.
 
 ### What languages does the app support?
 
-FinanceTracker v1 ships in English, Russian, Spanish, German, French, Brazilian Portuguese, Japanese, and Simplified Chinese. The app follows your iPhone's primary language setting automatically.
+Vela v1 ships in English, Russian, Spanish, German, French, Brazilian Portuguese, Japanese, and Simplified Chinese. The app follows your iPhone's primary language setting automatically.
 
 ---
 
@@ -102,6 +102,6 @@ FinanceTracker v1 ships in English, Russian, Spanish, German, French, Brazilian 
 
 ## About
 
-FinanceTracker is built by [Dmitry Logachev](https://github.com/MityaAndreevich) — an independent iOS developer. The app is not affiliated with any bank, financial institution, or large tech company. There are no investors, no advertisers, and no analytics partners involved.
+Vela is built by [Dmitry Logachev](https://github.com/MityaAndreevich) — an independent iOS developer. The app is not affiliated with any bank, financial institution, or large tech company. There are no investors, no advertisers, and no analytics partners involved.
 
 If you like the app, the best support is a 5-star review on the App Store — that's what helps other privacy-conscious users find it.

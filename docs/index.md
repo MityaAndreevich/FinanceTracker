@@ -1,12 +1,12 @@
 ---
-title: FinanceTracker
+title: Vela
 ---
 
-# FinanceTracker
+# Vela
 
 A privacy-first personal finance tracker for iOS — built with SwiftUI and SwiftData. No bank login required. No cloud sync unless you choose iCloud. No data collection. Ever.
 
-[View on GitHub](https://github.com/MityaAndreevich/FinanceTracker)
+[View on GitHub](https://github.com/MityaAndreevich/Vela)
 
 ---
 
@@ -19,7 +19,7 @@ A privacy-first personal finance tracker for iOS — built with SwiftUI and Swif
 
 ## About
 
-FinanceTracker is an indie iOS app focused on three things:
+Vela is an indie iOS app focused on three things:
 
 1. **Privacy** — your financial data never leaves your device unless you opt into iCloud sync.
 2. **Speed** — log a transaction in 3 seconds via the app, Home Screen widget, or Siri Shortcut.

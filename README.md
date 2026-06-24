@@ -1,7 +1,9 @@
-# FinanceTracker
+# Vela
 
 A lightweight personal finance tracker for iOS, built with **SwiftUI** and **SwiftData**.
 Focus on simplicity, clarity, and data ownership — every financial record stays on the user's device.
+
+> The repository is named `FinanceTracker` for historical reasons (it was the working title during development). The product ships as **Vela** on the App Store.
 
 > For implementation details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
