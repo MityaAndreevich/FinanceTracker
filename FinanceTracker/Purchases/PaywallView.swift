@@ -292,7 +292,7 @@ private struct MonthlyPlanCard: View {
                     .padding(.vertical, 7)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(.secondary.opacity(0.6), lineWidth: 0.75)
+                            .strokeBorder(.secondary, lineWidth: 1)
                     )
             }
             .buttonStyle(.plain)
