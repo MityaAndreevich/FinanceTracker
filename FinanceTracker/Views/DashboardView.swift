@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +16,9 @@ struct DashboardView: View {
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
+    @Query(sort: \Category.order, order: .forward)
+    private var allCategories: [Category]
+
     @State private var showAddTransaction = false
 
     // Recurring prompt
@@ -22,6 +26,12 @@ struct DashboardView: View {
     @State private var showRecurringPrompt = false
     @State private var editPrefill: AddTransactionPrefill?
     @State private var showEditPrefill = false
+
+    // Quick Add
+    @State private var quickAddText: String = ""
+    @State private var quickAddParsed: QuickAddParsedInput? = nil
+    @State private var showQuickAddEdit = false
+    @State private var quickAddEditPrefill: AddTransactionPrefill? = nil
 
     private var currentMonthTransactions: [Transaction] {
         PeriodScope.currentMonth.filter(transactions)
@@ -44,9 +54,11 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                quickAddSection
+                    .padding(.top, 8)
+
                 heroSection
                     .padding(.horizontal, 16)
-                    .padding(.top, 8)
 
                 insightSection
 
@@ -71,6 +83,11 @@ struct DashboardView: View {
         .sheet(isPresented: $showEditPrefill) {
             if let editPrefill {
                 NavigationStack { AddTransactionView(prefill: editPrefill) }
+            }
+        }
+        .sheet(isPresented: $showQuickAddEdit) {
+            if let quickAddEditPrefill {
+                NavigationStack { AddTransactionView(prefill: quickAddEditPrefill) }
             }
         }
         .task {
@@ -118,6 +135,158 @@ struct DashboardView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             showEditPrefill = true
         }
+    }
+
+    // MARK: - Quick Add
+
+    private var quickAddSection: some View {
+        VStack(spacing: 8) {
+            QuickAddBar(text: $quickAddText) { parsed in
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    quickAddParsed = parsed
+                }
+            }
+            .padding(.horizontal, 16)
+
+            if let parsed = quickAddParsed {
+                quickAddPreviewCard(parsed)
+                    .padding(.horizontal, 16)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: quickAddParsed != nil)
+    }
+
+    @ViewBuilder
+    private func quickAddPreviewCard(_ parsed: QuickAddParsedInput) -> some View {
+        let resolvedCategory = resolveCategoryForQuickAdd(parsed)
+        let canSave = resolvedCategory != nil
+
+        VStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.accentColor)
+
+                Text(Money.formatSigned(
+                    cents: parsed.amountCents,
+                    isPositive: parsed.typeRaw == TransactionType.income.raw,
+                    currencyCode: defaultCurrencyCode
+                ))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(parsed.typeRaw == TransactionType.income.raw ? Color.green : Color.red)
+                .monospacedDigit()
+
+                Text("→").foregroundStyle(.secondary)
+
+                Text(parsed.suggestedCategoryName ?? String(localized: "quickadd.preview.no_category"))
+                    .font(.subheadline)
+                    .foregroundStyle(parsed.suggestedCategoryName == nil ? .secondary : .primary)
+
+                if let merchant = parsed.merchant {
+                    Text("→").foregroundStyle(.secondary)
+                    Text(merchant)
+                        .font(.subheadline)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button {
+                    withAnimation { quickAddParsed = nil }
+                    quickAddText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("common.close"))
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    saveQuickAdd(parsed, category: resolvedCategory)
+                } label: {
+                    Text("quickadd.preview.save")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.accentColor)
+                .disabled(!canSave)
+
+                Button {
+                    openEditForQuickAdd(parsed)
+                } label: {
+                    Text("quickadd.preview.edit")
+                }
+                .buttonStyle(.bordered)
+
+                Spacer()
+            }
+        }
+        .padding(14)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
+    }
+
+    private func resolveCategoryForQuickAdd(_ parsed: QuickAddParsedInput) -> Category? {
+        guard let name = parsed.suggestedCategoryName else { return nil }
+        let target = name.lowercased()
+        let subset = allCategories.filter { $0.kindRaw == parsed.typeRaw }
+        return subset.first { cat in
+            if cat.name.lowercased() == target { return true }
+            if cat.displayName().lowercased() == target { return true }
+            if let key = cat.nameKey {
+                return NSLocalizedString(key, comment: "").lowercased() == target
+            }
+            return false
+        }
+    }
+
+    private func saveQuickAdd(_ parsed: QuickAddParsedInput, category: Category?) {
+        guard let category else { return }
+
+        let tx = Transaction(
+            typeRaw: parsed.typeRaw,
+            amountCents: parsed.amountCents,
+            currency: defaultCurrencyCode,
+            date: Date(),
+            category: category,
+            source: nil,
+            taxCents: nil,
+            note: nil,
+            merchant: parsed.merchant,
+            recurrenceRaw: nil
+        )
+        modelContext.insert(tx)
+
+        do {
+            try modelContext.save()
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            withAnimation { quickAddParsed = nil }
+            quickAddText = ""
+            refreshWidgetSnapshot()
+        } catch {
+            print("QuickAdd save failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func openEditForQuickAdd(_ parsed: QuickAddParsedInput) {
+        let categoryUUID = resolveCategoryForQuickAdd(parsed)?.uuid
+        quickAddEditPrefill = AddTransactionPrefill(
+            typeRaw: parsed.typeRaw,
+            amountText: Money.plainDecimalString(cents: parsed.amountCents),
+            merchant: parsed.merchant ?? "",
+            categoryUUID: categoryUUID,
+            sourceUUID: nil,
+            recurrence: nil
+        )
+        withAnimation { quickAddParsed = nil }
+        quickAddText = ""
+        showQuickAddEdit = true
     }
 
     // MARK: - Hero
@@ -287,6 +456,49 @@ private struct Day0EducationalCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(mintColor.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+// MARK: - Quick Add Bar
+
+private struct QuickAddBar: View {
+    @Binding var text: String
+    let onSubmit: (QuickAddParsedInput) -> Void
+
+    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 18))
+                .foregroundStyle(mintColor)
+
+            TextField("quickadd.placeholder", text: $text)
+                .submitLabel(.done)
+                .onSubmit { handleSubmit() }
+
+            if !text.isEmpty {
+                Button { handleSubmit() } label: {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(mintColor)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("common.add"))
+            }
+        }
+        .padding(12)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
+    }
+
+    private func handleSubmit() {
+        guard let parsed = QuickAddParser.parse(text) else { return }
+        onSubmit(parsed)
     }
 }
 

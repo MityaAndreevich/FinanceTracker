@@ -463,3 +463,9 @@
 /* Widget */
 "widget.spent.format" = "Spent %@";
 "widget.earned.format" = "Earned %@";
+
+/* Quick Add */
+"quickadd.placeholder" = "Quick add: $5.50 Starbucks";
+"quickadd.preview.save" = "Save";
+"quickadd.preview.edit" = "Edit";
+"quickadd.preview.no_category" = "[Tap to pick]";
