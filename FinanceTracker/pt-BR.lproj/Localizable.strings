@@ -134,3 +134,15 @@
 
 /* Dashboard — cartão de primeiro dia */
 "dashboard.day0.message.singular" = "Continue registrando — as análises aparecerão com mais dados";
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "Entrada rápida";
+"quick_entry.privacy_chip" = "Fica no seu iPhone";
+"quick_entry.save" = "Salvar";
+"quick_entry.use_form" = "Usar formulário detalhado";
+"quick_entry.fail_unparseable" = "Não foi possível ler — use o formulário";
+"quick_entry.placeholder.1" = "R$ 5,50 Starbucks";
+"quick_entry.placeholder.2" = "almoço 35";
+"quick_entry.placeholder.3" = "67 gasolina";
+"quick_entry.placeholder.4" = "+2800 salário";
+"quick_entry.placeholder.5" = "corte 25";

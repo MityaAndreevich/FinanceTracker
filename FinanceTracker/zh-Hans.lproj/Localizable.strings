@@ -179,3 +179,15 @@
 
 /* 仪表盘 — 新手引导卡片 */
 "dashboard.day0.message.singular" = "继续记录 — 数据累积后将显示分析";
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "快速输入";
+"quick_entry.privacy_chip" = "仅存于您的iPhone";
+"quick_entry.save" = "保存";
+"quick_entry.use_form" = "使用详细表单";
+"quick_entry.fail_unparseable" = "无法识别 — 请使用表单";
+"quick_entry.placeholder.1" = "¥35 星巴克";
+"quick_entry.placeholder.2" = "午餐 80";
+"quick_entry.placeholder.3" = "加油 500";
+"quick_entry.placeholder.4" = "+20000 工资";
+"quick_entry.placeholder.5" = "理发 100";

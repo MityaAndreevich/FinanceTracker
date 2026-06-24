@@ -172,3 +172,15 @@
 
 /* ダッシュボード — Day-0カード */
 "dashboard.day0.message.singular" = "記録を続けてください — データが蓄積されると分析が表示されます";
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "クイック入力";
+"quick_entry.privacy_chip" = "iPhone内に保存";
+"quick_entry.save" = "保存";
+"quick_entry.use_form" = "詳細フォームを使う";
+"quick_entry.fail_unparseable" = "読み取れませんでした — フォームを開く";
+"quick_entry.placeholder.1" = "¥550 Starbucks";
+"quick_entry.placeholder.2" = "ランチ 1200";
+"quick_entry.placeholder.3" = "ガソリン 7000";
+"quick_entry.placeholder.4" = "+280000 給料";
+"quick_entry.placeholder.5" = "散髪 3000";

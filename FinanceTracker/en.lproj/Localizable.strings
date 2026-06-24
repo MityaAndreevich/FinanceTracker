@@ -491,3 +491,15 @@
 "quickadd.preview.save" = "Save";
 "quickadd.preview.edit" = "Edit";
 "quickadd.preview.no_category" = "[Tap to pick]";
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "Quick entry";
+"quick_entry.privacy_chip" = "Stays on your iPhone";
+"quick_entry.save" = "Save";
+"quick_entry.use_form" = "Use detailed form";
+"quick_entry.fail_unparseable" = "We couldn't read that — try the detailed form";
+"quick_entry.placeholder.1" = "$5.50 Starbucks";
+"quick_entry.placeholder.2" = "lunch 12";
+"quick_entry.placeholder.3" = "67 gas";
+"quick_entry.placeholder.4" = "+2800 paycheck";
+"quick_entry.placeholder.5" = "haircut 25";

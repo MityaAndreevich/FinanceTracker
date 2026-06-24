@@ -134,3 +134,15 @@
 
 /* Dashboard — tarjeta de inicio */
 “dashboard.day0.message.singular” = “Sigue registrando — los análisis aparecerán con más datos”;
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "Entrada rápida";
+"quick_entry.privacy_chip" = "Permanece en tu iPhone";
+"quick_entry.save" = "Guardar";
+"quick_entry.use_form" = "Usar formulario detallado";
+"quick_entry.fail_unparseable" = "No se pudo leer — abre el formulario";
+"quick_entry.placeholder.1" = "5,50 € Starbucks";
+"quick_entry.placeholder.2" = "almuerzo 12";
+"quick_entry.placeholder.3" = "67 gasolina";
+"quick_entry.placeholder.4" = "+2800 salario";
+"quick_entry.placeholder.5" = "corte 25";

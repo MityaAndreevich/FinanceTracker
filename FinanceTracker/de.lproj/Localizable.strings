@@ -134,3 +134,15 @@
 
 /* Dashboard — Day-0 Karte */
 “dashboard.day0.message.singular” = “Weiter erfassen — Einsichten erscheinen mit mehr Daten”;
+
+/* Quick Entry hero sheet (Brief 23A) */
+"quick_entry.title" = "Schnelleingabe";
+"quick_entry.privacy_chip" = "Bleibt auf deinem iPhone";
+"quick_entry.save" = "Speichern";
+"quick_entry.use_form" = "Detailliertes Formular";
+"quick_entry.fail_unparseable" = "Nicht erkannt — Formular öffnen";
+"quick_entry.placeholder.1" = "5,50 € Starbucks";
+"quick_entry.placeholder.2" = "Mittag 12";
+"quick_entry.placeholder.3" = "67 Tanken";
+"quick_entry.placeholder.4" = "+2800 Gehalt";
+"quick_entry.placeholder.5" = "Haarschnitt 25";
