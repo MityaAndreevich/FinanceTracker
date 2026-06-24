@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "O Vela usa o microfone apenas quando você toca o botão para ditar uma transação. O áudio é processado no seu iPhone e não é enviado.";
+"NSSpeechRecognitionUsageDescription" = "O Vela transcreve sua fala no dispositivo usando o framework Speech da Apple. Nada é enviado a um servidor.";

@@ -1,0 +1,2 @@
+"NSMicrophoneUsageDescription" = "Vela usa el micrófono solo cuando tocas el botón de micrófono para dictar una transacción. El audio se procesa en tu iPhone y no se sube.";
+"NSSpeechRecognitionUsageDescription" = "Vela transcribe tu voz en el dispositivo usando el framework de voz de Apple. Nada se envía a un servidor.";
