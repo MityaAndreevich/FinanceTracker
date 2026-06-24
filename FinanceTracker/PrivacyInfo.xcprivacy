@@ -2,12 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!--
-        FinanceTracker collects user finance data ON-DEVICE only.
-        Nothing leaves the device. No analytics, no tracking, no third-party SDKs.
-        StoreKit handles purchases via Apple's first-party infrastructure.
-    -->
-
     <key>NSPrivacyTracking</key>
     <false/>
 
@@ -15,45 +9,16 @@
     <array/>
 
     <key>NSPrivacyCollectedDataTypes</key>
-    <array>
-        <!--
-            Purchase history is processed by StoreKit / App Store.
-            We do not collect it; Apple does as part of standard purchase flow.
-            Listed here only because Apple's purchase APIs are required-reason APIs.
-        -->
-        <dict>
-            <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypePurchaseHistory</string>
-            <key>NSPrivacyCollectedDataTypeLinked</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypeTracking</key>
-            <false/>
-            <key>NSPrivacyCollectedDataTypePurposes</key>
-            <array>
-                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-            </array>
-        </dict>
-    </array>
+    <array/>
 
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
-        <!-- UserDefaults: used for app preferences (currency, language, onboarding flag) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>CA92.1</string>
-            </array>
-        </dict>
-
-        <!-- File timestamp: used by export filenames (yyyy-MM-dd report names) -->
-        <dict>
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>C617.1</string>
             </array>
         </dict>
     </array>
