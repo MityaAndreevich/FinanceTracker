@@ -16,6 +16,17 @@ struct CSVImportResult {
     var firstError: String? = nil
 }
 
+/// Parsed preamble shared by the synchronous import (tests) and the async
+/// `CSVImportActor` (production). Holds everything computed before the row loop
+/// so the heavy parse logic lives in exactly one place (`processRow`).
+struct CSVImportPreamble {
+    var rows: [String]
+    var startIndex: Int
+    var categoryCache: [String: Category]
+    var sourceCache: [String: Source]
+    var totalDataRows: Int
+}
+
 struct CSVImportService {
 
     // MARK: - Limits (T-10)
@@ -30,6 +41,12 @@ struct CSVImportService {
     }
 
     /// Import with optional progress callback.
+    ///
+    /// This synchronous path is preserved for unit tests and any caller that
+    /// already runs off the main thread. The production UI now goes through
+    /// `CSVImportActor` (see DataSettingsView), which reuses the very same
+    /// `prepare` / `processRow` helpers on a background ModelActor executor.
+    ///
     /// - parameter progress: invoked with (rowsProcessed, totalRows). Called on the same
     ///   thread the function runs on — callers using it from a Task should hop to MainActor.
     static func importCSV(
@@ -37,8 +54,38 @@ struct CSVImportService {
         data: Data,
         progress: ((Int, Int) -> Void)?
     ) throws -> CSVImportResult {
+        let preamble = try prepare(modelContext: modelContext, data: data)
         var result = CSVImportResult()
+        guard !preamble.rows.isEmpty else { return result }
 
+        var categoryCache = preamble.categoryCache
+        var sourceCache = preamble.sourceCache
+        let dateFormatter = makeISO8601Formatter()
+        var processed = 0
+
+        for i in preamble.startIndex..<preamble.rows.count {
+            processRow(
+                preamble.rows[i],
+                lineIndex: i,
+                modelContext: modelContext,
+                dateFormatter: dateFormatter,
+                categoryCache: &categoryCache,
+                sourceCache: &sourceCache,
+                result: &result
+            )
+            processed += 1
+            progress?(processed, preamble.totalDataRows)
+        }
+
+        try modelContext.save()
+        return result
+    }
+
+    // MARK: - Shared parse internals (used by both sync API and CSVImportActor)
+
+    /// Decode, split, detect header, preload caches and enforce the row limit.
+    /// Touches `modelContext` (fetch only) — runs on the caller's executor.
+    static func prepare(modelContext: ModelContext, data: Data) throws -> CSVImportPreamble {
         guard let content = String(data: data, encoding: .utf8) else {
             throw NSError(domain: "CSVImport", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "File is not valid UTF-8 text"
@@ -46,15 +93,14 @@ struct CSVImportService {
         }
 
         let rows = splitCSVRows(content)
-        guard !rows.isEmpty else { return result }
+        guard !rows.isEmpty else {
+            return CSVImportPreamble(rows: [], startIndex: 0, categoryCache: [:], sourceCache: [:], totalDataRows: 0)
+        }
 
         var startIndex = 0
         if rows[0].lowercased().contains("date,type,amount") {
             startIndex = 1
         }
-
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withFullDate]
 
         // Cache by "csv name" (lowercased)
         var categoryCache: [String: Category] = [:]
@@ -96,105 +142,117 @@ struct CSVImportService {
             throw NSError(domain: "CSVImport", code: 4, userInfo: [NSLocalizedDescriptionKey: msg])
         }
 
-        var processed = 0
+        return CSVImportPreamble(
+            rows: rows,
+            startIndex: startIndex,
+            categoryCache: categoryCache,
+            sourceCache: sourceCache,
+            totalDataRows: totalDataRows
+        )
+    }
 
-        for i in startIndex..<rows.count {
-            // Trim ONLY at the row boundary to drop trailing CR / blank lines.
-            // Field-level trimming is done after parsing.
-            let rawLine = rows[i]
-            if rawLine.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                result.skipped += 1
-                processed += 1
-                progress?(processed, totalDataRows)
-                continue
-            }
+    static func makeISO8601Formatter() -> ISO8601DateFormatter {
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withFullDate]
+        return dateFormatter
+    }
 
-            do {
-                let cols = parseCSVLine(rawLine)
-                if cols.contains(where: { $0.count > MAX_FIELD_LENGTH }) {
-                    let msg = String(format: NSLocalizedString("csv.import.error.field_too_long.format", comment: ""), i + 1)
-                    throw NSError(domain: "CSVImport", code: 5, userInfo: [NSLocalizedDescriptionKey: msg])
-                }
-                guard cols.count >= 9 else {
-                    result.skipped += 1
-                    processed += 1
-                    progress?(processed, totalDataRows)
-                    continue
-                }
-
-                // Trim non-text fields. Free-text fields (categoryName, sourceName,
-                // note, merchant) keep their internal whitespace.
-                let dateStr = cols[0].trimmingCharacters(in: .whitespacesAndNewlines)
-                let typeRaw = cols[1].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                let amountStr = cols[2].trimmingCharacters(in: .whitespacesAndNewlines)
-                let currency = cols[3].trimmingCharacters(in: .whitespacesAndNewlines)
-                let categoryName = cols[4]
-                let sourceName = cols[5]
-                let taxStr = cols[6].trimmingCharacters(in: .whitespacesAndNewlines)
-                let note = cols[7]
-                let merchant = cols[8]
-
-                guard let date = dateFormatter.date(from: dateStr) else {
-                    throw makeLineError(i, "Invalid date: \(dateStr)")
-                }
-
-                guard typeRaw == "income" || typeRaw == "expense" else {
-                    throw makeLineError(i, "Invalid type: \(typeRaw)")
-                }
-
-                guard let amountCents = Money.parseCents(from: amountStr) else {
-                    throw makeLineError(i, "Invalid amount: \(amountStr)")
-                }
-
-                let taxCents = Money.parseCents(from: taxStr)
-                let rawCode = currency.uppercased()
-                let cleanCurrency = (!rawCode.isEmpty && isValidISO4217(rawCode))
-                    ? rawCode
-                    : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
-
-                let category = try getOrCreateCategory(
-                    modelContext: modelContext,
-                    cache: &categoryCache,
-                    nameFromCSV: categoryName,
-                    kindRaw: typeRaw,
-                    createdCount: &result.createdCategories
-                )
-
-                let source: Source? = try getOrCreateSourceIfNeeded(
-                    modelContext: modelContext,
-                    cache: &sourceCache,
-                    name: sourceName,
-                    createdCount: &result.createdSources
-                )
-
-                let tx = Transaction(
-                    typeRaw: typeRaw,
-                    amountCents: amountCents,
-                    currency: cleanCurrency,
-                    date: date,
-                    category: category,
-                    source: source,
-                    taxCents: taxCents,
-                    note: note.isEmpty ? nil : note,
-                    merchant: merchant.isEmpty ? nil : merchant
-                )
-
-                modelContext.insert(tx)
-                result.imported += 1
-
-            } catch {
-                result.skipped += 1
-                if result.firstError == nil {
-                    result.firstError = error.localizedDescription
-                }
-            }
-
-            processed += 1
-            progress?(processed, totalDataRows)
+    /// Parse and insert a single CSV row, mutating caches + result. The caller is
+    /// responsible for progress reporting and for saving (batched or final).
+    /// Never throws — per-row errors are recorded in `result` so the loop keeps going.
+    static func processRow(
+        _ rawLine: String,
+        lineIndex i: Int,
+        modelContext: ModelContext,
+        dateFormatter: ISO8601DateFormatter,
+        categoryCache: inout [String: Category],
+        sourceCache: inout [String: Source],
+        result: inout CSVImportResult
+    ) {
+        // Trim ONLY at the row boundary to drop trailing CR / blank lines.
+        // Field-level trimming is done after parsing.
+        if rawLine.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            result.skipped += 1
+            return
         }
 
-        try modelContext.save()
-        return result
+        do {
+            let cols = parseCSVLine(rawLine)
+            if cols.contains(where: { $0.count > MAX_FIELD_LENGTH }) {
+                let msg = String(format: NSLocalizedString("csv.import.error.field_too_long.format", comment: ""), i + 1)
+                throw NSError(domain: "CSVImport", code: 5, userInfo: [NSLocalizedDescriptionKey: msg])
+            }
+            guard cols.count >= 9 else {
+                result.skipped += 1
+                return
+            }
+
+            // Trim non-text fields. Free-text fields (categoryName, sourceName,
+            // note, merchant) keep their internal whitespace.
+            let dateStr = cols[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            let typeRaw = cols[1].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            let amountStr = cols[2].trimmingCharacters(in: .whitespacesAndNewlines)
+            let currency = cols[3].trimmingCharacters(in: .whitespacesAndNewlines)
+            let categoryName = cols[4]
+            let sourceName = cols[5]
+            let taxStr = cols[6].trimmingCharacters(in: .whitespacesAndNewlines)
+            let note = cols[7]
+            let merchant = cols[8]
+
+            guard let date = dateFormatter.date(from: dateStr) else {
+                throw makeLineError(i, "Invalid date: \(dateStr)")
+            }
+
+            guard typeRaw == "income" || typeRaw == "expense" else {
+                throw makeLineError(i, "Invalid type: \(typeRaw)")
+            }
+
+            guard let amountCents = Money.parseCents(from: amountStr) else {
+                throw makeLineError(i, "Invalid amount: \(amountStr)")
+            }
+
+            let taxCents = Money.parseCents(from: taxStr)
+            let rawCode = currency.uppercased()
+            let cleanCurrency = (!rawCode.isEmpty && isValidISO4217(rawCode))
+                ? rawCode
+                : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
+
+            let category = try getOrCreateCategory(
+                modelContext: modelContext,
+                cache: &categoryCache,
+                nameFromCSV: categoryName,
+                kindRaw: typeRaw,
+                createdCount: &result.createdCategories
+            )
+
+            let source: Source? = try getOrCreateSourceIfNeeded(
+                modelContext: modelContext,
+                cache: &sourceCache,
+                name: sourceName,
+                createdCount: &result.createdSources
+            )
+
+            let tx = Transaction(
+                typeRaw: typeRaw,
+                amountCents: amountCents,
+                currency: cleanCurrency,
+                date: date,
+                category: category,
+                source: source,
+                taxCents: taxCents,
+                note: note.isEmpty ? nil : note,
+                merchant: merchant.isEmpty ? nil : merchant
+            )
+
+            modelContext.insert(tx)
+            result.imported += 1
+
+        } catch {
+            result.skipped += 1
+            if result.firstError == nil {
+                result.firstError = error.localizedDescription
+            }
+        }
     }
 
     // MARK: - Helpers

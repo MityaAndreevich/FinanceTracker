@@ -210,30 +210,39 @@ struct DataSettingsView: View {
     private func startAsyncImport(data: Data) {
         isImporting = true
 
-        // We schedule the import as a Task so SwiftUI gets a chance to render the
-        // overlay BEFORE the synchronous CSV parsing begins. The Task body still
-        // runs on MainActor (inherited from this view) because SwiftData's
-        // ModelContext is not safe to touch from background threads without a
-        // ModelActor wrapper. For very large CSVs this still blocks the UI during
-        // the work itself — that's a known limitation, addressed in a future
-        // iteration via a dedicated background ModelActor.
-        Task { @MainActor in
+        // Run the import on a dedicated background ModelActor (CSVImportActor) so
+        // the parse + insert loop never touches the main thread — this is what
+        // keeps 10k-row imports from tripping the 0x8badf00d watchdog.
+        //
+        // Task.detached (NOT a plain Task) is required: a @ModelActor adopts the
+        // executor of whatever thread constructs it, so it must be built off the
+        // MainActor. We capture only the Sendable ModelContainer; all SwiftData
+        // work happens inside the actor, and we hop back to MainActor only to
+        // update @State for the result UI.
+        let container = modelContext.container
+        Task.detached(priority: .medium) {
             do {
-                let result = try CSVImportService.importCSV(
-                    modelContext: modelContext,
-                    data: data
-                )
+                let importer = CSVImportActor(modelContainer: container)
+                let result = try await importer.importData(data: data) { _, _ in
+                    // Progress is intentionally a no-op: the overlay is an
+                    // indeterminate spinner. Wire a determinate bar here later.
+                }
 
-                isImporting = false
-                importResultMessage = formatImportSummary(result)
-                showImportResult = true
+                await MainActor.run {
+                    self.isImporting = false
+                    self.importResultMessage = self.formatImportSummary(result)
+                    self.showImportResult = true
+                }
             } catch {
-                isImporting = false
-                importResultMessage = String(
+                let message = String(
                     format: NSLocalizedString("data.import.failed.format", comment: ""),
                     error.localizedDescription
                 )
-                showImportResult = true
+                await MainActor.run {
+                    self.isImporting = false
+                    self.importResultMessage = message
+                    self.showImportResult = true
+                }
             }
         }
     }
