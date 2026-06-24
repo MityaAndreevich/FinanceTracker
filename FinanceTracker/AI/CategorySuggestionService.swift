@@ -14,10 +14,24 @@
 //
 
 import Foundation
+import SwiftData
 
 enum CategorySuggestionService {
 
     /// Returns a canonical category name (English) or nil if no confident match.
+    /// Priority:
+    ///   1. User-learned mapping (requires ModelContext)
+    ///   2. Bare-word shortKeywords match
+    ///   3. Brand substring lookup
+    static func suggest(forMerchant merchant: String, in context: ModelContext?) -> String? {
+        if let context,
+           let learned = MerchantLearningService.suggestedCategoryName(for: merchant, in: context) {
+            return learned
+        }
+        return suggest(forMerchant: merchant)
+    }
+
+    /// Context-free fallback — used by QuickAddParser (pure) and existing tests.
     static func suggest(forMerchant merchant: String) -> String? {
         let needle = merchant
             .trimmingCharacters(in: .whitespacesAndNewlines)
