@@ -1,0 +1,61 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- FinanceTracker App Icon — Variant A: Lock + diagonal spark glint -->
+  <!-- Brand colors per docs/DESIGN_SYSTEM.md §2 -->
+  <!-- Source: APP_STORE_ASSETS.md §3 App Icon brief, Concept "Lock + spark" -->
+  <!-- HIG compliance: no text, focal point shifted ~2% up, optical center -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1B1F4D"/>
+      <stop offset="100%" stop-color="#2E2A6E"/>
+    </linearGradient>
+    <linearGradient id="lockGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E8E6E0"/>
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3DDC97"/>
+      <stop offset="100%" stop-color="#7FF0BC"/>
+    </linearGradient>
+    <filter id="lockShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="14"/>
+      <feOffset dx="0" dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sparkGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+
+  <!-- Background. Apple applies the corner mask itself. -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Subtle radial light source from upper-left to give the icon depth -->
+  <radialGradient id="topLight" cx="0.25" cy="0.15" r="0.7">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.10"/>
+    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="1024" height="1024" fill="url(#topLight)"/>
+
+  <!-- Lock group — focal point shifted ~2% above geometric center -->
+  <g filter="url(#lockShadow)">
+    <!-- Shackle: U-shape, opens downward, sits flush with body top -->
+    <path d="M 352,460 V 360 a 160,160 0 0 1 320,0 V 460"
+          fill="none"
+          stroke="url(#lockGrad)"
+          stroke-width="74"
+          stroke-linecap="round"/>
+    <!-- Body: rounded rectangle -->
+    <rect x="262" y="460" width="500" height="400" rx="68" fill="url(#lockGrad)"/>
+  </g>
+
+  <!-- Spark glow halo — soft mint aura behind the sparkle -->
+  <circle cx="392" cy="288" r="66" fill="#3DDC97" opacity="0.45" filter="url(#sparkGlow)"/>
+
+  <!-- Spark — 4-point sparkle glinting off the upper-left of the shackle -->
+  <g transform="translate(392,288)">
+    <path d="M 0,-54 L 11,-11 L 54,0 L 11,11 L 0,54 L -11,11 L -54,0 L -11,-11 Z"
+          fill="url(#sparkGrad)"/>
+    <circle cx="0" cy="0" r="13" fill="#FFFFFF"/>
+  </g>
+</svg>

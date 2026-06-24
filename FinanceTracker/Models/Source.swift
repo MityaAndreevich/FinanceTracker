@@ -11,8 +11,8 @@ import SwiftData
 @Model
 final class Source {
 
-    /// ✅ Стабильный внешний идентификатор
-    var uuid: UUID
+    /// Stable external identifier (used for UI selection, export/import, future cloud sync).
+    @Attribute(.unique) var uuid: UUID
 
     var name: String
     var note: String?

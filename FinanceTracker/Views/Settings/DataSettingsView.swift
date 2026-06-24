@@ -13,6 +13,8 @@ struct DataSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var pm = PurchaseManager.shared
 
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
     // Export
     @State private var exportURL: URL?
     @State private var exportFilename: String = ""
@@ -25,6 +27,9 @@ struct DataSettingsView: View {
     @State private var importResultMessage = ""
     @State private var showPaywall = false
 
+    // Import progress (indeterminate — see note in startAsyncImport)
+    @State private var isImporting = false
+
     var body: some View {
         List {
             exportSection
@@ -34,7 +39,6 @@ struct DataSettingsView: View {
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showPaywall) { PaywallView() }
 
-        // На всякий случай обновляем статус, когда экран открывается
         .task {
             await pm.refreshStatus()
         }
@@ -58,13 +62,20 @@ struct DataSettingsView: View {
         } message: {
             Text(exportErrorMessage)
         }
+
+        // Modal progress overlay during import. Blocks interaction so the user
+        // can't fire a second import while one is running.
+        .overlay {
+            if isImporting {
+                importProgressOverlay
+            }
+        }
     }
 
     // MARK: - Import types
 
     private var allowedImportTypes: [UTType] {
-        // CSV иногда приходит как plainText в зависимости от источника (Google Sheets, etc.)
-        // Поэтому оставляем и .plainText как fallback.
+        // CSV is sometimes delivered as plainText (Google Sheets etc).
         [.commaSeparatedText, .plainText]
     }
 
@@ -114,7 +125,6 @@ struct DataSettingsView: View {
 
             if let url = exportURL {
                 ShareLink(item: url) {
-                    // Здесь exportFilename динамический — это правильно.
                     let title = String(
                         format: NSLocalizedString("data.export.share_last.format", comment: ""),
                         exportFilename
@@ -134,6 +144,7 @@ struct DataSettingsView: View {
                 Label("data.import.csv",
                       systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
             }
+            .disabled(isImporting)
 
             if !pm.isPremium {
                 Text("data.premium_hint")
@@ -141,6 +152,25 @@ struct DataSettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private var importProgressOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.25)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                ProgressView()
+                    .controlSize(.large)
+
+                Text("data.import.in_progress")
+                    .font(.headline)
+            }
+            .padding(24)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.2), value: isImporting)
     }
 
     // MARK: - Premium gate
@@ -160,25 +190,14 @@ struct DataSettingsView: View {
             let urls = try result.get()
             guard let url = urls.first else { return }
 
+            // Read on the calling thread so we honor the security-scoped resource lifetime.
             let didStart = url.startAccessingSecurityScopedResource()
             defer { if didStart { url.stopAccessingSecurityScopedResource() } }
 
             let data = try Data(contentsOf: url)
-            let importResult = try CSVImportService.importCSV(modelContext: modelContext, data: data)
 
-            // Многострочный отчёт (MVP-логика)
-            var lines: [String] = []
-            lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
-            lines.append(String(format: NSLocalizedString("data.import.result.skipped.format", comment: ""), importResult.skipped))
-            lines.append(String(format: NSLocalizedString("data.import.result.created_categories.format", comment: ""), importResult.createdCategories))
-            lines.append(String(format: NSLocalizedString("data.import.result.created_sources.format", comment: ""), importResult.createdSources))
+            startAsyncImport(data: data)
 
-            if let first = importResult.firstError {
-                lines.append(String(format: NSLocalizedString("data.import.result.first_error.format", comment: ""), first))
-            }
-
-            importResultMessage = lines.joined(separator: "\n")
-            showImportResult = true
         } catch {
             importResultMessage = String(
                 format: NSLocalizedString("data.import.failed.format", comment: ""),
@@ -186,6 +205,51 @@ struct DataSettingsView: View {
             )
             showImportResult = true
         }
+    }
+
+    private func startAsyncImport(data: Data) {
+        isImporting = true
+
+        // We schedule the import as a Task so SwiftUI gets a chance to render the
+        // overlay BEFORE the synchronous CSV parsing begins. The Task body still
+        // runs on MainActor (inherited from this view) because SwiftData's
+        // ModelContext is not safe to touch from background threads without a
+        // ModelActor wrapper. For very large CSVs this still blocks the UI during
+        // the work itself — that's a known limitation, addressed in a future
+        // iteration via a dedicated background ModelActor.
+        Task { @MainActor in
+            do {
+                let result = try CSVImportService.importCSV(
+                    modelContext: modelContext,
+                    data: data
+                )
+
+                isImporting = false
+                importResultMessage = formatImportSummary(result)
+                showImportResult = true
+            } catch {
+                isImporting = false
+                importResultMessage = String(
+                    format: NSLocalizedString("data.import.failed.format", comment: ""),
+                    error.localizedDescription
+                )
+                showImportResult = true
+            }
+        }
+    }
+
+    private func formatImportSummary(_ importResult: CSVImportResult) -> String {
+        var lines: [String] = []
+        lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
+        lines.append(String(format: NSLocalizedString("data.import.result.skipped.format", comment: ""), importResult.skipped))
+        lines.append(String(format: NSLocalizedString("data.import.result.created_categories.format", comment: ""), importResult.createdCategories))
+        lines.append(String(format: NSLocalizedString("data.import.result.created_sources.format", comment: ""), importResult.createdSources))
+
+        if let first = importResult.firstError {
+            lines.append(String(format: NSLocalizedString("data.import.result.first_error.format", comment: ""), first))
+        }
+
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - Export
@@ -207,7 +271,11 @@ struct DataSettingsView: View {
 
     private func exportPDF(scope: CSVExportScope) {
         do {
-            let result = try PDFExportService.makeMonthlyReportPDF(modelContext: modelContext, scope: scope)
+            let result = try PDFExportService.makeMonthlyReportPDF(
+                modelContext: modelContext,
+                scope: scope,
+                currencyCode: defaultCurrencyCode
+            )
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
             exportURL = url
             exportFilename = result.filename

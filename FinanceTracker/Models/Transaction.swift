@@ -11,20 +11,27 @@ import SwiftData
 @Model
 final class Transaction {
 
-    /// ✅ Стабильный внешний идентификатор (не SwiftData PersistentIdentifier)
-    var uuid: UUID
+    /// Stable external identifier (not the SwiftData PersistentIdentifier).
+    /// Used for UI selection, exports, imports, and future cloud sync.
+    @Attribute(.unique) var uuid: UUID
 
-    var typeRaw: String           // "income" or "expense"
-    var amountCents: Int          // ВАЖНО: храним деньги как Int (центы)
-    var currency: String          // "USD"
+    /// Stored as raw string for SwiftData stability. Use `.type` for safe access.
+    var typeRaw: String
+
+    var amountCents: Int          // Money stored as Int cents — avoids float drift
+    var currency: String
     var date: Date
     var taxCents: Int?
     var note: String?
     var merchant: String?
 
     // Relationships
-    var category: Category
-    var source: Source?
+    // .deny: if you try to delete a Category that still has transactions, SwiftData throws.
+    // CategoriesSourcesView already blocks deletion UX-side; this is a safety net.
+    @Relationship(deleteRule: .deny) var category: Category
+
+    // .nullify: deleting a Source clears the back-reference on transactions.
+    @Relationship(deleteRule: .nullify) var source: Source?
 
     var createdAt: Date
     var updatedAt: Date
@@ -55,5 +62,24 @@ final class Transaction {
         self.merchant = merchant
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+}
+
+// MARK: - Typed accessors
+
+extension Transaction {
+
+    /// Strongly-typed view over `typeRaw`. Always prefer this in new code.
+    var type: TransactionType {
+        get { TransactionType.from(typeRaw) }
+        set { typeRaw = newValue.raw }
+    }
+
+    var isIncome: Bool { type == .income }
+    var isExpense: Bool { type == .expense }
+
+    /// Signed amount in cents. Income is positive, expense is negative.
+    var signedAmountCents: Int {
+        isIncome ? amountCents : -amountCents
     }
 }

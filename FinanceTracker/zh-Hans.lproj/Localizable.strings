@@ -140,3 +140,10 @@
 
 "data.import.failed.format" = "导入失败：%@";
 "data.export.failed.format" = "导出失败：%@";
+
+/* Demo-mode categories */
+"category.coffee" = "咖啡";
+"category.transit" = "交通";
+"category.subscriptions" = "订阅";
+"category.entertainment" = "娱乐";
+"category.health" = "健康";

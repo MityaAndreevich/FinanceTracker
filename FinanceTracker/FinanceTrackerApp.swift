@@ -27,11 +27,39 @@ struct FinanceTrackerApp: App {
         )
 
         do {
-            return try ModelContainer(for: FinanceTrackerApp.schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: FinanceTrackerApp.schema, configurations: [modelConfiguration])
+            applyStoreProtection(to: modelConfiguration.url)
+            return container
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+
+    // MARK: - File protection (T-2, T-6)
+
+    /// Apply NSFileProtectionComplete + backup exclusion to the SwiftData store.
+    /// Called once after container init. Non-fatal on failure.
+    private static func applyStoreProtection(to url: URL) {
+        do {
+            try (url as NSURL).setResourceValue(
+                URLFileProtection.complete,
+                forKey: .fileProtectionKey
+            )
+            // Exclude from iTunes / iCloud backup while CloudKit sync is not active.
+            // Reverse isExcludedFromBackupKey when Phase 1 CloudKit sync ships (T-6 trade-off).
+            try (url as NSURL).setResourceValue(true, forKey: .isExcludedFromBackupKey)
+
+            #if DEBUG
+            let values = try url.resourceValues(forKeys: [.fileProtectionKey])
+            let applied = values.fileProtection == .complete
+            print("[Security] SwiftData store NSFileProtectionComplete: \(applied ? "✓" : "⚠️ NOT applied")")
+            #endif
+        } catch {
+            // Non-fatal: the store may not exist on the first cold launch before
+            // ModelContainer writes the file. Protection is re-applied each launch.
+            print("[Security] ⚠️ Could not apply store protection: \(error.localizedDescription)")
+        }
+    }
 
     // MARK: - Locale + Layout
 

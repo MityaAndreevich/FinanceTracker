@@ -11,25 +11,23 @@ import Charts
 
 struct AnalyticsView: View {
     @Environment(\.locale) private var locale
-    
+
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
-    @State private var scope: Scope = .month
+    @State private var scope: PeriodScope = .currentMonth
     @State private var chartKind: ChartKind = .line
 
-    enum Scope: String, CaseIterable, Identifiable {
-        case month
-        case all
-        var id: String { rawValue }
+    // MARK: - Cached derived data (updated via onChange to avoid recompute every body redraw)
 
-        var titleKey: LocalizedStringKey {
-            switch self {
-            case .month: "scope.month"
-            case .all: "scope.all"
-            }
-        }
-    }
+    @State private var cachedSeries: [SeriesValue] = []
+    @State private var cachedSummary = PeriodSummary(incomeCents: 0, expenseCents: 0, currency: "USD")
+    @State private var cachedExpenseByCategory: [ChartRow] = []
+    @State private var cachedIncomeBySource: [ChartRow] = []
+    @State private var cachedXDomain: ClosedRange<Date> = Date()...Date()
+    @State private var cachedXAxisTicks: [Date] = []
 
     enum ChartKind: String, CaseIterable, Identifiable {
         case pie
@@ -47,40 +45,37 @@ struct AnalyticsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Picker(LocalizedStringKey("scope.picker.title"), selection: $scope) {
-                        ForEach(Scope.allCases) { s in
-                            Text(s.titleKey).tag(s)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+        List {
+            Section {
+                PeriodSelector(scope: $scope)
 
-                    Picker(LocalizedStringKey("analytics.chart.picker.title"), selection: $chartKind) {
-                        ForEach(ChartKind.allCases) { k in
-                            Text(k.titleKey).tag(k)
-                        }
+                Picker(LocalizedStringKey("analytics.chart.picker.title"), selection: $chartKind) {
+                    ForEach(ChartKind.allCases) { k in
+                        Text(k.titleKey).tag(k)
                     }
-                    .pickerStyle(.segmented)
                 }
-
-                if filteredTransactions.isEmpty {
-                    EmptyStateView(
-                        systemImage: "chart.bar.xaxis",
-                        title: "empty.noData",
-                        message: "analytics.empty.message"
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    combinedSection
-                    breakdownExpensesByCategorySection
-                    breakdownIncomeBySourceSection
-                }
+                .pickerStyle(.segmented)
             }
-            .navigationTitle(LocalizedStringKey("title.analytics"))
-            .listStyle(.insetGrouped)
+
+            if filteredTransactions.isEmpty {
+                EmptyStateView(
+                    systemImage: "chart.bar.xaxis",
+                    title: "empty.noData",
+                    message: "analytics.empty.message"
+                )
+                .listRowBackground(Color.clear)
+            } else {
+                combinedSection
+                breakdownExpensesByCategorySection
+                breakdownIncomeBySourceSection
+            }
         }
+        .navigationTitle(LocalizedStringKey("title.analytics"))
+        .listStyle(.insetGrouped)
+        .onAppear { recompute() }
+        .onChange(of: transactions) { _, _ in recompute() }
+        .onChange(of: scope) { _, _ in recompute() }
+        .onChange(of: defaultCurrencyCode) { _, _ in recompute() }
     }
 
     // MARK: - Combined
@@ -91,19 +86,21 @@ struct AnalyticsView: View {
 
             switch chartKind {
             case .bars:
-                barsChart(values: seriesValues)
+                barsChart(values: cachedSeries)
             case .line:
-                lineChart(values: seriesValues)
+                lineChart(values: cachedSeries)
             case .pie:
-                pieChart(summary: periodSummary)
+                pieChart(summary: cachedSummary)
             }
 
             HStack {
                 Text(LocalizedStringKey("analytics.label.income"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.incomeCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: cachedSummary.incomeCents, currencyCode: cachedSummary.currency))
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
 
@@ -111,8 +108,10 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.expense"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.expenseCents, currencyCode: periodSummary.currency))
+                Text(Money.format(cents: cachedSummary.expenseCents, currencyCode: cachedSummary.currency))
                     .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
 
@@ -120,8 +119,10 @@ struct AnalyticsView: View {
                 Text(LocalizedStringKey("analytics.label.net"))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(formatCents(periodSummary.netCents, currencyCode: periodSummary.currency))
-                    .foregroundStyle(periodSummary.netCents >= 0 ? .green : .red)
+                Text(Money.format(cents: cachedSummary.netCents, currencyCode: cachedSummary.currency))
+                    .foregroundStyle(cachedSummary.netCents >= 0 ? .green : .red)
+                    .monospacedDigit()
+                    .privacySensitive()
             }
             .font(.footnote)
         }
@@ -171,9 +172,9 @@ struct AnalyticsView: View {
                 .foregroundStyle(by: .value("analytics.axis.type", v.kind.legendName))
             }
         }
-        .chartXScale(domain: xDomain)
+        .chartXScale(domain: cachedXDomain)
         .chartXAxis {
-            AxisMarks(position: .bottom, values: xAxisTicks) { value in
+            AxisMarks(position: .bottom, values: cachedXAxisTicks) { value in
                 AxisGridLine()
                 AxisTick()
                 AxisValueLabel { Text(xAxisLabel(for: value.as(Date.self))) }
@@ -185,7 +186,7 @@ struct AnalyticsView: View {
         .padding(.vertical, 6)
     }
 
-    private var shouldShowPoints: Bool { seriesBucketCount <= 8 }
+    private var shouldShowPoints: Bool { cachedSeries.filter { $0.kind == .income }.count <= 8 }
 
     // MARK: - Pie
 
@@ -207,26 +208,28 @@ struct AnalyticsView: View {
     @ViewBuilder
     private var breakdownExpensesByCategorySection: some View {
         Section(LocalizedStringKey("analytics.section.expenses_by_category.title")) {
-            if expenseByCategory.isEmpty {
+            if cachedExpenseByCategory.isEmpty {
                 Text(LocalizedStringKey("analytics.empty.no_expenses"))
                     .foregroundStyle(.secondary)
             } else {
-                Chart(expenseByCategory) { row in
+                Chart(cachedExpenseByCategory) { row in
                     BarMark(
                         x: .value("analytics.axis.amount", row.amount),
                         y: .value("analytics.axis.category", row.name)
                     )
                 }
                 .chartXAxis { AxisMarks(position: .bottom) }
-                .frame(height: chartHeight(for: expenseByCategory.count))
+                .frame(height: chartHeight(for: cachedExpenseByCategory.count))
                 .padding(.vertical, 6)
 
-                ForEach(expenseByCategory) { row in
+                ForEach(cachedExpenseByCategory) { row in
                     HStack {
                         Text(LocalizedStringKey(row.name))
                         Spacer()
-                        Text(formatCents(row.amountCents, currencyCode: row.currency))
+                        Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .privacySensitive()
                     }
                     .font(.footnote)
                 }
@@ -237,26 +240,28 @@ struct AnalyticsView: View {
     @ViewBuilder
     private var breakdownIncomeBySourceSection: some View {
         Section(LocalizedStringKey("analytics.section.income_by_source.title")) {
-            if incomeBySource.isEmpty {
+            if cachedIncomeBySource.isEmpty {
                 Text(LocalizedStringKey("analytics.empty.no_income"))
                     .foregroundStyle(.secondary)
             } else {
-                Chart(incomeBySource) { row in
+                Chart(cachedIncomeBySource) { row in
                     BarMark(
                         x: .value("analytics.axis.amount", row.amount),
                         y: .value("analytics.axis.source", row.name)
                     )
                 }
                 .chartXAxis { AxisMarks(position: .bottom) }
-                .frame(height: chartHeight(for: incomeBySource.count))
+                .frame(height: chartHeight(for: cachedIncomeBySource.count))
                 .padding(.vertical, 6)
 
-                ForEach(incomeBySource) { row in
+                ForEach(cachedIncomeBySource) { row in
                     HStack {
                         Text(row.name)
                         Spacer()
-                        Text(formatCents(row.amountCents, currencyCode: row.currency))
+                        Text(Money.format(cents: row.amountCents, currencyCode: row.currency))
                             .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .privacySensitive()
                     }
                     .font(.footnote)
                 }
@@ -267,14 +272,19 @@ struct AnalyticsView: View {
     // MARK: - Filtering
 
     private var filteredTransactions: [Transaction] {
-        switch scope {
-        case .all:
-            return transactions
-        case .month:
-            let cal = Calendar.current
-            let now = Date()
-            return transactions.filter { cal.isDate($0.date, equalTo: now, toGranularity: .month) }
-        }
+        scope.filter(transactions)
+    }
+
+    // MARK: - Cache recomputation
+
+    private func recompute() {
+        let filtered = filteredTransactions
+        cachedSeries = computeSeriesValues(from: filtered)
+        cachedSummary = computePeriodSummary(from: filtered)
+        cachedExpenseByCategory = computeExpenseByCategory(from: filtered)
+        cachedIncomeBySource = computeIncomeBySource(from: filtered)
+        cachedXDomain = computeXDomain(series: cachedSeries)
+        cachedXAxisTicks = computeXAxisTicks(series: cachedSeries)
     }
 
     // MARK: - Series
@@ -291,18 +301,17 @@ struct AnalyticsView: View {
         }
     }
 
-    private var seriesValues: [SeriesValue] {
-        let list = filteredTransactions
+    private func computeSeriesValues(from list: [Transaction]) -> [SeriesValue] {
         let cal = Calendar.current
-        let currency = list.first?.currency ?? "USD"
+        let currency = defaultCurrencyCode
 
-        let bucket: (Date) -> Date = {
+        let bucket: (Date) -> Date = { date in
             switch scope {
             case .month:
-                return cal.startOfDay(for: $0)
+                return cal.startOfDay(for: date)
             case .all:
-                let comps = cal.dateComponents([.year, .month], from: $0)
-                return cal.date(from: comps) ?? cal.startOfDay(for: $0)
+                let comps = cal.dateComponents([.year, .month], from: date)
+                return cal.date(from: comps) ?? cal.startOfDay(for: date)
             }
         }
 
@@ -310,7 +319,7 @@ struct AnalyticsView: View {
         for tx in list {
             let key = bucket(tx.date)
             var cur = dict[key] ?? (0, 0)
-            if tx.typeRaw == "income" { cur.income += tx.amountCents }
+            if tx.isIncome { cur.income += tx.amountCents }
             else { cur.expense += tx.amountCents }
             dict[key] = cur
         }
@@ -337,31 +346,24 @@ struct AnalyticsView: View {
         return out
     }
 
-    private var seriesBucketCount: Int {
-        seriesValues.filter { $0.kind == .income }.count
-    }
-
     // MARK: - Period summary
 
-    private var periodSummary: PeriodSummary {
-        let list = filteredTransactions
-        let currency = list.first?.currency ?? "USD"
-
+    private func computePeriodSummary(from list: [Transaction]) -> PeriodSummary {
+        let currency = defaultCurrencyCode
         var income = 0
         var expense = 0
         for tx in list {
-            if tx.typeRaw == "income" { income += tx.amountCents }
+            if tx.isIncome { income += tx.amountCents }
             else { expense += tx.amountCents }
         }
-
         return PeriodSummary(incomeCents: income, expenseCents: expense, currency: currency)
     }
 
     // MARK: - X axis
 
-    private var xDomain: ClosedRange<Date> {
+    private func computeXDomain(series: [SeriesValue]) -> ClosedRange<Date> {
         let cal = Calendar.current
-        let dates = seriesValues.map(\.bucketDate)
+        let dates = series.map(\.bucketDate)
         guard let minD = dates.min(), let maxD = dates.max() else {
             let now = Date()
             return now...now
@@ -379,9 +381,9 @@ struct AnalyticsView: View {
         }
     }
 
-    private var xAxisTicks: [Date] {
+    private func computeXAxisTicks(series: [SeriesValue]) -> [Date] {
         let cal = Calendar.current
-        let dates = seriesValues.map(\.bucketDate)
+        let dates = series.map(\.bucketDate)
         guard let minD = dates.min(), let maxD = dates.max() else { return [] }
 
         switch scope {
@@ -421,19 +423,18 @@ struct AnalyticsView: View {
 
     // MARK: - Breakdown Data
 
-    private var expenseByCategory: [ChartRow] {
-        let list = filteredTransactions.filter { $0.typeRaw == "expense" }
-        guard let currency = list.first?.currency else { return [] }
+    private func computeExpenseByCategory(from list: [Transaction]) -> [ChartRow] {
+        let expenses = list.filter { $0.isExpense }
+        let currency = defaultCurrencyCode
 
         struct Acc {
             var nameKeyOrName: String
             var cents: Int
         }
 
-        // ✅ ключ = внешний стабильный UUID
         var sums: [UUID: Acc] = [:]
 
-        for tx in list {
+        for tx in expenses {
             let cat = tx.category
             let id = cat.uuid
             let display = cat.displayKeyOrName
@@ -457,12 +458,12 @@ struct AnalyticsView: View {
             .sorted { $0.amountCents > $1.amountCents }
     }
 
-    private var incomeBySource: [ChartRow] {
-        let list = filteredTransactions.filter { $0.typeRaw == "income" }
-        guard let currency = list.first?.currency else { return [] }
+    private func computeIncomeBySource(from list: [Transaction]) -> [ChartRow] {
+        let incomes = list.filter { $0.isIncome }
+        let currency = defaultCurrencyCode
 
         var sums: [String: Int] = [:]
-        for tx in list {
+        for tx in incomes {
             let name = tx.source?.name ?? String(localized: "common.unknown")
             sums[name, default: 0] += tx.amountCents
         }
@@ -569,40 +570,6 @@ struct AnalyticsView: View {
         let base: CGFloat = 160
         let extraPerRow: CGFloat = 24
         return max(base, CGFloat(rows) * extraPerRow)
-    }
-
-    private func formatCents(_ cents: Int, currencyCode: String) -> String {
-        let amount = Decimal(cents) / 100
-        return MoneyFormatter.shared.string(amount: amount, currencyCode: currencyCode)
-    }
-}
-
-// MARK: - Money formatter (currency-safe cache)
-
-private final class MoneyFormatter {
-    static let shared = MoneyFormatter()
-
-    private var cache: [String: NumberFormatter] = [:]
-    private let lock = NSLock()
-
-    private init() {}
-
-    func string(amount: Decimal, currencyCode: String) -> String {
-        let f = formatter(for: currencyCode)
-        return f.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
-    }
-
-    private func formatter(for currencyCode: String) -> NumberFormatter {
-        lock.lock()
-        defer { lock.unlock() }
-
-        if let f = cache[currencyCode] { return f }
-
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = currencyCode
-        cache[currencyCode] = f
-        return f
     }
 }
 

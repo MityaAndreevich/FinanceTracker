@@ -72,10 +72,6 @@ final class PurchaseManager: ObservableObject {
         updatesTask = Task { await listenForTransactionUpdates() }
     }
 
-    deinit {
-        updatesTask?.cancel()
-    }
-
     // MARK: - Products
 
     func loadProducts() async {
@@ -117,8 +113,8 @@ final class PurchaseManager: ObservableObject {
                 break
 
             case .pending:
-                // Family approval / SCA / etc.
-                break
+                // Family approval / SCA / etc. — let user know it's awaiting approval.
+                lastErrorMessage = String(localized: "purchase.pending_approval")
 
             @unknown default:
                 break
@@ -133,7 +129,9 @@ final class PurchaseManager: ObservableObject {
         do {
             try await AppStore.sync()
             await refreshPremiumStatus()
-            lastErrorMessage = nil
+            lastErrorMessage = isPremium
+                ? String(localized: "purchase.restored")
+                : String(localized: "purchase.no_previous_purchases")
         } catch {
             lastErrorMessage = "Restore failed: \(error.localizedDescription)"
         }

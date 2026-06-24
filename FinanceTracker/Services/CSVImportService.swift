@@ -18,7 +18,25 @@ struct CSVImportResult {
 
 struct CSVImportService {
 
+    // MARK: - Limits (T-10)
+    static let MAX_ROWS = 10_000
+    static let MAX_FIELD_LENGTH = 1_024
+
+    // MARK: - Public API
+
+    /// Synchronous variant kept for backwards compatibility / unit tests.
     static func importCSV(modelContext: ModelContext, data: Data) throws -> CSVImportResult {
+        try importCSV(modelContext: modelContext, data: data, progress: nil)
+    }
+
+    /// Import with optional progress callback.
+    /// - parameter progress: invoked with (rowsProcessed, totalRows). Called on the same
+    ///   thread the function runs on — callers using it from a Task should hop to MainActor.
+    static func importCSV(
+        modelContext: ModelContext,
+        data: Data,
+        progress: ((Int, Int) -> Void)?
+    ) throws -> CSVImportResult {
         var result = CSVImportResult()
 
         guard let content = String(data: data, encoding: .utf8) else {
@@ -38,18 +56,29 @@ struct CSVImportService {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withFullDate]
 
-        // Кэш по “имени из CSV” (lowercased)
+        // Cache by "csv name" (lowercased)
         var categoryCache: [String: Category] = [:]
         var sourceCache: [String: Source] = [:]
 
-        // Подтягиваем существующие категории/источники в кеш
+        // Preload existing categories/sources. Match against BOTH:
+        //   • the user-visible (custom or localized) name, and
+        //   • the nameKey itself if it's a seeded category (e.g. "category.food"),
+        // so importing "Food" into an English locale doesn't create a duplicate of the seeded Food.
         do {
             let existingCategories = try modelContext.fetch(FetchDescriptor<Category>())
             for c in existingCategories {
-                let visible = (c.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
-                    ? c.nameCustom!
-                    : c.name
-                categoryCache[visible.lowercased()] = c
+                if let custom = c.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines), !custom.isEmpty {
+                    categoryCache[custom.lowercased()] = c
+                }
+                // Always seed under the legacy English name for stable interop
+                categoryCache[c.name.lowercased()] = c
+                // And under the localized name if we have a key
+                if let key = c.nameKey, !key.isEmpty {
+                    let localized = NSLocalizedString(key, comment: "")
+                    if !localized.isEmpty && localized != key {
+                        categoryCache[localized.lowercased()] = c
+                    }
+                }
             }
 
             let existingSources = try modelContext.fetch(FetchDescriptor<Source>())
@@ -57,30 +86,51 @@ struct CSVImportService {
                 sourceCache[s.name.lowercased()] = s
             }
         } catch {
-            // не критично
+            // Not critical, we'll proceed without the cache.
         }
 
+        let totalDataRows = max(0, rows.count - startIndex)
+
+        if totalDataRows > MAX_ROWS {
+            let msg = String(format: NSLocalizedString("csv.import.error.too_many_rows.format", comment: ""), totalDataRows)
+            throw NSError(domain: "CSVImport", code: 4, userInfo: [NSLocalizedDescriptionKey: msg])
+        }
+
+        var processed = 0
+
         for i in startIndex..<rows.count {
-            let rawLine = rows[i].trimmingCharacters(in: .whitespacesAndNewlines)
-            if rawLine.isEmpty {
+            // Trim ONLY at the row boundary to drop trailing CR / blank lines.
+            // Field-level trimming is done after parsing.
+            let rawLine = rows[i]
+            if rawLine.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 result.skipped += 1
+                processed += 1
+                progress?(processed, totalDataRows)
                 continue
             }
 
             do {
                 let cols = parseCSVLine(rawLine)
+                if cols.contains(where: { $0.count > MAX_FIELD_LENGTH }) {
+                    let msg = String(format: NSLocalizedString("csv.import.error.field_too_long.format", comment: ""), i + 1)
+                    throw NSError(domain: "CSVImport", code: 5, userInfo: [NSLocalizedDescriptionKey: msg])
+                }
                 guard cols.count >= 9 else {
                     result.skipped += 1
+                    processed += 1
+                    progress?(processed, totalDataRows)
                     continue
                 }
 
-                let dateStr = cols[0]
-                let typeRaw = cols[1].lowercased()
-                let amountStr = cols[2]
-                let currency = cols[3].isEmpty ? "USD" : cols[3]
+                // Trim non-text fields. Free-text fields (categoryName, sourceName,
+                // note, merchant) keep their internal whitespace.
+                let dateStr = cols[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                let typeRaw = cols[1].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                let amountStr = cols[2].trimmingCharacters(in: .whitespacesAndNewlines)
+                let currency = cols[3].trimmingCharacters(in: .whitespacesAndNewlines)
                 let categoryName = cols[4]
                 let sourceName = cols[5]
-                let taxStr = cols[6]
+                let taxStr = cols[6].trimmingCharacters(in: .whitespacesAndNewlines)
                 let note = cols[7]
                 let merchant = cols[8]
 
@@ -92,11 +142,15 @@ struct CSVImportService {
                     throw makeLineError(i, "Invalid type: \(typeRaw)")
                 }
 
-                guard let amountCents = parseMoneyToCents(amountStr) else {
+                guard let amountCents = Money.parseCents(from: amountStr) else {
                     throw makeLineError(i, "Invalid amount: \(amountStr)")
                 }
 
-                let taxCents = parseMoneyToCents(taxStr)
+                let taxCents = Money.parseCents(from: taxStr)
+                let rawCode = currency.uppercased()
+                let cleanCurrency = (!rawCode.isEmpty && isValidISO4217(rawCode))
+                    ? rawCode
+                    : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
 
                 let category = try getOrCreateCategory(
                     modelContext: modelContext,
@@ -116,10 +170,10 @@ struct CSVImportService {
                 let tx = Transaction(
                     typeRaw: typeRaw,
                     amountCents: amountCents,
-                    currency: currency,
+                    currency: cleanCurrency,
                     date: date,
                     category: category,
-                    source: (typeRaw == "income") ? source : nil,
+                    source: source,
                     taxCents: taxCents,
                     note: note.isEmpty ? nil : note,
                     merchant: merchant.isEmpty ? nil : merchant
@@ -134,6 +188,9 @@ struct CSVImportService {
                     result.firstError = error.localizedDescription
                 }
             }
+
+            processed += 1
+            progress?(processed, totalDataRows)
         }
 
         try modelContext.save()
@@ -141,6 +198,10 @@ struct CSVImportService {
     }
 
     // MARK: - Helpers
+
+    static func isValidISO4217(_ code: String) -> Bool {
+        Locale.commonISOCurrencyCodes.contains(code.uppercased())
+    }
 
     private static func getOrCreateCategory(
         modelContext: ModelContext,
@@ -159,11 +220,9 @@ struct CSVImportService {
         let key = trimmed.lowercased()
         if let existing = cache[key] { return existing }
 
-        // order: ставим в конец в рамках типа
         let all = try modelContext.fetch(FetchDescriptor<Category>())
         let nextOrder = (all.filter { $0.kindRaw == kindRaw }.map(\.order).max() ?? 0) + 1
 
-        // ✅ Импортированная категория = user-defined
         let new = Category(
             name: trimmed,
             kindRaw: kindRaw,
@@ -205,6 +264,9 @@ struct CSVImportService {
             .components(separatedBy: "\n")
     }
 
+    /// RFC 4180-ish CSV row parser.
+    /// IMPORTANT: This does NOT trim whitespace inside fields — callers must
+    /// trim explicitly for fields that should be whitespace-stripped (e.g. date, type, amount).
     private static func parseCSVLine(_ line: String) -> [String] {
         var result: [String] = []
         var current = ""
@@ -239,18 +301,7 @@ struct CSVImportService {
         }
 
         result.append(current)
-        return result.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-    }
-
-    private static func parseMoneyToCents(_ text: String) -> Int? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return nil }
-
-        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
-        guard let dec = Decimal(string: normalized) else { return nil }
-
-        let cents = dec * 100
-        return NSDecimalNumber(decimal: cents).rounding(accordingToBehavior: nil).intValue
+        return result
     }
 
     private static func makeLineError(_ lineIndex: Int, _ message: String) -> NSError {

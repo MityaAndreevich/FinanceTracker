@@ -73,6 +73,51 @@ final class CSVImportServiceTests: XCTestCase {
         XCTAssertEqual(txs.count, 2)
     }
 
+    // T-10: row limit
+    func testImportCSV_ThrowsWhenRowLimitExceeded() throws {
+        let header = "date,type,amount,currency,category,source,tax,note,merchant\n"
+        let row = "2026-01-20,income,1.00,USD,Salary,,0.00,,\n"
+        let csv = header + String(repeating: row, count: CSVImportService.MAX_ROWS + 1)
+
+        XCTAssertThrowsError(try CSVImportService.importCSV(modelContext: context, data: Data(csv.utf8))) { error in
+            XCTAssertTrue((error as NSError).domain == "CSVImport")
+            XCTAssertTrue((error as NSError).code == 4)
+        }
+    }
+
+    // T-10: field length limit
+    func testImportCSV_SkipsRowWithOversizedField() throws {
+        let longNote = String(repeating: "x", count: CSVImportService.MAX_FIELD_LENGTH + 1)
+        let csv = """
+        date,type,amount,currency,category,source,tax,note,merchant
+        2026-01-20,income,10.00,USD,Salary,,0.00,\(longNote),
+        2026-01-21,income,5.00,USD,Salary,,0.00,Normal note,
+        """
+
+        let result = try CSVImportService.importCSV(modelContext: context, data: Data(csv.utf8))
+
+        XCTAssertEqual(result.imported, 1)
+        XCTAssertEqual(result.skipped, 1)
+        XCTAssertNotNil(result.firstError)
+    }
+
+    func testImportCSV_InvalidCurrencyFallsBackToDefault() throws {
+        UserDefaults.standard.set("EUR", forKey: "defaultCurrencyCode")
+        defer { UserDefaults.standard.removeObject(forKey: "defaultCurrencyCode") }
+
+        let csv = """
+        date,type,amount,currency,category,source,tax,note,merchant
+        2026-01-20,expense,50.00,INVALID,Food,,0.00,,Grocery
+        """
+
+        let result = try CSVImportService.importCSV(modelContext: context, data: Data(csv.utf8))
+        XCTAssertEqual(result.imported, 1)
+
+        let txs = try context.fetch(FetchDescriptor<Transaction>())
+        XCTAssertEqual(txs.count, 1)
+        XCTAssertEqual(txs[0].currency, "EUR")
+    }
+
     func testImportCSV_ParsesCommaDecimal() throws {
         let csv = """
         date,type,amount,currency,category,source,tax,note,merchant

@@ -11,9 +11,9 @@ import SwiftData
 @Model
 final class Category {
 
-    /// ✅ Стабильный внешний идентификатор (для UI-selection, экспорта/импорта, синка в будущем).
-    /// НЕ путать с Category.ID (это PersistentIdentifier SwiftData).
-    var uuid: UUID
+    /// Stable external identifier (used for UI selection, export/import, future cloud sync).
+    /// Not the same as Category.ID, which is SwiftData's PersistentIdentifier.
+    @Attribute(.unique) var uuid: UUID
 
     /// Legacy / fallback (оставляем, чтобы не ломать старые данные и миграции)
     var name: String

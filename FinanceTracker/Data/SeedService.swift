@@ -26,7 +26,7 @@ enum SeedService {
                 migrateLegacyCategoriesIfNeeded(all, modelContext: modelContext)
             }
         } catch {
-            print("SeedService failed: \(error)")
+            print("SeedService failed: \(error.localizedDescription)")
         }
     }
 
@@ -84,7 +84,7 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
-            print("Seed failed: \(error)")
+            print("Seed failed: \(error.localizedDescription)")
         }
     }
 
@@ -122,7 +122,7 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
-            print("Category migration failed: \(error)")
+            print("Category migration failed: \(error.localizedDescription)")
         }
     }
 

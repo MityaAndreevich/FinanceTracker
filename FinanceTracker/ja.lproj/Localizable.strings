@@ -133,3 +133,10 @@
 
 "data.import.failed.format" = "Import failed: %@";
 "data.export.failed.format" = "Export failed: %@";
+
+/* Demo-mode categories */
+"category.coffee" = "コーヒー";
+"category.transit" = "交通";
+"category.subscriptions" = "サブスク";
+"category.entertainment" = "娯楽";
+"category.health" = "健康";

@@ -15,3 +15,25 @@ DerivedData/
 # Xcode workspace/user data
 **/*.xcuserdatad/
 **/xcuserdata/
+
+# Local development tooling (private to this machine)
+CLAUDE.md
+.claude/
+.cursor/
+.aider*
+.aiderignore
+
+# Internal strategy / planning docs (not for public repo)
+PRODUCT_SPEC.md
+MARKET_ANALYSIS.md
+SECURITY_THREAT_MODEL.md
+FINANCIAL_PLAN.md
+GROWTH_STRATEGY.md
+APP_STORE_ASSETS.md
+TESTFLIGHT_CHECKLIST.md
+ASC_SETUP_GUIDE.md
+LAUNCH_DAY_CHECKLIST.md
+DESIGN_REVIEW.md
+DESIGN_REVIEW_v2_DELTA.md
+APP_PRIVACY_ANSWERS.md
+LEGAL_RISK_ASSESSMENT.md

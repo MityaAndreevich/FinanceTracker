@@ -34,6 +34,17 @@
 "common.error" = "Error";
 
 /* ======================================================
+   Authentication / Lock screen
+   ====================================================== */
+"auth.required.title" = "App Locked";
+"auth.required.message" = "Authenticate to access your financial data.";
+"auth.retry" = "Try Again";
+"auth.setting.title" = "Require Authentication";
+"auth.setting.always" = "Always";
+"auth.setting.after_5min" = "After 5 Minutes";
+"auth.setting.never" = "Never";
+
+/* ======================================================
    Scope / Period
    ====================================================== */
 "scope.picker.title" = "Scope";
@@ -71,8 +82,25 @@
 "settings.general" = "General";
 "settings.premium" = "Premium";
 "settings.data" = "Data";
-"settings.categories" = "Categories & Sources";
+"settings.categories" = "Categories & Accounts";
 "settings.about" = "About";
+"settings.privacy" = "Privacy";
+
+/* ======================================================
+   Privacy Settings
+   ====================================================== */
+"settings.privacy.title" = "Your Data Stays on Your Device";
+"settings.privacy.subtitle" = "FinanceTracker is built with privacy by design. No cloud account. No data sharing. Everything stays on your iPhone.";
+"privacy.section.ondevice" = "ON-DEVICE PROTECTION";
+"privacy.section.whatwedonot" = "WHAT WE DON'T DO";
+"privacy.claim.no_bank_login" = "No bank login required";
+"privacy.claim.no_cloud_account" = "No cloud account required";
+"privacy.claim.no_data_uploaded" = "No data uploaded to our servers";
+"privacy.claim.no_data_sold" = "No data sold or shared";
+"privacy.claim.no_ad_tracking" = "No ad tracking";
+"privacy.claim.no_sdk" = "No third-party analytics or ad SDKs";
+"privacy.policy.link" = "Privacy Policy";
+"privacy.policy.hint" = "Read our full privacy policy to learn how your data is protected.";
 
 /* ======================================================
    General settings
@@ -81,21 +109,14 @@
 
 "general.section.preferences" = "Preferences";
 "general.section.maintenance" = "Maintenance";
-"general.section.account" = "Account";
 
 "general.currency" = "Currency";
 "general.language" = "Language";
 "general.language_hint" = "Language switching will be fully enabled when localization keys are added.";
 
-"general.clear_cache" = "Clear Cache";
-"general.cache.message" = "There’s no cache to clear yet. This will be useful when offline caching is added.";
-
 "general.restart_onboarding" = "Restart onboarding";
 "general.reset_transactions" = "Reset Transactions";
 "general.reset_hint" = "Reset Transactions removes all transactions but keeps your categories and sources.";
-
-"general.sign_out" = "Sign Out";
-"general.signout.message" = "Sign out will be available when we add accounts (iCloud sync / login).";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Info";
@@ -127,10 +148,25 @@
 "dashboard.insights.top_expenses.title" = "Top expenses";
 "dashboard.insights.top_expenses.subtitle" = "This helps you spot where money leaks.";
 
-"dashboard.insights.top_income_sources.title" = "Top income sources";
+"dashboard.insights.top_income_sources.title" = "Top income accounts";
 "dashboard.insights.top_income_sources.subtitle" = "Useful when you have multiple streams.";
 
-"dashboard.unknown_source" = "Unknown source";
+"dashboard.unknown_source" = "Unknown account";
+
+"dashboard.spent_this_month" = "Spent this month";
+"dashboard.income_caption" = "+ %@ income";
+"dashboard.based_on_tracked" = "Based on tracked transactions";
+"dashboard.this_week" = "This week";
+
+"dashboard.day0.title" = "Smart insights coming soon";
+"dashboard.day0.message.singular" = "Add 1 more transaction to see your first insight.";
+"dashboard.day0.message.plural" = "Add %d more transactions to see your first insight.";
+"dashboard.day0.cta" = "Add transaction →";
+
+/* Month navigation */
+"scope.previous_month" = "Previous month";
+"scope.next_month" = "Next month";
+"scope.this_month_button" = "Today";
 
 /* ======================================================
    Analytics
@@ -145,7 +181,7 @@
 
 "analytics.section.combined.title" = "Income • Expense";
 "analytics.section.expenses_by_category.title" = "Expenses by Category";
-"analytics.section.income_by_source.title" = "Income by Source";
+"analytics.section.income_by_source.title" = "Income by Account";
 
 "analytics.label.income" = "Income";
 "analytics.label.expense" = "Expense";
@@ -177,11 +213,11 @@
 "add.category.empty_income" = "No income categories yet.";
 "add.category.empty_expense" = "No expense categories yet.";
 
-"add.section.source" = "Source";
-"add.section.source_optional" = "Source (optional)";
-"add.source.add" = "Add Source";
-"add.source.tip" = "Tip: Use Source to track where income comes from (job, client, etc.).";
-"add.source.expense_disabled_hint" = "Source is available only for income transactions.";
+"add.section.source" = "Account";
+"add.section.source_optional" = "Account (optional)";
+"add.source.add" = "Add Account";
+"add.source.tip" = "Use Account to track which card, bank or wallet was used.";
+"add.source.expense_disabled_hint" = "Account is available only for income transactions.";
 
 "add.section.date" = "Date";
 "add.section.note" = "Note (optional)";
@@ -196,10 +232,10 @@
 "add.category_sheet.type_income" = "Income category";
 "add.category_sheet.type_expense" = "Expense category";
 
-/* Add Source Sheet (из скринов ключи вылезают) */
-"add.source_sheet.nav_title" = "Add Source";
-"add.source_sheet.section.title" = "Source";
-"add.source_sheet.name.placeholder" = "Source name";
+/* Add Account Sheet */
+"add.source_sheet.nav_title" = "Add Account";
+"add.source_sheet.section.title" = "Account";
+"add.source_sheet.name.placeholder" = "Account name";
 "add.source_sheet.note.placeholder" = "Note (optional)";
 
 /* ======================================================
@@ -235,6 +271,14 @@
 "edit.error.save_failed" = "Failed to save.";
 
 /* ======================================================
+   Input validation (T-18)
+   ====================================================== */
+"validation.amount.out_of_range" = "Amount must be between 0.01 and 100,000,000,000.00.";
+"validation.merchant.too_long" = "Title must be 200 characters or fewer.";
+"validation.note.too_long" = "Note must be 2,000 characters or fewer.";
+"validation.date.out_of_range" = "Date must be between 1990 and one year from today.";
+
+/* ======================================================
    Premium / Paywall
    ====================================================== */
 "premium.section.status" = "Status";
@@ -250,26 +294,35 @@
 "paywall.title" = "Go Premium";
 "paywall.subtitle" = "Unlock import & full export, and future power features.";
 "paywall.loading" = "Loading plans…";
-"paywall.best_value" = "Best value";
-
-/* Paywall features/plan text (у тебя это светится ключами) */
-"paywall.feature.import_csv" = "Import from CSV";
-"paywall.feature.export_all" = "Full export (all data)";
-"paywall.feature.multicurrency_coming" = "Multi-currency (coming soon)";
-"paywall.feature.future_features" = "Future premium features";
+/* Paywall features */
+"paywall.features.header" = "Every plan includes";
+"paywall.feature.unlimited_transactions" = "Unlimited transactions";
+"paywall.feature.unlimited_csv" = "Unlimited CSV import";
+"paywall.feature.custom_fields" = "Custom fields";
+"paywall.feature.advanced_filters" = "Advanced filters";
 
 /* Plans */
 "paywall.plan.yearly" = "Yearly";
-"paywall.plan.yearly.subtitle" = "Save vs monthly";
+"paywall.plan.yearly.subtitle" = "7-day free trial · Cancel anytime in Settings";
 "paywall.plan.monthly" = "Monthly";
-"paywall.plan.monthly.subtitle" = "Billed monthly";
+"paywall.plan.monthly.subtitle" = "Cancel anytime";
 "paywall.plan.lifetime" = "Lifetime";
-"paywall.plan.lifetime.subtitle" = "One-time purchase";
+"paywall.plan.lifetime.subtitle" = "One-time, no subscription";
 
-/* Period labels */
-"paywall.period.year" = "per year";
-"paywall.period.month" = "per month";
-"paywall.period.once" = "one-time";
+/* CTAs */
+"paywall.cta.yearly" = "Start free trial";
+"paywall.cta.lifetime" = "Get Lifetime";
+"paywall.cta.monthly" = "Subscribe monthly";
+
+/* Legal disclosure (Apple-required for subscriptions) */
+"paywall.legal.auto_renew" = "Subscriptions auto-renew at the end of each period until cancelled. You can manage or cancel anytime in Settings → Apple ID → Subscriptions. Payment is charged to your Apple ID account at confirmation of purchase.";
+"paywall.legal.terms" = "Terms of Use";
+"paywall.legal.privacy" = "Privacy Policy";
+"paywall.legal.and" = " and ";
+
+"purchase.restored" = "Your purchases have been restored.";
+"purchase.no_previous_purchases" = "No previous purchases found.";
+"purchase.pending_approval" = "Your purchase is pending approval. You'll be notified when it's complete.";
 
 /* ======================================================
    Data (экран Data у тебя полностью ключами светится)
@@ -287,25 +340,29 @@
 "data.section.import" = "Import";
 "data.import.csv" = "Import CSV";
 "data.premium_hint" = "Available in Premium.";
+"data.import.progress.format" = "Importing %d of %d…";
+"data.import.in_progress" = "Importing…";
+"csv.import.error.too_many_rows.format" = "File contains %d rows; the maximum is 10,000.";
+"csv.import.error.field_too_long.format" = "Line %d skipped: a field exceeds 1,024 characters.";
 
 /* ======================================================
-   Categories & Sources
+   Categories & Accounts
    ====================================================== */
-"cs.section.sources" = "Sources";
+"cs.section.sources" = "Accounts";
 "cs.section.expense_categories" = "Expense categories";
 "cs.section.income_categories" = "Income categories";
 
-"cs.sources.empty" = "No sources yet";
-"cs.sources.add" = "Add Source";
+"cs.sources.empty" = "No accounts yet";
+"cs.sources.add" = "Add Account";
 "cs.categories.add" = "Add Category";
 
 "cs.alert.cant_delete.title" = "Can’t delete";
 "cs.alert.used_in_transactions.format" = "“%@” is used in %d transaction(s).";
 
-/* CS sheets (в Settings → Categories & Sources у тебя это светится ключами) */
-"cs.source_sheet.title" = "Add Source";
-"cs.source_sheet.section" = "Source";
-"cs.source_sheet.name.placeholder" = "Source name";
+/* Add/Edit Account sheets */
+"cs.source_sheet.title" = "Add Account";
+"cs.source_sheet.section" = "Account";
+"cs.source_sheet.name.placeholder" = "Account name";
 "cs.source_sheet.note.placeholder" = "Note (optional)";
 
 "cs.category_sheet.title" = "Add Category";
@@ -339,20 +396,29 @@
 "icons.search" = "Search symbols";
 "icons.clear" = "No icon";
 
+/* ======================================================
+   PDF report
+   ====================================================== */
+"pdf.report.title" = "FinanceTracker Report";
+"pdf.range.month" = "This month";
+"pdf.range.all" = "All time";
+"pdf.label.income" = "Income";
+"pdf.label.expenses" = "Expenses";
+"pdf.label.net" = "Net";
+"pdf.header.date" = "Date";
+"pdf.header.title" = "Title";
+"pdf.header.category" = "Category";
+"pdf.header.amount" = "Amount";
+"pdf.footer.page.format" = "Page %d of %d";
+
 "cs.expense.empty" = "No expense categories yet";
 "cs.income.empty" = "No income categories yet";
 
-"cs.source_sheet.section" = "Source";
-"cs.source_sheet.title" = "Add Source";
-"cs.source_sheet.name.placeholder" = "Source name";
-"cs.source_sheet.note.placeholder" = "Note (optional)";
-
-"cs.category_sheet.section" = "Category";
-"cs.category_sheet.title" = "Add Category";
-"cs.category_sheet.name.placeholder" = "Category name";
-"cs.category_sheet.icon.placeholder" = "SF Symbol (optional)";
 "cs.category_sheet.icon_hint" = "Tip: Choose an icon to make categories easier to scan.";
 
-"icons.title" = "Choose icon";
-"icons.search" = "Search symbols";
-"icons.clear" = "No icon";
+/* Demo-mode categories */
+"category.coffee" = "Coffee";
+"category.transit" = "Transit";
+"category.subscriptions" = "Subscriptions";
+"category.entertainment" = "Entertainment";
+"category.health" = "Health";

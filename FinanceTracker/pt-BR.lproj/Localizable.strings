@@ -95,3 +95,10 @@
 "transactions.search.prompt" = "Pesquisar";
 "transactions.empty.month" = "Adicione uma transação para a ver aqui.";
 "transactions.empty.all" = "Adicione uma transação para a ver aqui.";
+
+/* Demo-mode categories */
+"category.coffee" = "Café";
+"category.transit" = "Transporte";
+"category.subscriptions" = "Assinaturas";
+"category.entertainment" = "Lazer";
+"category.health" = "Saúde";
