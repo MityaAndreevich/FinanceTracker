@@ -60,7 +60,7 @@ enum DemoSeeder {
             try modelContext.save()
 
             #if DEBUG
-            print("[DemoSeeder] ✓ Demo data seeded — \(categories.count) categories, \(sources.count) sources, ~40 transactions")
+            print("[DemoSeeder] ✓ Demo data seeded — \(categories.count) categories, \(sources.count) sources, ~44 transactions")
             #endif
         } catch {
             print("[DemoSeeder] ⚠️ Failed: \(error.localizedDescription)")
@@ -90,25 +90,27 @@ enum DemoSeeder {
 
     // MARK: - Categories
 
-    /// Returns a dictionary keyed by legacy English name (for use in the
-    /// transaction-seed table below). The categories themselves carry localization
-    /// keys so they render correctly in every locale during screenshot capture.
+    /// Returns a dictionary keyed by English name (used in the transaction-seed
+    /// table below). Categories carry localization keys and isPrimary so they
+    /// match the production seed exactly — screenshots look identical to a fresh install.
     private static func seedDemoCategories(modelContext: ModelContext) -> [String: Category] {
-        let specs: [(name: String, key: String, kind: String, icon: String, order: Int)] = [
-            // Expense categories — ordered by anticipated screenshot prominence
-            ("Food",          "category.food",          "expense", "fork.knife",         1),
-            ("Coffee",        "category.coffee",        "expense", "cup.and.saucer",     2),
-            ("Gas",           "category.gas",           "expense", "fuelpump",           3),
-            ("Transit",       "category.transit",       "expense", "car",                4),
-            ("Subscriptions", "category.subscriptions", "expense", "rectangle.stack",    5),
-            ("Entertainment", "category.entertainment", "expense", "film",               6),
-            ("Health",        "category.health",        "expense", "heart",              7),
-            ("Rent",          "category.rent",          "expense", "house",              8),
-            ("Supplies",      "category.supplies",      "expense", "cart",               9),
-            ("Other",         "category.other",         "expense", "square.grid.2x2",   10),
-
-            // Income
-            ("Income",        "category.income",        "income",  "dollarsign.circle", 100),
+        let specs: [(name: String, key: String, kind: String, icon: String, order: Int, primary: Bool)] = [
+            // PRIMARY expense
+            ("Food & Drink",  "category.food_drink",   "expense", "fork.knife",        1,   true),
+            ("Transport",     "category.transport",     "expense", "car.fill",          2,   true),
+            ("Housing",       "category.housing",       "expense", "house.fill",        3,   true),
+            ("Shopping",      "category.shopping",      "expense", "bag.fill",          4,   true),
+            ("Entertainment", "category.entertainment", "expense", "film",              5,   true),
+            ("Other",         "category.other",         "expense", "square.grid.2x2",  6,   true),
+            // PRIMARY income
+            ("Income",        "category.income",        "income",  "dollarsign.circle", 100, true),
+            // SECONDARY expense — visible in Settings, hidden behind "Show all" in pickers
+            ("Health",        "category.health",        "expense", "heart",             10,  false),
+            ("Subscriptions", "category.subscriptions", "expense", "rectangle.stack",   11,  false),
+            ("Coffee",        "category.coffee",        "expense", "cup.and.saucer",    12,  false),
+            ("Travel",        "category.travel",        "expense", "airplane",          13,  false),
+            ("Personal Care", "category.personal_care", "expense", "scissors",          14,  false),
+            ("Utilities",     "category.utilities",     "expense", "bolt",              15,  false),
         ]
 
         var dict: [String: Category] = [:]
@@ -118,7 +120,8 @@ enum DemoSeeder {
                 kindRaw: s.kind,
                 icon: s.icon,
                 order: s.order,
-                nameKey: s.key
+                nameKey: s.key,
+                isPrimary: s.primary
             )
             modelContext.insert(cat)
             dict[s.name] = cat
@@ -186,19 +189,19 @@ enum DemoSeeder {
             Entry(60, "Income", "Checking", 280_000, "Paycheck", "income"),
 
             // 58d
-            Entry(58, "Food",          "Credit Card", 8_700, "Whole Foods"),
+            Entry(58, "Food & Drink",  "Credit Card", 8_700, "Whole Foods"),
             Entry(58, "Subscriptions", "Credit Card",   999, "Spotify"),
 
             // 55d
-            Entry(55, "Coffee", "Cash",           450, "Blue Bottle"),
-            Entry(55, "Gas",    "Credit Card",  4_200, "Shell"),
+            Entry(55, "Coffee",    "Cash",          450, "Blue Bottle"),  // secondary category demo
+            Entry(55, "Transport", "Credit Card", 4_200, "Shell"),
 
             // 50d
-            Entry(50, "Food",   "Credit Card",  5_800, "Sweetgreen"),
+            Entry(50, "Food & Drink", "Credit Card", 5_800, "Sweetgreen"),
 
             // 48d
-            Entry(48, "Coffee",  "Cash",           450, "Starbucks"),
-            Entry(48, "Transit", "Credit Card",  1_200, "Uber"),
+            Entry(48, "Coffee",    "Cash",          450, "Starbucks"),
+            Entry(48, "Transport", "Credit Card", 1_200, "Uber"),
 
             // 47d
             Entry(47, "Subscriptions", "Credit Card", 1_549, "Netflix"),
@@ -207,77 +210,77 @@ enum DemoSeeder {
             Entry(46, "Income", "Checking", 280_000, "Paycheck", "income"),
 
             // 44d
-            Entry(44, "Food",   "Credit Card", 9_400, "Whole Foods"),
-            Entry(44, "Coffee", "Cash",          450, "Blue Bottle"),
+            Entry(44, "Food & Drink", "Credit Card", 9_400, "Whole Foods"),
+            Entry(44, "Coffee",       "Cash",          450, "Blue Bottle"),
 
             // 41d
-            Entry(41, "Gas",    "Credit Card",  3_900, "Shell"),
-            Entry(41, "Other",  "Checking",     8_700, "Electric bill"),
+            Entry(41, "Transport", "Credit Card", 3_900, "Shell"),
+            Entry(41, "Utilities", "Checking",    8_700, "Electric bill"),  // secondary category demo
 
             // 38d
-            Entry(38, "Coffee", "Cash",           450, "Starbucks"),
-            Entry(38, "Health", "Credit Card",  2_300, "Walgreens"),
+            Entry(38, "Coffee", "Cash",          450, "Starbucks"),
+            Entry(38, "Health", "Credit Card", 2_300, "Walgreens"),
 
             // 35d
-            Entry(35, "Health", "Credit Card",   3_500, "Gym membership"),
-            Entry(35, "Rent",   "Checking",    145_000, "Rent"),
+            Entry(35, "Health",  "Credit Card",  3_500, "Gym membership"),
+            Entry(35, "Housing", "Checking",   145_000, "Rent"),
 
             // 32d
             Entry(32, "Income", "Checking", 280_000, "Paycheck", "income"),
 
             // 30d
-            Entry(30, "Food",   "Credit Card", 10_300, "Whole Foods"),
-            Entry(30, "Coffee", "Cash",           450, "Blue Bottle"),
+            Entry(30, "Food & Drink", "Credit Card", 10_300, "Whole Foods"),
+            Entry(30, "Coffee",       "Cash",            450, "Blue Bottle"),
 
             // 28d
             Entry(28, "Subscriptions", "Credit Card", 999, "Spotify"),
 
             // 25d
-            Entry(25, "Food",   "Credit Card", 4_200, "Sweetgreen"),
-            Entry(25, "Coffee", "Cash",          450, "Starbucks"),
+            Entry(25, "Food & Drink", "Credit Card", 4_200, "Sweetgreen"),
+            Entry(25, "Coffee",       "Cash",           450, "Starbucks"),
 
             // 22d
-            Entry(22, "Gas",           "Credit Card", 4_400, "Shell"),
+            Entry(22, "Transport",     "Credit Card", 4_400, "Shell"),
             Entry(22, "Entertainment", "Credit Card", 1_900, "Bookstore"),
 
             // 18d
             Entry(18, "Income", "Checking", 280_000, "Paycheck", "income"),
 
             // 16d
-            Entry(16, "Food",          "Credit Card", 8_700, "Whole Foods"),
+            Entry(16, "Food & Drink",  "Credit Card", 8_700, "Whole Foods"),
             Entry(16, "Subscriptions", "Credit Card", 1_549, "Netflix"),
             Entry(16, "Coffee",        "Cash",          450, "Blue Bottle"),
 
             // 14d
             Entry(14, "Entertainment", "Credit Card", 1_600, "AMC Theater"),
-            Entry(14, "Transit",       "Credit Card", 1_800, "Uber"),
+            Entry(14, "Transport",     "Credit Card", 1_800, "Uber"),
 
             // 12d
             Entry(12, "Health", "Credit Card", 3_500, "Gym membership"),
 
             // 10d
-            Entry(10, "Rent",   "Checking",  145_000, "Rent"),
+            Entry(10, "Housing", "Checking", 145_000, "Rent"),
 
             // 8d
-            Entry(8, "Coffee", "Cash",          450, "Starbucks"),
-            Entry(8, "Gas",    "Credit Card", 4_300, "Shell"),
+            Entry(8, "Coffee",    "Cash",          450, "Starbucks"),
+            Entry(8, "Transport", "Credit Card", 4_300, "Shell"),
 
             // 6d — INTENTIONAL ANOMALY (~+30% vs rolling grocery avg)
-            Entry(6, "Food",   "Credit Card", 11_200, "Whole Foods"),
+            Entry(6, "Food & Drink", "Credit Card", 11_200, "Whole Foods"),
 
             // 4d
             Entry(4, "Income", "Checking", 280_000, "Paycheck", "income"),
 
             // 3d
-            Entry(3, "Coffee", "Cash",          450, "Blue Bottle"),
-            Entry(3, "Food",   "Credit Card", 4_800, "Sweetgreen"),
+            Entry(3, "Coffee",       "Cash",          450, "Blue Bottle"),
+            Entry(3, "Food & Drink", "Credit Card", 4_800, "Sweetgreen"),
 
             // 2d
             Entry(2, "Subscriptions", "Credit Card", 999, "Spotify"),
 
             // 1d
-            Entry(1, "Coffee",  "Cash",          450, "Starbucks"),
-            Entry(1, "Transit", "Credit Card", 2_400, "Uber"),
+            Entry(1, "Coffee",    "Cash",          450, "Starbucks"),
+            Entry(1, "Transport", "Credit Card", 2_400, "Uber"),
 
             // 0d (today) — last visible row in the list
             Entry(0, "Coffee", "Cash", 450, "Blue Bottle"),

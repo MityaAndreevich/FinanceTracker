@@ -33,6 +33,10 @@ final class Category {
     /// Sort order
     var order: Int
 
+    /// False = shown only when user taps "Show all" in pickers. True = always visible.
+    /// Default true so existing user categories stay visible after migration.
+    var isPrimary: Bool = true
+
     init(
         uuid: UUID = UUID(),
         name: String,
@@ -40,7 +44,8 @@ final class Category {
         icon: String? = nil,
         order: Int = 0,
         nameKey: String? = nil,
-        nameCustom: String? = nil
+        nameCustom: String? = nil,
+        isPrimary: Bool = true
     ) {
         self.uuid = uuid
         self.name = name
@@ -49,6 +54,7 @@ final class Category {
         self.order = order
         self.nameKey = nameKey
         self.nameCustom = nameCustom
+        self.isPrimary = isPrimary
     }
 }
 
