@@ -128,6 +128,9 @@
 "category.tip_pick_other" = "Elige una categoría para mejor análisis";
 
 /* Configuración — interruptor isPrimary */
-"cs.category.shown_by_default" = "Mostrar por defecto";
-"cs.category.primary_label" = "Mostrar por defecto";
-"cs.category.secondary_label" = "En “Ver todas”";
+“cs.category.shown_by_default” = “Mostrar por defecto”;
+“cs.category.primary_label” = “Mostrar por defecto”;
+“cs.category.secondary_label” = “En “Ver todas””;
+
+/* Dashboard — tarjeta de inicio */
+“dashboard.day0.message.singular” = “Sigue registrando — los análisis aparecerán con más datos”;

@@ -169,3 +169,6 @@
 "cs.category.shown_by_default" = "デフォルトで表示";
 "cs.category.primary_label" = "デフォルトで表示中";
 "cs.category.secondary_label" = "「すべて表示」の中に";
+
+/* ダッシュボード — Day-0カード */
+"dashboard.day0.message.singular" = "記録を続けてください — データが蓄積されると分析が表示されます";

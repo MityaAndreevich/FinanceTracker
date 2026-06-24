@@ -12,6 +12,7 @@ import UIKit
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+    @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
@@ -335,17 +336,21 @@ struct DashboardView: View {
 
     // MARK: - Insight / Day-0
 
+    private var hasUnlockedInsights: Bool {
+        if transactions.count >= 10 { return true }
+        let firstLaunchDate = Date(timeIntervalSinceReferenceDate: firstLaunchInterval)
+        let daysSince = Calendar.current.dateComponents([.day], from: firstLaunchDate, to: .now).day ?? 0
+        return daysSince >= 14
+    }
+
     @ViewBuilder
     private var insightSection: some View {
         if transactions.isEmpty {
             EmptyStateCard(showAddTransaction: $showAddTransaction)
                 .padding(.horizontal, 16)
-        } else {
-            let needed = max(0, 5 - transactions.count)
-            if needed > 0 {
-                Day0EducationalCard(needed: needed, showAddTransaction: $showAddTransaction)
-                    .padding(.horizontal, 16)
-            }
+        } else if !hasUnlockedInsights {
+            Day0EducationalCard(showAddTransaction: $showAddTransaction)
+                .padding(.horizontal, 16)
         }
     }
 
@@ -427,7 +432,6 @@ private struct EmptyStateCard: View {
 // MARK: - Day-0 Educational Card
 
 private struct Day0EducationalCard: View {
-    let needed: Int
     @Binding var showAddTransaction: Bool
 
     private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
@@ -441,9 +445,7 @@ private struct Day0EducationalCard: View {
                     .font(.headline)
             }
 
-            Text(needed == 1
-                 ? String(localized: "dashboard.day0.message.singular")
-                 : String(format: String(localized: "dashboard.day0.message.plural"), needed))
+            Text("dashboard.day0.message.singular")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

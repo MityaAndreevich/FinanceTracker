@@ -128,6 +128,9 @@
 "category.tip_pick_other" = "Wähle eine Kategorie für bessere Einsichten";
 
 /* Einstellungen — isPrimary-Schalter */
-"cs.category.shown_by_default" = "Standardmäßig anzeigen";
-"cs.category.primary_label" = "Standardmäßig angezeigt";
-"cs.category.secondary_label" = "Unter „Alle anzeigen“";
+“cs.category.shown_by_default” = “Standardmäßig anzeigen”;
+“cs.category.primary_label” = “Standardmäßig angezeigt”;
+“cs.category.secondary_label” = “Unter „Alle anzeigen””;
+
+/* Dashboard — Day-0 Karte */
+“dashboard.day0.message.singular” = “Weiter erfassen — Einsichten erscheinen mit mehr Daten”;

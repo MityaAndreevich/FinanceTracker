@@ -164,7 +164,7 @@
 "dashboard.this_week" = "This week";
 
 "dashboard.day0.title" = "Smart insights coming soon";
-"dashboard.day0.message.singular" = "Add 1 more transaction to see your first insight.";
+"dashboard.day0.message.singular" = "Keep tracking — insights unlock as you build history";
 "dashboard.day0.message.plural" = "Add %d more transactions to see your first insight.";
 "dashboard.day0.cta" = "Add transaction →";
 

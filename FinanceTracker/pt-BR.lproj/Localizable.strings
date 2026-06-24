@@ -131,3 +131,6 @@
 "cs.category.shown_by_default" = "Mostrar por padrão";
 "cs.category.primary_label" = "Mostrado por padrão";
 "cs.category.secondary_label" = "Em \"Mostrar todas\"";
+
+/* Dashboard — cartão de primeiro dia */
+"dashboard.day0.message.singular" = "Continue registrando — as análises aparecerão com mais dados";

@@ -11,6 +11,7 @@ import SwiftData
 @main
 struct FinanceTrackerApp: App {
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
+    @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0
 
     // MARK: - SwiftData container
 
@@ -82,7 +83,12 @@ struct FinanceTrackerApp: App {
             RootView()
                 .environment(\.locale, appLocale)
                 .applyLayoutDirection(overrideLayoutDirection)
-                .task { PurchaseManager.shared.start() }
+                .task {
+                    PurchaseManager.shared.start()
+                    if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {
+                        firstLaunchInterval = Date().timeIntervalSinceReferenceDate
+                    }
+                }
         }
         .modelContainer(sharedModelContainer)
     }

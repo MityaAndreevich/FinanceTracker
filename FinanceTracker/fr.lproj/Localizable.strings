@@ -131,3 +131,6 @@
 "cs.category.shown_by_default" = "Affiché par défaut";
 "cs.category.primary_label" = "Affiché par défaut";
 "cs.category.secondary_label" = "Sous « Tout afficher »";
+
+/* Dashboard — carte d'initiation */
+"dashboard.day0.message.singular" = "Continuez à enregistrer — les analyses arriveront avec plus de données";

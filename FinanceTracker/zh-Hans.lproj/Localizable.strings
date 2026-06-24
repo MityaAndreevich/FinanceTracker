@@ -176,3 +176,6 @@
 "cs.category.shown_by_default" = "默认显示";
 "cs.category.primary_label" = "默认显示";
 "cs.category.secondary_label" = "在「显示全部」中";
+
+/* 仪表盘 — 新手引导卡片 */
+"dashboard.day0.message.singular" = "继续记录 — 数据累积后将显示分析";

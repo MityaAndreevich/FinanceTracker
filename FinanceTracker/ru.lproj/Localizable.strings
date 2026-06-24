@@ -175,7 +175,7 @@
 "dashboard.this_week" = "На этой неделе";
 
 "dashboard.day0.title" = "Умные подсказки скоро появятся";
-"dashboard.day0.message.singular" = "Добавьте ещё 1 транзакцию, чтобы увидеть первую подсказку.";
+"dashboard.day0.message.singular" = "Продолжайте отслеживать — аналитика появится с накопленной историей";
 "dashboard.day0.message.plural" = "Добавьте ещё %d транзакций, чтобы увидеть первую подсказку.";
 "dashboard.day0.cta" = "Добавить транзакцию →";
 
