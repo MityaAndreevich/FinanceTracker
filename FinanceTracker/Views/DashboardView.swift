@@ -75,7 +75,15 @@ struct DashboardView: View {
         }
         .task {
             loadDueRecurring()
+            refreshWidgetSnapshot()
         }
+        .onChange(of: transactions.count) { _, _ in
+            refreshWidgetSnapshot()
+        }
+    }
+
+    private func refreshWidgetSnapshot() {
+        NetSnapshotBuilder.updateSnapshot(transactions: transactions, currencyCode: defaultCurrencyCode)
     }
 
     // MARK: - Recurring

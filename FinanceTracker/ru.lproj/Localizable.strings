@@ -469,3 +469,7 @@
 "recurring.settings.empty" = "Пока нет повторяющихся транзакций.";
 "recurring.settings.footer" = "Смахните влево, чтобы остановить повтор. Исходная транзакция сохранится.";
 "recurring.settings.stop" = "Остановить";
+
+/* Widget */
+"widget.spent.format" = "Расходы: %@";
+"widget.earned.format" = "Доходы: %@";

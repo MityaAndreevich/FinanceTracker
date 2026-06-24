@@ -7,11 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		13248342A2FEDF9044636093 /* NetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */; };
+		15F16F5D8E40F2506602922F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AA500AAA16360FFB17DC89C /* Foundation.framework */; };
+		37677319791FDB5DB4474993 /* VelaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 74D9EF80B540EB035830EB26 /* VelaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		794101D7B00248B117BE85B8 /* NetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */; };
+		A661D3495983CF7F8A6B6540 /* VelaWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26AE8DF7A5FA573CF7A7DDD /* VelaWidget.swift */; };
 		CA770DF22F21CABB007EC55F /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA770DF12F21CABB007EC55F /* StoreKit.framework */; };
 		CA770E012F231EBE007EC55F /* FinanceTracker.storekit in Resources */ = {isa = PBXBuildFile; fileRef = CA770E002F231EBE007EC55F /* FinanceTracker.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AF774EFC9345CB6B1C5654BB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA770D772F19983F007EC55F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3E7EECB16321743B355DFE0D;
+			remoteInfo = VelaWidget;
+		};
 		CA770D902F199840007EC55F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CA770D772F19983F007EC55F /* Project object */;
@@ -28,7 +40,27 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		22162D237CA2424DE4615DE4 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				37677319791FDB5DB4474993 /* VelaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2C5B7867BD077522356C2AE1 /* VelaWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = VelaWidget.entitlements; sourceTree = "<group>"; };
+		3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetSnapshot.swift; sourceTree = "<group>"; };
+		7097BCB5E4707D59F8D7B702 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		74D9EF80B540EB035830EB26 /* VelaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VelaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7AA500AAA16360FFB17DC89C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		B26AE8DF7A5FA573CF7A7DDD /* VelaWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VelaWidget.swift; sourceTree = "<group>"; };
 		CA770D7F2F19983F007EC55F /* FinanceTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinanceTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA770D8F2F199840007EC55F /* FinanceTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA770D992F199840007EC55F /* FinanceTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinanceTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -57,11 +89,15 @@
 		};
 		CA770D922F199840007EC55F /* FinanceTrackerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = FinanceTrackerTests;
 			sourceTree = "<group>";
 		};
 		CA770D9C2F199840007EC55F /* FinanceTrackerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = FinanceTrackerUITests;
 			sourceTree = "<group>";
 		};
@@ -90,9 +126,45 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F5AAC551AB25C533B5B02722 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				15F16F5D8E40F2506602922F /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		051D878A8431A454273E5D02 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				7AA500AAA16360FFB17DC89C /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		058F88EE062DE46194BE65CF /* VelaShared */ = {
+			isa = PBXGroup;
+			children = (
+				3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */,
+			);
+			name = VelaShared;
+			path = VelaShared;
+			sourceTree = "<group>";
+		};
+		B06BBD79F0046F46C92E7CC9 /* VelaWidget */ = {
+			isa = PBXGroup;
+			children = (
+				B26AE8DF7A5FA573CF7A7DDD /* VelaWidget.swift */,
+				7097BCB5E4707D59F8D7B702 /* Info.plist */,
+				2C5B7867BD077522356C2AE1 /* VelaWidget.entitlements */,
+			);
+			name = VelaWidget;
+			path = VelaWidget;
+			sourceTree = "<group>";
+		};
 		CA770D762F19983F007EC55F = {
 			isa = PBXGroup;
 			children = (
@@ -102,6 +174,8 @@
 				CA770D802F19983F007EC55F /* Products */,
 				CA770D812F19983F007EC55F /* FinanceTracker */,
 				CA770DF02F21CABB007EC55F /* Frameworks */,
+				B06BBD79F0046F46C92E7CC9 /* VelaWidget */,
+				058F88EE062DE46194BE65CF /* VelaShared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,6 +185,7 @@
 				CA770D7F2F19983F007EC55F /* FinanceTracker.app */,
 				CA770D8F2F199840007EC55F /* FinanceTrackerTests.xctest */,
 				CA770D992F199840007EC55F /* FinanceTrackerUITests.xctest */,
+				74D9EF80B540EB035830EB26 /* VelaWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,6 +194,7 @@
 			isa = PBXGroup;
 			children = (
 				CA770DF12F21CABB007EC55F /* StoreKit.framework */,
+				051D878A8431A454273E5D02 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -126,6 +202,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3E7EECB16321743B355DFE0D /* VelaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3848D7056509BF0985F3480B /* Build configuration list for PBXNativeTarget "VelaWidget" */;
+			buildPhases = (
+				DCE5450CBE338AFAF32A9864 /* Sources */,
+				F5AAC551AB25C533B5B02722 /* Frameworks */,
+				62F00C7DAB95313F525DF122 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VelaWidget;
+			productName = VelaWidget;
+			productReference = 74D9EF80B540EB035830EB26 /* VelaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		CA770D7E2F19983F007EC55F /* FinanceTracker */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA770DA32F199840007EC55F /* Build configuration list for PBXNativeTarget "FinanceTracker" */;
@@ -133,17 +226,17 @@
 				CA770D7B2F19983F007EC55F /* Sources */,
 				CA770D7C2F19983F007EC55F /* Frameworks */,
 				CA770D7D2F19983F007EC55F /* Resources */,
+				22162D237CA2424DE4615DE4 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				1E0CD2C1230E77172F87B3D8 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				CA770D812F19983F007EC55F /* FinanceTracker */,
 			);
 			name = FinanceTracker;
-			packageProductDependencies = (
-			);
 			productName = FinanceTracker;
 			productReference = CA770D7F2F19983F007EC55F /* FinanceTracker.app */;
 			productType = "com.apple.product-type.application";
@@ -165,8 +258,6 @@
 				CA770D922F199840007EC55F /* FinanceTrackerTests */,
 			);
 			name = FinanceTrackerTests;
-			packageProductDependencies = (
-			);
 			productName = FinanceTrackerTests;
 			productReference = CA770D8F2F199840007EC55F /* FinanceTrackerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -188,8 +279,6 @@
 				CA770D9C2F199840007EC55F /* FinanceTrackerUITests */,
 			);
 			name = FinanceTrackerUITests;
-			packageProductDependencies = (
-			);
 			productName = FinanceTrackerUITests;
 			productReference = CA770D992F199840007EC55F /* FinanceTrackerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -260,11 +349,19 @@
 				CA770D7E2F19983F007EC55F /* FinanceTracker */,
 				CA770D8E2F199840007EC55F /* FinanceTrackerTests */,
 				CA770D982F199840007EC55F /* FinanceTrackerUITests */,
+				3E7EECB16321743B355DFE0D /* VelaWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		62F00C7DAB95313F525DF122 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CA770D7D2F19983F007EC55F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -294,6 +391,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13248342A2FEDF9044636093 /* NetSnapshot.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,9 +409,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DCE5450CBE338AFAF32A9864 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A661D3495983CF7F8A6B6540 /* VelaWidget.swift in Sources */,
+				794101D7B00248B117BE85B8 /* NetSnapshot.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		1E0CD2C1230E77172F87B3D8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = VelaWidget;
+			target = 3E7EECB16321743B355DFE0D /* VelaWidget */;
+			targetProxy = AF774EFC9345CB6B1C5654BB /* PBXContainerItemProxy */;
+		};
 		CA770D912F199840007EC55F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CA770D7E2F19983F007EC55F /* FinanceTracker */;
@@ -327,6 +440,61 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		32451A38D66BAEB87FC1C012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = VelaWidget/VelaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VelaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = DL.vela.VelaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		84D083466BCF2A27BABE39D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = VelaWidget/VelaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = VelaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = DL.vela.VelaWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		CA770DA12F199840007EC55F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -618,6 +786,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3848D7056509BF0985F3480B /* Build configuration list for PBXNativeTarget "VelaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				84D083466BCF2A27BABE39D2 /* Release */,
+				32451A38D66BAEB87FC1C012 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		CA770D7A2F19983F007EC55F /* Build configuration list for PBXProject "FinanceTracker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

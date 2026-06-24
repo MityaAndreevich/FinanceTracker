@@ -459,3 +459,7 @@
 "recurring.settings.empty" = "No recurring transactions yet.";
 "recurring.settings.footer" = "Swipe left on an item to stop it recurring. The original transaction is kept.";
 "recurring.settings.stop" = "Stop";
+
+/* Widget */
+"widget.spent.format" = "Spent %@";
+"widget.earned.format" = "Earned %@";
