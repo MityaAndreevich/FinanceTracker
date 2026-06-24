@@ -305,8 +305,10 @@ struct DashboardView: View {
 
                 Text((netCents >= 0 ? "+" : "−") + "\u{00A0}" +
                      Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode))
-                    .font(.system(size: 40, weight: .bold))
+                    .font(.system(size: 48, weight: .bold))
                     .monospacedDigit()
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
                     .foregroundStyle(netCents >= 0 ? Color.green : Color.red)
                     .privacySensitive(true)
             }
