@@ -21,7 +21,7 @@ enum RequireAuthMode: String, CaseIterable {
 // MARK: - AuthGateView
 
 struct AuthGateView: View {
-    @AppStorage("requireAuthMode") private var requireAuthMode: RequireAuthMode = .always
+    @AppStorage("requireAuthMode") private var requireAuthMode: RequireAuthMode = .never
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var isAuthenticated: Bool
@@ -30,8 +30,9 @@ struct AuthGateView: View {
 
     init() {
         // Read mode synchronously so we can set the correct initial state without a visible flash.
-        let raw = UserDefaults.standard.string(forKey: "requireAuthMode") ?? "always"
-        let mode = RequireAuthMode(rawValue: raw) ?? .always
+        // Default is .never — users must explicitly enable App Lock in Settings.
+        let raw = UserDefaults.standard.string(forKey: "requireAuthMode") ?? "never"
+        let mode = RequireAuthMode(rawValue: raw) ?? .never
         _isAuthenticated = State(initialValue: mode == .never)
     }
 

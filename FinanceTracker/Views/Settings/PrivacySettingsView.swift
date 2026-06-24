@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct PrivacySettingsView: View {
-    @AppStorage("requireAuthMode") private var requireAuthMode: RequireAuthMode = .always
+    @AppStorage("requireAuthMode") private var requireAuthMode: RequireAuthMode = .never
 
     private static let privacyURL = URL(string: "https://dmitrylogachev.github.io/FinanceTracker/PRIVACY_POLICY.html")!
 
