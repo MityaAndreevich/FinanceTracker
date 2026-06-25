@@ -29,6 +29,10 @@ final class Transaction {
     /// Optional with no default → SwiftData lightweight migration handles existing stores.
     var recurrenceRaw: String?
 
+    /// True for transactions seeded by DemoDataController (opt-in sample data).
+    /// Allows atomic removal without touching user data.
+    var isDemo: Bool = false
+
     // Relationships
     // .deny: if you try to delete a Category that still has transactions, SwiftData throws.
     // CategoriesSourcesView already blocks deletion UX-side; this is a safety net.
@@ -52,6 +56,7 @@ final class Transaction {
         note: String? = nil,
         merchant: String? = nil,
         recurrenceRaw: String? = nil,
+        isDemo: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -66,6 +71,7 @@ final class Transaction {
         self.note = note
         self.merchant = merchant
         self.recurrenceRaw = recurrenceRaw
+        self.isDemo = isDemo
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

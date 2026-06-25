@@ -44,8 +44,9 @@ enum DemoSeeder {
     /// Wipes ALL existing user data and replaces it with the canonical demo
     /// dataset. Idempotent — running twice produces identical state.
     ///
-    /// NEVER call this in production. Guarded by `isDemoMode` check on caller side.
-    static func resetAndSeedDemoData(modelContext: ModelContext) {
+    /// NEVER call this in production without `markAsDemo: true`. When called from
+    /// DemoDataController the transactions are flagged so they can be cleared atomically.
+    static func resetAndSeedDemoData(modelContext: ModelContext, markAsDemo: Bool = false) {
         do {
             try wipeAll(modelContext: modelContext)
 
@@ -54,7 +55,8 @@ enum DemoSeeder {
             seedDemoTransactions(
                 modelContext: modelContext,
                 categories: categories,
-                sources: sources
+                sources: sources,
+                markAsDemo: markAsDemo
             )
 
             try modelContext.save()
@@ -154,7 +156,8 @@ enum DemoSeeder {
     private static func seedDemoTransactions(
         modelContext: ModelContext,
         categories: [String: Category],
-        sources: [String: Source]
+        sources: [String: Source],
+        markAsDemo: Bool = false
     ) {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
@@ -301,7 +304,8 @@ enum DemoSeeder {
                 date: date(e.daysAgo),
                 category: cat,
                 source: src,
-                merchant: e.merchant
+                merchant: e.merchant,
+                isDemo: markAsDemo
             )
             modelContext.insert(tx)
         }
