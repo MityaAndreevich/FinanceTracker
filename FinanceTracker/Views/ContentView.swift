@@ -12,6 +12,7 @@ import SwiftData
 /// this view appears we know `hasCompletedOnboarding == true`.
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
@@ -58,15 +59,27 @@ struct ContentView: View {
             QuickEntryView()
         }
         .task {
-            // --demo-mode launch arg (used by simctl during App Store screenshot capture)
-            // resets all user data and seeds a deterministic, HIG-compliant dataset.
-            // See DemoSeeder for the full rationale and the seed contents.
             if DemoSeeder.isDemoMode {
                 DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
             } else {
-                // Seed default categories on first launch. Idempotent — safe to call again.
                 SeedService.seedIfNeeded(modelContext: modelContext)
             }
+            handlePendingIntentNavigation()
+        }
+        .onChange(of: scenePhase) { _, new in
+            if new == .active { handlePendingIntentNavigation() }
+        }
+    }
+
+    private func handlePendingIntentNavigation() {
+        let defaults = UserDefaults.appGroup
+        if defaults.bool(forKey: "pendingPresentQuickEntry") {
+            defaults.set(false, forKey: "pendingPresentQuickEntry")
+            showAddSheet = true
+        }
+        if defaults.bool(forKey: "pendingNavigateToAnalytics") {
+            defaults.set(false, forKey: "pendingNavigateToAnalytics")
+            selectedTab = 3
         }
     }
 }

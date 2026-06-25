@@ -12,55 +12,13 @@ import SwiftData
 struct FinanceTrackerApp: App {
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0
+    // Mirror default currency to App Group defaults so AppIntents can read it.
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    // MARK: - SwiftData container
-
-    private static let schema = Schema([
-        Transaction.self,
-        Category.self,
-        Source.self,
-        MerchantCategoryLearning.self
-    ])
-
-    var sharedModelContainer: ModelContainer = {
-        let modelConfiguration = ModelConfiguration(
-            schema: FinanceTrackerApp.schema,
-            isStoredInMemoryOnly: false
-        )
-
-        do {
-            let container = try ModelContainer(for: FinanceTrackerApp.schema, configurations: [modelConfiguration])
-            applyStoreProtection(to: modelConfiguration.url)
-            return container
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
-    // MARK: - File protection (T-2, T-6)
-
-    /// Apply NSFileProtectionComplete + backup exclusion to the SwiftData store.
-    /// Called once after container init. Non-fatal on failure.
-    private static func applyStoreProtection(to url: URL) {
-        do {
-            try (url as NSURL).setResourceValue(
-                URLFileProtection.complete,
-                forKey: .fileProtectionKey
-            )
-            // Exclude from iTunes / iCloud backup while CloudKit sync is not active.
-            // Reverse isExcludedFromBackupKey when Phase 1 CloudKit sync ships (T-6 trade-off).
-            try (url as NSURL).setResourceValue(true, forKey: .isExcludedFromBackupKey)
-
-            #if DEBUG
-            let values = try url.resourceValues(forKeys: [.fileProtectionKey])
-            let applied = values.fileProtection == .complete
-            print("[Security] SwiftData store NSFileProtectionComplete: \(applied ? "✓" : "⚠️ NOT applied")")
-            #endif
-        } catch {
-            // Non-fatal: the store may not exist on the first cold launch before
-            // ModelContainer writes the file. Protection is re-applied each launch.
-            print("[Security] ⚠️ Could not apply store protection: \(error.localizedDescription)")
-        }
+    init() {
+        // Must run before SharedModelContainer.shared is first accessed so the
+        // lazily-created App Group store is seeded with existing user data.
+        SharedModelContainer.migrateLegacyStoreIfNeeded()
     }
 
     // MARK: - Locale + Layout
@@ -89,9 +47,15 @@ struct FinanceTrackerApp: App {
                     if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {
                         firstLaunchInterval = Date().timeIntervalSinceReferenceDate
                     }
+                    // Seed App Group defaults on every launch so AppIntents read the
+                    // current currency without requiring the main app to be running.
+                    UserDefaults.appGroup.set(defaultCurrencyCode, forKey: "defaultCurrencyCode")
+                }
+                .onChange(of: defaultCurrencyCode) { _, new in
+                    UserDefaults.appGroup.set(new, forKey: "defaultCurrencyCode")
                 }
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(SharedModelContainer.shared)
     }
 }
 

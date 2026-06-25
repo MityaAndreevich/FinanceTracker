@@ -72,7 +72,10 @@ struct AnalyticsView: View {
         }
         .navigationTitle(LocalizedStringKey("title.analytics"))
         .listStyle(.insetGrouped)
-        .onAppear { recompute() }
+        .onAppear {
+            recompute()
+            applyPendingIntentPeriod()
+        }
         .onChange(of: transactions) { _, _ in recompute() }
         .onChange(of: scope) { _, _ in recompute() }
         .onChange(of: defaultCurrencyCode) { _, _ in recompute() }
@@ -273,6 +276,15 @@ struct AnalyticsView: View {
 
     private var filteredTransactions: [Transaction] {
         scope.filter(transactions)
+    }
+
+    // MARK: - AppIntent deep-link
+
+    private func applyPendingIntentPeriod() {
+        let defaults = UserDefaults.appGroup
+        guard let raw = defaults.string(forKey: "pendingAnalyticsPeriod") else { return }
+        defaults.removeObject(forKey: "pendingAnalyticsPeriod")
+        scope = PeriodScope.from(periodAppRaw: raw)
     }
 
     // MARK: - Cache recomputation
