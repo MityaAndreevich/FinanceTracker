@@ -457,6 +457,7 @@ struct QuickEntryView: View {
                 defaultCurrencyCode: defaultCurrencyCode
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+            RatingPromptCoordinator.recordTransactionSaved()
             dismiss()
         } catch {
             UINotificationFeedbackGenerator().notificationOccurred(.error)

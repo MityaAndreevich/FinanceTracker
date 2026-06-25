@@ -252,6 +252,7 @@ struct EditTransactionView: View {
             #if os(iOS)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             #endif
+            RatingPromptCoordinator.recordTransactionSaved()
             dismiss()
         } catch {
             fail(key: "edit.error.save_failed", extra: error.localizedDescription)

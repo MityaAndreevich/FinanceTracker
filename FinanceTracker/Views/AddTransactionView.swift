@@ -499,6 +499,7 @@ struct AddTransactionView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
 
+            RatingPromptCoordinator.recordTransactionSaved()
             dismiss()
         } catch {
             showErrorKey("add.error.save_failed")
