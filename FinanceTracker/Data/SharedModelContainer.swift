@@ -12,7 +12,7 @@ import Foundation
 
 enum SharedModelContainer {
 
-    static let appGroupID = "group.com.dmitrylogachev.vela"
+    static let appGroupID = "group.com.dmitrylogachev.budgetcrab"
 
     static let schema = Schema([
         Transaction.self,

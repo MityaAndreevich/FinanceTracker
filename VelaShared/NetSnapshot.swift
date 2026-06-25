@@ -14,7 +14,7 @@ import Foundation
 /// Constants shared between the app and the widget extension.
 enum WidgetSharing {
     /// App Group identifier — must match the entitlement on both targets.
-    static let appGroupID = "group.com.dmitrylogachev.vela"
+    static let appGroupID = "group.com.dmitrylogachev.budgetcrab"
     static let snapshotKey = "net_snapshot_v1"
 }
 
