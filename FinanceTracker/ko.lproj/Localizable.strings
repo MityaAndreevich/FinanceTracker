@@ -134,3 +134,31 @@
 
 "data.import.failed.format" = "Import failed: %@";
 "data.export.failed.format" = "Export failed: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "건너뛰기";
+"tutorial.cta.next" = "다음";
+"tutorial.cta.get_started" = "시작하기";
+"tutorial.page1.headline" = "입력하거나 말하세요 — Vela가 나머지를 처리합니다";
+"tutorial.page1.caption" = "+ 를 탭하거나 말하세요. 카테고리를 자동으로 파악합니다.";
+"tutorial.page2.headline" = "거래할수록 더 똑똑해집니다";
+"tutorial.page2.caption" = "Vela가 선택을 기억합니다. 클라우드 없이 — 모두 iPhone에서.";
+"tutorial.page3.headline" = "내 데이터는 나만의 것";
+"tutorial.page3.bullet1" = "100% 기기 내 — 클라우드나 서버 없음";
+"tutorial.page3.bullet2" = "계정, 광고, 추적 없음";
+"tutorial.page3.bullet3" = "음성은 Apple 프레임워크로 로컬 처리";
+"tutorial.page3.demo_offer" = "탐색을 위한 샘플 데이터 추가";
+"dashboard.empty.title" = "몇 초 만에 추적 시작";
+"dashboard.empty.caption" = "위에서 입력하거나 말하세요 — 나머지는 저희가";
+"transactions.empty.title" = "아직 거래 내역이 없습니다";
+"transactions.empty.cta" = "첫 거래 추가";
+"analytics.empty.title" = "여기에 인사이트가 표시됩니다";
+"analytics.empty.caption" = "지출 패턴을 보려면 거래를 추가하세요";
+"search.empty.title" = "결과 없음";
+"search.empty.caption" = "다른 단어나 금액을 시도해 보세요";
+"settings.section.tutorial_demo" = "튜토리얼 & 샘플 데이터";
+"settings.demo.add" = "샘플 데이터 추가";
+"settings.demo.clear" = "샘플 데이터 삭제";
+"settings.tutorial.replay" = "튜토리얼 다시 보기";

@@ -529,3 +529,31 @@
 "quick_entry.a11y.mic_hint" = "Распознавание на устройстве";
 "quick_entry.a11y.save_dynamic" = "Сохранить %@ в %@";
 "quick_entry.a11y.privacy_chip" = "Конфиденциальность: данные остаются на iPhone";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Пропустить";
+"tutorial.cta.next" = "Далее";
+"tutorial.cta.get_started" = "Начать";
+"tutorial.page1.headline" = "Печатайте или диктуйте — Vela всё поймёт";
+"tutorial.page1.caption" = "Нажмите + или просто говорите. Категорию мы определим сами.";
+"tutorial.page2.headline" = "Умнеет с каждой транзакцией";
+"tutorial.page2.caption" = "Vela запоминает ваш выбор. Без облака — всё на вашем iPhone.";
+"tutorial.page3.headline" = "Ваши данные — только ваши";
+"tutorial.page3.bullet1" = "100% на устройстве — без облака и серверов";
+"tutorial.page3.bullet2" = "Никаких аккаунтов, рекламы и слежки";
+"tutorial.page3.bullet3" = "Голос обрабатывается локально с помощью Apple";
+"tutorial.page3.demo_offer" = "Добавить пример данных для знакомства";
+"dashboard.empty.title" = "Начните отслеживать за секунды";
+"dashboard.empty.caption" = "Напишите или скажите выше — мы сделаем остальное";
+"transactions.empty.title" = "Транзакций пока нет";
+"transactions.empty.cta" = "Добавить первую";
+"analytics.empty.title" = "Здесь появится аналитика";
+"analytics.empty.caption" = "Добавьте несколько транзакций, чтобы увидеть расходы";
+"search.empty.title" = "Ничего не найдено";
+"search.empty.caption" = "Попробуйте другое слово или сумму";
+"settings.section.tutorial_demo" = "Обучение и данные примера";
+"settings.demo.add" = "Добавить пример данных";
+"settings.demo.clear" = "Удалить пример данных";
+"settings.tutorial.replay" = "Повторить обучение";

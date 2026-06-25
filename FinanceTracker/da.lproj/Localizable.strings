@@ -65,3 +65,31 @@
 "common.edit" = "Rediger";
 "common.today" = "I dag";
 "common.yesterday" = "I går";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Spring over";
+"tutorial.cta.next" = "Næste";
+"tutorial.cta.get_started" = "Kom i gang";
+"tutorial.page1.headline" = "Skriv eller tal — Vela klarer resten";
+"tutorial.page1.caption" = "Tryk + eller tal bare. Vi finder kategorien automatisk.";
+"tutorial.page2.headline" = "Bliver klogere for hver transaktion";
+"tutorial.page2.caption" = "Vela husker dine valg. Ingen sky — alt på din iPhone.";
+"tutorial.page3.headline" = "Dine data er kun dine";
+"tutorial.page3.bullet1" = "100% på enheden — ingen sky, ingen servere";
+"tutorial.page3.bullet2" = "Ingen konti, reklamer eller sporing";
+"tutorial.page3.bullet3" = "Tale behandles lokalt med Apples framework";
+"tutorial.page3.demo_offer" = "Tilføj eksempeldata for at udforske";
+"dashboard.empty.title" = "Begynd at spore på få sekunder";
+"dashboard.empty.caption" = "Skriv eller tal ovenfor — vi klarer resten";
+"transactions.empty.title" = "Ingen transaktioner endnu";
+"transactions.empty.cta" = "Tilføj den første";
+"analytics.empty.title" = "Indsigt vises her";
+"analytics.empty.caption" = "Tilføj et par transaktioner for at se dine forbrugsmønstre";
+"search.empty.title" = "Ingen resultater";
+"search.empty.caption" = "Prøv et andet ord eller beløb";
+"settings.section.tutorial_demo" = "Vejledning og eksempeldata";
+"settings.demo.add" = "Tilføj eksempeldata";
+"settings.demo.clear" = "Ryd eksempeldata";
+"settings.tutorial.replay" = "Afspil vejledning igen";

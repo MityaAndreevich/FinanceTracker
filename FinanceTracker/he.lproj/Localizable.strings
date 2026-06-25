@@ -143,3 +143,31 @@
 
 "data.import.failed.format" = "הייבוא נכשל: %@";
 "data.export.failed.format" = "הייצוא נכשל: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "דלג";
+"tutorial.cta.next" = "הבא";
+"tutorial.cta.get_started" = "התחל";
+"tutorial.page1.headline" = "הקלד או דבר — Vela יטפל בשאר";
+"tutorial.page1.caption" = "הקש + או פשוט דבר. אנו קובעים את הקטגוריה אוטומטית.";
+"tutorial.page2.headline" = "מחכים יותר עם כל עסקה";
+"tutorial.page2.caption" = "Vela זוכר את הבחירות שלך. ללא ענן — הכל על ה-iPhone שלך.";
+"tutorial.page3.headline" = "הנתונים שלך שייכים רק לך";
+"tutorial.page3.bullet1" = "100% על המכשיר — ללא ענן או שרתים";
+"tutorial.page3.bullet2" = "ללא חשבונות, פרסומות או מעקב";
+"tutorial.page3.bullet3" = "קול מעובד מקומית עם framework של Apple";
+"tutorial.page3.demo_offer" = "הוסף נתוני דוגמה לחקירה";
+"dashboard.empty.title" = "התחל לעקוב תוך שניות";
+"dashboard.empty.caption" = "הקלד או דבר למעלה — אנו נטפל בשאר";
+"transactions.empty.title" = "עדיין אין עסקאות";
+"transactions.empty.cta" = "הוסף את הראשונה";
+"analytics.empty.title" = "תובנות יופיעו כאן";
+"analytics.empty.caption" = "הוסף כמה עסקאות כדי לראות את דפוסי ההוצאות שלך";
+"search.empty.title" = "אין תוצאות";
+"search.empty.caption" = "נסה מילה או סכום אחר";
+"settings.section.tutorial_demo" = "מדריך ונתוני דוגמה";
+"settings.demo.add" = "הוסף נתוני דוגמה";
+"settings.demo.clear" = "נקה נתוני דוגמה";
+"settings.tutorial.replay" = "השמע שוב את המדריך";

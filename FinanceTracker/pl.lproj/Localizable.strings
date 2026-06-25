@@ -81,3 +81,31 @@
 "common.edit" = "Edytuj";
 "common.today" = "Dzisiaj";
 "common.yesterday" = "Wczoraj";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Pomiń";
+"tutorial.cta.next" = "Dalej";
+"tutorial.cta.get_started" = "Zacznij";
+"tutorial.page1.headline" = "Napisz lub powiedz — Vela zrobi resztę";
+"tutorial.page1.caption" = "Dotknij + lub po prostu mów. Kategoria zostanie określona automatycznie.";
+"tutorial.page2.headline" = "Staje się mądrzejszy z każdą transakcją";
+"tutorial.page2.caption" = "Vela zapamiętuje Twoje wybory. Bez chmury — wszystko na Twoim iPhonie.";
+"tutorial.page3.headline" = "Twoje dane są tylko Twoje";
+"tutorial.page3.bullet1" = "100% na urządzeniu — bez chmury i serwerów";
+"tutorial.page3.bullet2" = "Bez kont, reklam i śledzenia";
+"tutorial.page3.bullet3" = "Głos przetwarzany lokalnie z frameworkiem Apple";
+"tutorial.page3.demo_offer" = "Dodaj przykładowe dane do eksploracji";
+"dashboard.empty.title" = "Zacznij śledzić w kilka sekund";
+"dashboard.empty.caption" = "Wpisz lub powiedz powyżej — resztą zajmiemy się my";
+"transactions.empty.title" = "Brak transakcji";
+"transactions.empty.cta" = "Dodaj pierwszą";
+"analytics.empty.title" = "Tutaj pojawią się statystyki";
+"analytics.empty.caption" = "Dodaj kilka transakcji, aby zobaczyć wzorce wydatków";
+"search.empty.title" = "Brak wyników";
+"search.empty.caption" = "Spróbuj innego słowa lub kwoty";
+"settings.section.tutorial_demo" = "Samouczek i dane przykładowe";
+"settings.demo.add" = "Dodaj dane przykładowe";
+"settings.demo.clear" = "Usuń dane przykładowe";
+"settings.tutorial.replay" = "Powtórz samouczek";

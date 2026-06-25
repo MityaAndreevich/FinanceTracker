@@ -81,3 +81,31 @@
 "common.edit" = "Düzenle";
 "common.today" = "Bugün";
 "common.yesterday" = "Dün";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Atla";
+"tutorial.cta.next" = "İleri";
+"tutorial.cta.get_started" = "Başla";
+"tutorial.page1.headline" = "Yazın veya konuşun — Vela gerisini halleder";
+"tutorial.page1.caption" = "+ 'ya dokunun ya da konuşun. Kategoriyi otomatik belirleriz.";
+"tutorial.page2.headline" = "Her işlemle daha akıllı hale gelir";
+"tutorial.page2.caption" = "Vela seçimlerinizi hatırlar. Bulut yok — her şey iPhone'unuzda.";
+"tutorial.page3.headline" = "Verileriniz size ait";
+"tutorial.page3.bullet1" = "100% cihazda — bulut veya sunucu yok";
+"tutorial.page3.bullet2" = "Hesap, reklam veya takip yok";
+"tutorial.page3.bullet3" = "Ses Apple çerçevesiyle yerel olarak işlenir";
+"tutorial.page3.demo_offer" = "Keşfetmek için örnek veri ekle";
+"dashboard.empty.title" = "Saniyeler içinde takibe başlayın";
+"dashboard.empty.caption" = "Yukarıya yazın veya konuşun — gerisini biz yaparız";
+"transactions.empty.title" = "Henüz işlem yok";
+"transactions.empty.cta" = "İlkini ekle";
+"analytics.empty.title" = "İçgörüler burada görünecek";
+"analytics.empty.caption" = "Harcama modellerini görmek için birkaç işlem ekleyin";
+"search.empty.title" = "Sonuç bulunamadı";
+"search.empty.caption" = "Farklı bir kelime veya tutar deneyin";
+"settings.section.tutorial_demo" = "Öğretici ve Örnek Veriler";
+"settings.demo.add" = "Örnek veri ekle";
+"settings.demo.clear" = "Örnek veriyi temizle";
+"settings.tutorial.replay" = "Öğreticiyi tekrar oynat";

@@ -118,3 +118,31 @@
 
 "data.import.failed.format" = "Import mislukt: %@";
 "data.export.failed.format" = "Export mislukt: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Overslaan";
+"tutorial.cta.next" = "Volgende";
+"tutorial.cta.get_started" = "Aan de slag";
+"tutorial.page1.headline" = "Typ of spreek — Vela doet de rest";
+"tutorial.page1.caption" = "Tik op + of praat gewoon. We bepalen de categorie automatisch.";
+"tutorial.page2.headline" = "Wordt slimmer met elke transactie";
+"tutorial.page2.caption" = "Vela onthoudt je keuzes. Geen cloud — alles op je iPhone.";
+"tutorial.page3.headline" = "Jouw data blijft van jou";
+"tutorial.page3.bullet1" = "100% op het apparaat — geen cloud, geen servers";
+"tutorial.page3.bullet2" = "Geen accounts, geen advertenties, geen tracking";
+"tutorial.page3.bullet3" = "Spraak lokaal verwerkt met Apple's framework";
+"tutorial.page3.demo_offer" = "Voorbeelddata toevoegen om te verkennen";
+"dashboard.empty.title" = "Begin met bijhouden in seconden";
+"dashboard.empty.caption" = "Typ of spreek hierboven — wij doen de rest";
+"transactions.empty.title" = "Nog geen transacties";
+"transactions.empty.cta" = "Voeg de eerste toe";
+"analytics.empty.title" = "Inzichten verschijnen hier";
+"analytics.empty.caption" = "Voeg een paar transacties toe om je uitgavenpatronen te zien";
+"search.empty.title" = "Geen resultaten";
+"search.empty.caption" = "Probeer een ander woord of bedrag";
+"settings.section.tutorial_demo" = "Tutorial & Voorbeelddata";
+"settings.demo.add" = "Voorbeelddata toevoegen";
+"settings.demo.clear" = "Voorbeelddata wissen";
+"settings.tutorial.replay" = "Tutorial opnieuw afspelen";

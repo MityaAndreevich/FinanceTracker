@@ -143,3 +143,31 @@
 
 "data.import.failed.format" = "فشل الاستيراد: %@";
 "data.export.failed.format" = "فشل التصدير: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "تخطي";
+"tutorial.cta.next" = "التالي";
+"tutorial.cta.get_started" = "ابدأ";
+"tutorial.page1.headline" = "اكتب أو تحدث — Vela يتولى الباقي";
+"tutorial.page1.caption" = "اضغط + أو تحدث فقط. نحدد الفئة تلقائياً.";
+"tutorial.page2.headline" = "يصبح أذكى مع كل معاملة";
+"tutorial.page2.caption" = "Vela يتذكر اختياراتك. بدون سحابة — كل شيء على هاتفك.";
+"tutorial.page3.headline" = "بياناتك ملكك وحدك";
+"tutorial.page3.bullet1" = "100% على الجهاز — بدون سحابة أو خوادم";
+"tutorial.page3.bullet2" = "بدون حسابات أو إعلانات أو تتبع";
+"tutorial.page3.bullet3" = "معالجة الصوت محلياً باستخدام إطار عمل Apple";
+"tutorial.page3.demo_offer" = "إضافة بيانات نموذجية للاستكشاف";
+"dashboard.empty.title" = "ابدأ التتبع في ثوانٍ";
+"dashboard.empty.caption" = "اكتب أو تحدث أعلاه — سنتولى الباقي";
+"transactions.empty.title" = "لا معاملات بعد";
+"transactions.empty.cta" = "أضف الأولى";
+"analytics.empty.title" = "ستظهر الرؤى هنا";
+"analytics.empty.caption" = "أضف بعض المعاملات لرؤية أنماط إنفاقك";
+"search.empty.title" = "لا نتائج";
+"search.empty.caption" = "جرب كلمة أو مبلغاً مختلفاً";
+"settings.section.tutorial_demo" = "البرنامج التعليمي والبيانات النموذجية";
+"settings.demo.add" = "إضافة بيانات نموذجية";
+"settings.demo.clear" = "مسح البيانات النموذجية";
+"settings.tutorial.replay" = "إعادة تشغيل البرنامج التعليمي";

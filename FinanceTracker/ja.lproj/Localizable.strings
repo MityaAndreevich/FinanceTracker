@@ -200,3 +200,31 @@
 "quick_entry.a11y.mic_hint" = "端末内ディクテーション";
 "quick_entry.a11y.save_dynamic" = "%@を%@に保存";
 "quick_entry.a11y.privacy_chip" = "プライバシー：データはiPhone内に保存";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "スキップ";
+"tutorial.cta.next" = "次へ";
+"tutorial.cta.get_started" = "はじめる";
+"tutorial.page1.headline" = "入力するか話すだけ — Velaが残りを処理";
+"tutorial.page1.caption" = "+ をタップするか話しかけてください。カテゴリは自動で判別します。";
+"tutorial.page2.headline" = "使うほどに賢くなる";
+"tutorial.page2.caption" = "Velaはあなたの選択を記憶します。クラウド不要 — すべてiPhone上で。";
+"tutorial.page3.headline" = "あなたのデータはあなただけのもの";
+"tutorial.page3.bullet1" = "100%オンデバイス — クラウドもサーバーも不要";
+"tutorial.page3.bullet2" = "アカウント不要・広告なし・追跡なし";
+"tutorial.page3.bullet3" = "音声はAppleのフレームワークでローカル処理";
+"tutorial.page3.demo_offer" = "サンプルデータを追加して試す";
+"dashboard.empty.title" = "数秒で記録を始めよう";
+"dashboard.empty.caption" = "上から入力するか話しかけてください — 後はお任せ";
+"transactions.empty.title" = "まだ取引がありません";
+"transactions.empty.cta" = "最初を追加";
+"analytics.empty.title" = "ここにインサイトが表示されます";
+"analytics.empty.caption" = "支出パターンを見るには取引を追加してください";
+"search.empty.title" = "一致なし";
+"search.empty.caption" = "別の言葉や金額で試してください";
+"settings.section.tutorial_demo" = "チュートリアルとサンプルデータ";
+"settings.demo.add" = "サンプルデータを追加";
+"settings.demo.clear" = "サンプルデータを削除";
+"settings.tutorial.replay" = "チュートリアルを再表示";

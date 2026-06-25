@@ -134,3 +134,31 @@
 
 "data.import.failed.format" = "Import failed: %@";
 "data.export.failed.format" = "Export failed: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Παράλειψη";
+"tutorial.cta.next" = "Επόμενο";
+"tutorial.cta.get_started" = "Ξεκινήστε";
+"tutorial.page1.headline" = "Πληκτρολογήστε ή μιλήστε — Vela αναλαμβάνει τα υπόλοιπα";
+"tutorial.page1.caption" = "Πατήστε + ή απλώς μιλήστε. Εντοπίζουμε αυτόματα την κατηγορία.";
+"tutorial.page2.headline" = "Γίνεται πιο έξυπνο με κάθε συναλλαγή";
+"tutorial.page2.caption" = "Vela θυμάται τις επιλογές σας. Χωρίς cloud — τα πάντα στο iPhone σας.";
+"tutorial.page3.headline" = "Τα δεδομένα σας παραμένουν δικά σας";
+"tutorial.page3.bullet1" = "100% στη συσκευή — χωρίς cloud ή διακομιστές";
+"tutorial.page3.bullet2" = "Χωρίς λογαριασμούς, διαφημίσεις ή παρακολούθηση";
+"tutorial.page3.bullet3" = "Η φωνή επεξεργάζεται τοπικά με το framework της Apple";
+"tutorial.page3.demo_offer" = "Προσθήκη δείγματος δεδομένων για εξερεύνηση";
+"dashboard.empty.title" = "Ξεκινήστε την παρακολούθηση σε δευτερόλεπτα";
+"dashboard.empty.caption" = "Πληκτρολογήστε ή μιλήστε παραπάνω — εμείς κάνουμε τα υπόλοιπα";
+"transactions.empty.title" = "Δεν υπάρχουν συναλλαγές ακόμα";
+"transactions.empty.cta" = "Προσθήκη της πρώτης";
+"analytics.empty.title" = "Εδώ θα εμφανιστούν τα αποτελέσματα";
+"analytics.empty.caption" = "Προσθέστε μερικές συναλλαγές για να δείτε τα πρότυπα δαπανών σας";
+"search.empty.title" = "Δεν βρέθηκαν αποτελέσματα";
+"search.empty.caption" = "Δοκιμάστε διαφορετική λέξη ή ποσό";
+"settings.section.tutorial_demo" = "Εκπαίδευση & Δεδομένα Δείγματος";
+"settings.demo.add" = "Προσθήκη δεδομένων δείγματος";
+"settings.demo.clear" = "Εκκαθάριση δεδομένων δείγματος";
+"settings.tutorial.replay" = "Αναπαραγωγή εκπαίδευσης";

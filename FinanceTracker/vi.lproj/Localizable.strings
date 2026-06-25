@@ -134,3 +134,31 @@
 
 "data.import.failed.format" = "Import failed: %@";
 "data.export.failed.format" = "Export failed: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Bỏ qua";
+"tutorial.cta.next" = "Tiếp theo";
+"tutorial.cta.get_started" = "Bắt đầu";
+"tutorial.page1.headline" = "Gõ hoặc nói — Vela xử lý phần còn lại";
+"tutorial.page1.caption" = "Nhấn + hoặc chỉ cần nói. Chúng tôi xác định danh mục tự động.";
+"tutorial.page2.headline" = "Thông minh hơn với mỗi giao dịch";
+"tutorial.page2.caption" = "Vela ghi nhớ lựa chọn của bạn. Không có đám mây — tất cả trên iPhone của bạn.";
+"tutorial.page3.headline" = "Dữ liệu của bạn chỉ là của bạn";
+"tutorial.page3.bullet1" = "100% trên thiết bị — không có đám mây hay máy chủ";
+"tutorial.page3.bullet2" = "Không có tài khoản, quảng cáo hay theo dõi";
+"tutorial.page3.bullet3" = "Giọng nói được xử lý cục bộ với framework của Apple";
+"tutorial.page3.demo_offer" = "Thêm dữ liệu mẫu để khám phá";
+"dashboard.empty.title" = "Bắt đầu theo dõi trong vài giây";
+"dashboard.empty.caption" = "Gõ hoặc nói ở trên — chúng tôi sẽ làm phần còn lại";
+"transactions.empty.title" = "Chưa có giao dịch nào";
+"transactions.empty.cta" = "Thêm giao dịch đầu tiên";
+"analytics.empty.title" = "Thông tin chi tiết sẽ hiển thị ở đây";
+"analytics.empty.caption" = "Thêm một vài giao dịch để xem các mẫu chi tiêu";
+"search.empty.title" = "Không có kết quả";
+"search.empty.caption" = "Thử một từ hoặc số tiền khác";
+"settings.section.tutorial_demo" = "Hướng dẫn & Dữ liệu mẫu";
+"settings.demo.add" = "Thêm dữ liệu mẫu";
+"settings.demo.clear" = "Xóa dữ liệu mẫu";
+"settings.tutorial.replay" = "Phát lại hướng dẫn";

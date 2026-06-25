@@ -519,3 +519,31 @@
 "quick_entry.a11y.mic_hint" = "On-device dictation";
 "quick_entry.a11y.save_dynamic" = "Save %@ in %@";
 "quick_entry.a11y.privacy_chip" = "Privacy: data stays on your iPhone";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Skip";
+"tutorial.cta.next" = "Next";
+"tutorial.cta.get_started" = "Get started";
+"tutorial.page1.headline" = "Type or speak — Vela handles the rest";
+"tutorial.page1.caption" = "Tap + or just talk. We figure out the category automatically.";
+"tutorial.page2.headline" = "Gets smarter with every transaction";
+"tutorial.page2.caption" = "Vela remembers your choices. No cloud — all on your iPhone.";
+"tutorial.page3.headline" = "Your data stays yours";
+"tutorial.page3.bullet1" = "100% on-device — no cloud, no servers";
+"tutorial.page3.bullet2" = "No accounts, no ads, no tracking";
+"tutorial.page3.bullet3" = "Voice processed locally with Apple's framework";
+"tutorial.page3.demo_offer" = "Add sample data to explore";
+"dashboard.empty.title" = "Start tracking in seconds";
+"dashboard.empty.caption" = "Type or speak above — we'll do the rest";
+"transactions.empty.title" = "No transactions yet";
+"transactions.empty.cta" = "Add your first";
+"analytics.empty.title" = "Insights appear here";
+"analytics.empty.caption" = "Add a few transactions to see your spending patterns";
+"search.empty.title" = "No matches";
+"search.empty.caption" = "Try a different word or amount";
+"settings.section.tutorial_demo" = "Tutorial & Sample Data";
+"settings.demo.add" = "Add sample data";
+"settings.demo.clear" = "Clear sample data";
+"settings.tutorial.replay" = "Replay tutorial";

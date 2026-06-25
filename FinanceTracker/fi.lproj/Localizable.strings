@@ -62,3 +62,31 @@
 "common.edit" = "Muokkaa";
 "common.today" = "Tänään";
 "common.yesterday" = "Eilen";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Ohita";
+"tutorial.cta.next" = "Seuraava";
+"tutorial.cta.get_started" = "Aloita";
+"tutorial.page1.headline" = "Kirjoita tai puhu — Vela hoitaa loput";
+"tutorial.page1.caption" = "Napauta + tai puhu vain. Tunnistamme kategorian automaattisesti.";
+"tutorial.page2.headline" = "Älykkäämpi jokaisen tapahtuman myötä";
+"tutorial.page2.caption" = "Vela muistaa valintasi. Ei pilveä — kaikki iPhonessasi.";
+"tutorial.page3.headline" = "Tietosi pysyvät sinun";
+"tutorial.page3.bullet1" = "100% laitteella — ei pilveä, ei palvelimia";
+"tutorial.page3.bullet2" = "Ei tilejä, mainoksia tai seurantaa";
+"tutorial.page3.bullet3" = "Puhe käsitellään paikallisesti Applen kehyksellä";
+"tutorial.page3.demo_offer" = "Lisää esimerkkitiedot tutkimista varten";
+"dashboard.empty.title" = "Aloita seuranta sekunneissa";
+"dashboard.empty.caption" = "Kirjoita tai puhu yllä — me teemme loput";
+"transactions.empty.title" = "Ei vielä tapahtumia";
+"transactions.empty.cta" = "Lisää ensimmäinen";
+"analytics.empty.title" = "Oivallukset näkyvät tässä";
+"analytics.empty.caption" = "Lisää muutama tapahtuma nähdäksesi kulutustottumuksesi";
+"search.empty.title" = "Ei tuloksia";
+"search.empty.caption" = "Kokeile eri sanaa tai summaa";
+"settings.section.tutorial_demo" = "Opetusohjelma ja esimerkkitiedot";
+"settings.demo.add" = "Lisää esimerkkitiedot";
+"settings.demo.clear" = "Tyhjennä esimerkkitiedot";
+"settings.tutorial.replay" = "Toista opetusohjelma";

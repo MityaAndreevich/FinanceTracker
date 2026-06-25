@@ -134,3 +134,31 @@
 
 "data.import.failed.format" = "Import failed: %@";
 "data.export.failed.format" = "Export failed: %@";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "छोड़ें";
+"tutorial.cta.next" = "अगला";
+"tutorial.cta.get_started" = "शुरू करें";
+"tutorial.page1.headline" = "टाइप करें या बोलें — Vela बाकी संभालेगा";
+"tutorial.page1.caption" = "+ टैप करें या बस बोलें। हम अपने आप कैटेगरी पहचान लेते हैं।";
+"tutorial.page2.headline" = "हर लेनदेन के साथ होशियार होता है";
+"tutorial.page2.caption" = "Vela आपकी पसंद याद रखता है। बिना क्लाउड — सब कुछ आपके iPhone पर।";
+"tutorial.page3.headline" = "आपका डेटा सिर्फ आपका है";
+"tutorial.page3.bullet1" = "100% ऑन-डिवाइस — बिना क्लाउड या सर्वर";
+"tutorial.page3.bullet2" = "कोई अकाउंट, विज्ञापन या ट्रैकिंग नहीं";
+"tutorial.page3.bullet3" = "आवाज Apple के framework से स्थानीय रूप से प्रोसेस होती है";
+"tutorial.page3.demo_offer" = "एक्सप्लोर करने के लिए सैंपल डेटा जोड़ें";
+"dashboard.empty.title" = "सेकंड में ट्रैकिंग शुरू करें";
+"dashboard.empty.caption" = "ऊपर टाइप करें या बोलें — बाकी हम करेंगे";
+"transactions.empty.title" = "अभी तक कोई लेनदेन नहीं";
+"transactions.empty.cta" = "पहला जोड़ें";
+"analytics.empty.title" = "यहाँ अंतर्दृष्टि दिखेगी";
+"analytics.empty.caption" = "खर्च के पैटर्न देखने के लिए कुछ लेनदेन जोड़ें";
+"search.empty.title" = "कोई मिलान नहीं";
+"search.empty.caption" = "कोई और शब्द या राशि आज़माएं";
+"settings.section.tutorial_demo" = "ट्यूटोरियल और सैंपल डेटा";
+"settings.demo.add" = "सैंपल डेटा जोड़ें";
+"settings.demo.clear" = "सैंपल डेटा हटाएं";
+"settings.tutorial.replay" = "ट्यूटोरियल फिर से चलाएं";

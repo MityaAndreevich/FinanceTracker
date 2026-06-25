@@ -70,3 +70,31 @@
 "common.edit" = "Redigera";
 "common.today" = "Idag";
 "common.yesterday" = "Igår";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Hoppa över";
+"tutorial.cta.next" = "Nästa";
+"tutorial.cta.get_started" = "Kom igång";
+"tutorial.page1.headline" = "Skriv eller prata — Vela hanterar resten";
+"tutorial.page1.caption" = "Tryck + eller prata bara. Vi tar reda på kategorin automatiskt.";
+"tutorial.page2.headline" = "Blir smartare med varje transaktion";
+"tutorial.page2.caption" = "Vela minns dina val. Inget moln — allt på din iPhone.";
+"tutorial.page3.headline" = "Dina uppgifter förblir dina";
+"tutorial.page3.bullet1" = "100% på enheten — inget moln, inga servrar";
+"tutorial.page3.bullet2" = "Inga konton, annonser eller spårning";
+"tutorial.page3.bullet3" = "Röst bearbetas lokalt med Apples ramverk";
+"tutorial.page3.demo_offer" = "Lägg till exempeldata för att utforska";
+"dashboard.empty.title" = "Börja spåra på några sekunder";
+"dashboard.empty.caption" = "Skriv eller prata ovan — vi gör resten";
+"transactions.empty.title" = "Inga transaktioner än";
+"transactions.empty.cta" = "Lägg till den första";
+"analytics.empty.title" = "Insikter visas här";
+"analytics.empty.caption" = "Lägg till några transaktioner för att se dina utgiftsmönster";
+"search.empty.title" = "Inga träffar";
+"search.empty.caption" = "Prova ett annat ord eller belopp";
+"settings.section.tutorial_demo" = "Handledning och exempeldata";
+"settings.demo.add" = "Lägg till exempeldata";
+"settings.demo.clear" = "Rensa exempeldata";
+"settings.tutorial.replay" = "Spela upp handledning igen";

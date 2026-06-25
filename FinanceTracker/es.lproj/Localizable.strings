@@ -162,3 +162,31 @@
 "quick_entry.a11y.mic_hint" = "Dictado en el dispositivo";
 "quick_entry.a11y.save_dynamic" = "Guardar %@ en %@";
 "quick_entry.a11y.privacy_chip" = "Privacidad: los datos permanecen en tu iPhone";
+
+/* ======================================================
+   Tutorial & empty states (Brief 25)
+   ====================================================== */
+"tutorial.skip" = "Omitir";
+"tutorial.cta.next" = "Siguiente";
+"tutorial.cta.get_started" = "Comenzar";
+"tutorial.page1.headline" = "Escribe o habla — Vela hace el resto";
+"tutorial.page1.caption" = "Toca + o simplemente habla. Determinamos la categoría automáticamente.";
+"tutorial.page2.headline" = "Mejora con cada transacción";
+"tutorial.page2.caption" = "Vela recuerda tus elecciones. Sin nube — todo en tu iPhone.";
+"tutorial.page3.headline" = "Tus datos son solo tuyos";
+"tutorial.page3.bullet1" = "100% en el dispositivo — sin nube ni servidores";
+"tutorial.page3.bullet2" = "Sin cuentas, sin anuncios, sin rastreo";
+"tutorial.page3.bullet3" = "Voz procesada localmente con el framework de Apple";
+"tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
+"dashboard.empty.title" = "Empieza a registrar en segundos";
+"dashboard.empty.caption" = "Escribe o habla arriba — nosotros hacemos el resto";
+"transactions.empty.title" = "Todavía no hay transacciones";
+"transactions.empty.cta" = "Añadir la primera";
+"analytics.empty.title" = "Los insights aparecerán aquí";
+"analytics.empty.caption" = "Añade algunas transacciones para ver tus patrones de gasto";
+"search.empty.title" = "Sin coincidencias";
+"search.empty.caption" = "Prueba con otra palabra o cantidad";
+"settings.section.tutorial_demo" = "Tutorial y datos de muestra";
+"settings.demo.add" = "Añadir datos de muestra";
+"settings.demo.clear" = "Eliminar datos de muestra";
+"settings.tutorial.replay" = "Repetir tutorial";
