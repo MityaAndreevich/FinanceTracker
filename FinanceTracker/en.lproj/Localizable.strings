@@ -526,10 +526,10 @@
 "tutorial.skip" = "Skip";
 "tutorial.cta.next" = "Next";
 "tutorial.cta.get_started" = "Get started";
-"tutorial.page1.headline" = "Type or speak — Vela handles the rest";
+"tutorial.page1.headline" = "Type or speak — Budget Crab handles the rest";
 "tutorial.page1.caption" = "Tap + or just talk. We figure out the category automatically.";
 "tutorial.page2.headline" = "Gets smarter with every transaction";
-"tutorial.page2.caption" = "Vela remembers your choices. No cloud — all on your iPhone.";
+"tutorial.page2.caption" = "Budget Crab remembers your choices. No cloud — all on your iPhone.";
 "tutorial.page3.headline" = "Your data stays yours";
 "tutorial.page3.bullet1" = "100% on-device — no cloud, no servers";
 "tutorial.page3.bullet2" = "No accounts, no ads, no tracking";

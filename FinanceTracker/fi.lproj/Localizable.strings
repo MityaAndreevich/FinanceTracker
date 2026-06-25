@@ -69,10 +69,10 @@
 "tutorial.skip" = "Ohita";
 "tutorial.cta.next" = "Seuraava";
 "tutorial.cta.get_started" = "Aloita";
-"tutorial.page1.headline" = "Kirjoita tai puhu — Vela hoitaa loput";
+"tutorial.page1.headline" = "Kirjoita tai puhu — Budget Crab hoitaa loput";
 "tutorial.page1.caption" = "Napauta + tai puhu vain. Tunnistamme kategorian automaattisesti.";
 "tutorial.page2.headline" = "Älykkäämpi jokaisen tapahtuman myötä";
-"tutorial.page2.caption" = "Vela muistaa valintasi. Ei pilveä — kaikki iPhonessasi.";
+"tutorial.page2.caption" = "Budget Crab muistaa valintasi. Ei pilveä — kaikki iPhonessasi.";
 "tutorial.page3.headline" = "Tietosi pysyvät sinun";
 "tutorial.page3.bullet1" = "100% laitteella — ei pilveä, ei palvelimia";
 "tutorial.page3.bullet2" = "Ei tilejä, mainoksia tai seurantaa";

@@ -150,10 +150,10 @@
 "tutorial.skip" = "Пропустити";
 "tutorial.cta.next" = "Далі";
 "tutorial.cta.get_started" = "Почати";
-"tutorial.page1.headline" = "Друкуйте або говоріть — Vela зробить решту";
+"tutorial.page1.headline" = "Друкуйте або говоріть — Budget Crab зробить решту";
 "tutorial.page1.caption" = "Натисніть + або просто говоріть. Ми визначимо категорію автоматично.";
 "tutorial.page2.headline" = "Розумнішає з кожною транзакцією";
-"tutorial.page2.caption" = "Vela запам'ятовує ваш вибір. Без хмари — все на вашому iPhone.";
+"tutorial.page2.caption" = "Budget Crab запам'ятовує ваш вибір. Без хмари — все на вашому iPhone.";
 "tutorial.page3.headline" = "Ваші дані належать лише вам";
 "tutorial.page3.bullet1" = "100% на пристрої — без хмари й серверів";
 "tutorial.page3.bullet2" = "Жодних акаунтів, реклами чи стеження";

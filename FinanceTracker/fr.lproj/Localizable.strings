@@ -169,10 +169,10 @@
 "tutorial.skip" = "Passer";
 "tutorial.cta.next" = "Suivant";
 "tutorial.cta.get_started" = "Commencer";
-"tutorial.page1.headline" = "Tapez ou parlez — Vela s'occupe du reste";
+"tutorial.page1.headline" = "Tapez ou parlez — Budget Crab s'occupe du reste";
 "tutorial.page1.caption" = "Appuyez sur + ou parlez simplement. On détecte la catégorie automatiquement.";
 "tutorial.page2.headline" = "S'améliore à chaque transaction";
-"tutorial.page2.caption" = "Vela mémorise vos choix. Sans cloud — tout sur votre iPhone.";
+"tutorial.page2.caption" = "Budget Crab mémorise vos choix. Sans cloud — tout sur votre iPhone.";
 "tutorial.page3.headline" = "Vos données vous appartiennent";
 "tutorial.page3.bullet1" = "100% sur l'appareil — pas de cloud, pas de serveurs";
 "tutorial.page3.bullet2" = "Pas de comptes, pas de pub, pas de suivi";

@@ -20,7 +20,7 @@ struct PrivacyOverlayView: View {
                     .font(.system(size: 72))
                     .foregroundStyle(.tint)
 
-                Text("Vela")
+                Text("Budget Crab")
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)

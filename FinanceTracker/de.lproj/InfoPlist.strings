@@ -1,2 +1,2 @@
-"NSMicrophoneUsageDescription" = "Vela verwendet das Mikrofon nur, wenn du auf die Mikrofonschaltfläche tippst, um eine Transaktion zu diktieren. Audio wird auf deinem iPhone verarbeitet und nicht hochgeladen.";
-"NSSpeechRecognitionUsageDescription" = "Vela transkribiert deine Sprache auf dem Gerät mit Apples Speech Framework. Nichts wird an einen Server gesendet.";
+"NSMicrophoneUsageDescription" = "Budget Crab verwendet das Mikrofon nur, wenn du auf die Mikrofonschaltfläche tippst, um eine Transaktion zu diktieren. Audio wird auf deinem iPhone verarbeitet und nicht hochgeladen.";
+"NSSpeechRecognitionUsageDescription" = "Budget Crab transkribiert deine Sprache auf dem Gerät mit Apples Speech Framework. Nichts wird an einen Server gesendet.";

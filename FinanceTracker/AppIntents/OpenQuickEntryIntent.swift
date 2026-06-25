@@ -12,7 +12,7 @@ import AppIntents
 struct OpenQuickEntryIntent: AppIntent {
     static var title: LocalizedStringResource = "Open Quick Entry"
     static var description = IntentDescription(
-        "Open Vela Quick Entry to add a transaction.",
+        "Open Budget Crab Quick Entry to add a transaction.",
         categoryName: "Money"
     )
     static var openAppWhenRun: Bool = true

@@ -74,7 +74,7 @@ struct AddTransactionIntent: AppIntent {
                 )))?.first {
                     return other
                 }
-                throw IntentError.custom("No categories found. Open Vela to set up categories.")
+                throw IntentError.custom("No categories found. Open Budget Crab to set up categories.")
             }()
 
             let parsed = QuickAddParsedInput(

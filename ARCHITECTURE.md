@@ -2,6 +2,8 @@
 
 A native iOS personal finance tracker built with SwiftUI and SwiftData. Designed for App Store submission, with full localization (28 languages), StoreKit 2 subscriptions, and no third-party dependencies.
 
+> **Display name history:** The app was called "Vela" during early development. Renamed to "Budget Crab" on 2026-06-25 after extensive naming research across 23 candidates. Bundle ID (`com.dmitrylogachev.vela`), App Group, StoreKit product IDs, repo name (`FinanceTracker`), and Xcode project/scheme (`Vela.xcodeproj`) remain unchanged for continuity.
+
 ## Stack
 
 - **iOS 17+**, **Swift 5.9+**

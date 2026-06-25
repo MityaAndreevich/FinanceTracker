@@ -12,7 +12,7 @@ import AppIntents
 struct ShowSpendingIntent: AppIntent {
     static var title: LocalizedStringResource = "Show Spending"
     static var description = IntentDescription(
-        "Show spending breakdown in Vela.",
+        "Show spending breakdown in Budget Crab.",
         categoryName: "Money"
     )
     static var openAppWhenRun: Bool = true

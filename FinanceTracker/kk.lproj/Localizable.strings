@@ -141,10 +141,10 @@
 "tutorial.skip" = "Өткізіп жіберу";
 "tutorial.cta.next" = "Келесі";
 "tutorial.cta.get_started" = "Бастау";
-"tutorial.page1.headline" = "Теріңіз немесе айтыңыз — Vela қалғанын орындайды";
+"tutorial.page1.headline" = "Теріңіз немесе айтыңыз — Budget Crab қалғанын орындайды";
 "tutorial.page1.caption" = "+ түртіңіз немесе жай сөйлеңіз. Санатты автоматты анықтаймыз.";
 "tutorial.page2.headline" = "Әр транзакциямен ақылды болады";
-"tutorial.page2.caption" = "Vela таңдауларыңызды есте сақтайды. Бұлутсыз — бәрі iPhone-да.";
+"tutorial.page2.caption" = "Budget Crab таңдауларыңызды есте сақтайды. Бұлутсыз — бәрі iPhone-да.";
 "tutorial.page3.headline" = "Деректеріңіз тек сіздікі";
 "tutorial.page3.bullet1" = "100% құрылғыда — бұлут немесе серверсіз";
 "tutorial.page3.bullet2" = "Тіркелгі, жарнама немесе бақылаусыз";

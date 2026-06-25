@@ -620,9 +620,9 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Vela;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vela uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Vela transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -661,9 +661,9 @@
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Vela;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vela uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Vela transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

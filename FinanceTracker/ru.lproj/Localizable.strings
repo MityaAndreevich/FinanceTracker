@@ -536,10 +536,10 @@
 "tutorial.skip" = "Пропустить";
 "tutorial.cta.next" = "Далее";
 "tutorial.cta.get_started" = "Начать";
-"tutorial.page1.headline" = "Печатайте или диктуйте — Vela всё поймёт";
+"tutorial.page1.headline" = "Печатайте или диктуйте — Budget Crab всё поймёт";
 "tutorial.page1.caption" = "Нажмите + или просто говорите. Категорию мы определим сами.";
 "tutorial.page2.headline" = "Умнеет с каждой транзакцией";
-"tutorial.page2.caption" = "Vela запоминает ваш выбор. Без облака — всё на вашем iPhone.";
+"tutorial.page2.caption" = "Budget Crab запоминает ваш выбор. Без облака — всё на вашем iPhone.";
 "tutorial.page3.headline" = "Ваши данные — только ваши";
 "tutorial.page3.bullet1" = "100% на устройстве — без облака и серверов";
 "tutorial.page3.bullet2" = "Никаких аккаунтов, рекламы и слежки";

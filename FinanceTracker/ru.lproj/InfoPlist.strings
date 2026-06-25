@@ -1,2 +1,2 @@
-"NSMicrophoneUsageDescription" = "Vela использует микрофон только когда вы нажимаете кнопку микрофона, чтобы продиктовать транзакцию. Аудио обрабатывается на вашем iPhone и никуда не отправляется.";
-"NSSpeechRecognitionUsageDescription" = "Vela распознаёт речь на устройстве с помощью Apple Speech Framework. Ничего не отправляется на сервер.";
+"NSMicrophoneUsageDescription" = "Budget Crab использует микрофон только когда вы нажимаете кнопку микрофона, чтобы продиктовать транзакцию. Аудио обрабатывается на вашем iPhone и никуда не отправляется.";
+"NSSpeechRecognitionUsageDescription" = "Budget Crab распознаёт речь на устройстве с помощью Apple Speech Framework. Ничего не отправляется на сервер.";

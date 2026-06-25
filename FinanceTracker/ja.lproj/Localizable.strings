@@ -207,10 +207,10 @@
 "tutorial.skip" = "スキップ";
 "tutorial.cta.next" = "次へ";
 "tutorial.cta.get_started" = "はじめる";
-"tutorial.page1.headline" = "入力するか話すだけ — Velaが残りを処理";
+"tutorial.page1.headline" = "入力するか話すだけ — Budget Crabが残りを処理";
 "tutorial.page1.caption" = "+ をタップするか話しかけてください。カテゴリは自動で判別します。";
 "tutorial.page2.headline" = "使うほどに賢くなる";
-"tutorial.page2.caption" = "Velaはあなたの選択を記憶します。クラウド不要 — すべてiPhone上で。";
+"tutorial.page2.caption" = "Budget Crabはあなたの選択を記憶します。クラウド不要 — すべてiPhone上で。";
 "tutorial.page3.headline" = "あなたのデータはあなただけのもの";
 "tutorial.page3.bullet1" = "100%オンデバイス — クラウドもサーバーも不要";
 "tutorial.page3.bullet2" = "アカウント不要・広告なし・追跡なし";
