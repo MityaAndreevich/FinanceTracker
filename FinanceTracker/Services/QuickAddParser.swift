@@ -46,6 +46,16 @@ enum QuickAddParser {
             merchantText = merchantText.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
         merchantText = merchantText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Strip leading prepositions left over after keyword removal.
+        // "на Амазон" → "Амазон", "from Amazon" → "Amazon"
+        let lowerMerchant = merchantText.lowercased()
+        for prefix in merchantPrefixesToStrip where lowerMerchant.hasPrefix(prefix) {
+            merchantText = String(merchantText.dropFirst(prefix.count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            break
+        }
+
         let merchant: String? = merchantText.isEmpty ? nil : merchantText
 
         // 4. Suggest category using the existing on-device lookup table
@@ -62,9 +72,23 @@ enum QuickAddParser {
     // MARK: - Private
 
     private static let incomeKeywords = [
+        // English — formal + conversational
         "paycheck", "salary", "income", "refund", "bonus", "freelance",
-        "deposit", "interest", "dividend",
-        "зарплата", "доход", "перевод",
+        "deposit", "interest", "dividend", "earned", "received", "cashback",
+        "payout", "reimbursement",
+        // Russian — formal
+        "зарплата", "доход", "перевод", "премия", "аванс", "выплата",
+        // Russian — conversational verbs (past tense, the natural way users type)
+        "заработал", "заработала", "получил", "получила", "зачислено",
+        "пришло", "пришла", "пришёл", "вернули", "возврат", "кэшбэк", "кешбэк",
+    ]
+
+    /// Words to strip from extracted merchant text after income keyword detection.
+    /// E.g. "заработал на Амазон" → merchant should be "Амазон", not "на Амазон".
+    /// Strips leading Russian/English prepositions.
+    private static let merchantPrefixesToStrip = [
+        "на ", "от ", "из ", "в ", "за ", "по ",
+        "from ", "on ", "via ", "at ", "by ",
     ]
 
     /// Handles both standard ("5.50", "1,234.56") and European ("12,99", "1.234,56") formats.
