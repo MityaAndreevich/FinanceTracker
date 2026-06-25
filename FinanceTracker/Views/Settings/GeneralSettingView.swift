@@ -15,6 +15,8 @@ struct GeneralSettingsView: View {
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
+    @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
+
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
 
@@ -27,6 +29,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         List {
             preferencesSection
+            tutorialDemoSection
             maintenanceSection
         }
         .navigationTitle("general.title")
@@ -88,6 +91,25 @@ struct GeneralSettingsView: View {
             Text("general.language_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var tutorialDemoSection: some View {
+        Section("settings.section.tutorial_demo") {
+            if DemoDataController.isDemoDataActive {
+                Button("settings.demo.clear", role: .destructive) {
+                    DemoDataController.clearDemoData(modelContext: modelContext)
+                }
+            } else {
+                Button("settings.demo.add") {
+                    DemoDataController.seedDemoData()
+                }
+            }
+
+            Button("settings.tutorial.replay") {
+                hasSeenFeatureTour = false
+                RatingPromptCoordinator.resetForTutorialReplay()
+            }
         }
     }
 

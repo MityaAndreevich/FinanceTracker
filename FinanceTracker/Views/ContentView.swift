@@ -14,6 +14,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
 
+    @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
 
@@ -58,6 +59,12 @@ struct ContentView: View {
         .sheet(isPresented: $showAddSheet) {
             QuickEntryView()
         }
+        .fullScreenCover(isPresented: Binding(
+            get: { !hasSeenFeatureTour },
+            set: { _ in }
+        )) {
+            TutorialFlow()
+        }
         .task {
             if DemoSeeder.isDemoMode {
                 DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
@@ -65,6 +72,7 @@ struct ContentView: View {
                 SeedService.seedIfNeeded(modelContext: modelContext)
             }
             handlePendingIntentNavigation()
+            RatingPromptCoordinator.recordSessionOpen()
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }
