@@ -75,20 +75,48 @@ enum QuickAddParser {
         // English — formal + conversational
         "paycheck", "salary", "income", "refund", "bonus", "freelance",
         "deposit", "interest", "dividend", "earned", "received", "cashback",
-        "payout", "reimbursement",
+        "payout", "reimbursement", "got paid", "won", "made",
         // Russian — formal
         "зарплата", "доход", "перевод", "премия", "аванс", "выплата",
         // Russian — conversational verbs (past tense, the natural way users type)
         "заработал", "заработала", "получил", "получила", "зачислено",
         "пришло", "пришла", "пришёл", "вернули", "возврат", "кэшбэк", "кешбэк",
+        // Spanish
+        "salario", "sueldo", "paga", "nómina", "ingreso", "reembolso", "bono",
+        "gané", "recibí", "cobré", "devolución", "propina",
+        // German
+        "gehalt", "lohn", "einnahme", "verdient", "bekommen", "erhalten",
+        "gutgeschrieben", "rückzahlung",
+        // French
+        "salaire", "paie", "revenu", "remboursement", "prime",
+        "gagné", "reçu", "touché", "perçu", "remise",
+        // Portuguese (Brazil)
+        "salário", "pagamento", "renda", "bônus",
+        "ganhei", "recebi", "caiu", "pingou", "devolução",
+        // Japanese
+        "給料", "給与", "ボーナス", "返金", "副業", "入金",
+        "稼いだ", "もらった", "入った", "振り込まれた", "キャッシュバック",
+        // Chinese (Simplified)
+        "工资", "薪水", "奖金", "退款", "报销", "自由职业",
+        "赚了", "收到", "到账", "入账", "现金回赠",
     ]
 
     /// Words to strip from extracted merchant text after income keyword detection.
     /// E.g. "заработал на Амазон" → merchant should be "Амазон", not "на Амазон".
-    /// Strips leading Russian/English prepositions.
+    /// Longer prefixes listed before shorter ones to prevent partial matches (e.g. "desde" before "de").
     private static let merchantPrefixesToStrip = [
+        // Russian
         "на ", "от ", "из ", "в ", "за ", "по ",
-        "from ", "on ", "via ", "at ", "by ",
+        // English
+        "from ", "via ", "on ", "at ", "by ",
+        // Spanish / Portuguese-BR / French — longer prefixes first
+        "desde ", "depuis ", "de ", "en ", "por ", "do ", "da ", "em ", "à ", "par ",
+        // German
+        "von ", "bei ", "aus ", "an ",
+        // Japanese
+        "から", "で",
+        // Chinese (Simplified)
+        "从", "在", "由",
     ]
 
     /// Handles both standard ("5.50", "1,234.56") and European ("12,99", "1.234,56") formats.
