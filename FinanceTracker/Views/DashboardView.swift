@@ -21,6 +21,9 @@ struct DashboardView: View {
     private var allCategories: [Category]
 
     @State private var showAddTransaction = false
+    @State private var animateArrow = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Recurring prompt
     @State private var duePrompts: [RecurrencePrompt] = []
@@ -94,6 +97,7 @@ struct DashboardView: View {
         .task {
             loadDueRecurring()
             refreshWidgetSnapshot()
+            if !reduceMotion { animateArrow = true }
         }
         .onChange(of: transactions.count) { _, _ in
             refreshWidgetSnapshot()
@@ -248,6 +252,7 @@ struct DashboardView: View {
             withAnimation { quickAddParsed = nil }
             quickAddText = ""
             refreshWidgetSnapshot()
+            RatingPromptCoordinator.recordTransactionSaved()
         } catch {
             print("QuickAdd save failed: \(error.localizedDescription)")
         }
@@ -324,7 +329,7 @@ struct DashboardView: View {
     @ViewBuilder
     private var insightSection: some View {
         if transactions.isEmpty {
-            EmptyStateCard(showAddTransaction: $showAddTransaction)
+            DashboardEmptyState(animateArrow: animateArrow)
                 .padding(.horizontal, 16)
         } else if !hasUnlockedInsights {
             Day0EducationalCard(showAddTransaction: $showAddTransaction)
@@ -364,46 +369,45 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - First-launch empty state
+// MARK: - Empty state (contextual hint pointing at QuickAddBar)
 
-private struct EmptyStateCard: View {
-    @Binding var showAddTransaction: Bool
+private struct DashboardEmptyState: View {
+    let animateArrow: Bool
+
+    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "plus.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(Color.accentColor)
+        VStack(spacing: 12) {
+            // Arrow pointing up at QuickAddBar
+            Image(systemName: "arrow.up")
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(mintColor)
+                .opacity(animateArrow ? 1 : 0.35)
+                .offset(y: animateArrow ? -4 : 4)
+                .animation(
+                    .easeInOut(duration: 1.2).repeatForever(autoreverses: true),
+                    value: animateArrow
+                )
+
+            Image(systemName: "sparkles")
+                .font(.system(size: 44))
+                .foregroundStyle(.tertiary)
+                .padding(.top, 8)
 
             VStack(spacing: 8) {
-                Text("dashboard.empty.headline")
+                Text("dashboard.empty.title")
                     .font(.system(size: 22, weight: .semibold))
                     .multilineTextAlignment(.center)
 
-                Text("dashboard.empty.body")
+                Text("dashboard.empty.caption")
                     .font(.system(size: 15))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-
-            Button {
-                showAddTransaction = true
-            } label: {
-                Text("dashboard.empty.cta")
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 2)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.accentColor)
         }
-        .padding(24)
         .frame(maxWidth: .infinity)
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(.separator, lineWidth: 0.5)
-        )
+        .padding(.vertical, 32)
+        .padding(.horizontal, 24)
     }
 }
 

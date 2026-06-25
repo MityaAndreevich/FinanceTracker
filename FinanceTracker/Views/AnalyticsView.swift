@@ -58,12 +58,22 @@ struct AnalyticsView: View {
             }
 
             if filteredTransactions.isEmpty {
-                EmptyStateView(
-                    systemImage: "chart.bar.xaxis",
-                    title: "empty.noData",
-                    message: "analytics.empty.message"
-                )
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.pie")
+                        .font(.system(size: 52))
+                        .foregroundStyle(.tertiary)
+                    Text("analytics.empty.title")
+                        .font(.headline)
+                    Text("analytics.empty.caption")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             } else {
                 combinedSection
                 breakdownExpensesByCategorySection

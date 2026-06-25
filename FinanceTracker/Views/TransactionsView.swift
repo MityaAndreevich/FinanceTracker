@@ -19,6 +19,7 @@ struct TransactionsView: View {
     @State private var searchText: String = ""
 
     @State private var editTx: Transaction?
+    @State private var presentQuickEntry = false
 
     // MARK: - Derived
 
@@ -87,15 +88,36 @@ struct TransactionsView: View {
         .navigationDestination(item: $editTx) { tx in
             EditTransactionView(transaction: tx)
         }
+        .sheet(isPresented: $presentQuickEntry) {
+            QuickEntryView()
+        }
     }
 
     private var emptyStateRow: some View {
-        EmptyStateView(
-            systemImage: "list.bullet.rectangle",
-            title: "empty.noTransactions",
-            message: scope.isMonth ? "transactions.empty.month" : "transactions.empty.all"
-        )
+        VStack(spacing: 20) {
+            Image(systemName: "list.bullet.rectangle")
+                .font(.system(size: 52))
+                .foregroundStyle(.tertiary)
+
+            Text("transactions.empty.title")
+                .font(.headline)
+
+            Button {
+                presentQuickEntry = true
+            } label: {
+                Text("transactions.empty.cta")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Capsule().fill(Color.accentColor))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
         .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 
     private func daySection(for day: Date) -> some View {
