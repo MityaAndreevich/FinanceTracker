@@ -65,7 +65,9 @@ enum DemoSeeder {
             print("[DemoSeeder] ✓ Demo data seeded — \(categories.count) categories, \(sources.count) sources, ~44 transactions")
             #endif
         } catch {
+            #if DEBUG
             print("[DemoSeeder] ⚠️ Failed: \(error.localizedDescription)")
+            #endif
         }
     }
 

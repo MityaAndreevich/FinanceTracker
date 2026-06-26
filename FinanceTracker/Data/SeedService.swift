@@ -25,7 +25,9 @@ enum SeedService {
                 addMissingDefaultCategoriesIfNeeded(refreshed, modelContext: modelContext)
             }
         } catch {
+            #if DEBUG
             print("SeedService failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -76,7 +78,9 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("Seed failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -185,7 +189,9 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("Category migration failed: \(error.localizedDescription)")
+            #endif
         }
     }
 

@@ -229,7 +229,11 @@ struct CategoriesSourcesView: View {
 
     private func saveContext() {
         do { try modelContext.save() }
-        catch { print("Save failed: \(error.localizedDescription)") }
+        catch {
+            #if DEBUG
+            print("Save failed: \(error.localizedDescription)")
+            #endif
+        }
     }
 }
 

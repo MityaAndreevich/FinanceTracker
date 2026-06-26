@@ -172,7 +172,11 @@ struct TransactionsView: View {
     private func delete(_ tx: Transaction) {
         modelContext.delete(tx)
         do { try modelContext.save() }
-        catch { print("Failed to delete transaction: \(error.localizedDescription)") }
+        catch {
+            #if DEBUG
+            print("Failed to delete transaction: \(error.localizedDescription)")
+            #endif
+        }
     }
 }
 

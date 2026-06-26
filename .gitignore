@@ -1,10 +1,22 @@
 # Xcode
 DerivedData/
+build/
 *.xcuserstate
 *.xcuserdata/
 *.moved-aside
 *.xcscmblueprint
 *.xccheckout
+
+# Signing & provisioning (Xcode auto-managed)
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+
+# Secrets / env
+.env*
+.secrets
+credentials*
 
 # Swift Package Manager
 .build/

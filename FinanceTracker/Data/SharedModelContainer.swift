@@ -72,9 +72,13 @@ enum SharedModelContainer {
                     try FileManager.default.copyItem(at: s, to: d)
                 }
             }
+            #if DEBUG
             print("[SharedModelContainer] Legacy store migrated → App Group.")
+            #endif
         } catch {
+            #if DEBUG
             print("[SharedModelContainer] ⚠️ Migration failed: \(error.localizedDescription)")
+            #endif
         }
     }
 

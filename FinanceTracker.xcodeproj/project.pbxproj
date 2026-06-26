@@ -624,6 +624,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Budget Crab uses Face ID to protect your financial data. Authentication happens on-device and is never shared.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -665,6 +666,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Budget Crab uses Face ID to protect your financial data. Authentication happens on-device and is never shared.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;

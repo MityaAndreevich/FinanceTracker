@@ -503,7 +503,9 @@ struct AddTransactionView: View {
             dismiss()
         } catch {
             showErrorKey("add.error.save_failed")
+            #if DEBUG
             print("Save failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -695,7 +697,9 @@ private struct AddCategorySheet: View {
             onCreated(category)
             dismiss()
         } catch {
+            #if DEBUG
             print("Failed to create category: \(error.localizedDescription)")
+            #endif
         }
     }
 }
@@ -750,7 +754,9 @@ private struct AddSourceSheet: View {
             onCreated(source)
             dismiss()
         } catch {
+            #if DEBUG
             print("Failed to create source: \(error.localizedDescription)")
+            #endif
         }
     }
 }

@@ -195,7 +195,9 @@ struct GeneralSettingsView: View {
                 messageKey: "general.reset_failed.message",
                 extra: error.localizedDescription
             )
+            #if DEBUG
             print("Reset failed: \(error.localizedDescription)")
+            #endif
         }
     }
 

@@ -254,7 +254,9 @@ struct DashboardView: View {
             refreshWidgetSnapshot()
             RatingPromptCoordinator.recordTransactionSaved()
         } catch {
+            #if DEBUG
             print("QuickAdd save failed: \(error.localizedDescription)")
+            #endif
         }
     }
 
