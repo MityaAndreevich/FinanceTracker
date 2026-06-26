@@ -60,13 +60,6 @@ struct TransactionsView: View {
 
     var body: some View {
         List {
-            Section {
-                PeriodSelector(scope: $scope)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 4, trailing: 12))
-            }
-
             if filtered.isEmpty {
                 emptyStateRow
             } else {
@@ -76,6 +69,15 @@ struct TransactionsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .safeAreaInset(edge: .top) {
+            // PeriodSelector lives ABOVE the list, below the search drawer.
+            // Keeping it out of the List avoids a hit-test conflict that left
+            // the .searchable drawer visible but untappable on device.
+            PeriodSelector(scope: $scope)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(.bar)
+        }
         .navigationTitle("title.transactions")
         .searchable(
             text: $searchText,
