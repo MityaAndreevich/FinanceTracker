@@ -22,6 +22,7 @@
 "common.ok" = "OK";
 "common.cancel" = "Cancel";
 "common.close" = "Close";
+"common.done" = "Done";
 "common.add" = "Add";
 "common.save" = "Save";
 "common.edit" = "Edit";

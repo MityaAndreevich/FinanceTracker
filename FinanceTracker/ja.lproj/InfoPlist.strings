@@ -1,2 +1,0 @@
-"NSMicrophoneUsageDescription" = "Budget Crabは、マイクボタンをタップして取引を口述入力するときのみマイクを使用します。音声はiPhone内で処理され、アップロードされません。";
-"NSSpeechRecognitionUsageDescription" = "Budget CrabはAppleの音声フレームワークを使用して音声を端末内で文字起こしします。サーバーには何も送信されません。";

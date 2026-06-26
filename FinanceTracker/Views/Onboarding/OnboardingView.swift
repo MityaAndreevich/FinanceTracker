@@ -16,7 +16,6 @@ struct OnboardingView: View {
     @State private var selectedLanguage: SupportedLanguage = .system
     @State private var selectedCurrency: SupportedCurrency = .usd
 
-    @State private var showFullLanguageList = false
     @State private var showFullCurrencyList = false
 
     private enum Step: Int {
@@ -110,27 +109,7 @@ struct OnboardingView: View {
             .pickerStyle(.wheel)
             .frame(height: 200)
             .clipped()
-
-            Button {
-                showFullLanguageList = true
-            } label: {
-                Label("onboarding.language.more", systemImage: "globe")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.accentColor)
-            }
-        }
-        .sheet(isPresented: $showFullLanguageList) {
-            SearchablePickerSheet(
-                titleKey: "onboarding.language.all",
-                items: SupportedLanguage.allCases,
-                labelProvider: { "\($0.flag) \($0.title)" },
-                selection: Binding(
-                    get: { selectedLanguage.id },
-                    set: { newID in
-                        if let lang = SupportedLanguage(rawValue: newID) { selectedLanguage = lang }
-                    }
-                )
-            )
+            // All supported languages fit the wheel, so there is no "More…" overflow.
         }
     }
 
@@ -177,9 +156,8 @@ struct OnboardingView: View {
     // MARK: - Popular subsets (short wheel for first-run delight)
 
     private var popularLanguages: [SupportedLanguage] {
-        let popular: [SupportedLanguage] = [.system, .en, .es, .ru, .de, .fr, .pt, .ja, .zhHans]
-        // Ensure a long-tail pick made via "More…" still shows in the wheel.
-        return popular.contains(selectedLanguage) ? popular : popular + [selectedLanguage]
+        // All 4 supported locales (+ System) fit in the wheel — no overflow needed.
+        SupportedLanguage.allCases
     }
 
     private var popularCurrencies: [SupportedCurrency] {

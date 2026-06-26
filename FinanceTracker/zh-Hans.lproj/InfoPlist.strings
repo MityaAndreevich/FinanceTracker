@@ -1,2 +1,0 @@
-"NSMicrophoneUsageDescription" = "Budget Crab 仅在您点击麦克风按钮以口述交易时使用麦克风。音频在您的 iPhone 上处理，不会上传。";
-"NSSpeechRecognitionUsageDescription" = "Budget Crab 使用 Apple 的语音框架在设备上转录您的语音。不会向服务器发送任何内容。";

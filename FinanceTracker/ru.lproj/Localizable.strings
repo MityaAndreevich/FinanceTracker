@@ -29,6 +29,7 @@
 "common.ok" = "ОК";
 "common.cancel" = "Отмена";
 "common.close" = "Закрыть";
+"common.done" = "Готово";
 "common.add" = "Добавить";
 "common.save" = "Сохранить";
 "common.edit" = "Изменить";
