@@ -49,39 +49,66 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
 
     // MARK: - Locale resolution
 
-    /// Maps the user's `appLanguageCode` AppStorage value to the correct recognizer locale.
-    /// Falls back to `Locale.current` for "system" or any unrecognized code.
-    nonisolated private static func resolvedLocale() -> Locale {
+    /// Resolves the user's `appLanguageCode` to the first locale that actually has
+    /// on-device recognition installed, trying a regional fallback chain.
+    ///
+    /// A user may have, say, a Spanish dictation pack for `es_ES` but not `es_MX`.
+    /// Hardcoding `es_MX` returned a recognizer whose `supportsOnDeviceRecognition`
+    /// was `false`, which auto-hid the mic. Walking a chain (es_MX → es_ES → es)
+    /// finds whatever the device has. The same pattern protects EN/RU/PT users on
+    /// regional iOS variants. Falls back to the primary candidate (non-nil where
+    /// possible) when nothing on-device is available — `isAvailable` then gates the UI.
+    nonisolated private static func resolveBestAvailableLocale() -> Locale {
         let stored = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
+
+        let candidates: [String]
         switch stored {
         case "system", "":
-            return .current
+            candidates = [Locale.current.identifier]
         case "en":
-            return Locale(identifier: "en_US")
+            candidates = ["en_US", "en_GB", "en_AU", "en_CA", "en_IE", "en"]
         case "ru":
-            return Locale(identifier: "ru_RU")
+            candidates = ["ru_RU", "ru"]
         case "es":
-            return Locale(identifier: "es_MX")
+            // Mexican Spanish first (LATAM target), then Spain, then generic.
+            candidates = ["es_MX", "es_ES", "es_419", "es_AR", "es_CO", "es"]
         case "de":
-            return Locale(identifier: "de_DE")
+            candidates = ["de_DE", "de_AT", "de_CH", "de"]
         case "fr":
-            return Locale(identifier: "fr_FR")
-        case "pt-BR":
-            return Locale(identifier: "pt_BR")
+            candidates = ["fr_FR", "fr_CA", "fr"]
+        case "pt", "pt-BR":
+            candidates = ["pt_BR", "pt_PT", "pt"]
         case "ja":
-            return Locale(identifier: "ja_JP")
-        case "zh-Hans":
-            return Locale(identifier: "zh_CN")
+            candidates = ["ja_JP", "ja"]
+        case "zh", "zh-Hans":
+            candidates = ["zh_CN", "zh_Hans", "zh"]
         default:
-            return .current
+            candidates = [Locale.current.identifier]
         }
+
+        for code in candidates {
+            let locale = Locale(identifier: code)
+            if let recognizer = SFSpeechRecognizer(locale: locale),
+               recognizer.supportsOnDeviceRecognition {
+                #if DEBUG
+                print("[VoiceInputService] Using locale: \(code)")
+                #endif
+                return locale
+            }
+        }
+
+        #if DEBUG
+        print("[VoiceInputService] No on-device recognizer for appLanguageCode=\(stored)")
+        #endif
+        return Locale(identifier: candidates.first ?? Locale.current.identifier)
     }
 
     // MARK: - Init
 
     /// `locale` is injectable for testing (e.g. an unsupported locale to exercise the
-    /// `isAvailable == false` path). Defaults to the app language selected by the user.
-    init(locale: Locale = VoiceInputService.resolvedLocale()) {
+    /// `isAvailable == false` path). Defaults to the best on-device locale for the
+    /// app language selected by the user.
+    init(locale: Locale = VoiceInputService.resolveBestAvailableLocale()) {
         self.recognizer = SFSpeechRecognizer(locale: locale)
         super.init()
         recognizer?.delegate = self
