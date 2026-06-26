@@ -82,26 +82,27 @@ enum QuickAddParser {
         // Russian — conversational verbs (past tense, the natural way users type)
         "заработал", "заработала", "получил", "получила", "зачислено",
         "пришло", "пришла", "пришёл", "вернули", "возврат", "кэшбэк", "кешбэк",
+        "продал", "продала", "продаю", "продали",
         // Voice transliterations (SFSpeechRecognizer EN locale on RU speech)
         "poluchil", "poluchila", "zarplata", "premia", "premiia", "avans", "zp",
         // Spanish
         "salario", "sueldo", "paga", "nómina", "ingreso", "reembolso", "bono",
-        "gané", "recibí", "cobré", "devolución", "propina",
+        "gané", "recibí", "cobré", "devolución", "propina", "vendí", "vendió",
         // German
         "gehalt", "lohn", "einnahme", "verdient", "bekommen", "erhalten",
-        "gutgeschrieben", "rückzahlung",
+        "gutgeschrieben", "rückzahlung", "verkauft", "verkaufte",
         // French
         "salaire", "paie", "revenu", "remboursement", "prime",
-        "gagné", "reçu", "touché", "perçu", "remise",
+        "gagné", "reçu", "touché", "perçu", "remise", "vendu", "vendue",
         // Portuguese (Brazil)
         "salário", "pagamento", "renda", "bônus",
-        "ganhei", "recebi", "caiu", "pingou", "devolução",
+        "ganhei", "recebi", "caiu", "pingou", "devolução", "vendi", "vendeu",
         // Japanese
         "給料", "給与", "ボーナス", "返金", "副業", "入金",
-        "稼いだ", "もらった", "入った", "振り込まれた", "キャッシュバック",
+        "稼いだ", "もらった", "入った", "振り込まれた", "キャッシュバック", "売った", "売却",
         // Chinese (Simplified)
         "工资", "薪水", "奖金", "退款", "报销", "自由职业",
-        "赚了", "收到", "到账", "入账", "现金回赠",
+        "赚了", "收到", "到账", "入账", "现金回赠", "卖了", "卖出",
     ]
 
     /// Words to strip from extracted merchant text after income keyword detection.

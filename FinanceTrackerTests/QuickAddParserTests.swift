@@ -203,4 +203,34 @@ struct QuickAddParserTests {
         #expect(result?.typeRaw == "income")
         #expect(result?.amountCents == 500000)
     }
+
+    // MARK: - "sold" income verbs (Bug #2)
+
+    @Test func parse_income_prodal_basic() {
+        let result = QuickAddParser.parse("продал яйца за 7")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 700)
+    }
+
+    @Test func parse_income_prodala() {
+        let result = QuickAddParser.parse("продала велик 5000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 500000)
+    }
+
+    @Test func parse_income_sold_english() {
+        let result = QuickAddParser.parse("sold my bike 200")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 20000)
+    }
+
+    @Test func parse_income_sold_es() {
+        let result = QuickAddParser.parse("vendí mi coche 3000")
+        #expect(result?.typeRaw == "income")
+    }
+
+    @Test func parse_income_sold_de() {
+        let result = QuickAddParser.parse("verkauft Fahrrad 200")
+        #expect(result?.typeRaw == "income")
+    }
 }
