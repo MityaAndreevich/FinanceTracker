@@ -317,4 +317,30 @@ struct QuickAddParserTests {
         // it also maps to Food & Drink rather than no category.
         #expect(result?.suggestedCategoryName == "Food & Drink")
     }
+
+    // MARK: - Trailing preposition stripping (Brief 28E P1-1)
+
+    @Test func parse_trailing_za_stripped_ru() {
+        let result = QuickAddParser.parse("продал яйца за 7")
+        #expect(result?.merchant == "яйца")   // not "яйца за"
+        #expect(result?.typeRaw == "income")
+    }
+
+    @Test func parse_trailing_for_stripped_en() {
+        let result = QuickAddParser.parse("coffee for 5")
+        #expect(result?.merchant == "coffee") // not "coffee for"
+    }
+
+    @Test func parse_trailing_por_stripped_es() {
+        let result = QuickAddParser.parse("huevos por 7")
+        #expect(result?.merchant == "huevos") // not "huevos por"
+    }
+
+    // MARK: - Leading orphan conjunction stripping (Brief 28E P1-2)
+
+    @Test func parse_leading_orphan_a_stripped_ru() {
+        let result = QuickAddParser.parse("получил а зарплату 50000")
+        #expect(result?.merchant == "зарплату")  // not "а зарплату"
+        #expect(result?.typeRaw == "income")
+    }
 }

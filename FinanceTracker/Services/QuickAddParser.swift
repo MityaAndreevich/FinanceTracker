@@ -218,10 +218,26 @@ enum QuickAddParser {
         "から", "で",
         // Chinese (Simplified)
         "从", "在", "由",
+        // Orphan conjunctions that can leak after a verb-keyword strip
+        // ("получил а зарплату" → "а зарплату" → "зарплату").
+        "а ", "и ", "но ", "то ",       // Russian
+        "and ", "or ", "but ",          // English
+        "y ", "o ", "pero ",            // Spanish
+        "e ", "ou ", "mas ",            // Portuguese
     ]
 
-    /// Collapses whitespace, trims, and strips a single leading preposition.
-    /// "  desde Empresa " → "Empresa", "от Сбербанк" → "Сбербанк".
+    /// Prepositions that can dangle at the END of a merchant once the amount that
+    /// followed them has been removed ("продал яйца за 7" → "яйца за" → "яйца").
+    private static let merchantSuffixesToStrip = [
+        " за", " от", " из", " в", " по", " на",   // Russian
+        " for", " from", " at", " by", " via", " on",  // English
+        " por", " de", " en", " desde",            // Spanish
+        " em",                                      // Portuguese
+    ]
+
+    /// Collapses whitespace, trims, and strips a single leading preposition and a
+    /// single trailing preposition.
+    /// "  desde Empresa " → "Empresa", "от Сбербанк" → "Сбербанк", "яйца за" → "яйца".
     private static func normalizeMerchant(_ text: String) -> String {
         var s = text
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
@@ -229,6 +245,11 @@ enum QuickAddParser {
         let lower = s.lowercased()
         for prefix in merchantPrefixesToStrip where lower.hasPrefix(prefix) {
             s = String(s.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+            break
+        }
+        let lowerAfterPrefix = s.lowercased()
+        for suffix in merchantSuffixesToStrip where lowerAfterPrefix.hasSuffix(suffix) {
+            s = String(s.dropLast(suffix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
             break
         }
         return s
