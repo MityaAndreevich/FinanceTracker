@@ -58,9 +58,6 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                quickAddSection
-                    .padding(.top, 8)
-
                 heroSection
                     .padding(.horizontal, 16)
 
@@ -73,6 +70,14 @@ struct DashboardView: View {
                 Spacer(minLength: 20)
             }
             .padding(.vertical, 12)
+        }
+        // Pin Quick Add below the nav bar so focusing its field never scrolls it
+        // up under the inline title (the month "date").
+        .safeAreaInset(edge: .top, spacing: 0) {
+            quickAddSection
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                .background(.bar)
         }
         .navigationTitle(PeriodScope.currentMonth.label(locale: .current))
         .navigationBarTitleDisplayMode(.inline)
