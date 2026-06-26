@@ -179,6 +179,18 @@ struct QuickEntryView: View {
                 }
             }
         }
+        // When voice stops (manual tap or silence auto-stop), settle the parser
+        // immediately instead of waiting for the typing debounce, so the Save button
+        // enables as soon as dictation ends.
+        .onChange(of: voice.isListening) { _, isListening in
+            guard !isListening, !inputText.isEmpty else { return }
+            parseTask?.cancel()
+            withAnimation(
+                reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72)
+            ) {
+                parsed = QuickAddParser.parse(inputText)
+            }
+        }
         // Save button ready-pulse: starts/stops when parsedReady toggles.
         .onChange(of: parsedReady, initial: true) { _, newReady in
             if newReady && !reduceMotion {

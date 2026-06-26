@@ -43,6 +43,10 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
 
+    // Auto-stop after a pause so the user doesn't have to tap the mic to finish.
+    private var silenceTimer: Timer?
+    private let silenceThreshold: TimeInterval = 1.8
+
     // MARK: - Locale resolution
 
     /// Maps the user's `appLanguageCode` AppStorage value to the correct recognizer locale.
@@ -217,6 +221,7 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
                         self.stop()
                         return
                     }
+                    self.resetSilenceTimer()
                 }
                 if error != nil {
                     self.stop()
@@ -230,7 +235,21 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
         cleanup()
     }
 
+    /// Restarts the silence countdown on every new partial transcript. When no fresh
+    /// speech arrives within `silenceThreshold`, listening auto-stops.
+    private func resetSilenceTimer() {
+        silenceTimer?.invalidate()
+        silenceTimer = Timer.scheduledTimer(withTimeInterval: silenceThreshold, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.stop()
+            }
+        }
+    }
+
     private func cleanup() {
+        silenceTimer?.invalidate()
+        silenceTimer = nil
+
         recognitionTask?.cancel()
         recognitionTask = nil
 
