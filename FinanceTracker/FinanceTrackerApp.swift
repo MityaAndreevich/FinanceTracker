@@ -24,8 +24,12 @@ struct FinanceTrackerApp: App {
     // MARK: - Locale + Layout
 
     private var appLocale: Locale {
-        guard appLanguageCode != "system" else { return .autoupdatingCurrent }
-        return Locale(identifier: appLanguageCode)
+        switch appLanguageCode {
+        case "system", "": return .autoupdatingCurrent
+        case "pt": return Locale(identifier: "pt_BR")  // resources live in pt-BR.lproj
+        case "es": return Locale(identifier: "es_MX")  // LATAM target market
+        default: return Locale(identifier: appLanguageCode)
+        }
     }
 
     private var overrideLayoutDirection: LayoutDirection? {
@@ -42,6 +46,9 @@ struct FinanceTrackerApp: App {
             RootView()
                 .environment(\.locale, appLocale)
                 .applyLayoutDirection(overrideLayoutDirection)
+                // Recreate the whole view tree on language change so no view keeps
+                // a cached LocalizedStringKey resolution from the previous locale.
+                .id(appLanguageCode)
                 .task {
                     PurchaseManager.shared.start()
                     if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {
