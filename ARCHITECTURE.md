@@ -52,6 +52,28 @@ FinanceTrackerTests/                CSV import + export unit tests
 
 ## Design decisions
 
+### Orientation: portrait-only (v1.0)
+
+**Decision:** Budget Crab v1.0 supports iPhone portrait orientation only.
+
+**Rationale:**
+- Industry standard for iOS finance apps: Mint, YNAB, Copilot, Monarch, and
+  Rocket Money are all portrait-only.
+- The primary use case is two-handed phone interaction (type, dictate, enter
+  transactions on the go).
+- A landscape redesign requires 4–6 hours of layout work for marginal value.
+- Real-device testing (round 1) showed landscape layouts looked broken; fixing
+  each view properly was a large cost relative to the payoff.
+
+**Implementation:**
+- `Info.plist`: `UISupportedInterfaceOrientations` = `UIInterfaceOrientationPortrait`
+- `Info.plist`: `UIRequiresFullScreen` = `YES` (silences the Xcode orientation warning)
+
+**Reconsider in v1.2+ if:**
+- User reviews explicitly request landscape (track App Store reviews).
+- Apple ships a foldable iPhone (potentially landscape-default when unfolded).
+- An iPad version is built (iPad apps must support all orientations).
+
 ### Money is stored as Int cents
 
 Monetary values are stored as `amountCents: Int` (and `taxCents: Int?`) on `Transaction`. Float and Double are never used for money, because binary floating-point cannot represent decimal cents exactly and rounding errors compound across aggregations.
