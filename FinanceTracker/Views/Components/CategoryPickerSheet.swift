@@ -17,6 +17,7 @@ struct CategoryPickerSheet: View {
     let onPick: (Category) -> Void
 
     @State private var search = ""
+    @State private var showAddCategory = false
     @Query(sort: \Category.order) private var allCategories: [Category]
 
     private var filtered: [Category] {
@@ -28,13 +29,26 @@ struct CategoryPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            List(filtered) { cat in
-                Button {
-                    onPick(cat)
-                    dismiss()
-                } label: {
-                    Label(cat.displayName(), systemImage: cat.icon ?? "tag")
-                        .foregroundStyle(.primary)
+            List {
+                Section {
+                    ForEach(filtered) { cat in
+                        Button {
+                            onPick(cat)
+                            dismiss()
+                        } label: {
+                            Label(cat.displayName(), systemImage: cat.icon ?? "tag")
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+
+                Section {
+                    Button {
+                        showAddCategory = true
+                    } label: {
+                        Label("category.picker.add_new", systemImage: "plus.circle.fill")
+                            .foregroundStyle(Color.accentColor)
+                    }
                 }
             }
             .searchable(text: $search)
@@ -43,6 +57,12 @@ struct CategoryPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("common.done") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showAddCategory) {
+                AddCategorySheet(initialKind: currentType) { newCategory in
+                    onPick(newCategory)
+                    dismiss()
                 }
             }
         }

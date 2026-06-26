@@ -515,6 +515,7 @@
 "quickadd.preview.edit" = "Изменить";
 "quickadd.preview.no_category" = "[Выбрать категорию]";
 "quickadd.pick_category" = "Выберите категорию";
+"category.picker.add_new" = "Новая категория";
 "quickadd.a11y.change_category" = "Изменить категорию";
 
 /* Quick Entry hero sheet (Brief 23A) */

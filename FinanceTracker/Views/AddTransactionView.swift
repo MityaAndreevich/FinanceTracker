@@ -158,7 +158,7 @@ struct AddTransactionView: View {
                 Text(LocalizedStringKey(errorMessageKey))
             }
             .sheet(isPresented: $showAddCategorySheet) {
-                AddCategorySheet(
+                ManualAddCategorySheet(
                     kindRaw: typeRaw,
                     existingMaxOrder: (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0),
                     onCreated: { newCat in
@@ -617,7 +617,10 @@ struct AddTransactionView: View {
 
 // MARK: - Sheets
 
-private struct AddCategorySheet: View {
+// Simple manual-entry category form used by the Add Transaction screen.
+// (The preset-grid AddCategorySheet lives in Views/Components and is used by
+// Settings → Categories and the Quick Entry picker.)
+private struct ManualAddCategorySheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
