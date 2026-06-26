@@ -468,6 +468,8 @@ private struct QuickAddBar: View {
 
             TextField("quickadd.placeholder", text: $text)
                 .submitLabel(.done)
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .onSubmit { handleSubmit() }
 
             if !text.isEmpty {

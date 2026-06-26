@@ -87,6 +87,18 @@ struct OnboardingView: View {
             .navigationBarBackButtonHidden(step == .language)
             .toolbar { topToolbar }
             .onAppear(perform: preloadFromStorage)
+            // Pre-fill the currency to match the chosen language. The user reaches the
+            // currency step next and can still override; this is just a better default
+            // (Spanish → MXN, Portuguese → BRL, etc.).
+            .onChange(of: selectedLanguage) { _, newLang in
+                switch newLang {
+                case .en: selectedCurrency = .usd
+                case .es: selectedCurrency = .mxn
+                case .pt: selectedCurrency = .brl
+                case .ru: selectedCurrency = .rub
+                case .system: break
+                }
+            }
             // Tactile detent feedback as the user spins the wheel.
             .sensoryFeedback(.selection, trigger: selectedLanguage)
             .sensoryFeedback(.selection, trigger: selectedCurrency)
@@ -100,15 +112,16 @@ struct OnboardingView: View {
             Picker("onboarding.language.picker", selection: $selectedLanguage) {
                 ForEach(popularLanguages) { lang in
                     HStack(spacing: 12) {
-                        Text(lang.flag).font(.title2)
-                        Text(lang.title).font(.body)
+                        Text(lang.flag).font(.title)
+                        Text(lang.title).font(.body.bold())
                     }
                     .tag(lang)
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 200)
+            .frame(height: 240)
             .clipped()
+            .tint(Color.accentColor)
             // All supported languages fit the wheel, so there is no "More…" overflow.
         }
     }
@@ -120,15 +133,16 @@ struct OnboardingView: View {
             Picker("onboarding.currency.picker", selection: $selectedCurrency) {
                 ForEach(popularCurrencies) { c in
                     HStack(spacing: 12) {
-                        Text(c.flag).font(.title2)
-                        Text("\(c.code) — \(c.name)").font(.body)
+                        Text(c.flag).font(.title)
+                        Text("\(c.code) — \(c.name)").font(.body.bold())
                     }
                     .tag(c)
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 200)
+            .frame(height: 240)
             .clipped()
+            .tint(Color.accentColor)
 
             Button {
                 showFullCurrencyList = true
