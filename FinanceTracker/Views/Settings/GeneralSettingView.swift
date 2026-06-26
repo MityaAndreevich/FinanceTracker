@@ -17,6 +17,8 @@ struct GeneralSettingsView: View {
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
 
+    @State private var showCurrencyPicker = false
+    @State private var showLanguagePicker = false
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
 
@@ -72,25 +74,59 @@ struct GeneralSettingsView: View {
     private var preferencesSection: some View {
         Section("general.section.preferences") {
 
-            Picker("general.currency", selection: $defaultCurrencyCode) {
-                ForEach(SupportedCurrency.allCases) { c in
-                    Text("\(c.flag) \(c.code) — \(c.name)")
-                        .tag(c.code)
+            Button {
+                showCurrencyPicker = true
+            } label: {
+                HStack {
+                    Text("general.currency")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if let current = SupportedCurrency.allCases.first(where: { $0.code == defaultCurrencyCode }) {
+                        Text("\(current.flag) \(current.code)")
+                            .foregroundStyle(.secondary)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
-            .pickerStyle(.navigationLink)
 
-            Picker("general.language", selection: $appLanguageCode) {
-                ForEach(SupportedLanguage.allCases) { l in
-                    Text("\(l.flag) \(l.title)")
-                        .tag(l.id)
+            Button {
+                showLanguagePicker = true
+            } label: {
+                HStack {
+                    Text("general.language")
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    if let current = SupportedLanguage(rawValue: appLanguageCode) {
+                        Text("\(current.flag) \(current.title)")
+                            .foregroundStyle(.secondary)
+                    }
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
             }
-            .pickerStyle(.navigationLink)
 
             Text("general.language_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+        }
+        .sheet(isPresented: $showCurrencyPicker) {
+            SearchablePickerSheet(
+                titleKey: "general.currency",
+                items: SupportedCurrency.allCases,
+                labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
+                selection: $defaultCurrencyCode
+            )
+        }
+        .sheet(isPresented: $showLanguagePicker) {
+            SearchablePickerSheet(
+                titleKey: "general.language",
+                items: SupportedLanguage.allCases,
+                labelProvider: { "\($0.flag) \($0.title)" },
+                selection: $appLanguageCode
+            )
         }
     }
 
