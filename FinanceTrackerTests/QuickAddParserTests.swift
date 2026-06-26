@@ -134,7 +134,9 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("50000 ボーナス")
         #expect(result?.amountCents == 5000000)
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == nil)
+        // Bug #4: an income noun that is the only content is kept as the merchant.
+        #expect(result?.merchant == "ボーナス")
+        #expect(result?.suggestedCategoryName == "Income")
     }
 
     @Test func parse_prefixStrip_ja() {
@@ -150,7 +152,9 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("5000 工资")
         #expect(result?.amountCents == 500000)
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == nil)
+        // Bug #4: an income noun that is the only content is kept as the merchant.
+        #expect(result?.merchant == "工资")
+        #expect(result?.suggestedCategoryName == "Income")
     }
 
     @Test func parse_prefixStrip_zhHans() {
@@ -263,5 +267,52 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("получил 3 яйца 200")
         #expect(result?.amountCents == 20000)  // last number when no price marker
         #expect(result?.typeRaw == "income")
+    }
+
+    // MARK: - Income nouns keep merchant + map to the Income category (Bug #4)
+    //
+    // The taxonomy has a single income category ("Income"), so income nouns suggest
+    // that rather than inventing per-noun categories or falling back to "Other".
+
+    @Test func parse_income_zp_keeps_merchant_and_maps_income() {
+        let result = QuickAddParser.parse("получил зп 200")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 20000)
+        #expect(result?.merchant == "зп")               // not nil, not "получил"
+        #expect(result?.suggestedCategoryName == "Income")
+    }
+
+    @Test func parse_income_zarplata_alone() {
+        let result = QuickAddParser.parse("зарплата 50000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant == "зарплата")
+        #expect(result?.suggestedCategoryName == "Income")
+    }
+
+    @Test func parse_income_salary_english() {
+        let result = QuickAddParser.parse("salary 5000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant == "salary")
+        #expect(result?.suggestedCategoryName == "Income")
+    }
+
+    @Test func parse_income_bonus_keeps_merchant() {
+        let result = QuickAddParser.parse("bonus 1000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant == "bonus")
+        #expect(result?.suggestedCategoryName == "Income")
+    }
+
+    @Test func parse_income_refund_es() {
+        let result = QuickAddParser.parse("reembolso 50 euros")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.suggestedCategoryName == "Income")
+    }
+
+    @Test func parse_expense_does_not_match_income_noun() {
+        let result = QuickAddParser.parse("яйца 5 баксов")
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.suggestedCategoryName == nil)
     }
 }

@@ -28,40 +28,45 @@ enum QuickAddParser {
         //    captures the price (7), not the quantity (3). See detectAmountCents.
         guard let (cents, _) = detectAmountCents(in: input), cents > 0 else { return nil }
 
-        // 2. Detect type — explicit "+" prefix or income vocabulary
+        // 2. Detect type — explicit "+" prefix or income vocabulary (verb OR noun).
         let lower = input.lowercased()
-        let isIncome = input.hasPrefix("+") || incomeKeywords.contains { lower.contains($0) }
+        let isIncome = input.hasPrefix("+")
+            || verbIncomeKeywords.contains { lower.contains($0) }
+            || nounIncomeKeywords.contains { lower.contains($0) }
         let typeRaw = isIncome ? "income" : "expense"
 
-        // 3. Extract merchant text — strip ALL number tokens (the chosen amount plus
-        //    stray quantities), "+", currency symbols, and income keywords.
-        var merchantText = input.replacingOccurrences(of: "+", with: "")
-        merchantText = merchantText.replacingOccurrences(
-            of: amountRegexPattern, with: " ", options: .regularExpression
-        )
+        // 3. Extract merchant text. Strip ALL number tokens (the chosen amount plus
+        //    stray quantities), "+", and currency symbols. Income *verbs* are always
+        //    stripped. Income *nouns* are removed only when a real merchant remains
+        //    (e.g. the payer in "зп от Сбербанк" → "Сбербанк"); when the noun is the
+        //    only content it is kept so the transaction still has a description
+        //    ("зп" → "зп" instead of an empty merchant).
+        var base = input.replacingOccurrences(of: "+", with: "")
+        base = base.replacingOccurrences(of: amountRegexPattern, with: " ", options: .regularExpression)
         for sym in "$€£¥₽" {
-            merchantText = merchantText.replacingOccurrences(of: String(sym), with: "")
+            base = base.replacingOccurrences(of: String(sym), with: "")
         }
-        for keyword in incomeKeywords {
-            merchantText = merchantText.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
+        var verbStripped = base
+        for keyword in verbIncomeKeywords {
+            verbStripped = verbStripped.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
-        merchantText = merchantText
-            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // Strip leading prepositions left over after keyword removal.
-        // "на Амазон" → "Амазон", "from Amazon" → "Amazon"
-        let lowerMerchant = merchantText.lowercased()
-        for prefix in merchantPrefixesToStrip where lowerMerchant.hasPrefix(prefix) {
-            merchantText = String(merchantText.dropFirst(prefix.count))
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            break
+        var nounStripped = verbStripped
+        for keyword in nounIncomeKeywords {
+            nounStripped = nounStripped.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
-
+        let cleanMerchant = normalizeMerchant(nounStripped)
+        let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbStripped) : cleanMerchant
         let merchant: String? = merchantText.isEmpty ? nil : merchantText
 
-        // 4. Suggest category using the existing on-device lookup table
-        let suggestedCategoryName = merchant.flatMap { CategorySuggestionService.suggest(forMerchant: $0) }
+        // 4. Suggest category. The taxonomy has a single income category, so any
+        //    income transaction maps to "Income" rather than falling back to "Other"
+        //    or borrowing an expense category. Expenses use the merchant lookup.
+        let suggestedCategoryName: String?
+        if isIncome {
+            suggestedCategoryName = "Income"
+        } else {
+            suggestedCategoryName = merchant.flatMap { CategorySuggestionService.suggest(forMerchant: $0) }
+        }
 
         return QuickAddParsedInput(
             amountCents: cents,
@@ -132,38 +137,62 @@ enum QuickAddParser {
 
     // MARK: - Private
 
-    private static let incomeKeywords = [
-        // English — formal + conversational
-        "paycheck", "salary", "income", "refund", "bonus", "freelance",
-        "deposit", "interest", "dividend", "earned", "received", "cashback",
-        "payout", "reimbursement", "got paid", "won", "made", "sold", "commission",
-        // Russian — formal
-        "зарплата", "зп", "з/п", "доход", "перевод", "премия", "аванс", "выплата",
-        "донат", "чаевые", "перевели",
-        // Russian — conversational verbs (past tense, the natural way users type)
+    // MARK: - Income keyword taxonomy
+    //
+    // VERBS describe the act of receiving (получил, got paid, earned, recibí…).
+    // They are STRIPPED from merchant text since they're actions, not the thing earned.
+    //
+    // NOUNS describe what was received (зп, зарплата, salary, bonus…).
+    // They are KEPT in merchant text so the transaction has a meaningful description.
+    //
+    // Either list firing flags the transaction as income.
+
+    private static let verbIncomeKeywords = [
+        // English
+        "earned", "received", "got paid", "won", "made", "sold",
+        // Russian
         "заработал", "заработала", "получил", "получила", "зачислено",
-        "пришло", "пришла", "пришёл", "вернули", "возврат", "кэшбэк", "кешбэк",
+        "пришло", "пришла", "пришёл", "вернули", "перевели",
         "продал", "продала", "продаю", "продали",
         // Voice transliterations (SFSpeechRecognizer EN locale on RU speech)
-        "poluchil", "poluchila", "zarplata", "premia", "premiia", "avans", "zp",
+        "poluchil", "poluchila",
+        // Spanish
+        "gané", "recibí", "cobré", "vendí", "vendió",
+        // German
+        "verdient", "bekommen", "erhalten", "gutgeschrieben", "verkauft", "verkaufte",
+        // French
+        "gagné", "reçu", "touché", "perçu", "vendu", "vendue",
+        // Portuguese (Brazil)
+        "ganhei", "recebi", "caiu", "pingou", "vendi", "vendeu",
+        // Japanese
+        "稼いだ", "もらった", "入った", "振り込まれた", "売った", "売却",
+        // Chinese (Simplified)
+        "赚了", "收到", "到账", "入账", "卖了", "卖出",
+    ]
+
+    private static let nounIncomeKeywords = [
+        // English
+        "paycheck", "salary", "income", "refund", "bonus", "freelance",
+        "deposit", "interest", "dividend", "cashback", "payout",
+        "reimbursement", "commission",
+        // Russian
+        "зарплата", "зп", "з/п", "доход", "перевод", "премия", "аванс", "выплата",
+        "донат", "чаевые", "возврат", "кэшбэк", "кешбэк",
+        // Voice transliterations
+        "zarplata", "premia", "premiia", "avans", "zp",
         // Spanish
         "salario", "sueldo", "paga", "nómina", "ingreso", "reembolso", "bono",
-        "gané", "recibí", "cobré", "devolución", "propina", "vendí", "vendió",
+        "devolución", "propina",
         // German
-        "gehalt", "lohn", "einnahme", "verdient", "bekommen", "erhalten",
-        "gutgeschrieben", "rückzahlung", "verkauft", "verkaufte",
+        "gehalt", "lohn", "einnahme", "rückzahlung",
         // French
-        "salaire", "paie", "revenu", "remboursement", "prime",
-        "gagné", "reçu", "touché", "perçu", "remise", "vendu", "vendue",
+        "salaire", "paie", "revenu", "remboursement", "prime", "remise",
         // Portuguese (Brazil)
-        "salário", "pagamento", "renda", "bônus",
-        "ganhei", "recebi", "caiu", "pingou", "devolução", "vendi", "vendeu",
+        "salário", "pagamento", "renda", "bônus", "devolução",
         // Japanese
-        "給料", "給与", "ボーナス", "返金", "副業", "入金",
-        "稼いだ", "もらった", "入った", "振り込まれた", "キャッシュバック", "売った", "売却",
+        "給料", "給与", "ボーナス", "返金", "副業", "入金", "キャッシュバック",
         // Chinese (Simplified)
-        "工资", "薪水", "奖金", "退款", "报销", "自由职业",
-        "赚了", "收到", "到账", "入账", "现金回赠", "卖了", "卖出",
+        "工资", "薪水", "奖金", "退款", "报销", "自由职业", "现金回赠",
     ]
 
     /// Words to strip from extracted merchant text after income keyword detection.
@@ -183,6 +212,20 @@ enum QuickAddParser {
         // Chinese (Simplified)
         "从", "在", "由",
     ]
+
+    /// Collapses whitespace, trims, and strips a single leading preposition.
+    /// "  desde Empresa " → "Empresa", "от Сбербанк" → "Сбербанк".
+    private static func normalizeMerchant(_ text: String) -> String {
+        var s = text
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = s.lowercased()
+        for prefix in merchantPrefixesToStrip where lower.hasPrefix(prefix) {
+            s = String(s.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+            break
+        }
+        return s
+    }
 
     /// Handles both standard ("5.50", "1,234.56") and European ("12,99", "1.234,56") formats.
     private static func parseAmountCents(from raw: String) -> Int? {
