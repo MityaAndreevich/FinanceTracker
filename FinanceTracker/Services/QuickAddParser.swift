@@ -24,28 +24,30 @@ enum QuickAddParser {
         let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return nil }
 
-        // 1. Detect amount — supports "$5.50", "12,99", "1,234.56", "1.234,56", etc.
-        let amountRegex = #"[$€£¥₽]?\s*\d{1,3}(?:[,.\s]\d{3})*[,.]?\d{0,2}"#
-        guard let amountRange = input.range(of: amountRegex, options: .regularExpression) else { return nil }
-        let amountString = String(input[amountRange])
-        guard let cents = parseAmountCents(from: amountString), cents > 0 else { return nil }
+        // 1. Detect amount — smart multi-number selection so "bought 3 eggs for 7"
+        //    captures the price (7), not the quantity (3). See detectAmountCents.
+        guard let (cents, _) = detectAmountCents(in: input), cents > 0 else { return nil }
 
         // 2. Detect type — explicit "+" prefix or income vocabulary
         let lower = input.lowercased()
         let isIncome = input.hasPrefix("+") || incomeKeywords.contains { lower.contains($0) }
         let typeRaw = isIncome ? "income" : "expense"
 
-        // 3. Extract merchant text — strip amount, "+", currency symbols, and income keywords
-        var merchantText = input
-            .replacingOccurrences(of: amountString, with: "")
-            .replacingOccurrences(of: "+", with: "")
+        // 3. Extract merchant text — strip ALL number tokens (the chosen amount plus
+        //    stray quantities), "+", currency symbols, and income keywords.
+        var merchantText = input.replacingOccurrences(of: "+", with: "")
+        merchantText = merchantText.replacingOccurrences(
+            of: amountRegexPattern, with: " ", options: .regularExpression
+        )
         for sym in "$€£¥₽" {
             merchantText = merchantText.replacingOccurrences(of: String(sym), with: "")
         }
         for keyword in incomeKeywords {
             merchantText = merchantText.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
-        merchantText = merchantText.trimmingCharacters(in: .whitespacesAndNewlines)
+        merchantText = merchantText
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Strip leading prepositions left over after keyword removal.
         // "на Амазон" → "Амазон", "from Amazon" → "Amazon"
@@ -67,6 +69,65 @@ enum QuickAddParser {
             merchant: merchant,
             suggestedCategoryName: suggestedCategoryName
         )
+    }
+
+    // MARK: - Amount detection
+
+    /// Regex for a single amount token: optional currency symbol, then a number
+    /// supporting both "5.50"/"1,234.56" and European "12,99"/"1.234,56".
+    private static let amountRegexPattern = #"[$€£¥₽]?\s*\d{1,3}(?:[,.\s]\d{3})*[,.]?\d{0,2}"#
+
+    /// Picks the most likely transaction amount from inputs that may contain several
+    /// numbers (e.g. "bought 3 eggs for 7"). Heuristic priority:
+    ///   1. Number immediately after a price-marker preposition (for, за, at, по, à, por, für)
+    ///   2. Number adjacent to a currency symbol ($, €, £, ¥, ₽)
+    ///   3. Last number (often the price in "5 apples 12 dollars")
+    ///   4. First number (fallback — original single-number behaviour)
+    private static func detectAmountCents(in input: String) -> (cents: Int, matchedSubstring: String)? {
+        struct Candidate {
+            let substring: String
+            let startOffset: Int
+            let cents: Int
+        }
+
+        let nsRange = NSRange(input.startIndex..<input.endIndex, in: input)
+        guard let regex = try? NSRegularExpression(pattern: amountRegexPattern) else { return nil }
+        let matches = regex.matches(in: input, range: nsRange)
+
+        let candidates: [Candidate] = matches.compactMap { match in
+            guard let range = Range(match.range, in: input) else { return nil }
+            let substring = String(input[range])
+            guard let cents = parseAmountCents(from: substring), cents > 0 else { return nil }
+            let startOffset = input.distance(from: input.startIndex, to: range.lowerBound)
+            return Candidate(substring: substring, startOffset: startOffset, cents: cents)
+        }
+        guard !candidates.isEmpty else { return nil }
+
+        // Heuristic 1: number after a price-marker preposition
+        let pricePrepositions = [" for ", " за ", " at ", " по ", " à ", " por ", " für "]
+        let lower = input.lowercased()
+        for prep in pricePrepositions {
+            if let prepRange = lower.range(of: prep) {
+                let prepEnd = lower.distance(from: lower.startIndex, to: prepRange.upperBound)
+                if let afterPrep = candidates.first(where: { $0.startOffset >= prepEnd }) {
+                    return (afterPrep.cents, afterPrep.substring)
+                }
+            }
+        }
+
+        // Heuristic 2: number adjacent to a currency symbol
+        if let withSymbol = candidates.first(where: { $0.substring.contains { "$€£¥₽".contains($0) } }) {
+            return (withSymbol.cents, withSymbol.substring)
+        }
+
+        // Heuristic 3: multiple numbers — use the LAST (likely the price after a count)
+        if candidates.count >= 2, let last = candidates.last {
+            return (last.cents, last.substring)
+        }
+
+        // Heuristic 4: single number fallback
+        let first = candidates[0]
+        return (first.cents, first.substring)
     }
 
     // MARK: - Private

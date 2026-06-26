@@ -233,4 +233,35 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("verkauft Fahrrad 200")
         #expect(result?.typeRaw == "income")
     }
+
+    // MARK: - Multi-number amount detection (Bug #3)
+
+    @Test func parse_multinumber_bought_3_eggs_for_7() {
+        let result = QuickAddParser.parse("bought 3 eggs for 7")
+        #expect(result?.amountCents == 700)   // price after "for", not the quantity 3
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.contains("eggs") == true)
+    }
+
+    @Test func parse_multinumber_kupil_5_eggs_for_7() {
+        let result = QuickAddParser.parse("купил 5 яиц за 7 евро")
+        #expect(result?.amountCents == 700)
+        #expect(result?.typeRaw == "expense")
+    }
+
+    @Test func parse_multinumber_currency_symbol_priority() {
+        let result = QuickAddParser.parse("5 coffee $7")
+        #expect(result?.amountCents == 700)   // $7 wins on currency-symbol adjacency
+    }
+
+    @Test func parse_single_number_unchanged() {
+        let result = QuickAddParser.parse("яйца 5 баксов")
+        #expect(result?.amountCents == 500)
+    }
+
+    @Test func parse_multinumber_no_preposition_takes_last() {
+        let result = QuickAddParser.parse("получил 3 яйца 200")
+        #expect(result?.amountCents == 20000)  // last number when no price marker
+        #expect(result?.typeRaw == "income")
+    }
 }
