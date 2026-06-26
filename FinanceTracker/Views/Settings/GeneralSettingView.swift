@@ -174,7 +174,12 @@ struct GeneralSettingsView: View {
         if let language, language != appLanguageCode {
             appLanguageCode = language
             applyAppleLanguagesOverride(for: language)
-            showLanguageRestartAlert = true
+            // Defer the alert until the picker sheet has fully dismissed. Presenting
+            // it immediately races the dismiss transition and bounces back on the
+            // first attempt (Brief 28G hotfix).
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                showLanguageRestartAlert = true
+            }
         }
     }
 
