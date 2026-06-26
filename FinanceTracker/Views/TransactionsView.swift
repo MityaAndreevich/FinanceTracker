@@ -79,7 +79,7 @@ struct TransactionsView: View {
         .navigationTitle("title.transactions")
         .searchable(
             text: $searchText,
-            placement: .navigationBarDrawer(displayMode: .automatic),
+            placement: .navigationBarDrawer(displayMode: .always),
             prompt: Text("transactions.search.prompt")
         )
         .refreshable {
