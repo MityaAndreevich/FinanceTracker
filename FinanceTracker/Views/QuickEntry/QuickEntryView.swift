@@ -111,7 +111,20 @@ struct QuickEntryView: View {
         .animation(.easeInOut(duration: 0.2), value: voice.isListening)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationBackground(.regularMaterial)
+        .presentationBackground {
+            Color(.systemBackground)
+                .overlay(
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(0.04),
+                            Color.clear,
+                            Color.accentColor.opacity(0.02)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
         // MARK: Haptics (state-driven)
         .sensoryFeedback(.selection, trigger: appeared)
         .sensoryFeedback(.impact(weight: .light), trigger: parsed != nil) { old, new in
