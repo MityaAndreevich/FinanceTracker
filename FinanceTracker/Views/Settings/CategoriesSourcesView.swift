@@ -17,8 +17,15 @@ struct CategoriesSourcesView: View {
     @Query(sort: \Category.order, order: .forward)
     private var categories: [Category]
 
-    @State private var showAddSource = false
-    @State private var showAddCategory = false
+    // Single source of truth for the add sheets. Two sibling .sheet(isPresented:)
+    // modifiers could wedge UIKit's presentation state ("Attempt to present … which
+    // is already presenting …"), leaving the Settings tab unresponsive. A single
+    // .sheet(item:) presents at most one at a time.
+    private enum ActiveSheet: String, Identifiable {
+        case source, category
+        var id: String { rawValue }
+    }
+    @State private var activeSheet: ActiveSheet?
 
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
@@ -45,8 +52,12 @@ struct CategoriesSourcesView: View {
         }
         .navigationTitle("settings.categories")
         .listStyle(.insetGrouped)
-        .sheet(isPresented: $showAddSource) { AddSourceSheet() }
-        .sheet(isPresented: $showAddCategory) { AddCategorySheet() }
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .source:   AddSourceSheet()
+            case .category: AddCategorySheet()
+            }
+        }
         .alert("cs.alert.cant_delete.title", isPresented: $showBlockedDeleteAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
@@ -69,7 +80,7 @@ struct CategoriesSourcesView: View {
                 .onDelete(perform: deleteSources)
             }
 
-            Button { showAddSource = true } label: {
+            Button { activeSheet = .source } label: {
                 Label("cs.sources.add", systemImage: "plus")
             }
         } header: {
@@ -92,7 +103,7 @@ struct CategoriesSourcesView: View {
                 }
             }
 
-            Button { showAddCategory = true } label: {
+            Button { activeSheet = .category } label: {
                 Label("cs.categories.add", systemImage: "plus")
             }
         } header: {
@@ -115,7 +126,7 @@ struct CategoriesSourcesView: View {
                 }
             }
 
-            Button { showAddCategory = true } label: {
+            Button { activeSheet = .category } label: {
                 Label("cs.categories.add", systemImage: "plus")
             }
         } header: {
