@@ -147,6 +147,7 @@ struct OnboardingView: View {
             }
         }
         .frame(maxHeight: 420)
+        .scrollDismissesKeyboard(.interactively)
         .animation(.spring(duration: 0.25), value: selectedLanguage)
     }
 
@@ -170,6 +171,7 @@ struct OnboardingView: View {
             }
         }
         .frame(maxHeight: 420)
+        .scrollDismissesKeyboard(.interactively)
         .animation(.spring(duration: 0.25), value: selectedCurrency)
     }
 
