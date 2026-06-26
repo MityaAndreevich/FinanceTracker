@@ -15,7 +15,7 @@ struct PaywallView: View {
     @StateObject private var pm = PurchaseManager.shared
 
     private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    private static let privacyURL = URL(string: "https://dmitrylogachev.github.io/FinanceTracker/PRIVACY_POLICY.html")!
+    private static let privacyURL = URL(string: "https://budgetcrab.app/PRIVACY_POLICY.html")!
 
     var body: some View {
         NavigationStack {
