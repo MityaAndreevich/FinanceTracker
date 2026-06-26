@@ -46,9 +46,12 @@ struct FinanceTrackerApp: App {
             RootView()
                 .environment(\.locale, appLocale)
                 .applyLayoutDirection(overrideLayoutDirection)
-                // Recreate the whole view tree on language change so no view keeps
-                // a cached LocalizedStringKey resolution from the previous locale.
-                .id(appLanguageCode)
+                // NOTE: deliberately no `.id(appLanguageCode)` here. Re-creating the
+                // whole view tree on language change dismissed any in-flight sheet,
+                // which caused the Language picker to "bounce back" on the first try.
+                // `environment(\.locale)` already refreshes Text("key") strings; the
+                // AppleLanguages override (set in GeneralSettingsView) handles the
+                // remaining String(localized:) calls on next launch.
                 .task {
                     PurchaseManager.shared.start()
                     if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {

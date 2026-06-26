@@ -33,6 +33,7 @@ struct GeneralSettingsView: View {
 
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
+    @State private var showLanguageRestartAlert = false
 
     // Универсальный Info Alert
     @State private var showInfoAlert = false
@@ -78,6 +79,13 @@ struct GeneralSettingsView: View {
             Button("general.alert.restart", role: .destructive) { restartOnboarding() }
         } message: {
             Text("general.alert.restart_onboarding.message")
+        }
+
+        // Language updated — Apple-standard "reopen to fully apply" notice.
+        .alert("settings.language.restart_required.title", isPresented: $showLanguageRestartAlert) {
+            Button("settings.language.restart_required.cta", role: .cancel) {}
+        } message: {
+            Text("settings.language.restart_required.message")
         }
     }
 
@@ -159,10 +167,35 @@ struct GeneralSettingsView: View {
         let language = pendingLanguage
         pendingCurrency = nil
         pendingLanguage = nil
-        guard currency != nil || language != nil else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            if let currency, currency != defaultCurrencyCode { defaultCurrencyCode = currency }
-            if let language, language != appLanguageCode { appLanguageCode = language }
+
+        if let currency, currency != defaultCurrencyCode {
+            defaultCurrencyCode = currency
+        }
+        if let language, language != appLanguageCode {
+            appLanguageCode = language
+            applyAppleLanguagesOverride(for: language)
+            showLanguageRestartAlert = true
+        }
+    }
+
+    /// Mirrors the chosen app language into the `AppleLanguages` UserDefaults key so
+    /// Bundle.main (and therefore every `String(localized:)` / `NSLocalizedString`
+    /// call) resolves against the right `.lproj` on the next launch. The live
+    /// `environment(\.locale)` binding already handles `Text("key")` immediately;
+    /// this closes the gap for code-resolved strings without the fragile `.id()`
+    /// view-tree recreation that previously bounced the picker.
+    private func applyAppleLanguagesOverride(for code: String) {
+        let appleLangCode: String?
+        switch code {
+        case "system", "": appleLangCode = nil          // hand control back to iOS
+        case "es":         appleLangCode = "es-MX"        // LATAM target market
+        case "pt":         appleLangCode = "pt-BR"        // resources live in pt-BR.lproj
+        default:           appleLangCode = code           // en, ru
+        }
+        if let appleLangCode {
+            UserDefaults.standard.set([appleLangCode], forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
         }
     }
 

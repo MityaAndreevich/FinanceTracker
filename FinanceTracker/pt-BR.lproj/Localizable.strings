@@ -74,6 +74,9 @@
 "general.currency" = "Moeda";
 "general.language" = "Idioma";
 "general.language_hint" = "A mudança de idioma estará disponível quando todas as traduções forem adicionadas.";
+"settings.language.restart_required.title" = "Idioma atualizado";
+"settings.language.restart_required.cta" = "OK";
+"settings.language.restart_required.message" = "Alguns rótulos serão atualizados quando você reabrir o app.";
 
 
 "general.restart_onboarding" = "Reiniciar onboarding";

@@ -130,6 +130,9 @@
 "general.currency" = "Валюта";
 "general.language" = "Язык";
 "general.language_hint" = "Переключение языка станет полностью доступно после добавления всех переводов.";
+"settings.language.restart_required.title" = "Язык обновлён";
+"settings.language.restart_required.cta" = "OK";
+"settings.language.restart_required.message" = "Некоторые надписи обновятся после повторного открытия приложения.";
 
 "general.restart_onboarding" = "Перезапустить онбординг";
 "general.reset_transactions" = "Сбросить транзакции";

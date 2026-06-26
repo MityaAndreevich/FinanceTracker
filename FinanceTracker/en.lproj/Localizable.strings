@@ -119,6 +119,9 @@
 "general.currency" = "Currency";
 "general.language" = "Language";
 "general.language_hint" = "Language switching will be fully enabled when localization keys are added.";
+"settings.language.restart_required.title" = "Language updated";
+"settings.language.restart_required.cta" = "OK";
+"settings.language.restart_required.message" = "Some labels will update after you reopen the app.";
 
 "general.restart_onboarding" = "Restart onboarding";
 "general.reset_transactions" = "Reset Transactions";
