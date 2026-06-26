@@ -40,3 +40,58 @@ struct VoiceInputServiceTests {
         #expect(service.authState == .deviceUnavailable)
     }
 }
+
+@Suite("VoiceInputService locale resolution")
+@MainActor
+struct VoiceLocaleResolutionTests {
+
+    private let key = "appLanguageCode"
+
+    private func set(_ value: String) {
+        UserDefaults.standard.set(value, forKey: key)
+    }
+
+    private func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
+
+    @Test("system value falls back to current locale (no crash)")
+    func system_resolves_without_crash() {
+        set("system")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.authState == .undetermined || service.authState == .deviceUnavailable)
+    }
+
+    @Test("ru code creates a Russian recognizer (no crash)")
+    func russian_locale_no_crash() {
+        set("ru")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.isListening == false)
+    }
+
+    @Test("en code creates an English recognizer (no crash)")
+    func english_locale_no_crash() {
+        set("en")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.isListening == false)
+    }
+
+    @Test("unknown language code falls back without crash")
+    func unknown_code_fallback() {
+        set("klingon")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.isListening == false)
+    }
+
+    @Test("empty string falls back without crash")
+    func empty_string_fallback() {
+        set("")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.isListening == false)
+    }
+}

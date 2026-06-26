@@ -43,11 +43,41 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
 
+    // MARK: - Locale resolution
+
+    /// Maps the user's `appLanguageCode` AppStorage value to the correct recognizer locale.
+    /// Falls back to `Locale.current` for "system" or any unrecognized code.
+    nonisolated private static func resolvedLocale() -> Locale {
+        let stored = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
+        switch stored {
+        case "system", "":
+            return .current
+        case "en":
+            return Locale(identifier: "en_US")
+        case "ru":
+            return Locale(identifier: "ru_RU")
+        case "es":
+            return Locale(identifier: "es_MX")
+        case "de":
+            return Locale(identifier: "de_DE")
+        case "fr":
+            return Locale(identifier: "fr_FR")
+        case "pt-BR":
+            return Locale(identifier: "pt_BR")
+        case "ja":
+            return Locale(identifier: "ja_JP")
+        case "zh-Hans":
+            return Locale(identifier: "zh_CN")
+        default:
+            return .current
+        }
+    }
+
     // MARK: - Init
 
     /// `locale` is injectable for testing (e.g. an unsupported locale to exercise the
-    /// `isAvailable == false` path). Defaults to the user's current locale.
-    init(locale: Locale = .current) {
+    /// `isAvailable == false` path). Defaults to the app language selected by the user.
+    init(locale: Locale = VoiceInputService.resolvedLocale()) {
         self.recognizer = SFSpeechRecognizer(locale: locale)
         super.init()
         recognizer?.delegate = self
