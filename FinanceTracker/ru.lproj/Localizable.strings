@@ -76,11 +76,15 @@
 "onboarding.language.subtitle" = "Вы сможете изменить его позже в настройках.";
 "onboarding.language.picker" = "Язык";
 "onboarding.search.languages" = "Поиск языков";
+"onboarding.language.more" = "Больше языков";
+"onboarding.language.all" = "Все языки";
 
 "onboarding.currency.title" = "Выбор валюты";
 "onboarding.currency.subtitle" = "Будет использоваться по умолчанию для новых транзакций.";
 "onboarding.currency.picker" = "Валюта";
 "onboarding.search.currencies" = "Поиск валют";
+"onboarding.currency.more" = "Больше валют";
+"onboarding.currency.all" = "Все валюты";
 
 "onboarding.next" = "Далее";
 "onboarding.start" = "Начать";

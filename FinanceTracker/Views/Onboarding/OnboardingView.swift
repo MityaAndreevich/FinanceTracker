@@ -15,7 +15,9 @@ struct OnboardingView: View {
     @State private var step: Step = .language
     @State private var selectedLanguage: SupportedLanguage = .system
     @State private var selectedCurrency: SupportedCurrency = .usd
-    @State private var searchText: String = ""
+
+    @State private var showFullLanguageList = false
+    @State private var showFullCurrencyList = false
 
     private enum Step: Int {
         case language = 0
@@ -40,23 +42,19 @@ struct OnboardingView: View {
         var heroSymbol: String {
             self == .language ? "globe" : "dollarsign.circle"
         }
-
-        var searchPromptKey: LocalizedStringKey {
-            self == .language ? "onboarding.search.languages" : "onboarding.search.currencies"
-        }
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // MARK: Hero icon — Task A
+                // MARK: Hero icon
                 Image(systemName: step.heroSymbol)
                     .font(.system(size: 48))
                     .foregroundStyle(Color.accentColor)
                     .padding(.top, 24)
                     .animation(.spring(duration: 0.3), value: step)
 
-                // MARK: Title + subtitle — Task B
+                // MARK: Title + subtitle
                 VStack(spacing: 8) {
                     Text(step.titleKey)
                         .font(.system(size: 34, weight: .bold))
@@ -70,24 +68,16 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
                 }
-                .padding(.bottom, 20)
+                .padding(.bottom, 12)
 
-                // MARK: Elevated card — Tasks C, D, E
-                VStack(spacing: 0) {
-                    searchBar
+                Spacer(minLength: 6)
 
-                    Color(.tertiarySystemFill).frame(height: 0.5)
-
-                    if step == .language {
-                        languageList
-                    } else {
-                        currencyList
-                    }
+                // MARK: Wheel picker + escape hatch to the full list
+                if step == .language {
+                    languageWheel
+                } else {
+                    currencyWheel
                 }
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
-                .padding(.horizontal, 16)
 
                 Spacer(minLength: 6)
 
@@ -98,113 +88,103 @@ struct OnboardingView: View {
             .navigationBarBackButtonHidden(step == .language)
             .toolbar { topToolbar }
             .onAppear(perform: preloadFromStorage)
-            .onChange(of: step) { _, _ in searchText = "" }
+            // Tactile detent feedback as the user spins the wheel.
+            .sensoryFeedback(.selection, trigger: selectedLanguage)
+            .sensoryFeedback(.selection, trigger: selectedCurrency)
         }
     }
 
-    // MARK: - Search bar — Task C
+    // MARK: - Language wheel
 
-    private var searchBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-                .font(.system(size: 16))
-
-            TextField(step.searchPromptKey, text: $searchText)
-                .font(.system(size: 17))
-
-            if !searchText.isEmpty {
-                Button { searchText = "" } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+    private var languageWheel: some View {
+        VStack(spacing: 16) {
+            Picker("onboarding.language.picker", selection: $selectedLanguage) {
+                ForEach(popularLanguages) { lang in
+                    HStack(spacing: 12) {
+                        Text(lang.flag).font(.title2)
+                        Text(lang.title).font(.body)
+                    }
+                    .tag(lang)
                 }
-                .buttonStyle(.plain)
+            }
+            .pickerStyle(.wheel)
+            .frame(height: 200)
+            .clipped()
+
+            Button {
+                showFullLanguageList = true
+            } label: {
+                Label("onboarding.language.more", systemImage: "globe")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-
-    // MARK: - Lists — Tasks E, F
-
-    private var languageList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(filteredLanguages.enumerated()), id: \.element.id) { idx, l in
-                    selectRow(
-                        flag: l.flag,
-                        title: l.title,
-                        isSelected: l == selectedLanguage
-                    ) {
-                        selectedLanguage = l
+        .sheet(isPresented: $showFullLanguageList) {
+            SearchablePickerSheet(
+                titleKey: "onboarding.language.all",
+                items: SupportedLanguage.allCases,
+                labelProvider: { "\($0.flag) \($0.title)" },
+                selection: Binding(
+                    get: { selectedLanguage.id },
+                    set: { newID in
+                        if let lang = SupportedLanguage(rawValue: newID) { selectedLanguage = lang }
                     }
-                    if idx < filteredLanguages.count - 1 {
-                        Color(.tertiarySystemFill)
-                            .frame(height: 0.5)
-                            .padding(.leading, 16)
-                    }
-                }
-            }
-        }
-        .frame(maxHeight: 420)
-        .scrollDismissesKeyboard(.interactively)
-        .animation(.spring(duration: 0.25), value: selectedLanguage)
-    }
-
-    private var currencyList: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(filteredCurrencies.enumerated()), id: \.element.id) { idx, c in
-                    selectRow(
-                        flag: c.flag,
-                        title: "\(c.code) — \(c.name)",
-                        isSelected: c == selectedCurrency
-                    ) {
-                        selectedCurrency = c
-                    }
-                    if idx < filteredCurrencies.count - 1 {
-                        Color(.tertiarySystemFill)
-                            .frame(height: 0.5)
-                            .padding(.leading, 16)
-                    }
-                }
-            }
-        }
-        .frame(maxHeight: 420)
-        .scrollDismissesKeyboard(.interactively)
-        .animation(.spring(duration: 0.25), value: selectedCurrency)
-    }
-
-    // MARK: - Row — Tasks E, F
-
-    private func selectRow(flag: String, title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Text(flag)
-                    .font(.system(size: 22))
-
-                Text(title)
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .frame(minHeight: 56)
-            .contentShape(Rectangle())
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.accentColor, lineWidth: 2)
-                    .opacity(isSelected ? 1 : 0)
+                )
             )
         }
-        .buttonStyle(.plain)
+    }
+
+    // MARK: - Currency wheel
+
+    private var currencyWheel: some View {
+        VStack(spacing: 16) {
+            Picker("onboarding.currency.picker", selection: $selectedCurrency) {
+                ForEach(popularCurrencies) { c in
+                    HStack(spacing: 12) {
+                        Text(c.flag).font(.title2)
+                        Text("\(c.code) — \(c.name)").font(.body)
+                    }
+                    .tag(c)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(height: 200)
+            .clipped()
+
+            Button {
+                showFullCurrencyList = true
+            } label: {
+                Label("onboarding.currency.more", systemImage: "globe.americas")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentColor)
+            }
+        }
+        .sheet(isPresented: $showFullCurrencyList) {
+            SearchablePickerSheet(
+                titleKey: "onboarding.currency.all",
+                items: SupportedCurrency.allCases,
+                labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
+                selection: Binding(
+                    get: { selectedCurrency.id },
+                    set: { newCode in
+                        if let cur = SupportedCurrency(rawValue: newCode) { selectedCurrency = cur }
+                    }
+                )
+            )
+        }
+    }
+
+    // MARK: - Popular subsets (short wheel for first-run delight)
+
+    private var popularLanguages: [SupportedLanguage] {
+        let popular: [SupportedLanguage] = [.system, .en, .es, .ru, .de, .fr, .pt, .ja, .zhHans]
+        // Ensure a long-tail pick made via "More…" still shows in the wheel.
+        return popular.contains(selectedLanguage) ? popular : popular + [selectedLanguage]
+    }
+
+    private var popularCurrencies: [SupportedCurrency] {
+        let popular: [SupportedCurrency] = [.usd, .eur, .gbp, .rub, .jpy, .cny, .brl, .mxn, .cad, .aud]
+        return popular.contains(selectedCurrency) ? popular : popular + [selectedCurrency]
     }
 
     // MARK: - Primary button
@@ -227,7 +207,7 @@ struct OnboardingView: View {
         .tint(.accentColor)
     }
 
-    // MARK: - Toolbar — Task B (progress top-trailing, back top-leading)
+    // MARK: - Toolbar (progress top-trailing, back top-leading)
 
     @ToolbarContentBuilder
     private var topToolbar: some ToolbarContent {
@@ -248,24 +228,6 @@ struct OnboardingView: View {
     private func preloadFromStorage() {
         selectedLanguage = SupportedLanguage(rawValue: appLanguageCode) ?? .system
         selectedCurrency = SupportedCurrency(rawValue: defaultCurrencyCode) ?? .usd
-    }
-
-    // MARK: - Filtering
-
-    private var filteredLanguages: [SupportedLanguage] {
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return SupportedLanguage.allCases }
-        return SupportedLanguage.allCases.filter { l in
-            l.title.lowercased().contains(q) || l.id.lowercased().contains(q)
-        }
-    }
-
-    private var filteredCurrencies: [SupportedCurrency] {
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return SupportedCurrency.allCases }
-        return SupportedCurrency.allCases.filter { c in
-            c.code.lowercased().contains(q) || c.name.lowercased().contains(q)
-        }
     }
 }
 

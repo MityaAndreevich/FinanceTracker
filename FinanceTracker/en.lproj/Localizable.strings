@@ -65,11 +65,15 @@
 "onboarding.language.subtitle" = "You can change this anytime in Settings.";
 "onboarding.language.picker" = "Language";
 "onboarding.search.languages" = "Search languages";
+"onboarding.language.more" = "More languages";
+"onboarding.language.all" = "All languages";
 
 "onboarding.currency.title" = "Choose currency";
 "onboarding.currency.subtitle" = "This will be used by default for new transactions.";
 "onboarding.currency.picker" = "Currency";
 "onboarding.search.currencies" = "Search currencies";
+"onboarding.currency.more" = "More currencies";
+"onboarding.currency.all" = "All currencies";
 
 "onboarding.next" = "Next";
 "onboarding.start" = "Start";
