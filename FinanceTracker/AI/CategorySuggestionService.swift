@@ -90,6 +90,48 @@ enum CategorySuggestionService {
         ("пиво", "Food & Drink"), ("вино", "Food & Drink"), ("бар", "Food & Drink"),
         ("ресторан", "Food & Drink"), ("кафе", "Food & Drink"), ("доставка", "Food & Drink"),
         ("пицца", "Food & Drink"), ("суши", "Food & Drink"),
+        // ── Food & Drink — common grocery items (v1.0) ───────────────────────────
+        // NB: "water" intentionally omitted — it already maps to Housing (utilities).
+        // EN
+        ("eggs", "Food & Drink"), ("egg", "Food & Drink"),
+        ("bread", "Food & Drink"), ("milk", "Food & Drink"),
+        ("cheese", "Food & Drink"), ("yogurt", "Food & Drink"), ("butter", "Food & Drink"),
+        ("meat", "Food & Drink"), ("chicken", "Food & Drink"),
+        ("fish", "Food & Drink"), ("beef", "Food & Drink"), ("pork", "Food & Drink"),
+        ("vegetables", "Food & Drink"), ("veggies", "Food & Drink"),
+        ("fruit", "Food & Drink"), ("fruits", "Food & Drink"),
+        ("rice", "Food & Drink"), ("pasta", "Food & Drink"), ("noodles", "Food & Drink"),
+        ("salad", "Food & Drink"), ("soup", "Food & Drink"),
+        ("juice", "Food & Drink"), ("soda", "Food & Drink"),
+        ("chocolate", "Food & Drink"), ("candy", "Food & Drink"), ("ice cream", "Food & Drink"),
+        // RU
+        ("яйца", "Food & Drink"), ("яйцо", "Food & Drink"),
+        ("хлеб", "Food & Drink"), ("молоко", "Food & Drink"),
+        ("сыр", "Food & Drink"), ("йогурт", "Food & Drink"), ("масло", "Food & Drink"),
+        ("мясо", "Food & Drink"), ("курица", "Food & Drink"),
+        ("рыба", "Food & Drink"), ("говядина", "Food & Drink"), ("свинина", "Food & Drink"),
+        ("овощи", "Food & Drink"), ("фрукты", "Food & Drink"),
+        ("рис", "Food & Drink"), ("макароны", "Food & Drink"),
+        ("салат", "Food & Drink"), ("суп", "Food & Drink"),
+        ("сок", "Food & Drink"), ("шоколад", "Food & Drink"), ("конфеты", "Food & Drink"),
+        ("мороженое", "Food & Drink"),
+        // ES — common groceries
+        ("huevos", "Food & Drink"), ("pan", "Food & Drink"), ("leche", "Food & Drink"),
+        ("queso", "Food & Drink"), ("carne", "Food & Drink"), ("pollo", "Food & Drink"),
+        ("pescado", "Food & Drink"), ("frutas", "Food & Drink"), ("verduras", "Food & Drink"),
+        // DE
+        ("eier", "Food & Drink"), ("brot", "Food & Drink"), ("milch", "Food & Drink"),
+        ("käse", "Food & Drink"), ("fleisch", "Food & Drink"), ("hähnchen", "Food & Drink"),
+        ("fisch", "Food & Drink"), ("obst", "Food & Drink"), ("gemüse", "Food & Drink"),
+        // FR
+        ("œufs", "Food & Drink"), ("oeufs", "Food & Drink"), ("pain", "Food & Drink"),
+        ("lait", "Food & Drink"), ("fromage", "Food & Drink"), ("viande", "Food & Drink"),
+        ("poulet", "Food & Drink"), ("poisson", "Food & Drink"),
+        ("légumes", "Food & Drink"),
+        // PT
+        ("ovos", "Food & Drink"), ("pão", "Food & Drink"), ("leite", "Food & Drink"),
+        ("queijo", "Food & Drink"), ("frango", "Food & Drink"),
+        ("peixe", "Food & Drink"),
 
         // ── Transport ───────────────────────────────────────────────────────────
         // EN — fuel

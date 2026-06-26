@@ -156,4 +156,26 @@ struct CategorySuggestionTests {
         #expect(result == "Other",
                 "learned mapping must beat shortKeywords bare-word match (which would return 'Transport')")
     }
+
+    // MARK: - Common grocery items (Brief 28D Bug #4)
+
+    @Test func test_eggs_food_ru() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "яйца") == "Food & Drink")
+    }
+
+    @Test func test_eggs_food_en() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "eggs") == "Food & Drink")
+    }
+
+    @Test func test_milk_food_es() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "leche") == "Food & Drink")
+    }
+
+    @Test func test_meat_food_de() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "fleisch") == "Food & Drink")
+    }
+
+    @Test func test_chicken_food_fr() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "poulet") == "Food & Drink")
+    }
 }
