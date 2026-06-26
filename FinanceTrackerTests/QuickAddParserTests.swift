@@ -159,4 +159,48 @@ struct QuickAddParserTests {
         #expect(result?.typeRaw == "income")
         #expect(result?.merchant == "Amazon")
     }
+
+    // MARK: - RU colloquial / real-device gaps (Bug #1)
+
+    @Test func parse_income_ru_получилЗп() {
+        let result = QuickAddParser.parse("получил зп 50000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 5_000_000)
+    }
+
+    @Test func parse_income_ru_shortЗп() {
+        let result = QuickAddParser.parse("зп 50000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 5_000_000)
+    }
+
+    @Test func parse_expense_яйца() {
+        let result = QuickAddParser.parse("яйца 5 баксов")
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.amountCents == 500)
+    }
+
+    @Test func parse_income_ru_amountFirstThenЗп() {
+        let result = QuickAddParser.parse("5 баксов зп")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 500)
+    }
+
+    @Test func parse_income_transliteration_poluchilZp() {
+        let result = QuickAddParser.parse("poluchil zp 5000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 500000)
+    }
+
+    @Test func parse_income_ru_премия() {
+        let result = QuickAddParser.parse("премия 2000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 200000)
+    }
+
+    @Test func parse_income_ru_аванс() {
+        let result = QuickAddParser.parse("аванс 5000")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 500000)
+    }
 }

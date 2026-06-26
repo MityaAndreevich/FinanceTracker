@@ -75,12 +75,15 @@ enum QuickAddParser {
         // English — formal + conversational
         "paycheck", "salary", "income", "refund", "bonus", "freelance",
         "deposit", "interest", "dividend", "earned", "received", "cashback",
-        "payout", "reimbursement", "got paid", "won", "made",
+        "payout", "reimbursement", "got paid", "won", "made", "sold", "commission",
         // Russian — formal
-        "зарплата", "доход", "перевод", "премия", "аванс", "выплата",
+        "зарплата", "зп", "з/п", "доход", "перевод", "премия", "аванс", "выплата",
+        "донат", "чаевые", "перевели",
         // Russian — conversational verbs (past tense, the natural way users type)
         "заработал", "заработала", "получил", "получила", "зачислено",
         "пришло", "пришла", "пришёл", "вернули", "возврат", "кэшбэк", "кешбэк",
+        // Voice transliterations (SFSpeechRecognizer EN locale on RU speech)
+        "poluchil", "poluchila", "zarplata", "premia", "premiia", "avans", "zp",
         // Spanish
         "salario", "sueldo", "paga", "nómina", "ingreso", "reembolso", "bono",
         "gané", "recibí", "cobré", "devolución", "propina",
