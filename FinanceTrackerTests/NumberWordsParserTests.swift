@@ -78,4 +78,24 @@ final class NumberWordsParserTests: XCTestCase {
         XCTAssertEqual(result?.amountCents, 1200)
         XCTAssertEqual(result?.typeRaw, "expense")
     }
+
+    // MARK: - Colloquial "тыщ" → 1000 (Brief 28F P1-1 / P1-7)
+
+    func test_ru_slang_тыщ() {
+        XCTAssertEqual(NumberWordsParser.normalize("пять тыщ", locale: "ru"), "5000")
+        XCTAssertEqual(
+            NumberWordsParser.normalize("Продал велик за пять тыщ", locale: "ru"),
+            "Продал велик за 5000"
+        )
+    }
+
+    func test_combined_тыщ_velik() {
+        UserDefaults.standard.set("ru", forKey: "appLanguageCode")
+        defer { UserDefaults.standard.removeObject(forKey: "appLanguageCode") }
+
+        let result = QuickAddParser.parse("продал велик за пять тыщ")
+        XCTAssertEqual(result?.amountCents, 500_000)
+        XCTAssertEqual(result?.typeRaw, "income")
+        XCTAssertEqual(result?.merchant, "велик")
+    }
 }

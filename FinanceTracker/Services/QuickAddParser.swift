@@ -247,10 +247,17 @@ enum QuickAddParser {
             s = String(s.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
             break
         }
-        let lowerAfterPrefix = s.lowercased()
-        for suffix in merchantSuffixesToStrip where lowerAfterPrefix.hasSuffix(suffix) {
-            s = String(s.dropLast(suffix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
-            break
+        // Trailing prepositions can stack once the amount and a multi-word number
+        // are removed ("за пять тыщ" → "за 5000" → "за"), so iterate until stable.
+        var strippedSuffix = true
+        while strippedSuffix {
+            strippedSuffix = false
+            let lowerNow = s.lowercased()
+            for suffix in merchantSuffixesToStrip where lowerNow.hasSuffix(suffix) {
+                s = String(s.dropLast(suffix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                strippedSuffix = true
+                break
+            }
         }
         return s
     }
