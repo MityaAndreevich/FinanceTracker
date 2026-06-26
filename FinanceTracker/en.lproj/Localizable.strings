@@ -140,6 +140,9 @@
    Transactions
    ====================================================== */
 "transactions.search.prompt" = "Search";
+"transactions.filter.all" = "All";
+"transactions.filter.income" = "Income";
+"transactions.filter.expense" = "Expense";
 "transactions.empty.month" = "Add a transaction to see it here.";
 "transactions.empty.all" = "Add a transaction to see it here.";
 

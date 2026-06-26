@@ -151,6 +151,9 @@
    Transactions
    ====================================================== */
 "transactions.search.prompt" = "Поиск";
+"transactions.filter.all" = "Все";
+"transactions.filter.income" = "Доходы";
+"transactions.filter.expense" = "Расходы";
 "transactions.empty.month" = "Добавьте транзакцию, чтобы она появилась здесь.";
 "transactions.empty.all" = "Добавьте транзакцию, чтобы она появилась здесь.";
 

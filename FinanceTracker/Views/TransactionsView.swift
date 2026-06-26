@@ -17,6 +17,7 @@ struct TransactionsView: View {
 
     @State private var scope: PeriodScope = .currentMonth
     @State private var searchText: String = ""
+    @State private var typeFilter: TransactionFilter = .all
 
     @State private var editTx: Transaction?
     @State private var presentQuickEntry = false
@@ -24,7 +25,13 @@ struct TransactionsView: View {
     // MARK: - Derived
 
     private var filtered: [Transaction] {
-        let base = scope.filter(transactions)
+        var base = scope.filter(transactions)
+
+        switch typeFilter {
+        case .all:     break
+        case .income:  base = base.filter { $0.isIncome }
+        case .expense: base = base.filter { !$0.isIncome }
+        }
 
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return base }
@@ -70,13 +77,18 @@ struct TransactionsView: View {
         }
         .listStyle(.insetGrouped)
         .safeAreaInset(edge: .top) {
-            // PeriodSelector lives ABOVE the list, below the search drawer.
-            // Keeping it out of the List avoids a hit-test conflict that left
-            // the .searchable drawer visible but untappable on device.
-            PeriodSelector(scope: $scope)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(.bar)
+            // PeriodSelector + filter chips live ABOVE the list, below the search
+            // drawer. Keeping them out of the List avoids a hit-test conflict that
+            // left the .searchable drawer visible but untappable on device.
+            VStack(spacing: 8) {
+                PeriodSelector(scope: $scope)
+                    .padding(.horizontal, 12)
+
+                filterChips
+                    .padding(.horizontal, 12)
+            }
+            .padding(.vertical, 8)
+            .background(.bar)
         }
         .navigationTitle("title.transactions")
         .searchable(
@@ -93,6 +105,32 @@ struct TransactionsView: View {
         .sheet(isPresented: $presentQuickEntry) {
             QuickEntryView()
         }
+    }
+
+    private var filterChips: some View {
+        HStack(spacing: 8) {
+            ForEach(TransactionFilter.allCases) { filter in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { typeFilter = filter }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: filter.symbol)
+                            .font(.caption.weight(.medium))
+                        Text(filter.labelKey)
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(typeFilter == filter ? Color.accentColor : Color(.tertiarySystemFill))
+                    )
+                    .foregroundStyle(typeFilter == filter ? Color.white : Color.primary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var emptyStateRow: some View {
@@ -242,6 +280,32 @@ struct TransactionRow: View {
             isPositive: tx.isIncome,
             currencyCode: tx.currency
         )
+    }
+}
+
+// MARK: - Type filter
+
+enum TransactionFilter: String, CaseIterable, Identifiable {
+    case all = "all"
+    case income = "income"
+    case expense = "expense"
+
+    var id: String { rawValue }
+
+    var labelKey: LocalizedStringKey {
+        switch self {
+        case .all:     "transactions.filter.all"
+        case .income:  "transactions.filter.income"
+        case .expense: "transactions.filter.expense"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .all:     "list.bullet"
+        case .income:  "arrow.up.right"
+        case .expense: "arrow.down.right"
+        }
     }
 }
 
