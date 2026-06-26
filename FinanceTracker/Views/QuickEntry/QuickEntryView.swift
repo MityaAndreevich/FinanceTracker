@@ -26,6 +26,7 @@ struct QuickEntryView: View {
     @State private var parseTask: Task<Void, Never>? = nil
     @State private var appeared = false
     @State private var savePulseOn = false
+    @State private var micPulseOn = false
     @FocusState private var isInputFocused: Bool
 
     @StateObject private var voice = VoiceInputService()
@@ -188,6 +189,16 @@ struct QuickEntryView: View {
         // immediately instead of waiting for the typing debounce, so the Save button
         // enables as soon as dictation ends.
         .onChange(of: voice.isListening) { _, isListening in
+            // Drive the mic's pulsing ring while listening.
+            if isListening && !reduceMotion {
+                micPulseOn = false
+                withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                    micPulseOn = true
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.2)) { micPulseOn = false }
+            }
+
             guard !isListening, !inputText.isEmpty else { return }
             parseTask?.cancel()
             withAnimation(
@@ -256,18 +267,23 @@ struct QuickEntryView: View {
     private var heroTextField: some View {
         ZStack {
             if inputText.isEmpty {
-                Text(Self.placeholderExamples[placeholderIndex])
-                    .id(placeholderIndex)
-                    .font(.system(size: 32, weight: .medium))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.tertiary)
-                    .allowsHitTesting(false)
-                    .transition(.opacity.animation(.easeOut(duration: 0.5)))
-                    .accessibilityHidden(true)
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.accentColor.opacity(0.4))
+                    Text(Self.placeholderExamples[placeholderIndex])
+                        .id(placeholderIndex)
+                        .font(.system(size: 28, weight: .medium, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.tertiary)
+                        .transition(.opacity.animation(.easeOut(duration: 0.5)))
+                }
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
             }
 
             TextField("", text: $inputText, axis: .vertical)
-                .font(.system(size: 32, weight: .medium))
+                .font(.system(size: 28, weight: .medium, design: .rounded))
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .tint(.accentColor)
@@ -287,31 +303,47 @@ struct QuickEntryView: View {
         let resolvedCategory = categoryOverride ?? QuickAddSaveService.resolveCategory(for: p, in: modelContext)
         let isIncome = p.typeRaw == TransactionType.income.raw
 
-        HStack(alignment: .center, spacing: 12) {
-            Text(Money.formatSigned(
-                cents: p.amountCents,
-                isPositive: isIncome,
-                currencyCode: defaultCurrencyCode
-            ))
-            .font(.system(size: 28, weight: .semibold).monospacedDigit())
+        VStack(spacing: 12) {
+            // Amount row — large, bold, monospaced, with a direction arrow.
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Image(systemName: isIncome ? "arrow.up.right" : "arrow.down.right")
+                    .font(.system(size: 18, weight: .bold))
+                Text(Money.formatSigned(
+                    cents: p.amountCents,
+                    isPositive: isIncome,
+                    currencyCode: defaultCurrencyCode
+                ))
+                .font(.system(size: 36, weight: .bold, design: .rounded).monospacedDigit())
+            }
             .foregroundStyle(isIncome ? Color.green : Color.red)
             .accessibilityHidden(true)   // voiced by the Save button label
 
-            categoryBadge(resolvedCategory)
+            // Category badge + merchant.
+            HStack(spacing: 8) {
+                categoryBadge(resolvedCategory)
 
-            if let merchant = p.merchant {
-                Text(merchant)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .accessibilityHidden(true)
+                if let merchant = p.merchant {
+                    Text("·")
+                        .foregroundStyle(.tertiary)
+                    Text(merchant)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .accessibilityHidden(true)
+                }
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(maxWidth: .infinity)
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
     /// Tappable category chip — opens the picker so the user can override the
@@ -322,13 +354,17 @@ struct QuickEntryView: View {
             showCategoryPicker = true
         } label: {
             HStack(spacing: 4) {
+                if let symbol = category?.icon, !symbol.isEmpty {
+                    Image(systemName: symbol)
+                        .font(.caption)
+                }
                 Text(category?.displayName() ?? String(localized: "quickadd.preview.no_category"))
                     .font(.subheadline.weight(.medium))
                 Image(systemName: "chevron.down")
                     .font(.caption2)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(Color.accentColor.opacity(0.15))
             .foregroundStyle(Color.accentColor)
             .clipShape(Capsule())
@@ -366,21 +402,37 @@ struct QuickEntryView: View {
                 Button {
                     handleSave()
                 } label: {
-                    Text("quick_entry.save")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
+                    HStack(spacing: 8) {
+                        Image(systemName: parsed == nil ? "questionmark.circle" : "checkmark.circle.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("quick_entry.save")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        ZStack {
                             LinearGradient(
-                                colors: [Color.accentColor, Color.accentColor.opacity(0.82)],
+                                colors: parsed == nil
+                                    ? [Color.gray.opacity(0.5), Color.gray.opacity(0.4)]
+                                    : [Color.accentColor, Color.accentColor.opacity(0.82)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
-                        )
-                        .clipShape(Capsule())
-                        .opacity(parsed == nil ? 0.4 : 1)
-                        .scaleEffect(savePulseOn ? 1.02 : 1.0)
+                            if parsed != nil {
+                                // Subtle shimmer when ready to save.
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.0), Color.white.opacity(0.15), Color.white.opacity(0.0)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            }
+                        }
+                    )
+                    .clipShape(Capsule())
+                    .scaleEffect(savePulseOn ? 1.02 : 1.0)
+                    .shadow(color: parsed == nil ? .clear : Color.accentColor.opacity(0.4), radius: 8, y: 4)
                 }
                 .disabled(parsed == nil)
                 .accessibilityLabel(saveA11yLabel)
@@ -403,13 +455,24 @@ struct QuickEntryView: View {
         Button {
             toggleVoice()
         } label: {
-            Image(systemName: voice.isListening ? "waveform.circle.fill" : "mic.fill")
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(voice.isListening ? Color.red : Color.secondary)
-                .symbolEffect(.pulse.byLayer, options: .repeating, isActive: voice.isListening)
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: 56, height: 56)
-                .background(Circle().fill(.thinMaterial))
+            ZStack {
+                Circle()
+                    .fill(voice.isListening ? Color.red.opacity(0.15) : Color(.tertiarySystemFill))
+
+                if voice.isListening {
+                    Circle()
+                        .stroke(Color.red.opacity(0.4), lineWidth: 2)
+                        .scaleEffect(micPulseOn ? 1.15 : 1.0)
+                        .opacity(micPulseOn ? 0.2 : 0.8)
+                }
+
+                Image(systemName: voice.isListening ? "waveform" : "mic.fill")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(voice.isListening ? Color.red : Color.secondary)
+                    .symbolEffect(.variableColor.iterative.reversing, isActive: voice.isListening)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .frame(width: 60, height: 60)
         }
         .accessibilityLabel(
             Text(voice.isListening ? "quick_entry.a11y.mic_listening" : "quick_entry.a11y.mic_idle")
