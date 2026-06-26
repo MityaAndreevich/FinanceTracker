@@ -501,6 +501,8 @@
 "quickadd.preview.save" = "Сохранить";
 "quickadd.preview.edit" = "Изменить";
 "quickadd.preview.no_category" = "[Выбрать категорию]";
+"quickadd.pick_category" = "Выберите категорию";
+"quickadd.a11y.change_category" = "Изменить категорию";
 
 /* Quick Entry hero sheet (Brief 23A) */
 "quick_entry.title" = "Быстрый ввод";

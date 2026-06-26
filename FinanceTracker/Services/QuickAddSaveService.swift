@@ -17,9 +17,10 @@ enum QuickAddSaveService {
     static func save(
         parsed: QuickAddParsedInput,
         modelContext: ModelContext,
-        defaultCurrencyCode: String
+        defaultCurrencyCode: String,
+        overrideCategory: Category? = nil
     ) throws -> Transaction {
-        guard let category = resolveCategory(for: parsed, in: modelContext) else {
+        guard let category = overrideCategory ?? resolveCategory(for: parsed, in: modelContext) else {
             throw SaveError.noCategoryResolvable
         }
 

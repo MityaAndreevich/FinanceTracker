@@ -18,6 +18,8 @@ struct QuickEntryView: View {
 
     @State private var inputText: String = ""
     @State private var parsed: QuickAddParsedInput? = nil
+    @State private var showCategoryPicker = false
+    @State private var categoryOverride: Category? = nil
     @State private var showAddTxFallback = false
     @State private var saveError = false
     @State private var placeholderIndex = 0
@@ -50,6 +52,7 @@ struct QuickEntryView: View {
 
     private var resolvedCategoryName: String? {
         guard let p = parsed else { return nil }
+        if let categoryOverride { return categoryOverride.displayName() }
         return QuickAddSaveService.resolveCategory(for: p, in: modelContext)?.displayName()
     }
 
@@ -168,6 +171,8 @@ struct QuickEntryView: View {
                 voice.stop()
             }
             saveError = false
+            // A fresh parse invalidates any manual category override.
+            categoryOverride = nil
             parseTask?.cancel()
             parseTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 250_000_000)
@@ -206,6 +211,11 @@ struct QuickEntryView: View {
         .sheet(isPresented: $showAddTxFallback, onDismiss: { dismiss() }) {
             NavigationStack {
                 AddTransactionView(prefillText: inputText)
+            }
+        }
+        .sheet(isPresented: $showCategoryPicker) {
+            CategoryPickerSheet(currentType: parsed?.typeRaw ?? TransactionType.expense.raw) { picked in
+                categoryOverride = picked
             }
         }
     }
@@ -274,7 +284,7 @@ struct QuickEntryView: View {
 
     @ViewBuilder
     private func previewCard(_ p: QuickAddParsedInput) -> some View {
-        let resolvedCategory = QuickAddSaveService.resolveCategory(for: p, in: modelContext)
+        let resolvedCategory = categoryOverride ?? QuickAddSaveService.resolveCategory(for: p, in: modelContext)
         let isIncome = p.typeRaw == TransactionType.income.raw
 
         HStack(alignment: .center, spacing: 12) {
@@ -285,22 +295,16 @@ struct QuickEntryView: View {
             ))
             .font(.system(size: 28, weight: .semibold).monospacedDigit())
             .foregroundStyle(isIncome ? Color.green : Color.red)
+            .accessibilityHidden(true)   // voiced by the Save button label
 
-            if let catName = resolvedCategory?.displayName() {
-                Text(catName)
-                    .font(.subheadline.weight(.medium))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.accentColor.opacity(0.15))
-                    .foregroundStyle(Color.accentColor)
-                    .clipShape(Capsule())
-            }
+            categoryBadge(resolvedCategory)
 
             if let merchant = p.merchant {
                 Text(merchant)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .accessibilityHidden(true)
             }
 
             Spacer(minLength: 0)
@@ -308,8 +312,30 @@ struct QuickEntryView: View {
         .padding(16)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        // Decorative — save button label already voices amount + category for screen readers.
-        .accessibilityHidden(true)
+    }
+
+    /// Tappable category chip — opens the picker so the user can override the
+    /// auto-detected category.
+    @ViewBuilder
+    private func categoryBadge(_ category: Category?) -> some View {
+        Button {
+            showCategoryPicker = true
+        } label: {
+            HStack(spacing: 4) {
+                Text(category?.displayName() ?? String(localized: "quickadd.preview.no_category"))
+                    .font(.subheadline.weight(.medium))
+                Image(systemName: "chevron.down")
+                    .font(.caption2)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color.accentColor.opacity(0.15))
+            .foregroundStyle(Color.accentColor)
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("quickadd.a11y.change_category"))
+        .accessibilityValue(Text(category?.displayName() ?? ""))
     }
 
     // MARK: - Error banner
@@ -479,7 +505,8 @@ struct QuickEntryView: View {
             _ = try QuickAddSaveService.save(
                 parsed: p,
                 modelContext: modelContext,
-                defaultCurrencyCode: defaultCurrencyCode
+                defaultCurrencyCode: defaultCurrencyCode,
+                overrideCategory: categoryOverride
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             RatingPromptCoordinator.recordTransactionSaved()

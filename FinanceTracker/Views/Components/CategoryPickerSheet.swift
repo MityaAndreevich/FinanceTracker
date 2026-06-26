@@ -1,0 +1,51 @@
+//
+//  CategoryPickerSheet.swift
+//  FinanceTracker
+//
+//  Searchable category picker used to override the auto-detected category in
+//  Quick Entry. Filters by transaction kind so income inputs only show income
+//  categories and vice versa.
+//
+
+import SwiftUI
+import SwiftData
+
+struct CategoryPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let currentType: String   // "income" or "expense"
+    let onPick: (Category) -> Void
+
+    @State private var search = ""
+    @Query(sort: \Category.order) private var allCategories: [Category]
+
+    private var filtered: [Category] {
+        let typeMatched = allCategories.filter { $0.kindRaw == currentType }
+        let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !q.isEmpty else { return typeMatched }
+        return typeMatched.filter { $0.displayName().lowercased().contains(q) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List(filtered) { cat in
+                Button {
+                    onPick(cat)
+                    dismiss()
+                } label: {
+                    Label(cat.displayName(), systemImage: cat.icon ?? "tag")
+                        .foregroundStyle(.primary)
+                }
+            }
+            .searchable(text: $search)
+            .navigationTitle("quickadd.pick_category")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("common.done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}

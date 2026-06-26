@@ -491,6 +491,8 @@
 "quickadd.preview.save" = "Save";
 "quickadd.preview.edit" = "Edit";
 "quickadd.preview.no_category" = "[Tap to pick]";
+"quickadd.pick_category" = "Choose category";
+"quickadd.a11y.change_category" = "Change category";
 
 /* Quick Entry hero sheet (Brief 23A) */
 "quick_entry.title" = "Quick entry";
