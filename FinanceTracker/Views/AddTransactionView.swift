@@ -158,14 +158,11 @@ struct AddTransactionView: View {
                 Text(LocalizedStringKey(errorMessageKey))
             }
             .sheet(isPresented: $showAddCategorySheet) {
-                ManualAddCategorySheet(
-                    kindRaw: typeRaw,
-                    existingMaxOrder: (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0),
-                    onCreated: { newCat in
-                        selectedCategoryUUID = newCat.uuid
-                    }
-                )
-                .presentationDetents([.medium])
+                // Unified with Settings → Categories: the preset grid (Bills, Pets,
+                // Salary, …) plus a custom field, defaulting to the current type.
+                AddCategorySheet(initialKind: typeRaw) { newCat in
+                    selectedCategoryUUID = newCat.uuid
+                }
             }
             .sheet(isPresented: $showAddSourceSheet) {
                 AddSourceSheet { newSource in
@@ -616,96 +613,6 @@ struct AddTransactionView: View {
 }
 
 // MARK: - Sheets
-
-// Simple manual-entry category form used by the Add Transaction screen.
-// (The preset-grid AddCategorySheet lives in Views/Components and is used by
-// Settings → Categories and the Quick Entry picker.)
-private struct ManualAddCategorySheet: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-
-    let kindRaw: String
-    let existingMaxOrder: Int
-    let onCreated: (Category) -> Void
-
-    @State private var name: String = ""
-    @State private var icon: String = ""
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("add.category_sheet.name.placeholder", text: $name)
-
-                    TextField("add.category_sheet.icon.placeholder", text: $icon)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    Text(kindRaw == TransactionType.income.raw ? "add.category_sheet.type_income" : "add.category_sheet.type_expense")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text("add.category_sheet.section.title")
-                }
-            }
-            .navigationTitle("add.category_sheet.nav_title")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("common.cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("common.add") { create() }
-                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-            }
-        }
-    }
-
-    private func create() {
-        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanName.isEmpty else { return }
-
-        let lowerName = cleanName.lowercased()
-        let allCats = (try? modelContext.fetch(FetchDescriptor<Category>())) ?? []
-        if let existing = allCats.filter({ $0.kindRaw == kindRaw }).first(where: { cat in
-            if let custom = cat.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !custom.isEmpty, custom.lowercased() == lowerName { return true }
-            if let key = cat.nameKey, !key.isEmpty {
-                let loc = NSLocalizedString(key, comment: "").lowercased()
-                return loc != key.lowercased() && loc == lowerName
-            }
-            return false
-        }) {
-            onCreated(existing)
-            dismiss()
-            return
-        }
-
-        let cleanIcon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
-        let nextOrder = existingMaxOrder + 1
-
-        let category = Category(
-            name: cleanName,
-            kindRaw: kindRaw,
-            icon: cleanIcon.isEmpty ? nil : cleanIcon,
-            order: nextOrder,
-            nameKey: nil,
-            nameCustom: cleanName
-        )
-
-        modelContext.insert(category)
-
-        do {
-            try modelContext.save()
-            onCreated(category)
-            dismiss()
-        } catch {
-            #if DEBUG
-            print("Failed to create category: \(error.localizedDescription)")
-            #endif
-        }
-    }
-}
 
 private struct AddSourceSheet: View {
     @Environment(\.modelContext) private var modelContext
