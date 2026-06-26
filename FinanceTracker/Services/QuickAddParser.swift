@@ -21,7 +21,14 @@ enum QuickAddParser {
     // MARK: - Public
 
     static func parse(_ raw: String) -> QuickAddParsedInput? {
-        let input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let stripped = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !stripped.isEmpty else { return nil }
+
+        // Pre-process spelled-out numbers to digits using the user's app language.
+        // iOS dictation spells out numbers ("семь" not "7") in most locales, which
+        // would otherwise leave the amount regex with nothing to match.
+        let langCode = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
+        let input = NumberWordsParser.normalize(stripped, locale: langCode)
         guard !input.isEmpty else { return nil }
 
         // 1. Detect amount — smart multi-number selection so "bought 3 eggs for 7"
