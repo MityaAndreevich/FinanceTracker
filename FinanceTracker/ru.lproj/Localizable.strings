@@ -382,6 +382,19 @@
 
 "cs.category_sheet.title" = "Добавить категорию";
 "cs.category_sheet.section" = "Категория";
+"addcat.section.suggested" = "Предложенные";
+"addcat.section.custom" = "Своя";
+"addcat.preset.bills" = "Счета";
+"addcat.preset.pets" = "Питомцы";
+"addcat.preset.gifts" = "Подарки";
+"addcat.preset.education" = "Образование";
+"addcat.preset.fitness" = "Фитнес";
+"addcat.preset.kids" = "Дети";
+"addcat.preset.salary" = "Зарплата";
+"addcat.preset.bonus" = "Премия";
+"addcat.preset.freelance" = "Фриланс";
+"addcat.preset.investment" = "Инвестиции";
+"addcat.preset.refund" = "Возврат";
 "cs.category_sheet.name.placeholder" = "Название категории";
 "cs.category_sheet.icon.placeholder" = "SF Symbol (необязательно)";
 "cs.category_sheet.icon_hint" = "Совет: выберите значок, чтобы быстрее находить категории.";

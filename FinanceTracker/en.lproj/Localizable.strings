@@ -376,6 +376,19 @@
 
 "cs.category_sheet.title" = "Add Category";
 "cs.category_sheet.section" = "Category";
+"addcat.section.suggested" = "Suggested";
+"addcat.section.custom" = "Custom";
+"addcat.preset.bills" = "Bills";
+"addcat.preset.pets" = "Pets";
+"addcat.preset.gifts" = "Gifts";
+"addcat.preset.education" = "Education";
+"addcat.preset.fitness" = "Fitness";
+"addcat.preset.kids" = "Kids";
+"addcat.preset.salary" = "Salary";
+"addcat.preset.bonus" = "Bonus";
+"addcat.preset.freelance" = "Freelance";
+"addcat.preset.investment" = "Investment";
+"addcat.preset.refund" = "Refund";
 "cs.category_sheet.name.placeholder" = "Category name";
 "cs.category_sheet.icon.placeholder" = "SF Symbol (optional)";
 "cs.category_sheet.type.expense" = "Expense";

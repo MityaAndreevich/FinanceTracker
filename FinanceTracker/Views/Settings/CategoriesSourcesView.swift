@@ -340,6 +340,8 @@ private struct AddCategorySheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                suggestedSection
+
                 Section {
                     TextField("cs.category_sheet.name.placeholder", text: $name)
 
@@ -384,7 +386,7 @@ private struct AddCategorySheet: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 } header: {
-                    Text("cs.category_sheet.section")
+                    Text("addcat.section.custom")
                 }
             }
             .navigationTitle("cs.category_sheet.title")
@@ -402,6 +404,92 @@ private struct AddCategorySheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    // MARK: - Suggested presets
+
+    private struct Preset: Identifiable {
+        let labelKey: String   // localization key; also resolved to the stored custom name
+        let icon: String
+        var id: String { labelKey }
+    }
+
+    private static let expensePresets: [Preset] = [
+        Preset(labelKey: "addcat.preset.bills",     icon: "doc.text.fill"),
+        Preset(labelKey: "addcat.preset.pets",      icon: "pawprint.fill"),
+        Preset(labelKey: "addcat.preset.gifts",     icon: "gift.fill"),
+        Preset(labelKey: "addcat.preset.education", icon: "book.fill"),
+        Preset(labelKey: "addcat.preset.fitness",   icon: "dumbbell.fill"),
+        Preset(labelKey: "addcat.preset.kids",      icon: "person.2.fill"),
+    ]
+
+    private static let incomePresets: [Preset] = [
+        Preset(labelKey: "addcat.preset.salary",     icon: "banknote.fill"),
+        Preset(labelKey: "addcat.preset.bonus",      icon: "star.fill"),
+        Preset(labelKey: "addcat.preset.freelance",  icon: "laptopcomputer"),
+        Preset(labelKey: "addcat.preset.investment", icon: "chart.line.uptrend.xyaxis"),
+        Preset(labelKey: "addcat.preset.gifts",      icon: "gift.fill"),
+        Preset(labelKey: "addcat.preset.refund",     icon: "arrow.uturn.left"),
+    ]
+
+    /// Presets for the selected kind, minus any whose name already exists.
+    private var availablePresets: [Preset] {
+        let existing = Set(
+            categories
+                .filter { $0.kindRaw == typeRaw }
+                .map { $0.displayName().lowercased() }
+        )
+        let all = typeRaw == "income" ? Self.incomePresets : Self.expensePresets
+        return all.filter { !existing.contains(NSLocalizedString($0.labelKey, comment: "").lowercased()) }
+    }
+
+    @ViewBuilder
+    private var suggestedSection: some View {
+        let presets = availablePresets
+        if !presets.isEmpty {
+            Section {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+                    ForEach(presets) { preset in
+                        Button {
+                            createPreset(preset)
+                        } label: {
+                            VStack(spacing: 6) {
+                                Image(systemName: preset.icon)
+                                    .font(.title3)
+                                Text(LocalizedStringKey(preset.labelKey))
+                                    .font(.caption)
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.accentColor.opacity(0.1))
+                            .foregroundStyle(Color.accentColor)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 4)
+            } header: {
+                Text("addcat.section.suggested")
+            }
+        }
+    }
+
+    private func createPreset(_ preset: Preset) {
+        let resolved = NSLocalizedString(preset.labelKey, comment: "")
+        let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
+        let category = Category(
+            name: resolved,
+            kindRaw: typeRaw,
+            icon: preset.icon,
+            order: nextOrder,
+            nameKey: nil,
+            nameCustom: resolved
+        )
+        modelContext.insert(category)
+        try? modelContext.save()
+        dismiss()
     }
 
     private func create() {
