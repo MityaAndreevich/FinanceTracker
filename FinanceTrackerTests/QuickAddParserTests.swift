@@ -313,6 +313,8 @@ struct QuickAddParserTests {
     @Test func parse_expense_does_not_match_income_noun() {
         let result = QuickAddParser.parse("яйца 5 баксов")
         #expect(result?.typeRaw == "expense")
-        #expect(result?.suggestedCategoryName == nil)
+        // "яйца" (eggs) is an expense, never an income noun. Since Brief 28D Bug #4
+        // it also maps to Food & Drink rather than no category.
+        #expect(result?.suggestedCategoryName == "Food & Drink")
     }
 }
