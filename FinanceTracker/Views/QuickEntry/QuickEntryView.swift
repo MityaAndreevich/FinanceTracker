@@ -18,9 +18,18 @@ struct QuickEntryView: View {
 
     @State private var inputText: String = ""
     @State private var parsed: QuickAddParsedInput? = nil
-    @State private var showCategoryPicker = false
     @State private var categoryOverride: Category? = nil
-    @State private var showAddTxFallback = false
+    // Single source of truth for the two sheets. Two stacked `.sheet(isPresented:)`
+    // modifiers on the same view collide in SwiftUI (only one presents reliably),
+    // which is what silently broke the tappable category badge. One `.sheet(item:)`
+    // fixes it. `dismissAfterSheet` lets the form-fallback dismiss Quick Entry on
+    // close while the category picker leaves Quick Entry open.
+    private enum ActiveSheet: String, Identifiable {
+        case category, addTxFallback
+        var id: String { rawValue }
+    }
+    @State private var activeSheet: ActiveSheet? = nil
+    @State private var dismissAfterSheet = false
     @State private var saveError = false
     @State private var placeholderIndex = 0
     @State private var parseTask: Task<Void, Never>? = nil
@@ -219,14 +228,23 @@ struct QuickEntryView: View {
                 }
             }
         }
-        .sheet(isPresented: $showAddTxFallback, onDismiss: { dismiss() }) {
-            NavigationStack {
-                AddTransactionView(prefillText: inputText)
+        .sheet(item: $activeSheet, onDismiss: {
+            // Only the form-fallback should tear down Quick Entry; the category
+            // picker leaves it open so the user can keep editing the preview.
+            if dismissAfterSheet {
+                dismissAfterSheet = false
+                dismiss()
             }
-        }
-        .sheet(isPresented: $showCategoryPicker) {
-            CategoryPickerSheet(currentType: parsed?.typeRaw ?? TransactionType.expense.raw) { picked in
-                categoryOverride = picked
+        }) { sheet in
+            switch sheet {
+            case .category:
+                CategoryPickerSheet(currentType: parsed?.typeRaw ?? TransactionType.expense.raw) { picked in
+                    categoryOverride = picked
+                }
+            case .addTxFallback:
+                NavigationStack {
+                    AddTransactionView(prefillText: inputText)
+                }
             }
         }
     }
@@ -351,7 +369,7 @@ struct QuickEntryView: View {
     @ViewBuilder
     private func categoryBadge(_ category: Category?) -> some View {
         Button {
-            showCategoryPicker = true
+            activeSheet = .category
         } label: {
             HStack(spacing: 4) {
                 if let symbol = category?.icon, !symbol.isEmpty {
@@ -439,7 +457,8 @@ struct QuickEntryView: View {
             }
 
             Button {
-                showAddTxFallback = true
+                dismissAfterSheet = true
+                activeSheet = .addTxFallback
             } label: {
                 Text("quick_entry.use_form")
                     .font(.footnote)
