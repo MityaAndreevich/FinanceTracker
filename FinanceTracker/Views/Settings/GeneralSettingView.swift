@@ -17,8 +17,20 @@ struct GeneralSettingsView: View {
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
 
-    @State private var showCurrencyPicker = false
-    @State private var showLanguagePicker = false
+    // Single source of truth for the two picker sheets. Using .sheet(item:) rather
+    // than two .sheet(isPresented:) modifiers prevents "Attempt to present … which is
+    // already presenting …" when one sheet's content changes while another resolves.
+    private enum PickerSheet: String, Identifiable {
+        case currency, language
+        var id: String { rawValue }
+    }
+    @State private var activeSheet: PickerSheet?
+    // Pending selections are applied only after the sheet finishes dismissing, so the
+    // locale/currency re-render storm can't collide with the dismiss transition
+    // (which previously produced "Invalid frame dimension" NaN warnings).
+    @State private var pendingCurrency: String?
+    @State private var pendingLanguage: String?
+
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
 
@@ -75,7 +87,7 @@ struct GeneralSettingsView: View {
         Section("general.section.preferences") {
 
             Button {
-                showCurrencyPicker = true
+                activeSheet = .currency
             } label: {
                 HStack {
                     Text("general.currency")
@@ -92,7 +104,7 @@ struct GeneralSettingsView: View {
             }
 
             Button {
-                showLanguagePicker = true
+                activeSheet = .language
             } label: {
                 HStack {
                     Text("general.language")
@@ -112,21 +124,45 @@ struct GeneralSettingsView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
-        .sheet(isPresented: $showCurrencyPicker) {
-            SearchablePickerSheet(
-                titleKey: "general.currency",
-                items: SupportedCurrency.allCases,
-                labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
-                selection: $defaultCurrencyCode
-            )
+        .sheet(item: $activeSheet, onDismiss: applyPendingSelection) { sheet in
+            switch sheet {
+            case .currency:
+                SearchablePickerSheet(
+                    titleKey: "general.currency",
+                    items: SupportedCurrency.allCases,
+                    labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
+                    selection: Binding(
+                        get: { pendingCurrency ?? defaultCurrencyCode },
+                        set: { pendingCurrency = $0 }
+                    )
+                )
+            case .language:
+                SearchablePickerSheet(
+                    titleKey: "general.language",
+                    items: SupportedLanguage.allCases,
+                    labelProvider: { "\($0.flag) \($0.title)" },
+                    selection: Binding(
+                        get: { pendingLanguage ?? appLanguageCode },
+                        set: { pendingLanguage = $0 }
+                    )
+                )
+            }
         }
-        .sheet(isPresented: $showLanguagePicker) {
-            SearchablePickerSheet(
-                titleKey: "general.language",
-                items: SupportedLanguage.allCases,
-                labelProvider: { "\($0.flag) \($0.title)" },
-                selection: $appLanguageCode
-            )
+    }
+
+    /// Commits a picker selection after the sheet has fully dismissed. Applying the
+    /// @AppStorage change inline (while the sheet animates away) re-resolves every
+    /// LocalizedStringKey and the environment locale mid-transition, which crashed
+    /// sheet presentation and emitted NaN frame warnings.
+    private func applyPendingSelection() {
+        let currency = pendingCurrency
+        let language = pendingLanguage
+        pendingCurrency = nil
+        pendingLanguage = nil
+        guard currency != nil || language != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            if let currency, currency != defaultCurrencyCode { defaultCurrencyCode = currency }
+            if let language, language != appLanguageCode { appLanguageCode = language }
         }
     }
 
