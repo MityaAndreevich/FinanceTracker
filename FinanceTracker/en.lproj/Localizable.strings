@@ -647,3 +647,6 @@
 "analytics.category_total" = "Category total";
 "analytics.transactions_count" = "%d transactions";
 "analytics.horizon.tap_hint" = "Show this month's transactions";
+"analytics.pulse.tap_hint" = "Show this day's transactions";
+"analytics.selection.clear" = "Clear selection";
+"analytics.day.by_category" = "By category";

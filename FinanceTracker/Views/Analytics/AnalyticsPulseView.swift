@@ -16,7 +16,11 @@ struct AnalyticsPulseView: View {
     let netCents: Int
     let currencyCode: String
 
+    // `chartXSelection` resets to nil on touch-end; keep a sticky selection so
+    // the scrubbed day (and its tappable drill-down) survives finger lift.
     @State private var rawSelectedDate: Date?
+    @State private var stickySelectedDate: Date?
+    @State private var detailDay: DailyTotal?
 
     struct DailyTotal: Identifiable {
         let id = UUID()
@@ -24,12 +28,15 @@ struct AnalyticsPulseView: View {
         let cents: Int
     }
 
-    /// Day nearest the scrub position, or nil when the user isn't dragging.
+    /// Day nearest the sticky selection, or nil when nothing is selected.
     private var selectedDay: DailyTotal? {
-        guard let rawSelectedDate else { return nil }
-        return dailyTotals.min { lhs, rhs in
-            abs(lhs.date.timeIntervalSince(rawSelectedDate)) <
-            abs(rhs.date.timeIntervalSince(rawSelectedDate))
+        guard let stickySelectedDate else { return nil }
+        return nearestDay(to: stickySelectedDate)
+    }
+
+    private func nearestDay(to date: Date) -> DailyTotal? {
+        dailyTotals.min { lhs, rhs in
+            abs(lhs.date.timeIntervalSince(date)) < abs(rhs.date.timeIntervalSince(date))
         }
     }
 
@@ -44,24 +51,54 @@ struct AnalyticsPulseView: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+        .sheet(item: $detailDay) { day in
+            DaySpendingSheet(day: day.date, currencyCode: currencyCode)
+                .presentationDetents([.medium, .large])
+        }
     }
 
     @ViewBuilder
     private var heroMetric: some View {
         VStack(spacing: 4) {
             if let selectedDay {
-                Text(selectedDay.date.formatted(.dateTime.day().month(.wide)))
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                Text(Money.formatSigned(
-                    cents: selectedDay.cents,
-                    isPositive: selectedDay.cents >= 0,
-                    currencyCode: currencyCode
-                ))
-                .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundStyle(selectedDay.cents >= 0 ? .green : .red)
-                .privacySensitive(true)
-                .contentTransition(.numericText())
+                // Selected day → tappable, opens the day drill-down sheet.
+                Button {
+                    detailDay = selectedDay
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                } label: {
+                    VStack(spacing: 4) {
+                        Text(selectedDay.date.formatted(.dateTime.day().month(.wide)))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            Text(Money.formatSigned(
+                                cents: selectedDay.cents,
+                                isPositive: selectedDay.cents >= 0,
+                                currencyCode: currencyCode
+                            ))
+                            .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(Color.money(isPositive: selectedDay.cents >= 0))
+                            .privacySensitive(true)
+                            .contentTransition(.numericText())
+                            Image(systemName: "chevron.right.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text("analytics.pulse.tap_hint"))
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) { stickySelectedDate = nil }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.body)
+                            .foregroundStyle(.tertiary)
+                            .padding(8)
+                    }
+                    .accessibilityLabel(Text("analytics.selection.clear"))
+                }
             } else {
                 Text("analytics.net_this_month")
                     .font(.subheadline)
@@ -72,7 +109,7 @@ struct AnalyticsPulseView: View {
                     currencyCode: currencyCode
                 ))
                 .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundStyle(netCents >= 0 ? .green : .red)
+                .foregroundStyle(Color.money(isPositive: netCents >= 0))
                 .privacySensitive(true)  // hidden in App Switcher per HIG
                 .contentTransition(.numericText(value: Double(netCents) / 100))
             }
@@ -139,9 +176,14 @@ struct AnalyticsPulseView: View {
         }
         .frame(height: 240)
         .padding(.vertical, 8)
-        .onChange(of: rawSelectedDate) { _, _ in
-            // Soft haptic on scrub — matches Horizon (Apple Stocks reference).
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        .onChange(of: rawSelectedDate) { _, newValue in
+            // Ignore touch-end reset; commit live scrub into the sticky selection.
+            guard let newValue, let nearest = nearestDay(to: newValue) else { return }
+            if nearest.date != stickySelectedDate {
+                stickySelectedDate = nearest.date
+                // Soft haptic on scrub — matches Horizon (Apple Stocks reference).
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+            }
         }
     }
 
@@ -151,13 +193,13 @@ struct AnalyticsPulseView: View {
                 icon: "arrow.up.right",
                 label: "analytics.earned_total",
                 value: dailyTotals.filter { $0.cents > 0 }.reduce(0) { $0 + $1.cents },
-                color: .green
+                color: .bcIncome
             )
             summaryRow(
                 icon: "arrow.down.right",
                 label: "analytics.spent_total",
                 value: abs(dailyTotals.filter { $0.cents < 0 }.reduce(0) { $0 + $1.cents }),
-                color: .red
+                color: .bcExpense
             )
         }
     }

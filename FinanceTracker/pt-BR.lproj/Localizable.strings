@@ -528,3 +528,6 @@
 "analytics.category_total" = "Total da categoria";
 "analytics.transactions_count" = "%d transações";
 "analytics.horizon.tap_hint" = "Ver as transações do mês";
+"analytics.pulse.tap_hint" = "Ver as transações deste dia";
+"analytics.selection.clear" = "Limpar seleção";
+"analytics.day.by_category" = "Por categoria";

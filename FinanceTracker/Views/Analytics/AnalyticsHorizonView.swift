@@ -14,7 +14,13 @@ struct AnalyticsHorizonView: View {
     let monthlyTotals: [MonthlyTotal]   // 12 months
     let currencyCode: String
 
+    // `chartXSelection` resets its binding to nil the instant the finger lifts,
+    // which made the selection (and the tappable tooltip/Show-details affordance)
+    // vanish on touch-end. We treat `rawSelectedDate` as the *transient* scrub
+    // position and commit it into `stickySelectedDate`, which persists until the
+    // user scrubs elsewhere or explicitly clears. (Apple Health-style sticky.)
     @State private var rawSelectedDate: Date?
+    @State private var stickySelectedDate: Date?
     @State private var detailMonth: MonthlyTotal?
 
     struct MonthlyTotal: Identifiable {
@@ -54,7 +60,7 @@ struct AnalyticsHorizonView: View {
                             currencyCode: currencyCode
                         ))
                         .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(selected.netCents >= 0 ? .green : .red)
+                        .foregroundStyle(Color.money(isPositive: selected.netCents >= 0))
                         .privacySensitive(true)
                         .contentTransition(.numericText())
                         Image(systemName: "chevron.right.circle.fill")
@@ -67,6 +73,17 @@ struct AnalyticsHorizonView: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint(Text("analytics.horizon.tap_hint"))
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { stickySelectedDate = nil }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.body)
+                        .foregroundStyle(.tertiary)
+                        .padding(8)
+                }
+                .accessibilityLabel(Text("analytics.selection.clear"))
+            }
         } else {
             Text("analytics.horizon.hint")
                 .font(.subheadline)
@@ -128,17 +145,27 @@ struct AnalyticsHorizonView: View {
             }
         }
         .frame(height: 320)
-        .onChange(of: rawSelectedDate) { _, _ in
-            // Soft haptic on scrub — premium feel (Apple Stocks reference).
-            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        .onChange(of: rawSelectedDate) { _, newValue in
+            // Ignore the touch-end reset (newValue == nil); commit live scrub
+            // positions into the sticky selection so it persists after release.
+            guard let newValue,
+                  let nearest = nearestMonth(to: newValue) else { return }
+            if nearest.date != stickySelectedDate {
+                stickySelectedDate = nearest.date
+                // Soft haptic on scrub — premium feel (Apple Stocks reference).
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+            }
+        }
+    }
+
+    private func nearestMonth(to date: Date) -> MonthlyTotal? {
+        monthlyTotals.min { lhs, rhs in
+            abs(lhs.date.timeIntervalSince(date)) < abs(rhs.date.timeIntervalSince(date))
         }
     }
 
     private var selectedTotal: MonthlyTotal? {
-        guard let rawSelectedDate else { return nil }
-        return monthlyTotals.min { lhs, rhs in
-            abs(lhs.date.timeIntervalSince(rawSelectedDate)) <
-            abs(rhs.date.timeIntervalSince(rawSelectedDate))
-        }
+        guard let stickySelectedDate else { return nil }
+        return nearestMonth(to: stickySelectedDate)
     }
 }
