@@ -26,6 +26,23 @@ struct ContentView: View {
     @State private var settingsNavPath = NavigationPath()
 
     var body: some View {
+        ZStack {
+            mainTabView
+
+            // Feature tour. Rendered in-tree (not as a fullScreenCover) so its
+            // opaque background covers the tab view from the very first frame —
+            // a cover presents *after* appearance, which let the Dashboard flash
+            // through before the tour animated up (round 8 feedback).
+            if !hasSeenFeatureTour {
+                TutorialFlow()
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: hasSeenFeatureTour)
+    }
+
+    private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 DashboardView()
@@ -70,12 +87,6 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             QuickEntryView()
-        }
-        .fullScreenCover(isPresented: Binding(
-            get: { !hasSeenFeatureTour },
-            set: { _ in }
-        )) {
-            TutorialFlow()
         }
         .task {
             if DemoSeeder.isDemoMode {
