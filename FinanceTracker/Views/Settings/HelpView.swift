@@ -118,6 +118,10 @@ struct HelpArticleView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        // Short articles must not rubber-band above the nav bar and "freeze"
+        // overscrolled past the top boundary (Round 9 R2). Bounce only when the
+        // content is actually taller than the viewport.
+        .scrollBounceBehavior(.basedOnSize)
         .navigationTitle(article.titleKey)
         .navigationBarTitleDisplayMode(.inline)
     }
