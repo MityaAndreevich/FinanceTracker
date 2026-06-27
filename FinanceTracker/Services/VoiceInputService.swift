@@ -70,8 +70,12 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
         case "ru":
             candidates = ["ru_RU", "ru"]
         case "es":
-            // Mexican Spanish first (LATAM target), then Spain, then generic.
-            candidates = ["es_MX", "es_ES", "es_419", "es_AR", "es_CO", "es"]
+            // Brief 28H reorder: generic "es" + Castilian "es_ES" first because
+            // they are the most widely installed Spanish dictation packs on iPhones
+            // globally. LATAM-specific variants (es_MX, es_419) are less commonly
+            // downloaded, so trying them first returned a recognizer whose
+            // supportsOnDeviceRecognition was false and hid the mic.
+            candidates = ["es", "es_ES", "es_419", "es_MX", "es_AR", "es_CO", "es_US"]
         case "de":
             candidates = ["de_DE", "de_AT", "de_CH", "de"]
         case "fr":
@@ -86,19 +90,33 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
             candidates = [Locale.current.identifier]
         }
 
+        #if DEBUG
+        print("[VoiceInputService] Resolving recognizer for appLanguageCode=\(stored)")
+        print("[VoiceInputService] Trying candidates: \(candidates)")
+        #endif
+
         for code in candidates {
             let locale = Locale(identifier: code)
-            if let recognizer = SFSpeechRecognizer(locale: locale),
-               recognizer.supportsOnDeviceRecognition {
+            guard let recognizer = SFSpeechRecognizer(locale: locale) else {
                 #if DEBUG
-                print("[VoiceInputService] Using locale: \(code)")
+                print("[VoiceInputService] ❌ \(code): SFSpeechRecognizer init failed (locale unsupported)")
+                #endif
+                continue
+            }
+            if recognizer.supportsOnDeviceRecognition {
+                #if DEBUG
+                print("[VoiceInputService] ✅ \(code): on-device recognition available — using")
                 #endif
                 return locale
+            } else {
+                #if DEBUG
+                print("[VoiceInputService] ⚠️ \(code): recognizer exists but supportsOnDeviceRecognition=false")
+                #endif
             }
         }
 
         #if DEBUG
-        print("[VoiceInputService] No on-device recognizer for appLanguageCode=\(stored)")
+        print("[VoiceInputService] ❌ No on-device recognizer for appLanguageCode=\(stored). Mic will be hidden.")
         #endif
         return Locale(identifier: candidates.first ?? Locale.current.identifier)
     }
