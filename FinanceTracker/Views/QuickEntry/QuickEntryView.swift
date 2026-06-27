@@ -338,28 +338,41 @@ struct QuickEntryView: View {
         let resolvedCategory = effectiveCategory(for: p)
         let isIncome = p.typeRaw == TransactionType.income.raw
 
-        VStack(spacing: 12) {
-            // Amount row — large, bold, monospaced, with a direction arrow.
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+        VStack(spacing: Spacing.compact) {
+            // Direction pill — carries the income/expense color so the amount
+            // itself can stay maximum-contrast (daylight legibility).
+            HStack(spacing: Spacing.xs) {
                 Image(systemName: isIncome ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 18, weight: .bold))
-                Text(Money.formatSigned(
-                    cents: p.amountCents,
-                    isPositive: isIncome,
-                    currencyCode: defaultCurrencyCode
-                ))
-                .font(.system(size: 36, weight: .bold, design: .rounded).monospacedDigit())
+                    .font(.caption.weight(.bold))
+                Text(isIncome ? "analytics.label.income" : "analytics.label.expense")
+                    .font(.caption.weight(.semibold))
+                    .textCase(.uppercase)
+                    .tracking(0.5)
             }
-            .foregroundStyle(isIncome ? Color.green : Color.red)
+            .foregroundStyle(Color.money(isPositive: isIncome))
+            .padding(.horizontal, Spacing.s)
+            .padding(.vertical, 5)
+            .background(Color.money(isPositive: isIncome).opacity(0.14), in: Capsule())
+            .accessibilityHidden(true)
+
+            // Hero amount — 60pt, high contrast (primary label), monospaced.
+            // The leading +/− already encodes direction (color-blind safe).
+            Text(Money.formatSigned(
+                cents: p.amountCents,
+                isPositive: isIncome,
+                currencyCode: defaultCurrencyCode
+            ))
+            .font(.bcDisplay.monospacedDigit())
+            .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
             .accessibilityHidden(true)   // voiced by the Save button label
 
-            // Category badge + merchant.
-            HStack(spacing: 8) {
-                categoryBadge(resolvedCategory)
+            // Category chip + merchant.
+            HStack(spacing: Spacing.xs) {
+                categoryBadge(resolvedCategory, isIncome: isIncome)
 
                 if let merchant = p.merchant {
-                    Text("·")
-                        .foregroundStyle(.tertiary)
                     Text(merchant)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -369,40 +382,36 @@ struct QuickEntryView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .padding(Spacing.default)
+        .cardSurface(cornerRadius: CornerRadius.cardLarge)
     }
 
     /// Tappable category chip — opens the picker so the user can override the
-    /// auto-detected category.
+    /// auto-detected category. Prominent: category icon sits in a tinted color
+    /// chip so the control reads as a button, not text.
     @ViewBuilder
-    private func categoryBadge(_ category: Category?) -> some View {
+    private func categoryBadge(_ category: Category?, isIncome: Bool) -> some View {
+        let tint = Color.money(isPositive: isIncome)
         Button {
             activeSheet = .category
         } label: {
-            HStack(spacing: 4) {
-                if let symbol = category?.icon, !symbol.isEmpty {
-                    Image(systemName: symbol)
-                        .font(.caption)
-                }
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: (category?.icon?.isEmpty == false ? category!.icon! : "tag.fill"))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 26, height: 26)
+                    .background(tint.opacity(0.16), in: Circle())
                 Text(category?.displayName() ?? String(localized: "quickadd.preview.no_category"))
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
                 Image(systemName: "chevron.down")
-                    .font(.caption2)
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.accentColor.opacity(0.15))
-            .foregroundStyle(Color.accentColor)
-            .clipShape(Capsule())
+            .padding(.leading, 5)
+            .padding(.trailing, Spacing.s)
+            .padding(.vertical, 5)
+            .background(Color.bcSeparator, in: Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("quickadd.a11y.change_category"))
