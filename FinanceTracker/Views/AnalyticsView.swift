@@ -171,21 +171,24 @@ struct AnalyticsView: View {
     }
 
     private func recomputeBreakdown(cal: Calendar, monthStart: Date, today: Date) {
-        struct Acc { var name: String; var symbol: String; var cents: Int }
+        struct Acc { var name: String; var symbol: String; var cents: Int; var isIncome: Bool }
+        // Income and expense categories carry distinct UUIDs in this app's taxonomy,
+        // so a single uuid-keyed dictionary never merges directions. The Breakdown
+        // view filters by `isIncome` for its segmented Expenses/Income control.
         var sums: [UUID: Acc] = [:]
 
-        for tx in transactions where tx.isExpense {
+        for tx in transactions {
             let day = cal.startOfDay(for: tx.date)
             guard day >= monthStart && day <= today else { continue }
             let cat = tx.category
             var cur = sums[cat.uuid]
-                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.icon ?? "tag.fill", cents: 0)
+                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.icon ?? "tag.fill", cents: 0, isIncome: tx.isIncome)
             cur.cents += tx.amountCents
             sums[cat.uuid] = cur
         }
 
         breakdownCategories = sums.map { id, acc in
-            .init(id: id, name: acc.name, symbol: acc.symbol, cents: acc.cents)
+            .init(id: id, name: acc.name, symbol: acc.symbol, cents: acc.cents, isIncome: acc.isIncome)
         }
     }
 

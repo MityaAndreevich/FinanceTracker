@@ -506,6 +506,9 @@
 
 // Analytics redesign (Brief 28H) — Pulse / Breakdown / Horizon
 "analytics.screen.picker" = "Visão";
+"analytics.filter.picker" = "Tipo";
+"analytics.filter.expense" = "Despesas";
+"analytics.filter.income" = "Receitas";
 "analytics.pulse.title" = "Pulso";
 "analytics.breakdown.title" = "Detalhamento";
 "analytics.horizon.title" = "Horizonte";

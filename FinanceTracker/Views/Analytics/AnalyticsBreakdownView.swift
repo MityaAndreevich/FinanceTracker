@@ -2,10 +2,11 @@
 //  AnalyticsBreakdownView.swift
 //  FinanceTracker
 //
-//  Analytics screen 2 of 3 — "The Breakdown". This-month expenses by category
-//  as a donut (SectorMark) using hierarchical Mint opacity (NOT category-rainbow
-//  colors) to match the Quiet Premium palette. Tap a legend row to focus a slice.
-//  Brief 28H addendum (research-validated). VoiceOver-accessible via AXChartDescriptor.
+//  Analytics screen 2 of 3 — "The Breakdown". This-month category totals as a
+//  donut (SectorMark). A segmented control switches between Expenses and Income
+//  so the two directions are never mixed: expense slices are hierarchical red,
+//  income slices hierarchical green (opacity by rank, not hue). Tap a legend row
+//  to focus a slice. VoiceOver-accessible via AXChartDescriptor. Brief 28J P2.
 //
 
 import SwiftUI
@@ -15,33 +16,79 @@ struct AnalyticsBreakdownView: View {
     let categories: [CategoryTotal]
     let currencyCode: String
 
+    @State private var typeFilter: TypeFilter = .expense
     @State private var selectedCategory: CategoryTotal?
 
     struct CategoryTotal: Identifiable, Hashable {
         let id: UUID
         let name: String
         let symbol: String
-        let cents: Int
+        let cents: Int          // positive magnitude
+        let isIncome: Bool
+    }
+
+    enum TypeFilter: String, CaseIterable, Identifiable {
+        case expense, income
+        var id: String { rawValue }
+        var labelKey: LocalizedStringKey {
+            switch self {
+            case .expense: return "analytics.filter.expense"
+            case .income:  return "analytics.filter.income"
+            }
+        }
+    }
+
+    private var filteredCategories: [CategoryTotal] {
+        categories.filter { typeFilter == .income ? $0.isIncome : !$0.isIncome }
     }
 
     private var sortedCategories: [CategoryTotal] {
-        categories.sorted { $0.cents > $1.cents }
+        filteredCategories.sorted { $0.cents > $1.cents }
     }
 
     private var total: Int {
-        categories.reduce(0) { $0 + $1.cents }
+        filteredCategories.reduce(0) { $0 + $1.cents }
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                donutChart
-                legend
+                typePicker
+
+                if sortedCategories.isEmpty {
+                    emptyHint
+                } else {
+                    donutChart
+                    legend
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 24)
         }
+    }
+
+    private var typePicker: some View {
+        Picker("analytics.filter.picker", selection: $typeFilter) {
+            ForEach(TypeFilter.allCases) { filter in
+                Text(filter.labelKey).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .onChange(of: typeFilter) { _, _ in
+            // A focused slice from one direction makes no sense after switching.
+            withAnimation(.easeInOut(duration: 0.2)) { selectedCategory = nil }
+        }
+    }
+
+    private var emptyHint: some View {
+        Text(typeFilter == .income ? "analytics.empty.no_income" : "analytics.empty.no_expenses")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.top, 48)
+            .padding(.horizontal, 24)
     }
 
     private var donutChart: some View {
@@ -52,8 +99,8 @@ struct AnalyticsBreakdownView: View {
                 angularInset: 2.5
             )
             .cornerRadius(6)
-            // Hierarchical Mint — opacity varies by rank, not hue.
-            .foregroundStyle(colorForRank(cat))
+            // Hierarchical by rank — red for expenses, green for income.
+            .foregroundStyle(color(for: cat))
             .opacity(selectedCategory == nil || selectedCategory == cat ? 1.0 : 0.35)
         }
         .frame(height: 280)
@@ -93,13 +140,17 @@ struct AnalyticsBreakdownView: View {
         }
     }
 
-    private func colorForRank(_ cat: CategoryTotal) -> Color {
-        guard let rank = sortedCategories.firstIndex(of: cat) else {
-            return Color.accentColor.opacity(0.3)
-        }
-        // Most spent = full color, each lower rank a little more transparent.
-        let factor = max(0.35, 1.0 - (Double(rank) * 0.12))
-        return Color.accentColor.opacity(factor)
+    /// Expense = red, income = green; magnitude rank fades opacity so the biggest
+    /// slice reads strongest. Mirrors the +/− color language used elsewhere.
+    private func color(for cat: CategoryTotal) -> Color {
+        let base: Color = cat.isIncome ? .green : .red
+        return base.opacity(opacityForRank(cat))
+    }
+
+    private func opacityForRank(_ cat: CategoryTotal) -> Double {
+        guard let rank = sortedCategories.firstIndex(of: cat) else { return 0.35 }
+        // Most spent/earned = full color, each lower rank a little more transparent.
+        return max(0.35, 1.0 - (Double(rank) * 0.12))
     }
 
     private var legend: some View {
@@ -115,7 +166,7 @@ struct AnalyticsBreakdownView: View {
                     HStack(spacing: 14) {
                         Image(systemName: cat.symbol)
                             .font(.body)
-                            .foregroundStyle(colorForRank(cat))
+                            .foregroundStyle(color(for: cat))
                             .frame(width: 28)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(cat.name).font(.body)
@@ -177,7 +228,7 @@ extension AnalyticsBreakdownView: AXChartDescriptorRepresentable {
         )
         return AXChartDescriptor(
             title: "Spending Breakdown",
-            summary: "Shows distribution of spending across categories",
+            summary: "Shows distribution across categories",
             xAxis: xAxis,
             yAxis: yAxis,
             series: [series]
