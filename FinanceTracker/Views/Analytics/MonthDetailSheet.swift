@@ -45,7 +45,7 @@ struct MonthDetailSheet: View {
                             currencyCode: currencyCode
                         ))
                         .font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(month.netCents >= 0 ? .green : .red)
+                        .foregroundStyle(Color.money(isPositive: month.netCents >= 0))
                         .privacySensitive(true)
                         Text(String(format: NSLocalizedString("analytics.transactions_count", comment: ""), filtered.count))
                             .font(.caption)

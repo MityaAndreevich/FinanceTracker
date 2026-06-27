@@ -184,7 +184,7 @@ struct DashboardView: View {
                     currencyCode: defaultCurrencyCode
                 ))
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(parsed.typeRaw == TransactionType.income.raw ? Color.green : Color.red)
+                .foregroundStyle(Color.money(isPositive: parsed.typeRaw == TransactionType.income.raw))
                 .monospacedDigit()
 
                 Text("→").foregroundStyle(.secondary)
@@ -292,7 +292,7 @@ struct DashboardView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: netCents >= 0 ? "arrow.up.right" : "arrow.down.right")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(netCents >= 0 ? Color.green : Color.red)
+                    .foregroundStyle(Color.money(isPositive: netCents >= 0))
 
                 Text((netCents >= 0 ? "+" : "−") + "\u{00A0}" +
                      Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode))
@@ -300,7 +300,7 @@ struct DashboardView: View {
                     .monospacedDigit()
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
-                    .foregroundStyle(netCents >= 0 ? Color.green : Color.red)
+                    .foregroundStyle(Color.money(isPositive: netCents >= 0))
                     .privacySensitive(true)
             }
 

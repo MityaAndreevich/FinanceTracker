@@ -143,7 +143,7 @@ struct AnalyticsBreakdownView: View {
     /// Expense = red, income = green; magnitude rank fades opacity so the biggest
     /// slice reads strongest. Mirrors the +/− color language used elsewhere.
     private func color(for cat: CategoryTotal) -> Color {
-        let base: Color = cat.isIncome ? .green : .red
+        let base: Color = cat.isIncome ? .bcIncome : .bcExpense
         return base.opacity(opacityForRank(cat))
     }
 
