@@ -16,10 +16,21 @@ struct AnalyticsPulseView: View {
     let netCents: Int
     let currencyCode: String
 
+    @State private var rawSelectedDate: Date?
+
     struct DailyTotal: Identifiable {
         let id = UUID()
         let date: Date
         let cents: Int
+    }
+
+    /// Day nearest the scrub position, or nil when the user isn't dragging.
+    private var selectedDay: DailyTotal? {
+        guard let rawSelectedDate else { return nil }
+        return dailyTotals.min { lhs, rhs in
+            abs(lhs.date.timeIntervalSince(rawSelectedDate)) <
+            abs(rhs.date.timeIntervalSince(rawSelectedDate))
+        }
     }
 
     var body: some View {
@@ -35,22 +46,39 @@ struct AnalyticsPulseView: View {
         }
     }
 
+    @ViewBuilder
     private var heroMetric: some View {
         VStack(spacing: 4) {
-            Text("analytics.net_this_month")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text(Money.formatSigned(
-                cents: netCents,
-                isPositive: netCents >= 0,
-                currencyCode: currencyCode
-            ))
-            .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-            .foregroundStyle(netCents >= 0 ? .green : .red)
-            .privacySensitive(true)  // hidden in App Switcher per HIG
-            .contentTransition(.numericText(value: Double(netCents) / 100))
+            if let selectedDay {
+                Text(selectedDay.date.formatted(.dateTime.day().month(.wide)))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                Text(Money.formatSigned(
+                    cents: selectedDay.cents,
+                    isPositive: selectedDay.cents >= 0,
+                    currencyCode: currencyCode
+                ))
+                .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(selectedDay.cents >= 0 ? .green : .red)
+                .privacySensitive(true)
+                .contentTransition(.numericText())
+            } else {
+                Text("analytics.net_this_month")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(Money.formatSigned(
+                    cents: netCents,
+                    isPositive: netCents >= 0,
+                    currencyCode: currencyCode
+                ))
+                .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(netCents >= 0 ? .green : .red)
+                .privacySensitive(true)  // hidden in App Switcher per HIG
+                .contentTransition(.numericText(value: Double(netCents) / 100))
+            }
         }
         .padding(.top, 16)
+        .animation(.easeInOut(duration: 0.15), value: selectedDay?.id)
     }
 
     private var cashFlowChart: some View {
@@ -80,7 +108,21 @@ struct AnalyticsPulseView: View {
                 .interpolationMethod(.catmullRom)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
             }
+
+            if let selectedDay {
+                RuleMark(x: .value("analytics.axis.date", selectedDay.date))
+                    .foregroundStyle(Color.accentColor.opacity(0.4))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+
+                PointMark(
+                    x: .value("analytics.axis.date", selectedDay.date),
+                    y: .value("analytics.axis.amount", selectedDay.cents)
+                )
+                .foregroundStyle(Color.accentColor)
+                .symbolSize(120)
+            }
         }
+        .chartXSelection(value: $rawSelectedDate)
         .chartXAxis {
             AxisMarks(values: .stride(by: .day, count: 7)) { _ in
                 AxisGridLine().foregroundStyle(.secondary.opacity(0.15))
@@ -97,6 +139,10 @@ struct AnalyticsPulseView: View {
         }
         .frame(height: 240)
         .padding(.vertical, 8)
+        .onChange(of: rawSelectedDate) { _, _ in
+            // Soft haptic on scrub — matches Horizon (Apple Stocks reference).
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
+        }
     }
 
     private var summary: some View {
