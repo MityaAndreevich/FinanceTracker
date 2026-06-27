@@ -32,7 +32,10 @@ final class LocaleCompletenessTests: XCTestCase {
             return XCTFail("Missing English Localizable.strings")
         }
         let enKeys = Set(en.keys)
-        XCTAssertEqual(enKeys.count, 455, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-28 (overnight design polish): +3 analytics keys for the
+        // sticky chart selection / Pulse day drill-down (pulse.tap_hint,
+        // selection.clear, day.by_category). Was 456 before this pass.
+        XCTAssertEqual(enKeys.count, 459, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
