@@ -35,6 +35,10 @@ CLAUDE.md
 .aider*
 .aiderignore
 
+# Temporary scratchpads / web upload staging (not for repo)
+_briefs-28h/
+_web-files-for-upload/
+
 # Internal strategy / planning docs (not for public repo)
 PRODUCT_SPEC.md
 MARKET_ANALYSIS.md

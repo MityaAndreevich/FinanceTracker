@@ -2,7 +2,7 @@
 //  AddTransactionIntent.swift
 //  FinanceTracker
 //
-//  "Hey Siri, add twelve dollars groceries in Vela" → transaction saved
+//  "Hey Siri, add twelve dollars groceries in Budget Crab" → transaction saved
 //  without launching the app. Reuses QuickAddSaveService so merchant
 //  learning and all save side-effects fire consistently with in-app entry.
 //

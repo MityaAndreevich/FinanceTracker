@@ -3,11 +3,11 @@ import Testing
 import AppIntents
 @testable import FinanceTracker
 
-@Suite("VelaShortcuts")
-struct VelaShortcutsTests {
+@Suite("BudgetCrabShortcuts")
+struct BudgetCrabShortcutsTests {
 
     @Test func test_appShortcuts_containsThreeShortcuts() {
-        #expect(VelaShortcuts.appShortcuts.count == 3)
+        #expect(BudgetCrabShortcuts.appShortcuts.count == 3)
     }
 
     @Test func test_periodAppEnum_rawValues() {

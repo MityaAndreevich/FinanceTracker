@@ -1,6 +1,6 @@
 //
 //  NetSnapshot.swift
-//  Vela — shared by the app target and the VelaWidget extension.
+//  Budget Crab — shared by the app target and the BudgetCrabWidget extension.
 //
 //  A tiny, display-ready, Codable snapshot of the current month that the app
 //  writes to the shared App Group on data changes and the widget reads. The

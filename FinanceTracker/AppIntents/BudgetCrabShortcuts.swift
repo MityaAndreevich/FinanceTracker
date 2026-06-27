@@ -1,5 +1,5 @@
 //
-//  VelaShortcuts.swift
+//  BudgetCrabShortcuts.swift
 //  FinanceTracker
 //
 //  Surfaces three shortcuts automatically in the Shortcuts app, Siri suggestions,
@@ -8,7 +8,7 @@
 
 import AppIntents
 
-struct VelaShortcuts: AppShortcutsProvider {
+struct BudgetCrabShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: AddTransactionIntent(),

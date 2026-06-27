@@ -2,7 +2,7 @@
 //  OpenQuickEntryIntent.swift
 //  FinanceTracker
 //
-//  "Hey Siri, open Quick Entry in Vela" → app opens directly to the
+//  "Hey Siri, open Quick Entry in Budget Crab" → app opens directly to the
 //  Quick Entry sheet. Sets a flag in App Group UserDefaults; ContentView
 //  reads it on foreground and presents the sheet.
 //

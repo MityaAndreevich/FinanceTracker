@@ -29,6 +29,10 @@ enum SharedModelContainer {
         ) else {
             fatalError("App Group '\(appGroupID)' not found in entitlements.")
         }
+        // NOTE: filename intentionally kept as "Vela.sqlite" (the app's former name).
+        // This is the on-disk store path inside the App Group — renaming it would
+        // orphan existing user/test data. The display-name rename to "Budget Crab"
+        // does not touch persistence. Do not rename without a data migration.
         let storeURL = groupURL.appendingPathComponent("Vela.sqlite")
 
         let config = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
@@ -52,7 +56,7 @@ enum SharedModelContainer {
             forSecurityApplicationGroupIdentifier: appGroupID
         ) else { return }
 
-        let dst = groupURL.appendingPathComponent("Vela.sqlite")
+        let dst = groupURL.appendingPathComponent("Vela.sqlite") // legacy filename — see note above
         guard !FileManager.default.fileExists(atPath: dst.path) else { return }
 
         // Default SwiftData location when no URL is specified in ModelConfiguration.

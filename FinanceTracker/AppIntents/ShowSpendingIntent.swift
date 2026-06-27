@@ -2,7 +2,7 @@
 //  ShowSpendingIntent.swift
 //  FinanceTracker
 //
-//  "Hey Siri, show this month's spending in Vela" → app opens to Analytics
+//  "Hey Siri, show this month's spending in Budget Crab" → app opens to Analytics
 //  for the requested period. Sets flags in App Group UserDefaults; ContentView
 //  reads them on foreground and switches to the Analytics tab.
 //

@@ -1,6 +1,6 @@
 //
-//  VelaWidget.swift
-//  VelaWidget
+//  BudgetCrabWidget.swift
+//  BudgetCrabWidget
 //
 //  Read-only Home Screen widget showing the current month's NET. Reads a
 //  pre-computed NetSnapshot from the shared App Group — never opens SwiftData,
@@ -12,22 +12,22 @@ import SwiftUI
 
 // MARK: - Timeline
 
-struct VelaEntry: TimelineEntry {
+struct BudgetCrabEntry: TimelineEntry {
     let date: Date
     let snapshot: NetSnapshot
 }
 
-struct VelaProvider: TimelineProvider {
-    func placeholder(in context: Context) -> VelaEntry {
-        VelaEntry(date: Date(), snapshot: .placeholder())
+struct BudgetCrabProvider: TimelineProvider {
+    func placeholder(in context: Context) -> BudgetCrabEntry {
+        BudgetCrabEntry(date: Date(), snapshot: .placeholder())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (VelaEntry) -> Void) {
-        completion(VelaEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder()))
+    func getSnapshot(in context: Context, completion: @escaping (BudgetCrabEntry) -> Void) {
+        completion(BudgetCrabEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder()))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<VelaEntry>) -> Void) {
-        let entry = VelaEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder())
+    func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetCrabEntry>) -> Void) {
+        let entry = BudgetCrabEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder())
 
         // Cheap refresh: recompute month rollover at the next local midnight.
         let nextMidnight = Calendar.current.nextDate(
@@ -42,7 +42,7 @@ struct VelaProvider: TimelineProvider {
 
 // MARK: - Palette
 
-private let velaMint = Color(red: 0.239, green: 0.863, blue: 0.592) // #3DDC97
+private let budgetCrabMint = Color(red: 0.239, green: 0.863, blue: 0.592) // #3DDC97
 
 private extension NetSnapshot {
     var heroColor: Color { isPositive ? .green : .red }
@@ -51,9 +51,9 @@ private extension NetSnapshot {
 
 // MARK: - Entry view
 
-struct VelaWidgetEntryView: View {
+struct BudgetCrabWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
-    var entry: VelaEntry
+    var entry: BudgetCrabEntry
 
     var body: some View {
         switch family {
@@ -90,7 +90,7 @@ private struct SmallWidgetView: View {
     let snapshot: NetSnapshot
     var body: some View {
         VStack(alignment: .leading) {
-            HStack { Spacer(); Image(systemName: "chart.line.uptrend.xyaxis").font(.caption).foregroundStyle(velaMint) }
+            HStack { Spacer(); Image(systemName: "chart.line.uptrend.xyaxis").font(.caption).foregroundStyle(budgetCrabMint) }
             Spacer()
             HeroView(snapshot: snapshot)
         }
@@ -172,15 +172,15 @@ private struct LargeWidgetView: View {
 // MARK: - Widget
 
 @main
-struct VelaWidget: Widget {
-    private let kind = "VelaWidget"
+struct BudgetCrabWidget: Widget {
+    private let kind = "BudgetCrabWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: VelaProvider()) { entry in
-            VelaWidgetEntryView(entry: entry)
+        StaticConfiguration(kind: kind, provider: BudgetCrabProvider()) { entry in
+            BudgetCrabWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Vela")
+        .configurationDisplayName("Budget Crab")
         .description("See your monthly net at a glance.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
