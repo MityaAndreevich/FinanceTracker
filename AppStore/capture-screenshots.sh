@@ -54,16 +54,29 @@ log()  { printf '\033[0;36m▸ %s\033[0m\n' "$*"; }
 ok()   { printf '\033[0;32m✓ %s\033[0m\n' "$*"; }
 die()  { printf '\033[0;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
-# Map a UI locale → (seed json code, AppleLanguages code, AppleLocale).
+# Map a UI locale → (seed json code, AppleLanguages code, AppleLocale, keyboard).
 # Currency is driven by the seed JSON, not here: RUB/EUR/BRL/USD.
+# KB is an AppleKeyboards entry: the "sw=" software layout drives the on-screen
+# keyboard. es_ES (Spain, ñ) not es_MX; pt_BR (Brazilian, ç) not pt_PT.
 resolve_locale() {
   case "$(echo "$1" | tr '[:lower:]' '[:upper:]')" in
-    EN)            SEED=en;    LANG_CODE=en;    APPLE_LOCALE=en_US ;;
-    RU)            SEED=ru;    LANG_CODE=ru;    APPLE_LOCALE=ru_RU ;;
-    ES)            SEED=es;    LANG_CODE=es;    APPLE_LOCALE=es_ES ;;
-    PT-BR|PTBR|PT) SEED=pt-BR; LANG_CODE=pt-BR; APPLE_LOCALE=pt_BR ;;
+    EN)            SEED=en;    LANG_CODE=en;    APPLE_LOCALE=en_US; KB="en_US@sw=QWERTY;hw=Automatic" ;;
+    RU)            SEED=ru;    LANG_CODE=ru;    APPLE_LOCALE=ru_RU; KB="ru_RU@sw=Russian;hw=Automatic" ;;
+    ES)            SEED=es;    LANG_CODE=es;    APPLE_LOCALE=es_ES; KB="es_ES@sw=Spanish;hw=Automatic" ;;
+    PT-BR|PTBR|PT) SEED=pt-BR; LANG_CODE=pt-BR; APPLE_LOCALE=pt_BR; KB="pt_BR@sw=Portuguese-Brazilian;hw=Automatic" ;;
     *) die "Unknown locale '$1' (use EN | RU | ES | PT-BR | ALL)" ;;
   esac
+}
+
+# Force the on-screen keyboard to the locale's layout. Installing only the
+# target layout (+ emoji) leaves iOS no other input source to fall back to, so
+# the next app launch renders that keyboard. Without this the simulator keeps
+# the last-used input source (e.g. Russian leaking into es/pt-BR screenshots).
+set_keyboard() {
+  xcrun simctl spawn "$UDID" defaults write -g AppleKeyboards -array "$KB" "emoji@sw=Emoji"
+  xcrun simctl spawn "$UDID" defaults write -g AppleKeyboardsExpanded -int 1
+  # Flush the prefs daemon so the next launch reads the new value, not a cache.
+  xcrun simctl spawn "$UDID" killall cfprefsd >/dev/null 2>&1 || true
 }
 
 boot_device() {
@@ -136,6 +149,8 @@ capture_locale() {
   local out_dir="$REPO_ROOT/AppStore/screenshots/$locale"
   mkdir -p "$out_dir"
   log "Capturing $locale (seed=$SEED, $APPLE_LOCALE) → $out_dir"
+  log "Keyboard → $KB"
+  set_keyboard
 
   for entry in "${SCREENS[@]}"; do
     local screen="${entry%%:*}"
