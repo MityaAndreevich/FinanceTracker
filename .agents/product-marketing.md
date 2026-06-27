@@ -22,7 +22,7 @@ Budget Crab is the private way to track your money — no banks, no cloud, no ac
 ## What makes Budget Crab different
 
 1. **Architecture is the privacy promise.** Budget Crab cannot collect your financial data because there's no system to collect it. No servers. No analytics. No ad SDKs.
-2. **Voice entry that never leaves the iPhone.** Apple's SFSpeechRecognizer with `requiresOnDeviceRecognition = true`. Audio never reaches a server.
+2. **Voice entry that never leaves the iPhone.** Apple's SFSpeechRecognizer with `requiresOnDeviceRecognition = true`. Audio never reaches a server. Availability depends on the languages your iPhone supports for on-device dictation — don't promise specific languages (e.g. Spanish) in copy; frame it as "works in the languages your iPhone supports for dictation."
 3. **Smart entry without AI hype.** Quick Entry parses "$5 coffee" or "67 gas" via on-device rule-based matcher. Foundation Models NL parsing arrives v1.1.
 4. **Siri + Shortcuts + Widget native.** First-class App Intents integration. Say "Hey Siri, add ten dollars groceries" and the transaction lands locally.
 5. **Independent by design.** No investor pressure to monetize data. No bank sync ever forced in for growth metrics.
