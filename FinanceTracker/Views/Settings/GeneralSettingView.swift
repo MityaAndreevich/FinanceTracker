@@ -33,7 +33,6 @@ struct GeneralSettingsView: View {
 
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
-    @State private var showLanguageRestartAlert = false
 
     // Универсальный Info Alert
     @State private var showInfoAlert = false
@@ -79,13 +78,6 @@ struct GeneralSettingsView: View {
             Button("general.alert.restart", role: .destructive) { restartOnboarding() }
         } message: {
             Text("general.alert.restart_onboarding.message")
-        }
-
-        // Language updated — Apple-standard "reopen to fully apply" notice.
-        .alert("settings.language.restart_required.title", isPresented: $showLanguageRestartAlert) {
-            Button("settings.language.restart_required.cta", role: .cancel) {}
-        } message: {
-            Text("settings.language.restart_required.message")
         }
     }
 
@@ -174,12 +166,12 @@ struct GeneralSettingsView: View {
         if let language, language != appLanguageCode {
             appLanguageCode = language
             applyAppleLanguagesOverride(for: language)
-            // Defer the alert until the picker sheet has fully dismissed. Presenting
-            // it immediately races the dismiss transition and bounces back on the
-            // first attempt (Brief 28G hotfix).
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                showLanguageRestartAlert = true
-            }
+            // Apply silently — no restart alert. Four attempts to present a
+            // "reopen to fully apply" alert all raced the picker-sheet dismiss
+            // transition and bounced (Briefs 28D–28G). The live environment(\.locale)
+            // refreshes Text("key") immediately; code-resolved String(localized:)
+            // strings pick up the new language on the next launch. The expected
+            // behavior is documented in the Support FAQ instead of an in-app alert.
         }
     }
 
