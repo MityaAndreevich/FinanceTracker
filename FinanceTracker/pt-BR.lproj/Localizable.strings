@@ -456,3 +456,14 @@
 "quickadd.pick_category" = "Escolher categoria";
 "category.picker.add_new" = "Adicionar nova categoria";
 "quickadd.a11y.change_category" = "Alterar categoria";
+
+// Analytics redesign (Brief 28H) — Pulse / Breakdown / Horizon
+"analytics.screen.picker" = "Visão";
+"analytics.pulse.title" = "Pulso";
+"analytics.breakdown.title" = "Detalhamento";
+"analytics.horizon.title" = "Horizonte";
+"analytics.net_this_month" = "Líquido este mês";
+"analytics.total" = "Total";
+"analytics.earned_total" = "Receitas";
+"analytics.spent_total" = "Despesas";
+"analytics.horizon.hint" = "Arraste pelo gráfico para explorar";

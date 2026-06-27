@@ -585,3 +585,14 @@
 "settings.demo.add" = "Добавить пример данных";
 "settings.demo.clear" = "Удалить пример данных";
 "settings.tutorial.replay" = "Повторить обучение";
+
+// Analytics redesign (Brief 28H) — Pulse / Breakdown / Horizon
+"analytics.screen.picker" = "Вид";
+"analytics.pulse.title" = "Пульс";
+"analytics.breakdown.title" = "Разбивка";
+"analytics.horizon.title" = "Тренды";
+"analytics.net_this_month" = "Чистыми за месяц";
+"analytics.total" = "Всего";
+"analytics.earned_total" = "Доходы";
+"analytics.spent_total" = "Расходы";
+"analytics.horizon.hint" = "Проведите по графику, чтобы посмотреть";

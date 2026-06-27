@@ -575,3 +575,14 @@
 "settings.demo.add" = "Add sample data";
 "settings.demo.clear" = "Clear sample data";
 "settings.tutorial.replay" = "Replay tutorial";
+
+// Analytics redesign (Brief 28H) — Pulse / Breakdown / Horizon
+"analytics.screen.picker" = "View";
+"analytics.pulse.title" = "Pulse";
+"analytics.breakdown.title" = "Breakdown";
+"analytics.horizon.title" = "Horizon";
+"analytics.net_this_month" = "Net this month";
+"analytics.total" = "Total";
+"analytics.earned_total" = "Earned";
+"analytics.spent_total" = "Spent";
+"analytics.horizon.hint" = "Drag across the chart to explore";
