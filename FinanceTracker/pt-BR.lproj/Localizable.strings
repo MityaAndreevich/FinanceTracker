@@ -188,7 +188,7 @@
 "quick_entry.save" = "Salvar";
 "quick_entry.use_form" = "Usar formulário detalhado";
 "quick_entry.fail_unparseable" = "Não foi possível ler — use o formulário";
-"quick_entry.placeholder.1" = "R$ 5,50 Starbucks";
+"quick_entry.placeholder.1" = "R$ 12 café";
 "quick_entry.placeholder.2" = "almoço 35";
 "quick_entry.placeholder.3" = "67 gasolina";
 "quick_entry.placeholder.4" = "+2800 salário";

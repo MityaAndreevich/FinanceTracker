@@ -583,7 +583,7 @@
 "quick_entry.save" = "Сохранить";
 "quick_entry.use_form" = "Открыть форму";
 "quick_entry.fail_unparseable" = "Не удалось распознать — откройте форму";
-"quick_entry.placeholder.1" = "5,50 Starbucks";
+"quick_entry.placeholder.1" = "350₽ кофе";
 "quick_entry.placeholder.2" = "обед 800";
 "quick_entry.placeholder.3" = "3000 бензин";
 "quick_entry.placeholder.4" = "+200000 зарплата";
