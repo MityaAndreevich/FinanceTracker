@@ -18,6 +18,13 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
 
+    // Settings navigation is path-driven so we can pop it to root whenever the user
+    // leaves the tab. Without this, a language change (AppleLanguages override +
+    // appLanguageCode cascade while a sheet/alert dismisses) could leave the Settings
+    // NavigationStack in a stuck transitional state — taps on the tab did nothing
+    // until the user switched tabs and back. Resetting on leave gives a clean slate.
+    @State private var settingsNavPath = NavigationPath()
+
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
@@ -44,7 +51,7 @@ struct ContentView: View {
             .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
             .tag(3)
 
-            NavigationStack {
+            NavigationStack(path: $settingsNavPath) {
                 SettingsView()
             }
             .tabItem { Label("tab.settings", systemImage: "gear") }
@@ -54,6 +61,11 @@ struct ContentView: View {
             if newTab == 2 {
                 showAddSheet = true
                 selectedTab = oldTab   // restore: the + tab never "sticks"
+            }
+            // Leaving Settings: clear its navigation path so the next visit is a
+            // clean root, never a stuck transitional state after a language change.
+            if oldTab == 4 && newTab != 4 {
+                settingsNavPath = NavigationPath()
             }
         }
         .sheet(isPresented: $showAddSheet) {
