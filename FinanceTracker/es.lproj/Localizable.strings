@@ -110,6 +110,9 @@
 
 "help.contact_support" = "Correo de soporte";
 "help.online_faq" = "Preguntas frecuentes";
+"help.copy_email" = "Copiar correo";
+"help.open_in_mail" = "Abrir en Mail";
+"help.email_copied" = "Correo copiado al portapapeles";
 
 /* General */
 "general.title" = "General";

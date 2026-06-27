@@ -135,6 +135,9 @@
 
 "help.contact_support" = "Email support";
 "help.online_faq" = "Online FAQ";
+"help.copy_email" = "Copy email";
+"help.open_in_mail" = "Open in Mail app";
+"help.email_copied" = "Email copied to clipboard";
 "settings.privacy" = "Privacy";
 
 /* ======================================================

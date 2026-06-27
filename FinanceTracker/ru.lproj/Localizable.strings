@@ -146,6 +146,9 @@
 
 "help.contact_support" = "Написать в поддержку";
 "help.online_faq" = "Онлайн-справка";
+"help.copy_email" = "Скопировать e-mail";
+"help.open_in_mail" = "Открыть в Почте";
+"help.email_copied" = "E-mail скопирован в буфер обмена";
 "settings.privacy" = "Конфиденциальность";
 
 /* ======================================================

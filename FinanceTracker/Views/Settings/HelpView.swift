@@ -7,10 +7,14 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct HelpView: View {
-    private let supportEmail = URL(string: "mailto:support@budgetcrab.app")!
+    private let supportEmailAddress = "support@budgetcrab.app"
+    private let supportEmail = URL(string: "mailto:support@budgetcrab.app?subject=Budget%20Crab%20Support")!
     private let onlineFAQ = URL(string: "https://budgetcrab.app/support.html")!
+
+    @State private var showCopiedToast = false
 
     var body: some View {
         List {
@@ -32,9 +36,29 @@ struct HelpView: View {
             }
 
             Section("help.contact.title") {
-                Link(destination: supportEmail) {
-                    Label("help.contact_support", systemImage: "envelope")
+                // Copy-to-clipboard works on any iPhone, even one with no Mail
+                // account configured (Round 9 R3: mailto failed with "не удалось
+                // отправить" on such devices). The mailto link is offered too for
+                // users who do have Mail set up.
+                Button {
+                    UIPasteboard.general.string = supportEmailAddress
+                    showCopiedToast = true
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                } label: {
+                    HStack {
+                        Label("help.copy_email", systemImage: "doc.on.doc")
+                        Spacer()
+                        Text(verbatim: supportEmailAddress)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .buttonStyle(.plain)
+
+                Link(destination: supportEmail) {
+                    Label("help.open_in_mail", systemImage: "envelope.open")
+                }
+
                 Link(destination: onlineFAQ) {
                     Label("help.online_faq", systemImage: "safari")
                 }
@@ -43,6 +67,9 @@ struct HelpView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("settings.help")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("help.email_copied", isPresented: $showCopiedToast) {
+            Button("common.ok", role: .cancel) {}
+        }
     }
 
     private func articleLink(_ article: HelpArticle, icon: String) -> some View {
