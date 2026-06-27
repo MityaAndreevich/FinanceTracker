@@ -27,6 +27,13 @@ struct AboutView: View {
             }
 
             Section {
+                ShareLink(item: Self.appStoreURL,
+                          message: Text("about.tell_friend.share")) {
+                    Label("about.tell_friend", systemImage: "square.and.arrow.up")
+                }
+            }
+
+            Section {
                 Text("about.privacy_hint")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -35,6 +42,9 @@ struct AboutView: View {
         .navigationTitle("settings.about")
         .listStyle(.insetGrouped)
     }
+
+    /// App Store URL — replace `idTBD` with the real App ID once Apple assigns it post-submission.
+    private static let appStoreURL = URL(string: "https://apps.apple.com/app/budget-crab/idTBD")!
 
     private var appVersionString: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
