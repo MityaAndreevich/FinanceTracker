@@ -18,12 +18,18 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
 
-    // Settings navigation is path-driven so we can pop it to root whenever the user
-    // leaves the tab. Without this, a language change (AppleLanguages override +
-    // appLanguageCode cascade while a sheet/alert dismisses) could leave the Settings
-    // NavigationStack in a stuck transitional state — taps on the tab did nothing
-    // until the user switched tabs and back. Resetting on leave gives a clean slate.
-    @State private var settingsNavPath = NavigationPath()
+    // Settings navigation is reset by recreating its NavigationStack whenever the
+    // user leaves the tab (bumping this token changes the stack's `.id`, which pops
+    // it to root). A language change (AppleLanguages override + appLanguageCode
+    // cascade while a sheet/alert dismisses) could otherwise leave the stack in a
+    // stuck transitional state — taps did nothing until switching tabs and back.
+    //
+    // We deliberately do NOT bind a `NavigationPath` here. SettingsView and HelpView
+    // push with destination-based `NavigationLink`s; mixing those with a bound path
+    // (which only tracks value-based links) corrupted the stack after a deep pop —
+    // returning from a Help article left "General" unresponsive (Round 9 R1). A
+    // plain, id-reset NavigationStack is the canonical pairing for destination links.
+    @State private var settingsResetToken = UUID()
 
     var body: some View {
         ZStack {
@@ -68,9 +74,10 @@ struct ContentView: View {
             .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
             .tag(3)
 
-            NavigationStack(path: $settingsNavPath) {
+            NavigationStack {
                 SettingsView()
             }
+            .id(settingsResetToken)
             .tabItem { Label("tab.settings", systemImage: "gear") }
             .tag(4)
         }
@@ -79,10 +86,10 @@ struct ContentView: View {
                 showAddSheet = true
                 selectedTab = oldTab   // restore: the + tab never "sticks"
             }
-            // Leaving Settings: clear its navigation path so the next visit is a
+            // Leaving Settings: recreate its NavigationStack so the next visit is a
             // clean root, never a stuck transitional state after a language change.
             if oldTab == 4 && newTab != 4 {
-                settingsNavPath = NavigationPath()
+                settingsResetToken = UUID()
             }
         }
         .sheet(isPresented: $showAddSheet) {
