@@ -1,0 +1,372 @@
+{
+  "locale": "ru",
+  "currencyCode": "RUB",
+  "sources": [
+    {
+      "key": "checking",
+      "name": "Дебетовая карта"
+    },
+    {
+      "key": "credit",
+      "name": "Кредитная карта"
+    },
+    {
+      "key": "cash",
+      "name": "Наличные"
+    }
+  ],
+  "transactions": [
+    {
+      "daysAgo": 60,
+      "category": "Income",
+      "source": "checking",
+      "minor": 8000000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "daysAgo": 58,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Пятёрочка",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 58,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 29900,
+      "merchant": "Яндекс Плюс",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 55,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 55,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Лукойл",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 50,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 65000,
+      "merchant": "Теремок",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 48,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 48,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 45000,
+      "merchant": "Яндекс Go",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 47,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 39900,
+      "merchant": "Кинопоиск",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 46,
+      "category": "Income",
+      "source": "checking",
+      "minor": 8000000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "daysAgo": 44,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Пятёрочка",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 44,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 41,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Лукойл",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 41,
+      "category": "Utilities",
+      "source": "checking",
+      "minor": 380000,
+      "merchant": "ЖКХ",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 38,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 38,
+      "category": "Health",
+      "source": "credit",
+      "minor": 85000,
+      "merchant": "Аптека",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 35,
+      "category": "Health",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Фитнес-клуб",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 35,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 4500000,
+      "merchant": "Аренда жилья",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 32,
+      "category": "Income",
+      "source": "checking",
+      "minor": 8000000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "daysAgo": 30,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Пятёрочка",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 30,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 28,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 29900,
+      "merchant": "Яндекс Плюс",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 25,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 65000,
+      "merchant": "Теремок",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Лукойл",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 22,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 60000,
+      "merchant": "Читай-город",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 18,
+      "category": "Income",
+      "source": "checking",
+      "minor": 8000000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "daysAgo": 16,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Пятёрочка",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 16,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 39900,
+      "merchant": "Кинопоиск",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 16,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 14,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 50000,
+      "merchant": "Кинотеатр",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 14,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 45000,
+      "merchant": "Яндекс Go",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 12,
+      "category": "Health",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Фитнес-клуб",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 10,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 4500000,
+      "merchant": "Аренда жилья",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 8,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 8,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Лукойл",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 6,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 350000,
+      "merchant": "Пятёрочка",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 4,
+      "category": "Income",
+      "source": "checking",
+      "minor": 8000000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "daysAgo": 3,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 65000,
+      "merchant": "Теремок",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 2,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 29900,
+      "merchant": "Яндекс Плюс",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 1,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 1,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 45000,
+      "merchant": "Яндекс Go",
+      "type": "expense"
+    },
+    {
+      "daysAgo": 0,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    }
+  ]
+}

@@ -63,6 +63,10 @@ struct AnalyticsView: View {
         }
         .navigationTitle("title.analytics")
         .onAppear {
+            #if DEBUG
+            // Screenshot frame #4 is the category breakdown — open it directly.
+            if ScreenshotMode.requestedScreen == .analytics { screen = .breakdown }
+            #endif
             clearPendingIntentPeriod()
             recompute()
         }

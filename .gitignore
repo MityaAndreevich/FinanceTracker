@@ -53,3 +53,6 @@ DESIGN_REVIEW.md
 DESIGN_REVIEW_v2_DELTA.md
 APP_PRIVACY_ANSWERS.md
 LEGAL_RISK_ASSESSMENT.md
+
+# Generated App Store screenshots (regenerate via AppStore/capture-screenshots.sh)
+AppStore/screenshots/

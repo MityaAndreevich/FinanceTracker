@@ -28,15 +28,18 @@ enum DemoSeeder {
 
     // MARK: - Public API
 
-    /// Returns true if the app was launched with `--demo-mode`.
-    /// Used by `ContentView` to decide whether to reset + seed demo data
-    /// or run the regular `SeedService.seedIfNeeded`.
+    /// Returns true if the app was launched in demo mode.
+    /// Accepts either `--demo-mode-debug-only` (used by the screenshot capture
+    /// script) or the legacy `--demo-mode` alias. Used by `ContentView` to decide
+    /// whether to reset + seed demo data or run `SeedService.seedIfNeeded`.
     static var isDemoMode: Bool {
         #if DEBUG
-        return CommandLine.arguments.contains("--demo-mode")
+        let args = CommandLine.arguments
+        return args.contains("--demo-mode-debug-only") || args.contains("--demo-mode")
         #else
-        // Production Release builds MUST NOT process --demo-mode (catastrophic data loss).
-        // Guard prevents accidental scheme misconfiguration from wiping user data.
+        // Production Release builds MUST NOT process demo flags (catastrophic data
+        // loss). This guard prevents an accidental scheme misconfiguration or a
+        // stray launch argument from wiping real user data.
         return false
         #endif
     }
@@ -48,12 +51,21 @@ enum DemoSeeder {
     /// DemoDataController the transactions are flagged so they can be cleared atomically.
     static func resetAndSeedDemoData(modelContext: ModelContext, markAsDemo: Bool = false) {
         do {
+            // Pick the locale-appropriate seed (currency + merchants + account names).
+            // Falls back to the bundled English seed if the requested locale is missing.
+            let seed = loadSeed(localeCode: ScreenshotMode.demoLocaleCode)
+
             try wipeAll(modelContext: modelContext)
 
+            // Mirror the seed currency into the app-wide default so every aggregation
+            // (Dashboard, Analytics, AppIntents) renders in the in-frame currency.
+            applyDemoCurrency(seed.currencyCode)
+
             let categories = seedDemoCategories(modelContext: modelContext)
-            let sources = seedDemoSources(modelContext: modelContext)
+            let sources = seedDemoSources(modelContext: modelContext, specs: seed.sources)
             seedDemoTransactions(
                 modelContext: modelContext,
+                seed: seed,
                 categories: categories,
                 sources: sources,
                 markAsDemo: markAsDemo
@@ -62,13 +74,61 @@ enum DemoSeeder {
             try modelContext.save()
 
             #if DEBUG
-            print("[DemoSeeder] ✓ Demo data seeded — \(categories.count) categories, \(sources.count) sources, ~44 transactions")
+            print("[DemoSeeder] ✓ Seeded '\(seed.locale)' (\(seed.currencyCode)) — \(categories.count) categories, \(sources.count) sources, \(seed.transactions.count) transactions")
             #endif
         } catch {
             #if DEBUG
             print("[DemoSeeder] ⚠️ Failed: \(error.localizedDescription)")
             #endif
         }
+    }
+
+    // MARK: - Locale-appropriate seed loading
+
+    /// Decoded shape of `DemoSeeds/DemoSeed_<locale>.json`.
+    struct Seed: Decodable {
+        let locale: String
+        let currencyCode: String
+        let sources: [SourceSpec]
+        let transactions: [TxSpec]
+
+        struct SourceSpec: Decodable {
+            let key: String
+            let name: String
+        }
+        struct TxSpec: Decodable {
+            let daysAgo: Int
+            let category: String   // English category name — maps to seedDemoCategories keys
+            let source: String?    // source key, matches SourceSpec.key
+            let minor: Int         // amount in minor currency units (cents/kopecks/centavos)
+            let merchant: String?
+            let type: String       // "income" | "expense"
+        }
+    }
+
+    /// Loads `DemoSeed_<localeCode>.json` from the app bundle, falling back to the
+    /// English seed (and finally a hardcoded USD seed) if a resource is missing.
+    private static func loadSeed(localeCode: String) -> Seed {
+        if let seed = decodeSeed(named: "DemoSeed_\(localeCode)") { return seed }
+        #if DEBUG
+        print("[DemoSeeder] ⚠️ No seed for '\(localeCode)' — falling back to en")
+        #endif
+        if let fallback = decodeSeed(named: "DemoSeed_en") { return fallback }
+        // Last-resort empty USD seed so a missing-resource build never crashes.
+        return Seed(locale: "en", currencyCode: "USD", sources: [], transactions: [])
+    }
+
+    private static func decodeSeed(named name: String) -> Seed? {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(Seed.self, from: data)
+    }
+
+    /// Writes the demo currency to both the standard and App Group defaults so
+    /// `@AppStorage("defaultCurrencyCode")` views and AppIntents agree.
+    private static func applyDemoCurrency(_ code: String) {
+        UserDefaults.standard.set(code, forKey: "defaultCurrencyCode")
+        UserDefaults.appGroup.set(code, forKey: "defaultCurrencyCode")
     }
 
     // MARK: - Wipe
@@ -135,163 +195,46 @@ enum DemoSeeder {
 
     // MARK: - Sources (accounts)
 
-    private static func seedDemoSources(modelContext: ModelContext) -> [String: Source] {
-        let names = ["Checking", "Credit Card", "Cash"]
+    /// Inserts the locale-appropriate accounts and returns them keyed by their
+    /// stable seed `key` (e.g. "checking") so transactions can reference them
+    /// regardless of the localized display name.
+    private static func seedDemoSources(
+        modelContext: ModelContext,
+        specs: [Seed.SourceSpec]
+    ) -> [String: Source] {
         var dict: [String: Source] = [:]
-        for n in names {
-            let s = Source(name: n)
+        for spec in specs {
+            let s = Source(name: spec.name)
             modelContext.insert(s)
-            dict[n] = s
+            dict[spec.key] = s
         }
         return dict
     }
 
     // MARK: - Transactions
 
-    /// Seeds ~40 transactions spanning the last 60 days. Amounts pulled from
-    /// median US household spending (BLS CES). All merchants are mainstream,
-    /// non-status-signaling per HIG inclusion guidance.
+    /// Inserts the ~44 transactions from the locale seed, spanning the last 60
+    /// days. Amounts are localized per currency but follow the same anchored,
+    /// non-status-signaling profile (median household spending, HIG inclusion).
     ///
     /// The 6-days-ago grocery line is intentionally ~30% above the rolling
     /// average so the Smart Insights screen has a real anomaly to surface
-    /// for screenshot frame #3.
+    /// for screenshot frame #4.
     private static func seedDemoTransactions(
         modelContext: ModelContext,
+        seed: Seed,
         categories: [String: Category],
         sources: [String: Source],
         markAsDemo: Bool = false
     ) {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
-        let usd = "USD"
 
         func date(_ daysAgo: Int) -> Date {
             cal.date(byAdding: .day, value: -daysAgo, to: today) ?? today
         }
 
-        // (daysAgo, categoryKey, sourceKey?, amountCents, merchant?, type)
-        struct Entry {
-            let daysAgo: Int
-            let category: String
-            let source: String?
-            let cents: Int
-            let merchant: String?
-            let type: String
-
-            init(_ daysAgo: Int, _ cat: String, _ src: String?, _ cents: Int,
-                 _ merchant: String? = nil, _ type: String = "expense") {
-                self.daysAgo = daysAgo
-                self.category = cat
-                self.source = src
-                self.cents = cents
-                self.merchant = merchant
-                self.type = type
-            }
-        }
-
-        let entries: [Entry] = [
-            // 60d
-            Entry(60, "Income", "Checking", 280_000, "Paycheck", "income"),
-
-            // 58d
-            Entry(58, "Food & Drink",  "Credit Card", 8_700, "Whole Foods"),
-            Entry(58, "Subscriptions", "Credit Card",   999, "Spotify"),
-
-            // 55d
-            Entry(55, "Coffee",    "Cash",          450, "Blue Bottle"),  // secondary category demo
-            Entry(55, "Transport", "Credit Card", 4_200, "Shell"),
-
-            // 50d
-            Entry(50, "Food & Drink", "Credit Card", 5_800, "Sweetgreen"),
-
-            // 48d
-            Entry(48, "Coffee",    "Cash",          450, "Starbucks"),
-            Entry(48, "Transport", "Credit Card", 1_200, "Uber"),
-
-            // 47d
-            Entry(47, "Subscriptions", "Credit Card", 1_549, "Netflix"),
-
-            // 46d
-            Entry(46, "Income", "Checking", 280_000, "Paycheck", "income"),
-
-            // 44d
-            Entry(44, "Food & Drink", "Credit Card", 9_400, "Whole Foods"),
-            Entry(44, "Coffee",       "Cash",          450, "Blue Bottle"),
-
-            // 41d
-            Entry(41, "Transport", "Credit Card", 3_900, "Shell"),
-            Entry(41, "Utilities", "Checking",    8_700, "Electric bill"),  // secondary category demo
-
-            // 38d
-            Entry(38, "Coffee", "Cash",          450, "Starbucks"),
-            Entry(38, "Health", "Credit Card", 2_300, "Walgreens"),
-
-            // 35d
-            Entry(35, "Health",  "Credit Card",  3_500, "Gym membership"),
-            Entry(35, "Housing", "Checking",   145_000, "Rent"),
-
-            // 32d
-            Entry(32, "Income", "Checking", 280_000, "Paycheck", "income"),
-
-            // 30d
-            Entry(30, "Food & Drink", "Credit Card", 10_300, "Whole Foods"),
-            Entry(30, "Coffee",       "Cash",            450, "Blue Bottle"),
-
-            // 28d
-            Entry(28, "Subscriptions", "Credit Card", 999, "Spotify"),
-
-            // 25d
-            Entry(25, "Food & Drink", "Credit Card", 4_200, "Sweetgreen"),
-            Entry(25, "Coffee",       "Cash",           450, "Starbucks"),
-
-            // 22d
-            Entry(22, "Transport",     "Credit Card", 4_400, "Shell"),
-            Entry(22, "Entertainment", "Credit Card", 1_900, "Bookstore"),
-
-            // 18d
-            Entry(18, "Income", "Checking", 280_000, "Paycheck", "income"),
-
-            // 16d
-            Entry(16, "Food & Drink",  "Credit Card", 8_700, "Whole Foods"),
-            Entry(16, "Subscriptions", "Credit Card", 1_549, "Netflix"),
-            Entry(16, "Coffee",        "Cash",          450, "Blue Bottle"),
-
-            // 14d
-            Entry(14, "Entertainment", "Credit Card", 1_600, "AMC Theater"),
-            Entry(14, "Transport",     "Credit Card", 1_800, "Uber"),
-
-            // 12d
-            Entry(12, "Health", "Credit Card", 3_500, "Gym membership"),
-
-            // 10d
-            Entry(10, "Housing", "Checking", 145_000, "Rent"),
-
-            // 8d
-            Entry(8, "Coffee",    "Cash",          450, "Starbucks"),
-            Entry(8, "Transport", "Credit Card", 4_300, "Shell"),
-
-            // 6d — INTENTIONAL ANOMALY (~+30% vs rolling grocery avg)
-            Entry(6, "Food & Drink", "Credit Card", 11_200, "Whole Foods"),
-
-            // 4d
-            Entry(4, "Income", "Checking", 280_000, "Paycheck", "income"),
-
-            // 3d
-            Entry(3, "Coffee",       "Cash",          450, "Blue Bottle"),
-            Entry(3, "Food & Drink", "Credit Card", 4_800, "Sweetgreen"),
-
-            // 2d
-            Entry(2, "Subscriptions", "Credit Card", 999, "Spotify"),
-
-            // 1d
-            Entry(1, "Coffee",    "Cash",          450, "Starbucks"),
-            Entry(1, "Transport", "Credit Card", 2_400, "Uber"),
-
-            // 0d (today) — last visible row in the list
-            Entry(0, "Coffee", "Cash", 450, "Blue Bottle"),
-        ]
-
-        for e in entries {
+        for e in seed.transactions {
             guard let cat = categories[e.category] else {
                 #if DEBUG
                 print("[DemoSeeder] ⚠️ Missing category '\(e.category)' — skipping entry")
@@ -301,8 +244,8 @@ enum DemoSeeder {
             let src = e.source.flatMap { sources[$0] }
             let tx = Transaction(
                 typeRaw: e.type,
-                amountCents: e.cents,
-                currency: usd,
+                amountCents: e.minor,
+                currency: seed.currencyCode,
                 date: date(e.daysAgo),
                 category: cat,
                 source: src,

@@ -33,6 +33,14 @@ struct AuthGateView: View {
         // Default is .never — users must explicitly enable App Lock in Settings.
         let raw = UserDefaults.standard.string(forKey: "requireAuthMode") ?? "never"
         let mode = RequireAuthMode(rawValue: raw) ?? .never
+        #if DEBUG
+        // Screenshot frame #6 captures the locked state — start locked and skip
+        // the system biometric prompt (which the simulator can't satisfy headlessly).
+        if ScreenshotMode.requestedScreen == .lock {
+            _isAuthenticated = State(initialValue: false)
+            return
+        }
+        #endif
         _isAuthenticated = State(initialValue: mode == .never)
     }
 
@@ -47,6 +55,10 @@ struct AuthGateView: View {
             }
         }
         .task {
+            #if DEBUG
+            // Lock-screen screenshot: stay locked, don't raise the system prompt.
+            if ScreenshotMode.requestedScreen == .lock { return }
+            #endif
             // Trigger initial auth if not already unlocked.
             if !isAuthenticated {
                 await authenticate()
@@ -55,6 +67,10 @@ struct AuthGateView: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                #if DEBUG
+                // Lock-screen screenshot: keep locked, never raise the system prompt.
+                if ScreenshotMode.requestedScreen == .lock { isAuthenticated = false; break }
+                #endif
                 applyLockPolicy()
                 if !isAuthenticated {
                     Task { await authenticate() }

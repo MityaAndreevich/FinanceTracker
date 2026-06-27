@@ -18,6 +18,11 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
 
+    // Screenshot automation: which settings-detail / paywall screen to present
+    // over the tab view on launch. Stays nil in Release (set only from the
+    // DEBUG-gated ScreenshotMode). See applyScreenshotRoutingIfNeeded().
+    @State private var screenshotCover: ScreenshotMode.Screen?
+
     // Settings navigation is reset by recreating its NavigationStack whenever the
     // user leaves the tab (bumping this token changes the stack's `.id`, which pops
     // it to root). A language change (AppleLanguages override + appLanguageCode
@@ -95,17 +100,50 @@ struct ContentView: View {
         .sheet(isPresented: $showAddSheet) {
             QuickEntryView()
         }
+        .fullScreenCover(item: $screenshotCover) { screen in
+            NavigationStack { screenshotDestination(for: screen) }
+        }
         .task {
             if DemoSeeder.isDemoMode {
                 DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
             } else {
                 SeedService.seedIfNeeded(modelContext: modelContext)
             }
+            applyScreenshotRoutingIfNeeded()
             handlePendingIntentNavigation()
             RatingPromptCoordinator.recordSessionOpen()
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }
+        }
+    }
+
+    // MARK: - Screenshot automation routing
+
+    /// Routes to the requested storyboard screen on launch when running under the
+    /// capture script. No-op in Release (ScreenshotMode.requestedScreen is nil).
+    private func applyScreenshotRoutingIfNeeded() {
+        guard let screen = ScreenshotMode.requestedScreen else { return }
+        switch screen {
+        case .dashboard:  selectedTab = 0
+        case .analytics:  selectedTab = 3   // AnalyticsView selects .breakdown itself
+        case .quickentry: showAddSheet = true
+        case .privacy, .categories, .export, .lifetime:
+            screenshotCover = screen
+        case .lock:
+            break   // handled upstream by AuthGateView
+        }
+    }
+
+    /// The view presented over the tab bar for settings-detail / paywall captures.
+    @ViewBuilder
+    private func screenshotDestination(for screen: ScreenshotMode.Screen) -> some View {
+        switch screen {
+        case .privacy:    PrivacySettingsView()
+        case .categories: CategoriesSourcesView()
+        case .export:     DataSettingsView()
+        case .lifetime:   PaywallView()
+        default:          EmptyView()
         }
     }
 
