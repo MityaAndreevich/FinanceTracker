@@ -91,6 +91,50 @@
 "settings.data" = "Data";
 "settings.categories" = "Categories & Accounts";
 "settings.about" = "About";
+
+// MARK: - Help & Tips (Brief 28I N1)
+"settings.help" = "Help & Tips";
+
+"help.getting_started.title" = "Getting Started";
+"help.advanced.title" = "Advanced Features";
+"help.privacy.title" = "Privacy";
+"help.contact.title" = "Contact";
+
+"help.quick_add" = "Quick Add";
+"help.voice_entry" = "Voice Entry";
+"help.categories" = "Categories";
+"help.analytics" = "Analytics";
+"help.widget" = "Widget";
+"help.siri" = "Siri";
+"help.privacy_local_storage" = "Local Storage";
+"help.language_change" = "Language change";
+
+"help.quick_add.title" = "How Quick Add works";
+"help.quick_add.body" = "Type how you spent or earned money in plain language — like \"coffee 4.50\" or \"salary 3200\". Budget Crab reads the amount, decides whether it's income or an expense, and picks out the merchant. Tap the category chip to choose where it belongs, then Save. Everything is parsed on your iPhone — nothing is sent anywhere.";
+
+"help.voice_entry.title" = "Voice entry";
+"help.voice_entry.body" = "Tap the microphone in Quick Entry and say what you spent or earned, like \"twelve dollars groceries\". Speech is processed on your iPhone using Apple's on-device recognition — your audio is never sent to a server. If the microphone button doesn't appear, your iPhone doesn't have on-device dictation installed for the current language.";
+
+"help.categories.title" = "Managing categories";
+"help.categories.body" = "Budget Crab starts with a set of common categories. Add, rename, reorder, or hide them in Settings → Categories & Accounts. When you correct the category on a transaction, Budget Crab remembers that merchant and suggests the same category next time.";
+
+"help.analytics.title" = "Understanding analytics";
+"help.analytics.body" = "The Analytics tab has three views. Pulse shows this month's day-by-day cash flow — drag across the chart to read any day. Breakdown splits this month's spending by category; tap a slice or a row to see the transactions behind it. Horizon plots your net over the last 12 months — drag to scrub, then tap a month to open its transactions.";
+
+"help.widget.title" = "Using the widget";
+"help.widget.body" = "Add the Budget Crab widget from your Home Screen: touch and hold an empty area, tap the plus in the corner, then search for Budget Crab. It shows this month's net at a glance and refreshes daily. Tap it to open the app.";
+
+"help.siri.title" = "Siri shortcuts";
+"help.siri.body" = "Say \"Hey Siri, add ten dollars groceries in Budget Crab\" and the transaction is saved without opening the app. You can also say \"open Quick Entry in Budget Crab\". Add or rename your own phrases in the Shortcuts app under Budget Crab.";
+
+"help.privacy_local_storage.title" = "Your data is on your iPhone";
+"help.privacy.body" = "Budget Crab stores everything in the app's protected container on your iPhone. There are no accounts, no servers, and no tracking — your financial data never leaves your device. Exports (CSV, Excel, PDF) are created on demand and shared only when you choose to.";
+
+"help.language_change.title" = "Changing your language";
+"help.language_change.body" = "When you change the app language, most labels update immediately. A few — like the dashboard summary — update the next time you open the app. Close Budget Crab fully (swipe up from the bottom and flick it away) and reopen it to apply the change everywhere.";
+
+"help.contact_support" = "Email support";
+"help.online_faq" = "Online FAQ";
 "settings.privacy" = "Privacy";
 
 /* ======================================================

@@ -67,6 +67,50 @@
 "settings.categories" = "Categorias e fontes";
 "settings.about" = "Sobre";
 
+// MARK: - Help & Tips (Brief 28I N1)
+"settings.help" = "Ajuda e dicas";
+
+"help.getting_started.title" = "Primeiros passos";
+"help.advanced.title" = "Recursos avançados";
+"help.privacy.title" = "Privacidade";
+"help.contact.title" = "Contato";
+
+"help.quick_add" = "Adição rápida";
+"help.voice_entry" = "Entrada por voz";
+"help.categories" = "Categorias";
+"help.analytics" = "Análises";
+"help.widget" = "Widget";
+"help.siri" = "Siri";
+"help.privacy_local_storage" = "Armazenamento local";
+"help.language_change" = "Mudança de idioma";
+
+"help.quick_add.title" = "Como funciona a Adição rápida";
+"help.quick_add.body" = "Digite em linguagem natural o que você gastou ou recebeu, como \"café 4,50\" ou \"salário 3200\". O Budget Crab identifica o valor, decide se é receita ou despesa e reconhece o estabelecimento. Toque no chip de categoria para escolher a certa e salve. Tudo é processado no seu iPhone — nada é enviado para lugar nenhum.";
+
+"help.voice_entry.title" = "Entrada por voz";
+"help.voice_entry.body" = "Toque no microfone na Adição rápida e diga o que gastou ou recebeu, como \"doze reais de mercado\". A fala é processada no seu iPhone com o reconhecimento no dispositivo da Apple — seu áudio nunca é enviado a um servidor. Se o botão do microfone não aparecer, seu iPhone não tem o ditado off-line instalado para o idioma atual.";
+
+"help.categories.title" = "Gerenciar categorias";
+"help.categories.body" = "O Budget Crab já vem com um conjunto de categorias comuns. Adicione, renomeie, reordene ou oculte-as em Ajustes → Categorias e contas. Quando você corrige a categoria de uma transação, o Budget Crab memoriza o estabelecimento e sugere a mesma categoria na próxima vez.";
+
+"help.analytics.title" = "Entender as análises";
+"help.analytics.body" = "A aba Análises tem três telas. Pulso mostra o fluxo de caixa diário deste mês — arraste pelo gráfico para ver qualquer dia. Distribuição divide os gastos do mês por categoria; toque em uma fatia ou linha para ver as transações. Horizonte traça o seu saldo dos últimos 12 meses — arraste para explorar e toque em um mês para abrir as transações.";
+
+"help.widget.title" = "Usar o widget";
+"help.widget.body" = "Adicione o widget do Budget Crab pela Tela de Início: mantenha pressionada uma área vazia, toque no sinal de mais no canto e procure por Budget Crab. Ele mostra o saldo deste mês de relance e atualiza diariamente. Toque nele para abrir o app.";
+
+"help.siri.title" = "Atalhos da Siri";
+"help.siri.body" = "Diga \"E aí Siri, adicione dez reais de mercado no Budget Crab\" e a transação é salva sem abrir o app. Você também pode dizer \"abrir Adição rápida no Budget Crab\". Adicione ou renomeie suas próprias frases no app Atalhos, em Budget Crab.";
+
+"help.privacy_local_storage.title" = "Seus dados ficam no seu iPhone";
+"help.privacy.body" = "O Budget Crab guarda tudo no contêiner protegido do app no seu iPhone. Não há contas, servidores nem rastreamento — seus dados financeiros nunca saem do dispositivo. As exportações (CSV, Excel, PDF) são criadas sob demanda e compartilhadas apenas quando você decide.";
+
+"help.language_change.title" = "Mudar o idioma";
+"help.language_change.body" = "Quando você muda o idioma do app, a maioria dos textos é atualizada na hora. Alguns — como o resumo do painel — só mudam na próxima vez que você abrir o app. Feche o Budget Crab por completo (deslize para cima e dispense-o) e abra novamente para aplicar a mudança em todos os lugares.";
+
+"help.contact_support" = "E-mail de suporte";
+"help.online_faq" = "Perguntas frequentes";
+
 /* General */
 "general.title" = "Geral";
 "general.section.preferences" = "Preferências";

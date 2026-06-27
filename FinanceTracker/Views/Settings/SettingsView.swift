@@ -52,6 +52,12 @@ struct SettingsView: View {
 
             Section {
                 NavigationLink {
+                    HelpView()
+                } label: {
+                    Label("settings.help", systemImage: "questionmark.circle")
+                }
+
+                NavigationLink {
                     AboutView()
                 } label: {
                     Label("settings.about", systemImage: "info.circle")
