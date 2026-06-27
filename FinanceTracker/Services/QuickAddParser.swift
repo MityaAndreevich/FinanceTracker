@@ -61,8 +61,13 @@ enum QuickAddParser {
         for keyword in nounIncomeKeywords {
             nounStripped = nounStripped.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
-        let cleanMerchant = normalizeMerchant(nounStripped)
-        let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbStripped) : cleanMerchant
+        // Strip standalone currency words ("баксов", "dollars", "euros", "reais")
+        // so "50 баксов за кофе" yields merchant "кофе", not "баксов за кофе".
+        // normalizeMerchant then drops the now-dangling preposition ("за").
+        let nounCurrencyStripped = stripCurrencyWords(nounStripped)
+        let verbCurrencyStripped = stripCurrencyWords(verbStripped)
+        let cleanMerchant = normalizeMerchant(nounCurrencyStripped)
+        let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbCurrencyStripped) : cleanMerchant
         let merchant: String? = merchantText.isEmpty ? nil : merchantText
 
         // 4. Suggest category. The taxonomy has a single income category, so any
@@ -234,6 +239,40 @@ enum QuickAddParser {
         " por", " de", " en", " desde",            // Spanish
         " em",                                      // Portuguese
     ]
+
+    /// Spelled-out currency words that, like a "$" symbol, name the unit rather than
+    /// the merchant. Stripped from merchant text after the amount is removed so the
+    /// description is the thing bought ("кофе"), not the currency ("баксов за кофе").
+    /// Listed longest-first within each language is unnecessary because word-boundary
+    /// matching prevents one entry from clobbering a longer one ("доллар" won't match
+    /// inside "долларов").
+    private static let currencyWordsToStrip = [
+        // RU
+        "баксов", "баксы", "бакс", "долларов", "доллары", "доллар",
+        "евро", "евра", "рублей", "рубли", "рубль", "руб",
+        "юаней", "юаня", "юань",
+        // EN
+        "dollars", "dollar", "bucks", "buck",
+        "euros", "euro", "pounds", "pound",
+        "rubles", "ruble",
+        // ES
+        "dólares", "dolares", "dólar", "dolar",
+        // PT
+        "reais", "real",
+    ]
+
+    /// Removes whole-word currency terms (case-insensitive, Unicode word boundaries
+    /// so Cyrillic matches) and leaves a space so adjacent words don't merge.
+    private static func stripCurrencyWords(_ text: String) -> String {
+        var s = text
+        for word in currencyWordsToStrip {
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: word))\\b"
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { continue }
+            let range = NSRange(s.startIndex..., in: s)
+            s = regex.stringByReplacingMatches(in: s, range: range, withTemplate: " ")
+        }
+        return s
+    }
 
     /// Collapses whitespace, trims, and strips a single leading preposition and a
     /// single trailing preposition.

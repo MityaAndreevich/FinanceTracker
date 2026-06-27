@@ -343,4 +343,28 @@ struct QuickAddParserTests {
         #expect(result?.merchant == "зарплату")  // not "а зарплату"
         #expect(result?.typeRaw == "income")
     }
+
+    // MARK: - Currency word stripping (Brief 28J P1)
+
+    @Test func parse_strip_baksov_ru() {
+        let result = QuickAddParser.parse("50 баксов за кофе")
+        #expect(result?.merchant == "кофе")     // not "баксов за кофе"
+        #expect(result?.amountCents == 5000)
+    }
+
+    @Test func parse_strip_dollars_en() {
+        let result = QuickAddParser.parse("12 dollars coffee")
+        #expect(result?.merchant == "coffee")
+        #expect(result?.amountCents == 1200)
+    }
+
+    @Test func parse_strip_euros_es() {
+        let result = QuickAddParser.parse("7 euros café")
+        #expect(result?.merchant == "café")
+    }
+
+    @Test func parse_strip_reais_pt() {
+        let result = QuickAddParser.parse("5 reais café")
+        #expect(result?.merchant == "café")
+    }
 }
