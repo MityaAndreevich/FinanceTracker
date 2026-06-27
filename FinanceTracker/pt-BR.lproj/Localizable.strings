@@ -469,3 +469,4 @@
 "analytics.horizon.hint" = "Arraste pelo gráfico para explorar";
 "analytics.category_total" = "Total da categoria";
 "analytics.transactions_count" = "%d transações";
+"analytics.horizon.tap_hint" = "Ver as transações do mês";

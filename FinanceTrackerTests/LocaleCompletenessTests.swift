@@ -32,7 +32,7 @@ final class LocaleCompletenessTests: XCTestCase {
             return XCTFail("Missing English Localizable.strings")
         }
         let enKeys = Set(en.keys)
-        XCTAssertEqual(enKeys.count, 412, "English baseline changed; update the expected count.")
+        XCTAssertEqual(enKeys.count, 413, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

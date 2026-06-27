@@ -598,3 +598,4 @@
 "analytics.horizon.hint" = "Проведите по графику, чтобы посмотреть";
 "analytics.category_total" = "Всего по категории";
 "analytics.transactions_count" = "Операций: %d";
+"analytics.horizon.tap_hint" = "Показать операции за месяц";

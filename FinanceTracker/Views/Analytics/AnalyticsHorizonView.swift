@@ -15,6 +15,7 @@ struct AnalyticsHorizonView: View {
     let currencyCode: String
 
     @State private var rawSelectedDate: Date?
+    @State private var detailMonth: MonthlyTotal?
 
     struct MonthlyTotal: Identifiable {
         let id = UUID()
@@ -29,27 +30,43 @@ struct AnalyticsHorizonView: View {
                 .padding(.horizontal, 20)
             Spacer(minLength: 0)
         }
+        .sheet(item: $detailMonth) { month in
+            MonthDetailSheet(month: month, currencyCode: currencyCode)
+                .presentationDetents([.medium, .large])
+        }
     }
 
     @ViewBuilder
     private var tooltipBar: some View {
         if let selected = selectedTotal {
-            VStack(spacing: 4) {
-                Text(selected.date.formatted(.dateTime.month(.wide).year()))
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                Text(Money.formatSigned(
-                    cents: selected.netCents,
-                    isPositive: selected.netCents >= 0,
-                    currencyCode: currencyCode
-                ))
-                .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundStyle(selected.netCents >= 0 ? .green : .red)
-                .privacySensitive(true)
-                .contentTransition(.numericText())
+            Button {
+                detailMonth = selected
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            } label: {
+                VStack(spacing: 4) {
+                    Text(selected.date.formatted(.dateTime.month(.wide).year()))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 6) {
+                        Text(Money.formatSigned(
+                            cents: selected.netCents,
+                            isPositive: selected.netCents >= 0,
+                            currencyCode: currencyCode
+                        ))
+                        .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(selected.netCents >= 0 ? .green : .red)
+                        .privacySensitive(true)
+                        .contentTransition(.numericText())
+                        Image(systemName: "chevron.right.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 12)
             }
-            .padding(.top, 8)
-            .padding(.bottom, 12)
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("analytics.horizon.tap_hint"))
         } else {
             Text("analytics.horizon.hint")
                 .font(.subheadline)

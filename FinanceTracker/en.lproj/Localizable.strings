@@ -588,3 +588,4 @@
 "analytics.horizon.hint" = "Drag across the chart to explore";
 "analytics.category_total" = "Category total";
 "analytics.transactions_count" = "%d transactions";
+"analytics.horizon.tap_hint" = "Show this month's transactions";
