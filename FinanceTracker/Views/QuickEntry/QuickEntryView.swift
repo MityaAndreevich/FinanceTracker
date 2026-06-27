@@ -62,8 +62,25 @@ struct QuickEntryView: View {
 
     private var resolvedCategoryName: String? {
         guard let p = parsed else { return nil }
-        if let categoryOverride { return categoryOverride.displayName() }
-        return QuickAddSaveService.resolveCategory(for: p, in: modelContext)?.displayName()
+        return effectiveCategory(for: p)?.displayName()
+    }
+
+    /// Category that will actually be saved for a parsed input.
+    ///
+    /// Round 8 device feedback: silently auto-assigning a *guessed* expense
+    /// category (e.g. "транспорт" for "купил кофе") felt presumptuous and was
+    /// often wrong. So expenses now default to "Other" until the user taps the
+    /// badge to choose — no silent keyword guessing. Income keeps its automatic
+    /// assignment because the taxonomy has a single dedicated "Income" category,
+    /// which is correct rather than a guess.
+    private func effectiveCategory(for p: QuickAddParsedInput) -> Category? {
+        if let categoryOverride { return categoryOverride }
+        if p.typeRaw == TransactionType.income.raw {
+            return QuickAddSaveService.resolveCategory(for: p, in: modelContext)
+        }
+        let all = (try? modelContext.fetch(FetchDescriptor<Category>())) ?? []
+        return all.first { $0.name == "Other" && $0.kindRaw == p.typeRaw }
+            ?? all.first { $0.name == "Other" }
     }
 
     private var saveA11yLabel: Text {
@@ -318,7 +335,7 @@ struct QuickEntryView: View {
 
     @ViewBuilder
     private func previewCard(_ p: QuickAddParsedInput) -> some View {
-        let resolvedCategory = categoryOverride ?? QuickAddSaveService.resolveCategory(for: p, in: modelContext)
+        let resolvedCategory = effectiveCategory(for: p)
         let isIncome = p.typeRaw == TransactionType.income.raw
 
         VStack(spacing: 12) {
@@ -588,7 +605,7 @@ struct QuickEntryView: View {
                 parsed: p,
                 modelContext: modelContext,
                 defaultCurrencyCode: defaultCurrencyCode,
-                overrideCategory: categoryOverride
+                overrideCategory: effectiveCategory(for: p)
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             RatingPromptCoordinator.recordTransactionSaved()
