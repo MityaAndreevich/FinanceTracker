@@ -62,12 +62,13 @@ enum QuickAddParser {
             nounStripped = nounStripped.replacingOccurrences(of: keyword, with: "", options: .caseInsensitive)
         }
         // Strip standalone currency words ("баксов", "dollars", "euros", "reais")
-        // so "50 баксов за кофе" yields merchant "кофе", not "баксов за кофе".
-        // normalizeMerchant then drops the now-dangling preposition ("за").
-        let nounCurrencyStripped = stripCurrencyWords(nounStripped)
-        let verbCurrencyStripped = stripCurrencyWords(verbStripped)
-        let cleanMerchant = normalizeMerchant(nounCurrencyStripped)
-        let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbCurrencyStripped) : cleanMerchant
+        // and expense-indicator words ("расход", "expense", "gasto") so "50 баксов
+        // за кофе" yields merchant "кофе" and "50 расход" yields no merchant — not
+        // the literal word "расход". normalizeMerchant then drops dangling prepositions.
+        let nounWordsStripped = stripWholeWords(noiseWordsToStrip, from: nounStripped)
+        let verbWordsStripped = stripWholeWords(noiseWordsToStrip, from: verbStripped)
+        let cleanMerchant = normalizeMerchant(nounWordsStripped)
+        let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbWordsStripped) : cleanMerchant
         let merchant: String? = merchantText.isEmpty ? nil : merchantText
 
         // 4. Suggest category. The taxonomy has a single income category, so any
@@ -261,11 +262,27 @@ enum QuickAddParser {
         "reais", "real",
     ]
 
-    /// Removes whole-word currency terms (case-insensitive, Unicode word boundaries
+    /// Bare expense-indicator words ("50 расход" = "50, an expense"). Expense is
+    /// already the default type, so these only need removing from merchant text —
+    /// they describe direction, not a payee.
+    private static let expenseIndicatorWords = [
+        // RU
+        "расходы", "расход", "расхода", "траты", "трата",
+        // EN
+        "expenses", "expense",
+        // ES
+        "gastos", "gasto",
+        // PT
+        "despesas", "despesa",
+    ]
+
+    private static let noiseWordsToStrip = currencyWordsToStrip + expenseIndicatorWords
+
+    /// Removes whole words from `words` (case-insensitive, Unicode word boundaries
     /// so Cyrillic matches) and leaves a space so adjacent words don't merge.
-    private static func stripCurrencyWords(_ text: String) -> String {
+    private static func stripWholeWords(_ words: [String], from text: String) -> String {
         var s = text
-        for word in currencyWordsToStrip {
+        for word in words {
             let pattern = "\\b\(NSRegularExpression.escapedPattern(for: word))\\b"
             guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { continue }
             let range = NSRange(s.startIndex..., in: s)

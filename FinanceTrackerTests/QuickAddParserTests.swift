@@ -367,4 +367,19 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("5 reais café")
         #expect(result?.merchant == "café")
     }
+
+    // MARK: - Expense-indicator word stripping (Brief 28J P6)
+
+    @Test func parse_strip_rashod_ru() {
+        let result = QuickAddParser.parse("50 расход")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == nil)        // "расход" is the direction, not a payee
+    }
+
+    @Test func parse_strip_expense_en() {
+        let result = QuickAddParser.parse("50 expense")
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == nil)
+    }
 }
