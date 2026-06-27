@@ -466,6 +466,7 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Version";
 "about.privacy_hint" = "Privacy Policy and Terms will be added before App Store release.";
+"about.rate" = "Rate Budget Crab";
 "about.tell_friend" = "Tell a Friend";
 "about.tell_friend.share" = "Check out Budget Crab Money Tracker — a private, on-device finance app.";
 

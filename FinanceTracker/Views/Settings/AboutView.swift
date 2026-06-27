@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import StoreKit
 
 struct AboutView: View {
+    @Environment(\.requestReview) private var requestReview
+
     var body: some View {
         List {
             Section {
@@ -27,6 +30,12 @@ struct AboutView: View {
             }
 
             Section {
+                Button {
+                    requestReview()
+                } label: {
+                    Label("about.rate", systemImage: "star")
+                }
+
                 ShareLink(item: Self.appStoreURL,
                           message: Text("about.tell_friend.share")) {
                     Label("about.tell_friend", systemImage: "square.and.arrow.up")

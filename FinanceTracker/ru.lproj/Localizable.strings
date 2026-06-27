@@ -473,6 +473,7 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Версия";
 "about.privacy_hint" = "Политика конфиденциальности и условия будут добавлены перед релизом.";
+"about.rate" = "Оценить Budget Crab";
 "about.tell_friend" = "Рассказать другу";
 "about.tell_friend.share" = "Попробуй Budget Crab Money Tracker — приватный учёт расходов прямо на iPhone.";
 
