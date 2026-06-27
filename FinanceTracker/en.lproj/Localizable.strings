@@ -32,6 +32,7 @@
 "common.today" = "Today";
 "common.yesterday" = "Yesterday";
 "common.unknown" = "Unknown";
+"common.search" = "Search";
 "common.error" = "Error";
 
 /* ======================================================

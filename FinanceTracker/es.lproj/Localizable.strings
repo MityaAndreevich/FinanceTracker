@@ -32,6 +32,7 @@
 "common.today" = "Hoy";
 "common.yesterday" = "Ayer";
 "common.unknown" = "Desconocido";
+"common.search" = "Buscar";
 "common.error" = "Error";
 
 /* Scope */

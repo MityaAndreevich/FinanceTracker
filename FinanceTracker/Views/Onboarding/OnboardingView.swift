@@ -71,11 +71,11 @@ struct OnboardingView: View {
 
                 Spacer(minLength: 6)
 
-                // MARK: Wheel picker + escape hatch to the full list
+                // MARK: Elevated selection list + escape hatch to the full list
                 if step == .language {
-                    languageWheel
+                    languageSelector
                 } else {
-                    currencyWheel
+                    currencySelector
                 }
 
                 Spacer(minLength: 6)
@@ -99,50 +99,32 @@ struct OnboardingView: View {
                 case .system: break
                 }
             }
-            // Tactile detent feedback as the user spins the wheel.
-            .sensoryFeedback(.selection, trigger: selectedLanguage)
-            .sensoryFeedback(.selection, trigger: selectedCurrency)
         }
     }
 
-    // MARK: - Language wheel
+    // MARK: - Language selector (elevated list)
 
-    private var languageWheel: some View {
-        VStack(spacing: 16) {
-            Picker("onboarding.language.picker", selection: $selectedLanguage) {
-                ForEach(popularLanguages) { lang in
-                    HStack(spacing: 12) {
-                        Text(lang.flag).font(.title)
-                        Text(lang.title).font(.body.bold())
-                    }
-                    .tag(lang)
-                }
-            }
-            .pickerStyle(.wheel)
-            .frame(height: 240)
-            .clipped()
-            .tint(Color.accentColor)
-            // All supported languages fit the wheel, so there is no "More…" overflow.
-        }
+    private var languageSelector: some View {
+        ElevatedSelectionList(
+            items: popularLanguages,
+            selection: $selectedLanguage,
+            labelProvider: { (flag: $0.flag, title: $0.title) },
+            searchable: false   // all supported languages fit directly, no search needed
+        )
+        .frame(maxHeight: 480)
     }
 
-    // MARK: - Currency wheel
+    // MARK: - Currency selector (elevated list + escape hatch to the full list)
 
-    private var currencyWheel: some View {
+    private var currencySelector: some View {
         VStack(spacing: 16) {
-            Picker("onboarding.currency.picker", selection: $selectedCurrency) {
-                ForEach(popularCurrencies) { c in
-                    HStack(spacing: 12) {
-                        Text(c.flag).font(.title)
-                        Text("\(c.code) — \(c.name)").font(.body.bold())
-                    }
-                    .tag(c)
-                }
-            }
-            .pickerStyle(.wheel)
-            .frame(height: 240)
-            .clipped()
-            .tint(Color.accentColor)
+            ElevatedSelectionList(
+                items: popularCurrencies,
+                selection: $selectedCurrency,
+                labelProvider: { (flag: $0.flag, title: "\($0.code) — \($0.name)") },
+                searchable: false
+            )
+            .frame(maxHeight: 420)
 
             Button {
                 showFullCurrencyList = true

@@ -39,6 +39,7 @@
 "common.today" = "Сегодня";
 "common.yesterday" = "Вчера";
 "common.unknown" = "Неизвестно";
+"common.search" = "Поиск";
 "common.error" = "Ошибка";
 "common.choose" = "Выбрать";
 
