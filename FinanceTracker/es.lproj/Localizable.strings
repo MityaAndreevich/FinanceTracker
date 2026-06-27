@@ -386,11 +386,16 @@
 "paywall.feature.custom_fields" = "Campos personalizados";
 "paywall.feature.advanced_filters" = "Filtros avanzados";
 "paywall.plan.yearly" = "Anual";
-"paywall.plan.yearly.subtitle" = "7 días de prueba gratis · Cancela cuando quieras en Ajustes";
+"paywall.plan.yearly.subtitle" = "7 días gratis, luego 34,99 USD/año";
 "paywall.plan.monthly" = "Mensual";
 "paywall.plan.monthly.subtitle" = "Cancela cuando quieras";
 "paywall.plan.lifetime" = "De por vida";
 "paywall.plan.lifetime.subtitle" = "Pago único, sin suscripción";
+"paywall.plan.lifetime.subline" = "Bloquea el precio de hoy. Incluye todas las funciones futuras. Las suscripciones pueden subir.";
+
+/* Lifetime badges */
+"paywall.badge.family_sharing" = "Compartible con Familia";
+"paywall.badge.founders_edition" = "Edición Fundador";
 "paywall.cta.yearly" = "Iniciar prueba gratis";
 "paywall.cta.lifetime" = "Obtener De por vida";
 "paywall.cta.monthly" = "Suscribirse mensual";
@@ -452,6 +457,8 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Versión";
 "about.privacy_hint" = "La Política de privacidad y los Términos se agregarán antes del lanzamiento en la App Store.";
+"about.tell_friend" = "Recomendar a un amigo";
+"about.tell_friend.share" = "Mira Budget Crab Money Tracker — registro de gastos privado en tu iPhone.";
 "common.choose" = "Elegir";
 "icons.title" = "Elegir icono";
 "icons.search" = "Buscar símbolos";

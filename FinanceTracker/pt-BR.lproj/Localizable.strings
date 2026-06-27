@@ -390,11 +390,16 @@
 "paywall.feature.custom_fields" = "Campos personalizados";
 "paywall.feature.advanced_filters" = "Filtros avançados";
 "paywall.plan.yearly" = "Anual";
-"paywall.plan.yearly.subtitle" = "7 dias de teste grátis · Cancele quando quiser nos Ajustes";
+"paywall.plan.yearly.subtitle" = "7 dias grátis, depois USD 34,99/ano";
 "paywall.plan.monthly" = "Mensal";
 "paywall.plan.monthly.subtitle" = "Cancele quando quiser";
 "paywall.plan.lifetime" = "Vitalício";
 "paywall.plan.lifetime.subtitle" = "Pagamento único, sem assinatura";
+"paywall.plan.lifetime.subline" = "Trave o preço de hoje. Inclui todas as funcionalidades futuras. Assinaturas podem subir.";
+
+/* Lifetime badges */
+"paywall.badge.family_sharing" = "Compartilhável com Família";
+"paywall.badge.founders_edition" = "Edição Fundador";
 "paywall.cta.yearly" = "Iniciar teste grátis";
 "paywall.cta.lifetime" = "Obter Vitalício";
 "paywall.cta.monthly" = "Assinar mensal";
@@ -456,6 +461,8 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Versão";
 "about.privacy_hint" = "A Política de Privacidade e os Termos serão adicionados antes do lançamento na App Store.";
+"about.tell_friend" = "Indicar a um amigo";
+"about.tell_friend.share" = "Conheça o Budget Crab Money Tracker — controle de gastos privado no seu iPhone.";
 "common.choose" = "Escolher";
 "icons.title" = "Escolher ícone";
 "icons.search" = "Buscar símbolos";

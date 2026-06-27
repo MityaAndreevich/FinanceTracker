@@ -371,11 +371,16 @@
 
 /* Plans */
 "paywall.plan.yearly" = "Yearly";
-"paywall.plan.yearly.subtitle" = "7-day free trial · Cancel anytime in Settings";
+"paywall.plan.yearly.subtitle" = "7-day free trial, then $34.99/year";
 "paywall.plan.monthly" = "Monthly";
 "paywall.plan.monthly.subtitle" = "Cancel anytime";
 "paywall.plan.lifetime" = "Lifetime";
 "paywall.plan.lifetime.subtitle" = "One-time, no subscription";
+"paywall.plan.lifetime.subline" = "Lock in today's price. Includes all future features. Subscription pricing may rise.";
+
+/* Lifetime badges */
+"paywall.badge.family_sharing" = "Shareable via Family Sharing";
+"paywall.badge.founders_edition" = "Founder's Edition";
 
 /* CTAs */
 "paywall.cta.yearly" = "Start free trial";
@@ -461,6 +466,8 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Version";
 "about.privacy_hint" = "Privacy Policy and Terms will be added before App Store release.";
+"about.tell_friend" = "Tell a Friend";
+"about.tell_friend.share" = "Check out Budget Crab Money Tracker — a private, on-device finance app.";
 
 /* ======================================================
    System categories (чтобы не показывало category.food ключом)

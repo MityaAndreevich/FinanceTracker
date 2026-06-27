@@ -377,11 +377,16 @@
 
 /* Plans */
 "paywall.plan.yearly" = "Годовой";
-"paywall.plan.yearly.subtitle" = "7 дней бесплатно · Отмена в Настройках";
+"paywall.plan.yearly.subtitle" = "7 дней бесплатно, затем 34,99 $/год";
 "paywall.plan.monthly" = "Месячный";
 "paywall.plan.monthly.subtitle" = "Отмена в любое время";
 "paywall.plan.lifetime" = "Навсегда";
 "paywall.plan.lifetime.subtitle" = "Разовая оплата, без подписки";
+"paywall.plan.lifetime.subline" = "Зафиксируйте сегодняшнюю цену. Все будущие функции включены. Подписки могут дорожать.";
+
+/* Lifetime badges */
+"paywall.badge.family_sharing" = "Доступно через Family Sharing";
+"paywall.badge.founders_edition" = "Издание основателя";
 
 /* CTAs */
 "paywall.cta.yearly" = "Начать бесплатный период";
@@ -468,6 +473,8 @@
 "about.app_name" = "FinanceTracker";
 "about.version" = "Версия";
 "about.privacy_hint" = "Политика конфиденциальности и условия будут добавлены перед релизом.";
+"about.tell_friend" = "Рассказать другу";
+"about.tell_friend.share" = "Попробуй Budget Crab Money Tracker — приватный учёт расходов прямо на iPhone.";
 
 /* ======================================================
    System categories

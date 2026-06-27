@@ -242,6 +242,16 @@ private struct LifetimePlanCard: View {
                     .monospacedDigit()
             }
 
+            HStack(spacing: 6) {
+                BadgeLabel(textKey: "paywall.badge.founders_edition", systemImage: "crown.fill")
+                BadgeLabel(textKey: "paywall.badge.family_sharing", systemImage: "person.2.fill")
+            }
+
+            Text("paywall.plan.lifetime.subline")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             Button(action: action) {
                 Text("paywall.cta.lifetime")
                     .font(.subheadline)
@@ -309,6 +319,24 @@ private struct MonthlyPlanCard: View {
 }
 
 // MARK: - Supporting Views
+
+private struct BadgeLabel: View {
+    let textKey: LocalizedStringKey
+    let systemImage: String
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+                .font(.system(size: 10, weight: .semibold))
+            Text(textKey)
+                .font(.system(size: 11, weight: .medium))
+        }
+        .foregroundStyle(paywallMint)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(paywallMint.opacity(0.12))
+        .clipShape(Capsule())
+    }
+}
 
 private struct FeatureRow: View {
     let textKey: LocalizedStringKey
