@@ -217,8 +217,7 @@ struct AnalyticsPulseView: View {
                 .foregroundStyle(.secondary)
                 .privacySensitive(true)
         }
-        .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(Spacing.compact)
+        .cardSurface(cornerRadius: CornerRadius.card)
     }
 }
