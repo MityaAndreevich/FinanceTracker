@@ -586,3 +586,5 @@
 "analytics.earned_total" = "Earned";
 "analytics.spent_total" = "Spent";
 "analytics.horizon.hint" = "Drag across the chart to explore";
+"analytics.category_total" = "Category total";
+"analytics.transactions_count" = "%d transactions";

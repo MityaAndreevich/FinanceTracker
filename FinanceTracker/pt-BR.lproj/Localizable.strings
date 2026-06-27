@@ -467,3 +467,5 @@
 "analytics.earned_total" = "Receitas";
 "analytics.spent_total" = "Despesas";
 "analytics.horizon.hint" = "Arraste pelo gráfico para explorar";
+"analytics.category_total" = "Total da categoria";
+"analytics.transactions_count" = "%d transações";

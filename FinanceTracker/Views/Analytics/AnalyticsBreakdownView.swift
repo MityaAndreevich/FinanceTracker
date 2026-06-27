@@ -105,11 +105,12 @@ struct AnalyticsBreakdownView: View {
     private var legend: some View {
         VStack(spacing: 8) {
             ForEach(sortedCategories) { cat in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        selectedCategory = (selectedCategory == cat) ? nil : cat
-                    }
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                NavigationLink {
+                    CategoryDetailView(
+                        categoryUUID: cat.id,
+                        categoryName: cat.name,
+                        currencyCode: currencyCode
+                    )
                 } label: {
                     HStack(spacing: 14) {
                         Image(systemName: cat.symbol)
@@ -127,15 +128,21 @@ struct AnalyticsBreakdownView: View {
                             .font(.body.monospacedDigit())
                             .foregroundStyle(.secondary)
                             .privacySensitive(true)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .background(
-                        selectedCategory == cat ? Color.accentColor.opacity(0.1) : Color(.secondarySystemBackground)
-                    )
+                    .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture().onEnded {
+                    // Also focus the matching donut slice on tap.
+                    withAnimation(.easeInOut(duration: 0.25)) { selectedCategory = cat }
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                })
             }
         }
     }

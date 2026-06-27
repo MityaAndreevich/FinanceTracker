@@ -596,3 +596,5 @@
 "analytics.earned_total" = "Доходы";
 "analytics.spent_total" = "Расходы";
 "analytics.horizon.hint" = "Проведите по графику, чтобы посмотреть";
+"analytics.category_total" = "Всего по категории";
+"analytics.transactions_count" = "Операций: %d";
