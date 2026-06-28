@@ -365,12 +365,14 @@
 "premium.redeem_hint" = "Используйте код, если у вас есть промокод.";
 
 /* Paywall */
-"paywall.title" = "Премиум";
-"paywall.subtitle" = "Откройте импорт и полный экспорт, и будущие расширенные функции.";
+"paywall.title" = "Финансы под вашим контролем, навсегда на iPhone";
+"paywall.subtitle" = "Всё остаётся на вашем iPhone — без серверов, аккаунтов и слежки.";
 "paywall.loading" = "Загружаем планы…";
 /* Paywall features */
 "paywall.features.header" = "В каждый план входит";
 "paywall.feature.unlimited_transactions" = "Без лимита транзакций";
+"paywall.feature.alltime_exports" = "Экспорт за всё время (CSV / PDF / Excel)";
+"paywall.feature.privacy_ondevice" = "Всё на устройстве — без облака";
 "paywall.feature.unlimited_csv" = "Неограниченный импорт CSV";
 "paywall.feature.custom_fields" = "Настраиваемые поля";
 "paywall.feature.advanced_filters" = "Расширенные фильтры";

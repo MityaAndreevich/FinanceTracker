@@ -90,6 +90,8 @@ struct PaywallView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             FeatureRow(textKey: "paywall.feature.unlimited_transactions")
+            FeatureRow(textKey: "paywall.feature.alltime_exports")
+            FeatureRow(textKey: "paywall.feature.privacy_ondevice")
             FeatureRow(textKey: "paywall.feature.unlimited_csv")
             FeatureRow(textKey: "paywall.feature.custom_fields")
             FeatureRow(textKey: "paywall.feature.advanced_filters")

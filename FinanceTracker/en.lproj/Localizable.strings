@@ -359,12 +359,14 @@
 "premium.restore" = "Restore Purchases";
 "premium.redeem_hint" = "Use Redeem Code if you have a promo code for Premium.";
 
-"paywall.title" = "Go Premium";
-"paywall.subtitle" = "Unlock import & full export, and future power features.";
+"paywall.title" = "Own your money, on your iPhone forever";
+"paywall.subtitle" = "Everything stays on your iPhone — no servers, no accounts, no tracking.";
 "paywall.loading" = "Loading plans…";
 /* Paywall features */
 "paywall.features.header" = "Every plan includes";
 "paywall.feature.unlimited_transactions" = "Unlimited transactions";
+"paywall.feature.alltime_exports" = "All-time exports (CSV / PDF / Excel)";
+"paywall.feature.privacy_ondevice" = "Everything on-device — no cloud";
 "paywall.feature.unlimited_csv" = "Unlimited CSV import";
 "paywall.feature.custom_fields" = "Custom fields";
 "paywall.feature.advanced_filters" = "Advanced filters";

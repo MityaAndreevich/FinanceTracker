@@ -381,11 +381,13 @@
 "premium.redeem_code" = "Resgatar código";
 "premium.restore" = "Restaurar compras";
 "premium.redeem_hint" = "Use Resgatar código se você tiver um código promocional do Premium.";
-"paywall.title" = "Seja Premium";
-"paywall.subtitle" = "Desbloqueie a importação e a exportação completa, e futuros recursos avançados.";
+"paywall.title" = "Seu dinheiro, no seu iPhone para sempre";
+"paywall.subtitle" = "Tudo fica no seu iPhone — sem servidores, sem contas, sem rastreamento.";
 "paywall.loading" = "Carregando planos…";
 "paywall.features.header" = "Todos os planos incluem";
 "paywall.feature.unlimited_transactions" = "Transações ilimitadas";
+"paywall.feature.alltime_exports" = "Exportações de todo o tempo (CSV / PDF / Excel)";
+"paywall.feature.privacy_ondevice" = "Tudo no dispositivo — sem nuvem";
 "paywall.feature.unlimited_csv" = "Importação CSV ilimitada";
 "paywall.feature.custom_fields" = "Campos personalizados";
 "paywall.feature.advanced_filters" = "Filtros avançados";
