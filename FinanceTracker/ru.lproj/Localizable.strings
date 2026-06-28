@@ -155,7 +155,7 @@
    Privacy Settings
    ====================================================== */
 "settings.privacy.title" = "Ваши данные остаются на устройстве";
-"settings.privacy.subtitle" = "FinanceTracker создан с учётом приватности. Без облачного аккаунта. Без передачи данных. Всё остаётся на вашем iPhone.";
+"settings.privacy.subtitle" = "Budget Crab создан с учётом приватности. Без облачного аккаунта. Без передачи данных. Всё остаётся на вашем iPhone.";
 "privacy.section.ondevice" = "ЗАЩИТА НА УСТРОЙСТВЕ";
 "privacy.section.whatwedonot" = "ЧТО МЫ НЕ ДЕЛАЕМ";
 "privacy.claim.no_bank_login" = "Не требуем доступа к банку";
@@ -177,7 +177,7 @@
 
 "general.currency" = "Валюта";
 "general.language" = "Язык";
-"general.language_hint" = "Переключение языка станет полностью доступно после добавления всех переводов.";
+"general.language_hint" = "Большинство надписей обновятся сразу. Некоторые — при следующем открытии Budget Crab.";
 "settings.language.restart_required.title" = "Язык обновлён";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Некоторые надписи обновятся после повторного открытия приложения.";
@@ -470,9 +470,9 @@
    ====================================================== */
 "about.title" = "О приложении";
 "about.app" = "Приложение";
-"about.app_name" = "FinanceTracker";
+"about.app_name" = "Budget Crab";
 "about.version" = "Версия";
-"about.privacy_hint" = "Политика конфиденциальности и условия будут добавлены перед релизом.";
+"about.privacy_hint" = "Ваши данные остаются на iPhone. Без аккаунтов и серверов.";
 "about.rate" = "Оценить Budget Crab";
 "about.tell_friend" = "Рассказать другу";
 "about.tell_friend.share" = "Попробуй Budget Crab Money Tracker — приватный учёт расходов прямо на iPhone.";
@@ -503,7 +503,7 @@
 /* ======================================================
    PDF report
    ====================================================== */
-"pdf.report.title" = "Отчёт FinanceTracker";
+"pdf.report.title" = "Отчёт Budget Crab";
 "pdf.range.month" = "Этот месяц";
 "pdf.range.all" = "За всё время";
 "pdf.label.income" = "Доходы";

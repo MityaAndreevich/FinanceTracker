@@ -144,7 +144,7 @@
    Privacy Settings
    ====================================================== */
 "settings.privacy.title" = "Your Data Stays on Your Device";
-"settings.privacy.subtitle" = "FinanceTracker is built with privacy by design. No cloud account. No data sharing. Everything stays on your iPhone.";
+"settings.privacy.subtitle" = "Budget Crab is built with privacy by design. No cloud account. No data sharing. Everything stays on your iPhone.";
 "privacy.section.ondevice" = "ON-DEVICE PROTECTION";
 "privacy.section.whatwedonot" = "WHAT WE DON'T DO";
 "privacy.claim.no_bank_login" = "No bank login required";
@@ -166,7 +166,7 @@
 
 "general.currency" = "Currency";
 "general.language" = "Language";
-"general.language_hint" = "Language switching will be fully enabled when localization keys are added.";
+"general.language_hint" = "Most labels update right away. A few update the next time you open Budget Crab.";
 "settings.language.restart_required.title" = "Language updated";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Some labels will update after you reopen the app.";
@@ -463,9 +463,9 @@
    ====================================================== */
 "about.title" = "About";
 "about.app" = "App";
-"about.app_name" = "FinanceTracker";
+"about.app_name" = "Budget Crab";
 "about.version" = "Version";
-"about.privacy_hint" = "Privacy Policy and Terms will be added before App Store release.";
+"about.privacy_hint" = "Your data stays on your iPhone. No accounts, no servers.";
 "about.rate" = "Rate Budget Crab";
 "about.tell_friend" = "Tell a Friend";
 "about.tell_friend.share" = "Check out Budget Crab Money Tracker — a private, on-device finance app.";
@@ -488,7 +488,7 @@
 /* ======================================================
    PDF report
    ====================================================== */
-"pdf.report.title" = "FinanceTracker Report";
+"pdf.report.title" = "Budget Crab Report";
 "pdf.range.month" = "This month";
 "pdf.range.all" = "All time";
 "pdf.label.income" = "Income";

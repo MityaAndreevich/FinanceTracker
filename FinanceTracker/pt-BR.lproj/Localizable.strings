@@ -121,7 +121,7 @@
 
 "general.currency" = "Moeda";
 "general.language" = "Idioma";
-"general.language_hint" = "A mudança de idioma estará disponível quando todas as traduções forem adicionadas.";
+"general.language_hint" = "A maioria dos textos é atualizada na hora. Alguns mudam na próxima vez que você abrir o Budget Crab.";
 "settings.language.restart_required.title" = "Idioma atualizado";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Alguns rótulos serão atualizados quando você reabrir o app.";
@@ -258,7 +258,7 @@
 "onboarding.currency.all" = "Todas as moedas";
 "settings.privacy" = "Privacidade";
 "settings.privacy.title" = "Seus dados ficam no seu dispositivo";
-"settings.privacy.subtitle" = "O FinanceTracker é feito com privacidade por design. Sem conta na nuvem. Sem compartilhamento de dados. Tudo fica no seu iPhone.";
+"settings.privacy.subtitle" = "O Budget Crab é feito com privacidade por design. Sem conta na nuvem. Sem compartilhamento de dados. Tudo fica no seu iPhone.";
 "privacy.section.ondevice" = "PROTEÇÃO NO DISPOSITIVO";
 "privacy.section.whatwedonot" = "O QUE NÃO FAZEMOS";
 "privacy.claim.no_bank_login" = "Sem login bancário";
@@ -458,9 +458,9 @@
 "cs.category_sheet.type.income" = "Receita";
 "about.title" = "Sobre";
 "about.app" = "App";
-"about.app_name" = "FinanceTracker";
+"about.app_name" = "Budget Crab";
 "about.version" = "Versão";
-"about.privacy_hint" = "A Política de Privacidade e os Termos serão adicionados antes do lançamento na App Store.";
+"about.privacy_hint" = "Seus dados ficam no seu iPhone. Sem contas e sem servidores.";
 "about.rate" = "Avaliar Budget Crab";
 "about.tell_friend" = "Indicar a um amigo";
 "about.tell_friend.share" = "Conheça o Budget Crab Money Tracker — controle de gastos privado no seu iPhone.";
@@ -468,7 +468,7 @@
 "icons.title" = "Escolher ícone";
 "icons.search" = "Buscar símbolos";
 "icons.clear" = "Sem ícone";
-"pdf.report.title" = "Relatório do FinanceTracker";
+"pdf.report.title" = "Relatório do Budget Crab";
 "pdf.range.month" = "Este mês";
 "pdf.range.all" = "Todo o histórico";
 "pdf.label.income" = "Receitas";

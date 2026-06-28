@@ -121,7 +121,7 @@
 
 "general.currency" = "Moneda";
 "general.language" = "Idioma";
-"general.language_hint" = "El cambio de idioma estará disponible cuando se completen las traducciones.";
+"general.language_hint" = "La mayoría de los textos se actualizan al instante. Algunos cambian la próxima vez que abras Budget Crab.";
 "settings.language.restart_required.title" = "Idioma actualizado";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Algunas etiquetas se actualizarán cuando vuelvas a abrir la app.";
@@ -253,7 +253,7 @@
 "onboarding.currency.all" = "Todas las monedas";
 "settings.privacy" = "Privacidad";
 "settings.privacy.title" = "Tus datos se quedan en tu dispositivo";
-"settings.privacy.subtitle" = "FinanceTracker está diseñado con privacidad desde el principio. Sin cuenta en la nube. Sin compartir datos. Todo se queda en tu iPhone.";
+"settings.privacy.subtitle" = "Budget Crab está diseñado con privacidad desde el principio. Sin cuenta en la nube. Sin compartir datos. Todo se queda en tu iPhone.";
 "privacy.section.ondevice" = "PROTECCIÓN EN EL DISPOSITIVO";
 "privacy.section.whatwedonot" = "LO QUE NO HACEMOS";
 "privacy.claim.no_bank_login" = "Sin inicio de sesión bancario";
@@ -454,9 +454,9 @@
 "cs.category_sheet.type.income" = "Ingreso";
 "about.title" = "Acerca de";
 "about.app" = "App";
-"about.app_name" = "FinanceTracker";
+"about.app_name" = "Budget Crab";
 "about.version" = "Versión";
-"about.privacy_hint" = "La Política de privacidad y los Términos se agregarán antes del lanzamiento en la App Store.";
+"about.privacy_hint" = "Tus datos se quedan en tu iPhone. Sin cuentas ni servidores.";
 "about.rate" = "Valorar Budget Crab";
 "about.tell_friend" = "Recomendar a un amigo";
 "about.tell_friend.share" = "Mira Budget Crab Money Tracker — registro de gastos privado en tu iPhone.";
@@ -464,7 +464,7 @@
 "icons.title" = "Elegir icono";
 "icons.search" = "Buscar símbolos";
 "icons.clear" = "Sin icono";
-"pdf.report.title" = "Informe de FinanceTracker";
+"pdf.report.title" = "Informe de Budget Crab";
 "pdf.range.month" = "Este mes";
 "pdf.range.all" = "Todo el historial";
 "pdf.label.income" = "Ingresos";
