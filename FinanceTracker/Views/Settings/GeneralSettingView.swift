@@ -52,6 +52,35 @@ struct GeneralSettingsView: View {
         .onChange(of: appLanguageCode) { _, _ in normalizeStoredValuesIfNeeded() }
         .onChange(of: defaultCurrencyCode) { _, _ in normalizeStoredValuesIfNeeded() }
 
+        // Picker sheet on root — attaching to a Section (non-root) caused a
+        // SwiftUI presentation race where the first tap on the language row was
+        // silently swallowed ~50% of the time. Root attachment avoids that.
+        .sheet(item: $activeSheet, onDismiss: applyPendingSelection) { sheet in
+            switch sheet {
+            case .currency:
+                SearchablePickerSheet(
+                    titleKey: "general.currency",
+                    items: SupportedCurrency.allCases,
+                    labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
+                    selection: Binding(
+                        get: { pendingCurrency ?? defaultCurrencyCode },
+                        set: { pendingCurrency = $0 }
+                    )
+                )
+            case .language:
+                SearchablePickerSheet(
+                    titleKey: "general.language",
+                    items: SupportedLanguage.allCases,
+                    labelProvider: { "\($0.flag) \($0.title)" },
+                    identifierPrefix: "picker.locale",
+                    selection: Binding(
+                        get: { pendingLanguage ?? appLanguageCode },
+                        set: { pendingLanguage = $0 }
+                    )
+                )
+            }
+        }
+
         // Info alert
         .alert(infoTitleKey, isPresented: $showInfoAlert) {
             Button("general.alert.ok", role: .cancel) { infoExtra = nil }
@@ -124,31 +153,6 @@ struct GeneralSettingsView: View {
             Text("general.language_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-        }
-        .sheet(item: $activeSheet, onDismiss: applyPendingSelection) { sheet in
-            switch sheet {
-            case .currency:
-                SearchablePickerSheet(
-                    titleKey: "general.currency",
-                    items: SupportedCurrency.allCases,
-                    labelProvider: { "\($0.flag) \($0.code) — \($0.name)" },
-                    selection: Binding(
-                        get: { pendingCurrency ?? defaultCurrencyCode },
-                        set: { pendingCurrency = $0 }
-                    )
-                )
-            case .language:
-                SearchablePickerSheet(
-                    titleKey: "general.language",
-                    items: SupportedLanguage.allCases,
-                    labelProvider: { "\($0.flag) \($0.title)" },
-                    identifierPrefix: "picker.locale",
-                    selection: Binding(
-                        get: { pendingLanguage ?? appLanguageCode },
-                        set: { pendingLanguage = $0 }
-                    )
-                )
-            }
         }
     }
 

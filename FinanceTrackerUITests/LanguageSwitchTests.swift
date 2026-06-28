@@ -41,9 +41,9 @@ import XCTest
 
 final class LanguageSwitchTests: XCTestCase {
 
-    /// Max taps allowed to open the picker. Currently 3 to tolerate the open
-    /// first-tap race; drop to 1 once the race is fixed to enforce first-tap open.
-    private let maxOpenTaps = 3
+    /// Max taps allowed to open the picker. Confirmed 1 after moving .sheet(item:) to
+    /// the view root (Fix #12, 2026-06-28) — first-tap race resolved.
+    private let maxOpenTaps = 1
 
     override func setUpWithError() throws {
         continueAfterFailure = false
