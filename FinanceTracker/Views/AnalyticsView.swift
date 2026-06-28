@@ -223,17 +223,26 @@ struct AnalyticsView: View {
             return
         }
 
-        var monthNet: [Date: Int] = [:]
+        // Track income and expense magnitudes separately so the Horizon mode
+        // toggle (Net / Expenses / Income / Combined) can plot each absolute
+        // series; net is derived as income − expense.
+        struct MonthAcc { var income = 0; var expense = 0 }
+        var monthAcc: [Date: MonthAcc] = [:]
         for tx in transactions {
             guard let mStart = cal.date(from: cal.dateComponents([.year, .month], from: tx.date)) else { continue }
             guard mStart >= horizonStart && mStart <= monthStart else { continue }
-            monthNet[mStart, default: 0] += tx.signedAmountCents
+            if tx.isIncome {
+                monthAcc[mStart, default: MonthAcc()].income += tx.amountCents
+            } else {
+                monthAcc[mStart, default: MonthAcc()].expense += tx.amountCents
+            }
         }
 
         var out: [AnalyticsHorizonView.MonthlyTotal] = []
         var cursor = horizonStart
         while cursor <= monthStart {
-            out.append(.init(date: cursor, netCents: monthNet[cursor] ?? 0))
+            let acc = monthAcc[cursor] ?? MonthAcc()
+            out.append(.init(date: cursor, incomeCents: acc.income, expenseCents: acc.expense))
             guard let next = cal.date(byAdding: .month, value: 1, to: cursor) else { break }
             cursor = next
         }

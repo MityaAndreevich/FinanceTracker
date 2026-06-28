@@ -2,9 +2,11 @@
 //  AnalyticsHorizonView.swift
 //  FinanceTracker
 //
-//  Analytics screen 3 of 3 — "The Horizon". 12-month net trend with Apple
-//  Stocks-style haptic scrubbing: drag across the line to read any month's net.
-//  Brief 28H addendum (research-validated). Balances are .privacySensitive().
+//  Analytics screen 3 of 3 — "The Horizon". 12-month trend with Apple
+//  Stocks-style haptic scrubbing: drag across the line to read any month.
+//  A mode toggle (Net / Expenses / Income / Combined) lets users read the
+//  net flow or isolate the absolute income / expense trends. Balances are
+//  .privacySensitive(). Brief 28H addendum (research-validated).
 //
 
 import SwiftUI
@@ -14,11 +16,17 @@ struct AnalyticsHorizonView: View {
     let monthlyTotals: [MonthlyTotal]   // 12 months
     let currencyCode: String
 
+    // Which trend to draw. Persisted so the user's last choice survives tab
+    // switches and relaunches.
+    @AppStorage("horizon_mode") private var mode: HorizonMode = .net
+
     // `chartXSelection` resets its binding to nil the instant the finger lifts,
     // which made the selection (and the tappable tooltip/Show-details affordance)
     // vanish on touch-end. We treat `rawSelectedDate` as the *transient* scrub
     // position and commit it into `stickySelectedDate`, which persists until the
     // user scrubs elsewhere or explicitly clears. (Apple Health-style sticky.)
+    // The selection is keyed by *date*, so switching mode keeps it — every mode
+    // shares the same month axis.
     @State private var rawSelectedDate: Date?
     @State private var stickySelectedDate: Date?
     @State private var detailMonth: MonthlyTotal?
@@ -26,25 +34,61 @@ struct AnalyticsHorizonView: View {
     struct MonthlyTotal: Identifiable {
         let id = UUID()
         let date: Date
-        let netCents: Int
+        let incomeCents: Int    // absolute income magnitude for the month
+        let expenseCents: Int   // absolute expense magnitude for the month
+        var netCents: Int { incomeCents - expenseCents }
+    }
+
+    enum HorizonMode: String, CaseIterable, Identifiable {
+        case net, expenses, income, combined
+        var id: String { rawValue }
+        var titleKey: LocalizedStringKey {
+            switch self {
+            case .net: return "analytics.horizon.mode.net"
+            case .expenses: return "analytics.horizon.mode.expenses"
+            case .income: return "analytics.horizon.mode.income"
+            case .combined: return "analytics.horizon.mode.combined"
+            }
+        }
     }
 
     var body: some View {
         VStack(spacing: 0) {
+            modePicker
             tooltipBar
             trendChart
                 .padding(.horizontal, 20)
             Spacer(minLength: 0)
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: mode)
         .sheet(item: $detailMonth) { month in
             MonthDetailSheet(month: month, currencyCode: currencyCode)
                 .presentationDetents([.medium, .large])
         }
     }
 
+    // MARK: - Mode toggle
+
+    private var modePicker: some View {
+        // Label key is reused (hidden) so no new localization key is introduced.
+        Picker("analytics.horizon.title", selection: $mode) {
+            ForEach(HorizonMode.allCases) { m in
+                Text(m.titleKey).tag(m)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - Tooltip / drill-down affordance
+
     @ViewBuilder
     private var tooltipBar: some View {
         if let selected = selectedTotal {
+            let headline = headlineValue(for: selected)
             Button {
                 detailMonth = selected
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -54,15 +98,11 @@ struct AnalyticsHorizonView: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     HStack(spacing: 6) {
-                        Text(Money.formatSigned(
-                            cents: selected.netCents,
-                            isPositive: selected.netCents >= 0,
-                            currencyCode: currencyCode
-                        ))
-                        .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(Color.money(isPositive: selected.netCents >= 0))
-                        .privacySensitive(true)
-                        .contentTransition(.numericText())
+                        Text(headline.text)
+                            .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(headline.color)
+                            .privacySensitive(true)
+                            .contentTransition(.numericText())
                         Image(systemName: "chevron.right.circle.fill")
                             .font(.title3)
                             .foregroundStyle(.tertiary)
@@ -92,37 +132,33 @@ struct AnalyticsHorizonView: View {
         }
     }
 
+    /// The big headline number + color for the selected month, per mode.
+    private func headlineValue(for total: MonthlyTotal) -> (text: String, color: Color) {
+        switch mode {
+        case .net, .combined:
+            return (Money.formatSigned(cents: total.netCents,
+                                       isPositive: total.netCents >= 0,
+                                       currencyCode: currencyCode),
+                    Color.money(isPositive: total.netCents >= 0))
+        case .expenses:
+            return (Money.formatSigned(cents: total.expenseCents,
+                                       isPositive: false,
+                                       currencyCode: currencyCode),
+                    .bcExpense)
+        case .income:
+            return (Money.formatSigned(cents: total.incomeCents,
+                                       isPositive: true,
+                                       currencyCode: currencyCode),
+                    .bcIncome)
+        }
+    }
+
+    // MARK: - Chart
+
     private var trendChart: some View {
         Chart {
-            ForEach(monthlyTotals) { item in
-                LineMark(
-                    x: .value("analytics.axis.month", item.date),
-                    y: .value("analytics.axis.amount", item.netCents)
-                )
-                .foregroundStyle(netTrendGradient)
-                .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
-
-                AreaMark(
-                    x: .value("analytics.axis.month", item.date),
-                    y: .value("analytics.axis.amount", item.netCents)
-                )
-                .foregroundStyle(netAreaGradient)
-                .interpolationMethod(.catmullRom)
-            }
-
-            if let selectedTotal {
-                RuleMark(x: .value("analytics.axis.month", selectedTotal.date))
-                    .foregroundStyle(.secondary.opacity(0.4))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
-
-                PointMark(
-                    x: .value("analytics.axis.month", selectedTotal.date),
-                    y: .value("analytics.axis.amount", selectedTotal.netCents)
-                )
-                .foregroundStyle(Color.money(isPositive: selectedTotal.netCents >= 0))
-                .symbolSize(120)
-            }
+            chartMarks
+            selectionMarks
         }
         .chartXSelection(value: $rawSelectedDate)
         .chartXAxis {
@@ -152,20 +188,145 @@ struct AnalyticsHorizonView: View {
         }
     }
 
-    // MARK: - Sign-aware coloring
+    @ChartContentBuilder
+    private var chartMarks: some ChartContent {
+        switch mode {
+        case .net:
+            ForEach(monthlyTotals) { item in
+                LineMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.netCents)
+                )
+                .foregroundStyle(netTrendGradient)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .interpolationMethod(.catmullRom)
+
+                AreaMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.netCents)
+                )
+                .foregroundStyle(netAreaGradient)
+                .interpolationMethod(.catmullRom)
+            }
+
+        case .expenses:
+            ForEach(monthlyTotals) { item in
+                LineMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.expenseCents)
+                )
+                .foregroundStyle(Color.bcExpense)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .interpolationMethod(.catmullRom)
+
+                AreaMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.expenseCents)
+                )
+                .foregroundStyle(solidAreaGradient(.bcExpense))
+                .interpolationMethod(.catmullRom)
+            }
+
+        case .income:
+            ForEach(monthlyTotals) { item in
+                LineMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.incomeCents)
+                )
+                .foregroundStyle(Color.bcIncome)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .interpolationMethod(.catmullRom)
+
+                AreaMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.incomeCents)
+                )
+                .foregroundStyle(solidAreaGradient(.bcIncome))
+                .interpolationMethod(.catmullRom)
+            }
+
+        case .combined:
+            // Two overlaid lines, no area fill. `series:` keeps them as distinct
+            // lines rather than one zig-zag.
+            ForEach(monthlyTotals) { item in
+                LineMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.incomeCents),
+                    series: .value("series", "income")
+                )
+                .foregroundStyle(Color.bcIncome)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .interpolationMethod(.catmullRom)
+            }
+            ForEach(monthlyTotals) { item in
+                LineMark(
+                    x: .value("analytics.axis.month", item.date),
+                    y: .value("analytics.axis.amount", item.expenseCents),
+                    series: .value("series", "expense")
+                )
+                .foregroundStyle(Color.bcExpense)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .interpolationMethod(.catmullRom)
+            }
+        }
+    }
+
+    @ChartContentBuilder
+    private var selectionMarks: some ChartContent {
+        if let selectedTotal {
+            RuleMark(x: .value("analytics.axis.month", selectedTotal.date))
+                .foregroundStyle(.secondary.opacity(0.4))
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+
+            switch mode {
+            case .net:
+                PointMark(
+                    x: .value("analytics.axis.month", selectedTotal.date),
+                    y: .value("analytics.axis.amount", selectedTotal.netCents)
+                )
+                .foregroundStyle(Color.money(isPositive: selectedTotal.netCents >= 0))
+                .symbolSize(120)
+            case .expenses:
+                PointMark(
+                    x: .value("analytics.axis.month", selectedTotal.date),
+                    y: .value("analytics.axis.amount", selectedTotal.expenseCents)
+                )
+                .foregroundStyle(Color.bcExpense)
+                .symbolSize(120)
+            case .income:
+                PointMark(
+                    x: .value("analytics.axis.month", selectedTotal.date),
+                    y: .value("analytics.axis.amount", selectedTotal.incomeCents)
+                )
+                .foregroundStyle(Color.bcIncome)
+                .symbolSize(120)
+            case .combined:
+                PointMark(
+                    x: .value("analytics.axis.month", selectedTotal.date),
+                    y: .value("analytics.axis.amount", selectedTotal.incomeCents)
+                )
+                .foregroundStyle(Color.bcIncome)
+                .symbolSize(110)
+                PointMark(
+                    x: .value("analytics.axis.month", selectedTotal.date),
+                    y: .value("analytics.axis.amount", selectedTotal.expenseCents)
+                )
+                .foregroundStyle(Color.bcExpense)
+                .symbolSize(110)
+            }
+        }
+    }
+
+    // MARK: - Sign-aware coloring (Net mode)
     //
-    // The Horizon trend is a single *net* line (income − expense). It used to be
+    // The Net trend is a single *net* line (income − expense). It used to be
     // drawn entirely in `Color.accentColor`, so a month with net spending looked
-    // identical to a month with net income — users read the chart as "income only,
-    // no expenses" because there was never any terracotta on screen. We now split
-    // the line/area at the zero line: emerald (`.bcIncome`) above zero, terracotta
-    // (`.bcExpense`) below. This keeps the single-line "Stocks-style" design while
-    // making expense-led months visually unmistakable, using the shared semantic
-    // money tokens (no new strings, no separate series).
+    // identical to a month with net income. We split the line/area at the zero
+    // line: emerald (`.bcIncome`) above zero, terracotta (`.bcExpense`) below.
+    // Expenses/Income modes plot a single absolute series in one semantic color.
 
     /// Position of the zero line within the value range, as a fraction from the
-    /// top (0) to the bottom (1) of the chart's plotted bounding box. Drives the
-    /// hard color stop in the gradients below.
+    /// top (0) to the bottom (1) of the chart's plotted bounding box.
     private var zeroFraction: CGFloat {
         let values = monthlyTotals.map(\.netCents)
         guard let maxV = values.max(), let minV = values.min(), maxV != minV else {
@@ -197,6 +358,15 @@ struct AnalyticsHorizonView: View {
                 .init(color: .bcExpense.opacity(0.04), location: zeroFraction),
                 .init(color: .bcExpense.opacity(0.28), location: 1),
             ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    /// Top-down fade for a single-color area fill (Expenses / Income modes).
+    private func solidAreaGradient(_ color: Color) -> LinearGradient {
+        LinearGradient(
+            colors: [color.opacity(0.28), color.opacity(0.02)],
             startPoint: .top,
             endPoint: .bottom
         )

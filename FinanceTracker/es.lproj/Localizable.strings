@@ -528,6 +528,10 @@
 "analytics.category_total" = "Total de la categoría";
 "analytics.transactions_count" = "%d transacciones";
 "analytics.horizon.tap_hint" = "Ver las transacciones del mes";
+"analytics.horizon.mode.net" = "Neto";
+"analytics.horizon.mode.expenses" = "Gastos";
+"analytics.horizon.mode.income" = "Ingresos";
+"analytics.horizon.mode.combined" = "Combinado";
 "analytics.pulse.tap_hint" = "Ver las transacciones de este día";
 "analytics.selection.clear" = "Borrar selección";
 "analytics.day.by_category" = "Por categoría";
