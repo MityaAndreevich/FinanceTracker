@@ -15,10 +15,20 @@ struct FinanceTrackerApp: App {
     // Mirror default currency to App Group defaults so AppIntents can read it.
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
+    // Observing the shared bundle re-renders the tree when the in-app language
+    // changes, so code-resolved strings (String(localized:) / NSLocalizedString)
+    // refresh live alongside Text("key") — no relaunch, no `.id()` recreation.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     init() {
         // Must run before SharedModelContainer.shared is first accessed so the
         // lazily-created App Group store is seeded with existing user data.
         SharedModelContainer.migrateLegacyStoreIfNeeded()
+
+        // Apply the stored language override to Bundle.main *before* the first
+        // frame, so code-resolved strings match the chosen language immediately.
+        let stored = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
+        LocalizedBundle.shared.setLanguage(stored)
     }
 
     // MARK: - Locale + Layout
@@ -45,6 +55,7 @@ struct FinanceTrackerApp: App {
         WindowGroup {
             RootView()
                 .environment(\.locale, appLocale)
+                .environmentObject(localizedBundle)
                 .applyLayoutDirection(overrideLayoutDirection)
                 // NOTE: deliberately no `.id(appLanguageCode)` here. Re-creating the
                 // whole view tree on language change dismissed any in-flight sheet,
@@ -63,6 +74,13 @@ struct FinanceTrackerApp: App {
                 }
                 .onChange(of: defaultCurrencyCode) { _, new in
                     UserDefaults.appGroup.set(new, forKey: "defaultCurrencyCode")
+                }
+                // Redirect Bundle.main string lookups the instant the in-app
+                // language changes. GeneralSettingView already defers this state
+                // change past the picker's dismiss (with animations disabled), so
+                // wiring it here keeps Bug 2's sheet-presentation timing untouched.
+                .onChange(of: appLanguageCode) { _, new in
+                    LocalizedBundle.shared.setLanguage(new)
                 }
         }
         .modelContainer(SharedModelContainer.shared)
