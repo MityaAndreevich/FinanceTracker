@@ -659,3 +659,26 @@
 "analytics.pulse.tap_hint" = "Show this day's transactions";
 "analytics.selection.clear" = "Clear selection";
 "analytics.day.by_category" = "By category";
+
+/* --- Round 10 i18n fix: keys referenced in code but missing from all locales (raw-key leak in TransactionDetailView, DataSettingsView, PremiumSettingsView) --- */
+"tx_detail.title" = "Transaction Details";
+"tx_detail.section.summary" = "Summary";
+"tx_detail.type" = "Type";
+"tx_detail.amount" = "Amount";
+"tx_detail.date" = "Date";
+"tx_detail.section.category" = "Category";
+"tx_detail.category" = "Category";
+"tx_detail.section.source" = "Account";
+"tx_detail.source" = "Account";
+"tx_detail.section.note" = "Note";
+"data.alert.import_result.title" = "Import Complete";
+"data.alert.export_error.title" = "Export Failed";
+"data.export.share_last.format" = "Share %@";
+"data.export.failed.format" = "Export failed: %@";
+"data.import.failed.format" = "Import failed: %@";
+"data.import.result.imported.format" = "Imported: %d";
+"data.import.result.skipped.format" = "Skipped: %d";
+"data.import.result.created_categories.format" = "Categories created: %d";
+"data.import.result.created_sources.format" = "Accounts created: %d";
+"data.import.result.first_error.format" = "First error: %@";
+"premium.section.manage" = "Manage";

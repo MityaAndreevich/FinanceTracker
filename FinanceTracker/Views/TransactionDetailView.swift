@@ -16,9 +16,12 @@ struct TransactionDetailView: View {
     var body: some View {
         List {
             Section("tx_detail.section.summary") {
-                row("tx_detail.type", tx.isIncome
-                    ? String(localized: "add.type.income")
-                    : String(localized: "add.type.expense"))
+                // Render the type label through a LocalizedStringKey (not a
+                // pre-resolved String) so it localizes via the same environment
+                // path as every other Text here — "Expense" → "Расход" can't lag.
+                row("tx_detail.type", valueKey: tx.isIncome
+                    ? "add.type.income"
+                    : "add.type.expense")
                 row("tx_detail.amount", Money.format(cents: tx.amountCents, currencyCode: tx.currency))
                     .privacySensitive()
                 row("tx_detail.date", formattedDate(tx.date))
@@ -53,6 +56,17 @@ struct TransactionDetailView: View {
             Text(titleKey)
             Spacer()
             Text(value)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Like ``row(_:_:)`` but the value is itself a localization key, resolved by
+    /// `Text` through the environment locale/bundle (not pre-resolved to a String).
+    private func row(_ titleKey: LocalizedStringKey, valueKey: LocalizedStringKey) -> some View {
+        HStack {
+            Text(titleKey)
+            Spacer()
+            Text(valueKey)
                 .foregroundStyle(.secondary)
         }
     }

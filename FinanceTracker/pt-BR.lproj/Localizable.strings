@@ -540,3 +540,26 @@
 "analytics.pulse.tap_hint" = "Ver as transações deste dia";
 "analytics.selection.clear" = "Limpar seleção";
 "analytics.day.by_category" = "Por categoria";
+
+/* --- Round 10 i18n fix: keys referenced in code but missing from all locales (raw-key leak in TransactionDetailView, DataSettingsView, PremiumSettingsView) --- */
+"tx_detail.title" = "Detalhes da transação";
+"tx_detail.section.summary" = "Resumo";
+"tx_detail.type" = "Tipo";
+"tx_detail.amount" = "Valor";
+"tx_detail.date" = "Data";
+"tx_detail.section.category" = "Categoria";
+"tx_detail.category" = "Categoria";
+"tx_detail.section.source" = "Conta";
+"tx_detail.source" = "Conta";
+"tx_detail.section.note" = "Nota";
+"data.alert.import_result.title" = "Importação concluída";
+"data.alert.export_error.title" = "Falha na exportação";
+"data.export.share_last.format" = "Compartilhar %@";
+"data.export.failed.format" = "Falha ao exportar: %@";
+"data.import.failed.format" = "Falha ao importar: %@";
+"data.import.result.imported.format" = "Importadas: %d";
+"data.import.result.skipped.format" = "Ignoradas: %d";
+"data.import.result.created_categories.format" = "Categorias criadas: %d";
+"data.import.result.created_sources.format" = "Contas criadas: %d";
+"data.import.result.first_error.format" = "Primeiro erro: %@";
+"premium.section.manage" = "Gerenciar";

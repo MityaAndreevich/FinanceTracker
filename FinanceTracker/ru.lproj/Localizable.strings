@@ -669,3 +669,26 @@
 "analytics.pulse.tap_hint" = "Показать операции за этот день";
 "analytics.selection.clear" = "Сбросить выбор";
 "analytics.day.by_category" = "По категориям";
+
+/* --- Round 10 i18n fix: keys referenced in code but missing from all locales (raw-key leak in TransactionDetailView, DataSettingsView, PremiumSettingsView) --- */
+"tx_detail.title" = "Подробности операции";
+"tx_detail.section.summary" = "Сводка";
+"tx_detail.type" = "Тип";
+"tx_detail.amount" = "Сумма";
+"tx_detail.date" = "Дата";
+"tx_detail.section.category" = "Категория";
+"tx_detail.category" = "Категория";
+"tx_detail.section.source" = "Счёт";
+"tx_detail.source" = "Счёт";
+"tx_detail.section.note" = "Заметка";
+"data.alert.import_result.title" = "Импорт завершён";
+"data.alert.export_error.title" = "Не удалось экспортировать";
+"data.export.share_last.format" = "Поделиться %@";
+"data.export.failed.format" = "Не удалось экспортировать: %@";
+"data.import.failed.format" = "Не удалось импортировать: %@";
+"data.import.result.imported.format" = "Импортировано: %d";
+"data.import.result.skipped.format" = "Пропущено: %d";
+"data.import.result.created_categories.format" = "Создано категорий: %d";
+"data.import.result.created_sources.format" = "Создано счетов: %d";
+"data.import.result.first_error.format" = "Первая ошибка: %@";
+"premium.section.manage" = "Управление";
