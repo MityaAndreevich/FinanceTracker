@@ -16,8 +16,11 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
+    // Teach the edge-swipe affordance on the first few launches, then stop.
+    @AppStorage("swipe_hint_shown_count") private var swipeHintShownCount = 0
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
+    @State private var showSwipeHint = false
 
     // Screenshot automation: which settings-detail / paywall screen to present
     // over the tab view on launch. Stays nil in Release (set only from the
@@ -92,16 +95,24 @@ struct ContentView: View {
             .tabItem { Label("tab.settings", systemImage: "gear") }
             .tag(4)
         }
-        // Horizontal swipe pages between the main tabs (skipping the "+" tab),
+        // Edge-only swipe pages between the main tabs (skipping the "+" tab),
         // clamping at the first/last so the user is never disoriented by a wrap.
-        // Within Analytics the swipe is shadowed by that screen's own sub-tab
-        // swipe (a descendant gesture wins), so paging out of Analytics is done
-        // via the tab bar — see AnalyticsView.
-        .horizontalSwipeNavigation(
+        // Anchoring to the screen edges keeps it from competing with charts,
+        // lists, and scroll views in the content area. Within Analytics the
+        // gesture is shadowed by that screen's own content-wide sub-tab swipe (a
+        // descendant gesture wins), so paging out of Analytics is done via the
+        // tab bar — see AnalyticsView.
+        .edgeSwipeNavigation(
             onNext: { selectAdjacentTab(forward: true) },
             onPrevious: { selectAdjacentTab(forward: false) }
         )
         .sensoryFeedback(.selection, trigger: selectedTab)
+        .overlay {
+            if showSwipeHint {
+                EdgeSwipeHintView()
+                    .transition(.opacity)
+            }
+        }
         .onChange(of: selectedTab) { oldTab, newTab in
             if newTab == 2 {
                 showAddSheet = true
@@ -128,6 +139,7 @@ struct ContentView: View {
             applyScreenshotRoutingIfNeeded()
             handlePendingIntentNavigation()
             RatingPromptCoordinator.recordSessionOpen()
+            maybeShowSwipeHint()
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }
@@ -142,6 +154,16 @@ struct ContentView: View {
     }
 
     // MARK: - Swipe navigation
+
+    /// Flashes the edge-swipe hint on the first few launches, then never again.
+    private func maybeShowSwipeHint() {
+        guard swipeHintShownCount < 3, !showSwipeHint else { return }
+        swipeHintShownCount += 1
+        withAnimation(.easeIn(duration: 0.4)) { showSwipeHint = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+            withAnimation(.easeOut(duration: 0.5)) { showSwipeHint = false }
+        }
+    }
 
     /// Advances to the adjacent swipeable tab, clamping at the ends (no wrap).
     private func selectAdjacentTab(forward: Bool) {
