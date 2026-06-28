@@ -88,7 +88,7 @@ private struct SelectionRow: View {
                     .font(.system(size: 32))
 
                 Text(label.title)
-                    .font(.system(size: 18, weight: .medium, design: .rounded))
+                    .font(.system(.body, design: .rounded).weight(.medium))
                     .foregroundStyle(isSelected ? .white : .primary)
 
                 Spacer()

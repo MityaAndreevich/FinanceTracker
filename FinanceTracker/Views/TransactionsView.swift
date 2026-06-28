@@ -146,7 +146,7 @@ struct TransactionsView: View {
                 presentQuickEntry = true
             } label: {
                 Text("transactions.empty.cta")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)

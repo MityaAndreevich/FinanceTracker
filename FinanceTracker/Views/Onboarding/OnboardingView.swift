@@ -56,13 +56,13 @@ struct OnboardingView: View {
                 // MARK: Title + subtitle
                 VStack(spacing: 8) {
                     Text(step.titleKey)
-                        .font(.system(size: 34, weight: .bold))
+                        .font(.largeTitle.weight(.bold))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
 
                     Text(step.subtitleKey)
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
@@ -192,7 +192,7 @@ struct OnboardingView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Text(step.progressText)
-                .font(.system(size: 13, weight: .regular))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
         }
     }

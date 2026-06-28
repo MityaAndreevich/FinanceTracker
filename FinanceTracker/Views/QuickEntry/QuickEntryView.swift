@@ -450,7 +450,7 @@ struct QuickEntryView: View {
                         Image(systemName: parsed == nil ? "questionmark.circle" : "checkmark.circle.fill")
                             .font(.system(size: 18, weight: .semibold))
                         Text("quick_entry.save")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.headline)
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

@@ -110,29 +110,29 @@ struct PaywallView: View {
                     Task { await pm.restorePurchases() }
                 } label: {
                     Text("premium.restore")
-                        .font(.system(size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
 
                 Text("·")
-                    .font(.system(size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.tertiary)
 
                 Link(destination: Self.privacyURL) {
                     Text("paywall.legal.privacy")
-                        .font(.system(size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                         .underline()
                 }
 
                 Text("·")
-                    .font(.system(size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.tertiary)
 
                 Link(destination: Self.termsURL) {
                     Text("paywall.legal.terms")
-                        .font(.system(size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                         .underline()
                 }
@@ -339,7 +339,7 @@ private struct BadgeLabel: View {
             Image(systemName: systemImage)
                 .font(.system(size: 10, weight: .semibold))
             Text(textKey)
-                .font(.system(size: 11, weight: .medium))
+                .font(.caption2.weight(.medium))
         }
         .foregroundStyle(Color.brand)
         .padding(.horizontal, 8)

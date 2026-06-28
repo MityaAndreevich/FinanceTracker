@@ -309,7 +309,7 @@ struct DashboardView: View {
                 Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
                 Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
             ))
-            .font(.system(size: 13))
+            .font(.footnote)
             .monospacedDigit()
             .foregroundStyle(.secondary)
             .privacySensitive(true)
@@ -394,11 +394,11 @@ private struct DashboardEmptyState: View {
 
             VStack(spacing: 8) {
                 Text("dashboard.empty.title")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.title2.weight(.semibold))
                     .multilineTextAlignment(.center)
 
                 Text("dashboard.empty.caption")
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }

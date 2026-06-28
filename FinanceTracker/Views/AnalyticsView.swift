@@ -109,7 +109,7 @@ struct AnalyticsView: View {
             Text("analytics.empty.title")
                 .font(.headline)
             Text("analytics.empty.caption")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
