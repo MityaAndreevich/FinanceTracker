@@ -391,6 +391,9 @@
 "paywall.feature.unlimited_csv" = "Importação CSV ilimitada";
 "paywall.feature.custom_fields" = "Campos personalizados";
 "paywall.feature.advanced_filters" = "Filtros avançados";
+"paywall.yearly.best_value" = "Melhor valor";
+"paywall.yearly.save_amount" = "Economize 42%";
+"paywall.yearly.per_month" = "US$ 2,92/mês, cobrança anual";
 "paywall.plan.yearly" = "Anual";
 "paywall.plan.yearly.subtitle" = "7 dias grátis, depois USD 34,99/ano";
 "paywall.plan.monthly" = "Mensal";

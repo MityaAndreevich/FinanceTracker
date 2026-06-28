@@ -197,9 +197,20 @@ private struct YearlyPlanCard: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text(product.displayPrice)
-                    .font(.headline)
-                    .monospacedDigit()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(product.displayPrice)
+                        .font(.headline)
+                        .monospacedDigit()
+                    Text("paywall.yearly.per_month")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+            }
+
+            HStack(spacing: 6) {
+                BadgeLabel(textKey: "paywall.yearly.best_value", systemImage: "crown.fill")
+                BadgeLabel(textKey: "paywall.yearly.save_amount", systemImage: "tag.fill")
             }
 
             Button(action: action) {

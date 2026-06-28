@@ -32,9 +32,9 @@ final class LocaleCompletenessTests: XCTestCase {
             return XCTFail("Missing English Localizable.strings")
         }
         let enKeys = Set(en.keys)
-        // Bumped 2026-06-28 (Wave 1 Fix #2): +2 paywall feature keys
-        // (paywall.feature.alltime_exports, paywall.feature.privacy_ondevice). Was 459 before this pass.
-        XCTAssertEqual(enKeys.count, 461, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-28 (Wave 1 Fix #3): +3 yearly plan framing keys
+        // (paywall.yearly.best_value, paywall.yearly.save_amount, paywall.yearly.per_month). Was 461 before this pass.
+        XCTAssertEqual(enKeys.count, 464, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

@@ -378,6 +378,9 @@
 "paywall.feature.advanced_filters" = "Расширенные фильтры";
 
 /* Plans */
+"paywall.yearly.best_value" = "Лучшая выгода";
+"paywall.yearly.save_amount" = "Экономия 42%";
+"paywall.yearly.per_month" = "$2.92/мес, оплата за год";
 "paywall.plan.yearly" = "Годовой";
 "paywall.plan.yearly.subtitle" = "7 дней бесплатно, затем 34,99 $/год";
 "paywall.plan.monthly" = "Месячный";

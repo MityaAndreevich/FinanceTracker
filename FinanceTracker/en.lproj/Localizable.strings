@@ -372,6 +372,9 @@
 "paywall.feature.advanced_filters" = "Advanced filters";
 
 /* Plans */
+"paywall.yearly.best_value" = "Best value";
+"paywall.yearly.save_amount" = "Save 42%";
+"paywall.yearly.per_month" = "$2.92/month, billed annually";
 "paywall.plan.yearly" = "Yearly";
 "paywall.plan.yearly.subtitle" = "7-day free trial, then $34.99/year";
 "paywall.plan.monthly" = "Monthly";
