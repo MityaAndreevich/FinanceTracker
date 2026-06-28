@@ -283,7 +283,7 @@ struct DashboardView: View {
     // MARK: - Hero
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("dashboard.net_this_month")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -313,15 +313,8 @@ struct DashboardView: View {
             .monospacedDigit()
             .foregroundStyle(.secondary)
             .privacySensitive(true)
-
-            Text(netCents < 0 ? "dashboard.spent_more" : "dashboard.earned_more")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Text("dashboard.based_on_tracked")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
         }
+        .padding(.vertical, 8)
     }
 
     // MARK: - Insight / Day-0
