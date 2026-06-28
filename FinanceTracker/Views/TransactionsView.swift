@@ -76,10 +76,12 @@ struct TransactionsView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .safeAreaInset(edge: .top) {
+        .safeAreaInset(edge: .top, spacing: 0) {
             // PeriodSelector + filter chips live ABOVE the list, below the search
             // drawer. Keeping them out of the List avoids a hit-test conflict that
             // left the .searchable drawer visible but untappable on device.
+            // `spacing: 0` sits the bar flush under the nav bar (no extra gap that
+            // pushed content too far down).
             VStack(spacing: 8) {
                 PeriodSelector(scope: $scope)
                     .padding(.horizontal, 12)
@@ -91,6 +93,10 @@ struct TransactionsView: View {
             .background(.bar)
         }
         .navigationTitle("title.transactions")
+        // Inline (matching DashboardView) keeps the title fixed in the nav bar.
+        // The default large title collapsed under the always-on search drawer +
+        // period bar, leaving it half-hidden behind the bar's blur on device.
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(
             text: $searchText,
             placement: .navigationBarDrawer(displayMode: .always),
