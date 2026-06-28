@@ -40,7 +40,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // (analytics.horizon.mode.net/expenses/income/combined). Was 460.
         // Bumped 2026-06-28 (Fix 5): +4 restored onboarding language-screen keys
         // (onboarding.language.title/subtitle, onboarding.next/back). Was 464.
-        XCTAssertEqual(enKeys.count, 468, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-28 (Round 10 i18n leak fix): +21 keys referenced in code but
+        // missing from ALL locales — 10 tx_detail.* (raw-key leak in TransactionDetailView),
+        // 10 data.* import/export results (DataSettingsView), premium.section.manage. Was 468.
+        XCTAssertEqual(enKeys.count, 489, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
@@ -67,6 +70,78 @@ final class LocaleCompletenessTests: XCTestCase {
             XCTAssertFalse((value ?? "").isEmpty, "common.done empty in \(locale)")
             XCTAssertNotEqual(value, "common.done", "common.done is a raw key in \(locale)")
         }
+    }
+
+    // MARK: - Code ↔ strings completeness (catches the Round 10 raw-key leak)
+
+    /// The parity tests above only compare locales to *each other*. They cannot
+    /// catch a key that is referenced in code but missing from **every** locale —
+    /// which is exactly how `tx_detail.*` shipped as raw keys. This test scans the
+    /// Swift source for localization call-sites and asserts every referenced key
+    /// exists in the EN master `.strings`.
+    func testNoMissingLocalizationKeys() throws {
+        let sourceDir = URL(fileURLWithPath: #filePath)   // …/FinanceTrackerTests/LocaleCompletenessTests.swift
+            .deletingLastPathComponent()                  // …/FinanceTrackerTests
+            .deletingLastPathComponent()                  // …/ (repo root)
+            .appendingPathComponent("FinanceTracker")     // …/FinanceTracker (app sources)
+
+        let referenced = scanCodebaseForLocalizationKeys(in: sourceDir)
+        XCTAssertFalse(referenced.isEmpty, "Scanner found no keys — path wrong? \(sourceDir.path)")
+
+        let masterURL = sourceDir.appendingPathComponent("en.lproj/Localizable.strings")
+        let master = parseStringsFile(try String(contentsOf: masterURL, encoding: .utf8))
+
+        let missing = referenced.subtracting(master)
+        XCTAssertTrue(missing.isEmpty,
+            "Localization keys referenced in code but absent from en.lproj/Localizable.strings:\n" +
+            missing.sorted().joined(separator: "\n"))
+    }
+
+    /// Extracts dotted localization keys from Swift localization call-sites.
+    /// `systemImage:` / `systemName:` arguments are stripped first so SF Symbol
+    /// names (e.g. "house.fill") are never mistaken for keys. Only the first
+    /// string argument of a known localizing construct is considered, and only
+    /// when it matches a dotted `a.b.c` key shape.
+    private func scanCodebaseForLocalizationKeys(in directory: URL) -> Set<String> {
+        // swiftlint:disable:next force_try
+        let callSite = try! NSRegularExpression(pattern:
+            #"(?:NSLocalizedString|String\(localized:|LocalizedStringKey|Text|Section|Button|Label|Toggle|Picker|row|navigationTitle|navigationBarTitle|confirmationDialog|alert|tabItem|header:\s*Text)\s*\(\s*"([^"]+)""#)
+        let symbolArg = try! NSRegularExpression(pattern: #"system(?:Image|Name):\s*"[^"]+""#)
+        let dotted = try! NSRegularExpression(pattern: #"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$"#)
+
+        func isDotted(_ s: String) -> Bool {
+            dotted.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
+        }
+
+        var keys = Set<String>()
+        let fm = FileManager.default
+        guard let walker = fm.enumerator(at: directory, includingPropertiesForKeys: nil) else { return keys }
+        for case let url as URL in walker where url.pathExtension == "swift" {
+            guard var src = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            // Neutralize SF Symbol args so they can't be read as keys.
+            src = symbolArg.stringByReplacingMatches(
+                in: src, range: NSRange(src.startIndex..., in: src), withTemplate: "systemImage: SYMBOL")
+            let range = NSRange(src.startIndex..., in: src)
+            callSite.enumerateMatches(in: src, range: range) { match, _, _ in
+                guard let m = match, let r = Range(m.range(at: 1), in: src) else { return }
+                let key = String(src[r])
+                if isDotted(key) { keys.insert(key) }
+            }
+        }
+        return keys
+    }
+
+    /// Parses the keys out of a `.strings` file (`"key" = "value";`).
+    private func parseStringsFile(_ content: String) -> Set<String> {
+        // swiftlint:disable:next force_try
+        let keyLine = try! NSRegularExpression(pattern: #"^\s*"([^"]+)"\s*="#, options: [.anchorsMatchLines])
+        var keys = Set<String>()
+        let range = NSRange(content.startIndex..., in: content)
+        keyLine.enumerateMatches(in: content, range: range) { match, _, _ in
+            guard let m = match, let r = Range(m.range(at: 1), in: content) else { return }
+            keys.insert(String(content[r]))
+        }
+        return keys
     }
 
     func test_supported_language_enum_has_exactly_five_cases() {
