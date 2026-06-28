@@ -4,6 +4,11 @@
 //
 //  Created by Dmitry Logachev (USA) on 02.02.2026.
 //
+//  First-run flow. The language is auto-detected from the device (Brief: Wave 3
+//  Fix #14) so the user lands one tap from value — only the currency, which is
+//  genuinely ambiguous from language alone, still needs confirming. Manual
+//  language override lives in Settings → Language for later.
+//
 
 import SwiftUI
 
@@ -12,56 +17,30 @@ struct OnboardingView: View {
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    @State private var step: Step = .language
+    // Auto-detected on appear; not user-facing anymore (no language screen).
     @State private var selectedLanguage: SupportedLanguage = .system
     @State private var selectedCurrency: SupportedCurrency = .usd
 
     @State private var showFullCurrencyList = false
 
-    private enum Step: Int {
-        case language = 0
-        case currency = 1
-
-        var titleKey: LocalizedStringKey {
-            self == .language ? "onboarding.language.title" : "onboarding.currency.title"
-        }
-
-        var subtitleKey: LocalizedStringKey {
-            self == .language ? "onboarding.language.subtitle" : "onboarding.currency.subtitle"
-        }
-
-        var primaryButtonKey: LocalizedStringKey {
-            self == .language ? "onboarding.next" : "onboarding.cta.start_tracking"
-        }
-
-        var progressText: String {
-            self == .language ? "1/2" : "2/2"
-        }
-
-        var heroSymbol: String {
-            self == .language ? "globe" : "dollarsign.circle"
-        }
-    }
-
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // MARK: Hero icon
-                Image(systemName: step.heroSymbol)
+                Image(systemName: "dollarsign.circle")
                     .font(.system(size: 48))
                     .foregroundStyle(Color.accentColor)
                     .padding(.top, 24)
-                    .animation(.spring(duration: 0.3), value: step)
 
                 // MARK: Title + subtitle
                 VStack(spacing: 8) {
-                    Text(step.titleKey)
+                    Text("onboarding.currency.title")
                         .font(.largeTitle.weight(.bold))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
 
-                    Text(step.subtitleKey)
+                    Text("onboarding.currency.subtitle")
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -71,12 +50,8 @@ struct OnboardingView: View {
 
                 Spacer(minLength: 6)
 
-                // MARK: Elevated selection list + escape hatch to the full list
-                if step == .language {
-                    languageSelector
-                } else {
-                    currencySelector
-                }
+                // MARK: Currency selection + escape hatch to the full list
+                currencySelector
 
                 Spacer(minLength: 6)
 
@@ -84,34 +59,8 @@ struct OnboardingView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
-            .navigationBarBackButtonHidden(step == .language)
-            .toolbar { topToolbar }
-            .onAppear(perform: preloadFromStorage)
-            // Pre-fill the currency to match the chosen language. The user reaches the
-            // currency step next and can still override; this is just a better default
-            // (Spanish → MXN, Portuguese → BRL, etc.).
-            .onChange(of: selectedLanguage) { _, newLang in
-                switch newLang {
-                case .en: selectedCurrency = .usd
-                case .es: selectedCurrency = .mxn
-                case .pt: selectedCurrency = .brl
-                case .ru: selectedCurrency = .rub
-                case .system: break
-                }
-            }
+            .onAppear(perform: autoDetectDefaults)
         }
-    }
-
-    // MARK: - Language selector (elevated list)
-
-    private var languageSelector: some View {
-        ElevatedSelectionList(
-            items: popularLanguages,
-            selection: $selectedLanguage,
-            labelProvider: { (flag: $0.flag, title: $0.title) },
-            searchable: false   // all supported languages fit directly, no search needed
-        )
-        .frame(maxHeight: 480)
     }
 
     // MARK: - Currency selector (elevated list + escape hatch to the full list)
@@ -149,13 +98,6 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Popular subsets (short wheel for first-run delight)
-
-    private var popularLanguages: [SupportedLanguage] {
-        // All 4 supported locales (+ System) fit in the wheel — no overflow needed.
-        SupportedLanguage.allCases
-    }
-
     private var popularCurrencies: [SupportedCurrency] {
         let popular: [SupportedCurrency] = [.usd, .eur, .gbp, .rub, .jpy, .cny, .brl, .mxn, .cad, .aud]
         return popular.contains(selectedCurrency) ? popular : popular + [selectedCurrency]
@@ -165,15 +107,12 @@ struct OnboardingView: View {
 
     private var primaryButton: some View {
         Button {
-            if step == .language {
-                step = .currency
-            } else {
-                appLanguageCode = selectedLanguage.id
-                defaultCurrencyCode = selectedCurrency.code
-                hasCompletedOnboarding = true
-            }
+            appLanguageCode = selectedLanguage.id
+            applyAppleLanguagesOverride(for: selectedLanguage.id)
+            defaultCurrencyCode = selectedCurrency.code
+            hasCompletedOnboarding = true
         } label: {
-            Text(step.primaryButtonKey)
+            Text("onboarding.cta.start_tracking")
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
         }
@@ -181,27 +120,70 @@ struct OnboardingView: View {
         .tint(.accentColor)
     }
 
-    // MARK: - Toolbar (progress top-trailing, back top-leading)
+    // MARK: - Auto-detection
 
-    @ToolbarContentBuilder
-    private var topToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarLeading) {
-            if step == .currency {
-                Button("onboarding.back") { step = .language }
-            }
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Text(step.progressText)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+    /// Resolves the starting language + currency. On a genuine first run we read
+    /// the device language; if the user returned via Settings → Restart onboarding,
+    /// their previously pinned choice is respected instead of being overwritten.
+    private func autoDetectDefaults() {
+        if let pinned = SupportedLanguage(rawValue: appLanguageCode), pinned != .system {
+            selectedLanguage = pinned
+            selectedCurrency = SupportedCurrency(rawValue: defaultCurrencyCode)
+                ?? defaultCurrency(for: pinned)
+        } else {
+            let detected = detectDeviceLanguage()
+            selectedLanguage = detected
+            selectedCurrency = defaultCurrency(for: detected)
         }
     }
 
-    // MARK: - Storage preload
+    /// Maps the device's preferred language to one of our four shipped locales.
+    /// Unsupported languages resolve to `.system`, which renders the English base
+    /// strings at runtime (no `<lang>.lproj` to match) — graceful fallback, no
+    /// confirmation screen needed.
+    private func detectDeviceLanguage() -> SupportedLanguage {
+        guard let preferred = Locale.preferredLanguages.first else { return .system }
+        switch Locale(identifier: preferred).language.languageCode?.identifier {
+        case "en": return .en
+        case "ru": return .ru
+        case "es": return .es
+        case "pt": return .pt
+        default:   return .system
+        }
+    }
 
-    private func preloadFromStorage() {
-        selectedLanguage = SupportedLanguage(rawValue: appLanguageCode) ?? .system
-        selectedCurrency = SupportedCurrency(rawValue: defaultCurrencyCode) ?? .usd
+    /// Best currency guess. Prefers the device region's actual currency when we
+    /// support it, otherwise falls back to a language-based default.
+    private func defaultCurrency(for language: SupportedLanguage) -> SupportedCurrency {
+        if let regionCode = Locale.current.currency?.identifier,
+           let regionCurrency = SupportedCurrency(rawValue: regionCode) {
+            return regionCurrency
+        }
+        switch language {
+        case .es: return .mxn
+        case .pt: return .brl
+        case .ru: return .rub
+        case .en, .system: return .usd
+        }
+    }
+
+    /// Mirrors the resolved language into the `AppleLanguages` key so
+    /// `String(localized:)` / `NSLocalizedString` resolve against the right
+    /// `.lproj` on the next launch (matches GeneralSettingsView). For `.system`
+    /// we hand control back to iOS by removing the override.
+    private func applyAppleLanguagesOverride(for code: String) {
+        let appleLangCode: String?
+        switch code {
+        case "system", "": appleLangCode = nil           // hand control back to iOS
+        case "es":         appleLangCode = "es-MX"        // LATAM target market
+        case "pt":         appleLangCode = "pt-BR"        // resources live in pt-BR.lproj
+        default:           appleLangCode = code           // en, ru
+        }
+        if let appleLangCode {
+            UserDefaults.standard.set([appleLangCode], forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        }
     }
 }
 
