@@ -108,7 +108,12 @@ struct AnalyticsBreakdownView: View {
             GeometryReader { geo in
                 if let anchor = proxy.plotFrame {
                     let frame = geo[anchor]
+                    // Bound the label to the donut's inner hole so the amount
+                    // scales down to fit instead of bleeding under the ring at
+                    // large Dynamic Type sizes (innerRadius ratio is 0.62).
+                    let holeDiameter = min(frame.width, frame.height) * 0.62
                     centerLabel
+                        .frame(maxWidth: holeDiameter * 0.9)
                         .position(x: frame.midX, y: frame.midY)
                 }
             }
@@ -128,6 +133,8 @@ struct AnalyticsBreakdownView: View {
                     .foregroundStyle(.secondary)
                 Text(Money.format(cents: selected.cents, currencyCode: currencyCode))
                     .font(.system(.title3, design: .rounded).bold().monospacedDigit())
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .privacySensitive(true)
             } else {
                 Text("analytics.total")
@@ -135,6 +142,8 @@ struct AnalyticsBreakdownView: View {
                     .foregroundStyle(.secondary)
                 Text(Money.format(cents: total, currencyCode: currencyCode))
                     .font(.system(.title2, design: .rounded).bold().monospacedDigit())
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
                     .privacySensitive(true)
             }
         }
