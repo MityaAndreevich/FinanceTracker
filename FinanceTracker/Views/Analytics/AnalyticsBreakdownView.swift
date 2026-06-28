@@ -148,9 +148,16 @@ struct AnalyticsBreakdownView: View {
     }
 
     private func opacityForRank(_ cat: CategoryTotal) -> Double {
-        guard let rank = sortedCategories.firstIndex(of: cat) else { return 0.35 }
-        // Most spent/earned = full color, each lower rank a little more transparent.
-        return max(0.35, 1.0 - (Double(rank) * 0.12))
+        guard let rank = sortedCategories.firstIndex(of: cat) else { return 0.5 }
+        // Top 3 slices step down distinctly; rank 4+ clamps to a 0.5 opacity
+        // floor so same-hue slices stay legible instead of fading toward the
+        // background (legend icon + label + % carries finer differentiation).
+        switch rank {
+        case 0:  return 1.0
+        case 1:  return 0.85
+        case 2:  return 0.7
+        default: return 0.5
+        }
     }
 
     private var legend: some View {
