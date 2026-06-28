@@ -160,18 +160,30 @@ struct GeneralSettingsView: View {
         pendingCurrency = nil
         pendingLanguage = nil
 
-        if let currency, currency != defaultCurrencyCode {
-            defaultCurrencyCode = currency
-        }
-        if let language, language != appLanguageCode {
-            appLanguageCode = language
-            applyAppleLanguagesOverride(for: language)
-            // Apply silently — no restart alert. Four attempts to present a
-            // "reopen to fully apply" alert all raced the picker-sheet dismiss
-            // transition and bounced (Briefs 28D–28G). The live environment(\.locale)
-            // refreshes Text("key") immediately; code-resolved String(localized:)
-            // strings pick up the new language on the next launch. The expected
-            // behavior is documented in the Support FAQ instead of an in-app alert.
+        guard currency != nil || language != nil else { return }
+
+        // 5th attempt at the "screen drops on the first language change" bug.
+        // onDismiss fires while the sheet's dismiss transition is still settling.
+        // Mutating @AppStorage there re-resolves every LocalizedStringKey AND the
+        // environment locale mid-transition, so the List underneath visibly drops
+        // on the *first* attempt (the second worked only because the sheet was
+        // already gone). Fix: defer the apply past the full dismiss animation, and
+        // commit it with animations disabled so the locale re-render doesn't ride
+        // the transition. No restart alert (see Briefs 28D–28G); the live
+        // environment(\.locale) refreshes Text("key") immediately and code-resolved
+        // String(localized:) strings pick up the new language on next launch.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            var tx = SwiftUI.Transaction()
+            tx.disablesAnimations = true
+            withTransaction(tx) {
+                if let currency, currency != defaultCurrencyCode {
+                    defaultCurrencyCode = currency
+                }
+                if let language, language != appLanguageCode {
+                    appLanguageCode = language
+                    applyAppleLanguagesOverride(for: language)
+                }
+            }
         }
     }
 
