@@ -130,10 +130,7 @@ struct TutorialPage2_LearnsAsYouGo: View {
 
 #Preview {
     ZStack {
-        LinearGradient(
-            colors: [Color(red: 0.11, green: 0.09, blue: 0.22), Color(red: 0.15, green: 0.10, blue: 0.32)],
-            startPoint: .topLeading, endPoint: .bottomTrailing
-        ).ignoresSafeArea()
+        LinearGradient.tutorialBackdrop.ignoresSafeArea()
         TutorialPage2_LearnsAsYouGo()
     }
 }

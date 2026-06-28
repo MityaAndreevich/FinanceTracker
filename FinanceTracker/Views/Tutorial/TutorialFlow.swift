@@ -20,15 +20,8 @@ struct TutorialFlow: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.11, green: 0.09, blue: 0.22),
-                    Color(red: 0.15, green: 0.10, blue: 0.32)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            LinearGradient.tutorialBackdrop
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Skip button — always visible
@@ -88,4 +81,20 @@ struct TutorialFlow: View {
 
 #Preview {
     TutorialFlow()
+}
+
+// MARK: - Shared backdrop
+
+extension LinearGradient {
+    /// Quiet-Premium dark backdrop tinted toward the Budget Crab brand mint
+    /// (replaces the earlier indigo/purple gradient). Stays dark enough for the
+    /// white tutorial text to keep its contrast.
+    static let tutorialBackdrop = LinearGradient(
+        colors: [
+            Color(red: 0.04, green: 0.13, blue: 0.11),   // deep forest-teal
+            Color(red: 0.06, green: 0.18, blue: 0.15)    // slightly lifted teal
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 }

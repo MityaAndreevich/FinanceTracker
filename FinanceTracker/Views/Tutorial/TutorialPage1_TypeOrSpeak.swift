@@ -57,7 +57,7 @@ struct TutorialPage1_TypeOrSpeak: View {
 
                         Text("− $67.00")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.bcExpense)
 
                         Text("→").foregroundStyle(.white.opacity(0.6))
 
@@ -136,10 +136,7 @@ struct TutorialPage1_TypeOrSpeak: View {
 
 #Preview {
     ZStack {
-        LinearGradient(
-            colors: [Color(red: 0.11, green: 0.09, blue: 0.22), Color(red: 0.15, green: 0.10, blue: 0.32)],
-            startPoint: .topLeading, endPoint: .bottomTrailing
-        ).ignoresSafeArea()
+        LinearGradient.tutorialBackdrop.ignoresSafeArea()
         TutorialPage1_TypeOrSpeak()
     }
 }
