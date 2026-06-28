@@ -67,25 +67,26 @@ extension View {
     }
 }
 
-// MARK: - Edge-only swipe (top-level tabs)
+// MARK: - Right-edge forward swipe (top-level tabs)
 
-/// A horizontal swipe that pages between sibling screens **only when it begins at
-/// the left or right screen edge**. Used for the main tab bar, where a
-/// content-wide swipe fired unpredictably — descendant charts/lists/scrolls won
-/// the drag, so users couldn't tell which zone navigated. Anchoring to the edges
-/// makes the gesture a deliberate, discoverable affordance:
+/// A forward-only horizontal swipe that advances to the next sibling screen
+/// **when it begins at the right screen edge**. Used for the main tab bar as an
+/// additive accelerator on top of tap navigation.
 ///
-/// - start within `edgeWidth` of the **left** edge + drag right → previous screen
-/// - start within `edgeWidth` of the **right** edge + drag left  → next screen
+/// We deliberately page **forward only**. A left-edge rightward swipe was dropped
+/// because it competes with the iOS system back gesture (interactive pop) and
+/// trains contradictory muscle memory; backward navigation is done by tapping the
+/// tab bar — the canonical iOS pattern. Research-validated B-trimmed verdict.
+///
+/// - start within `edgeWidth` of the **right** edge + drag left → next screen
 ///
 /// Still a low-priority `.gesture`, so the system's interactive back-swipe (when a
 /// NavigationStack has something to pop) and a row's `.swipeActions` both win over
-/// it; it only fires at a tab root where the left edge is otherwise inert.
-private struct EdgeSwipeNavigation: ViewModifier {
+/// it; it only fires at a tab root where the right edge is otherwise inert.
+private struct EdgeSwipeForward: ViewModifier {
     var onNext: () -> Void
-    var onPrevious: () -> Void
 
-    /// Width of the active zone at each edge.
+    /// Width of the active zone at the right edge.
     private let edgeWidth: CGFloat = 30
     /// Minimum horizontal travel before a swipe counts.
     private let distanceThreshold: CGFloat = 60
@@ -113,9 +114,7 @@ private struct EdgeSwipeNavigation: ViewModifier {
                               abs(dy) < verticalTolerance,
                               abs(dx) > abs(dy) else { return }
 
-                        if startX < edgeWidth, dx > 0 {
-                            onPrevious()
-                        } else if startX > width - edgeWidth, dx < 0 {
+                        if startX > width - edgeWidth, dx < 0 {
                             onNext()
                         }
                     }
@@ -124,30 +123,26 @@ private struct EdgeSwipeNavigation: ViewModifier {
 }
 
 extension View {
-    /// Pages between top-level tabs on a swipe that starts at a screen edge. See
-    /// ``EdgeSwipeNavigation``. `onNext` fires on a right-edge leftward swipe,
-    /// `onPrevious` on a left-edge rightward swipe.
-    func edgeSwipeNavigation(
-        onNext: @escaping () -> Void,
-        onPrevious: @escaping () -> Void
-    ) -> some View {
-        modifier(EdgeSwipeNavigation(onNext: onNext, onPrevious: onPrevious))
+    /// Advances to the next top-level tab on a right-edge leftward swipe. See
+    /// ``EdgeSwipeForward``. Backward navigation is intentionally tap-only.
+    func edgeSwipeForward(onNext: @escaping () -> Void) -> some View {
+        modifier(EdgeSwipeForward(onNext: onNext))
     }
 }
 
 // MARK: - Edge hint
 
-/// A discreet, non-interactive accent glow at both screen edges, shown a handful
-/// of times on early launches to teach the edge-swipe affordance. Breathes gently
-/// then is faded out by its host. HIG-aligned: subtle, never blocks touches.
+/// A discreet, non-interactive accent glow at the **right** screen edge, shown a
+/// handful of times on early launches to teach the right-edge forward-swipe
+/// affordance. Breathes gently then is faded out by its host. Single-edge to match
+/// the forward-only gesture. HIG-aligned: subtle, never blocks touches.
 struct EdgeSwipeHintView: View {
     @State private var pulse = false
 
     var body: some View {
         HStack(spacing: 0) {
-            edgeGlow(leading: true)
             Spacer()
-            edgeGlow(leading: false)
+            edgeGlow
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
@@ -158,11 +153,11 @@ struct EdgeSwipeHintView: View {
         }
     }
 
-    private func edgeGlow(leading: Bool) -> some View {
+    private var edgeGlow: some View {
         LinearGradient(
             colors: [Color.accentColor.opacity(pulse ? 0.30 : 0.05), .clear],
-            startPoint: leading ? .leading : .trailing,
-            endPoint: leading ? .trailing : .leading
+            startPoint: .trailing,
+            endPoint: .leading
         )
         .frame(width: 24)
     }

@@ -95,16 +95,17 @@ struct ContentView: View {
             .tabItem { Label("tab.settings", systemImage: "gear") }
             .tag(4)
         }
-        // Edge-only swipe pages between the main tabs (skipping the "+" tab),
-        // clamping at the first/last so the user is never disoriented by a wrap.
-        // Anchoring to the screen edges keeps it from competing with charts,
-        // lists, and scroll views in the content area. Within Analytics the
-        // gesture is shadowed by that screen's own content-wide sub-tab swipe (a
-        // descendant gesture wins), so paging out of Analytics is done via the
-        // tab bar — see AnalyticsView.
-        .edgeSwipeNavigation(
-            onNext: { selectAdjacentTab(forward: true) },
-            onPrevious: { selectAdjacentTab(forward: false) }
+        // Right-edge swipe advances forward through the main tabs (skipping the
+        // "+" tab), clamping at the last so the user is never disoriented by a
+        // wrap. Forward-only: a left-edge back swipe was dropped because it
+        // competes with the iOS system back gesture; backward navigation is
+        // tap-only (canonical iOS pattern). Anchoring to the right edge keeps it
+        // from competing with charts, lists, and scroll views in the content
+        // area. Within Analytics the gesture is shadowed by that screen's own
+        // content-wide sub-tab swipe (a descendant gesture wins), so paging out
+        // of Analytics is done via the tab bar — see AnalyticsView.
+        .edgeSwipeForward(
+            onNext: { selectAdjacentTab(forward: true) }
         )
         .sensoryFeedback(.selection, trigger: selectedTab)
         .overlay {
