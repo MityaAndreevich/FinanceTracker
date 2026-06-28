@@ -119,6 +119,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
+            .accessibilityIdentifier("settings.language.row")
 
             Text("general.language_hint")
                 .font(.footnote)
@@ -141,6 +142,7 @@ struct GeneralSettingsView: View {
                     titleKey: "general.language",
                     items: SupportedLanguage.allCases,
                     labelProvider: { "\($0.flag) \($0.title)" },
+                    identifierPrefix: "picker.locale",
                     selection: Binding(
                         get: { pendingLanguage ?? appLanguageCode },
                         set: { pendingLanguage = $0 }

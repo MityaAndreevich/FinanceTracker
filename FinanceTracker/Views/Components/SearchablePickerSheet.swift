@@ -4,6 +4,10 @@ struct SearchablePickerSheet<Item: Identifiable & Hashable>: View {
     let titleKey: LocalizedStringKey
     let items: [Item]
     let labelProvider: (Item) -> String
+    /// When set, each row gets the accessibility identifier "<prefix>.<item.id>"
+    /// and the list gets "<prefix>.sheet", so UI tests can drive the picker in a
+    /// language-independent way. nil (default) = no identifiers (production no-op).
+    var identifierPrefix: String? = nil
     @Binding var selection: Item.ID
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
@@ -31,7 +35,9 @@ struct SearchablePickerSheet<Item: Identifiable & Hashable>: View {
                         }
                     }
                 }
+                .accessibilityIdentifier(rowIdentifier(for: item))
             }
+            .accessibilityIdentifier(sheetIdentifier)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .navigationTitle(titleKey)
             .navigationBarTitleDisplayMode(.inline)
@@ -42,5 +48,17 @@ struct SearchablePickerSheet<Item: Identifiable & Hashable>: View {
             }
         }
         .presentationDetents([.large])
+    }
+
+    /// "<prefix>.<item.id>" when a prefix is set, else "" (no-op identifier).
+    private func rowIdentifier(for item: Item) -> String {
+        guard let identifierPrefix else { return "" }
+        return "\(identifierPrefix).\(item.id)"
+    }
+
+    /// "<prefix>.sheet" when a prefix is set, else "" (no-op identifier).
+    private var sheetIdentifier: String {
+        guard let identifierPrefix else { return "" }
+        return "\(identifierPrefix).sheet"
     }
 }
