@@ -99,7 +99,7 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.netCents)
                 )
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(netTrendGradient)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
 
@@ -107,26 +107,20 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.netCents)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.accentColor.opacity(0.3), Color.clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(netAreaGradient)
                 .interpolationMethod(.catmullRom)
             }
 
             if let selectedTotal {
                 RuleMark(x: .value("analytics.axis.month", selectedTotal.date))
-                    .foregroundStyle(Color.accentColor.opacity(0.4))
+                    .foregroundStyle(.secondary.opacity(0.4))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
 
                 PointMark(
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.netCents)
                 )
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.money(isPositive: selectedTotal.netCents >= 0))
                 .symbolSize(120)
             }
         }
@@ -156,6 +150,56 @@ struct AnalyticsHorizonView: View {
                 UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.4)
             }
         }
+    }
+
+    // MARK: - Sign-aware coloring
+    //
+    // The Horizon trend is a single *net* line (income − expense). It used to be
+    // drawn entirely in `Color.accentColor`, so a month with net spending looked
+    // identical to a month with net income — users read the chart as "income only,
+    // no expenses" because there was never any terracotta on screen. We now split
+    // the line/area at the zero line: emerald (`.bcIncome`) above zero, terracotta
+    // (`.bcExpense`) below. This keeps the single-line "Stocks-style" design while
+    // making expense-led months visually unmistakable, using the shared semantic
+    // money tokens (no new strings, no separate series).
+
+    /// Position of the zero line within the value range, as a fraction from the
+    /// top (0) to the bottom (1) of the chart's plotted bounding box. Drives the
+    /// hard color stop in the gradients below.
+    private var zeroFraction: CGFloat {
+        let values = monthlyTotals.map(\.netCents)
+        guard let maxV = values.max(), let minV = values.min(), maxV != minV else {
+            return (values.first ?? 0) >= 0 ? 1 : 0
+        }
+        if maxV <= 0 { return 0 }   // every month net-negative → all terracotta
+        if minV >= 0 { return 1 }   // every month net-positive → all emerald
+        return CGFloat(maxV) / CGFloat(maxV - minV)
+    }
+
+    private var netTrendGradient: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: .bcIncome, location: 0),
+                .init(color: .bcIncome, location: zeroFraction),
+                .init(color: .bcExpense, location: zeroFraction),
+                .init(color: .bcExpense, location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var netAreaGradient: LinearGradient {
+        LinearGradient(
+            stops: [
+                .init(color: .bcIncome.opacity(0.28), location: 0),
+                .init(color: .bcIncome.opacity(0.04), location: zeroFraction),
+                .init(color: .bcExpense.opacity(0.04), location: zeroFraction),
+                .init(color: .bcExpense.opacity(0.28), location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     private func nearestMonth(to date: Date) -> MonthlyTotal? {
