@@ -37,6 +37,11 @@ struct ContentView: View {
     // plain, id-reset NavigationStack is the canonical pairing for destination links.
     @State private var settingsResetToken = UUID()
 
+    // Tab tags in left-to-right swipe order. The center "+" tab (tag 2) is an
+    // action, not a destination, so swipe navigation skips over it: Transactions
+    // (1) pages straight to Analytics (3).
+    private let swipeableTabTags = [0, 1, 3, 4]
+
     var body: some View {
         ZStack {
             mainTabView
@@ -87,6 +92,16 @@ struct ContentView: View {
             .tabItem { Label("tab.settings", systemImage: "gear") }
             .tag(4)
         }
+        // Horizontal swipe pages between the main tabs (skipping the "+" tab),
+        // clamping at the first/last so the user is never disoriented by a wrap.
+        // Within Analytics the swipe is shadowed by that screen's own sub-tab
+        // swipe (a descendant gesture wins), so paging out of Analytics is done
+        // via the tab bar — see AnalyticsView.
+        .horizontalSwipeNavigation(
+            onNext: { selectAdjacentTab(forward: true) },
+            onPrevious: { selectAdjacentTab(forward: false) }
+        )
+        .sensoryFeedback(.selection, trigger: selectedTab)
         .onChange(of: selectedTab) { oldTab, newTab in
             if newTab == 2 {
                 showAddSheet = true
@@ -123,6 +138,18 @@ struct ContentView: View {
         // stale Quick Entry flag left over from an earlier missed consumption.
         .onReceive(NotificationCenter.default.publisher(for: .budgetCrabPendingIntent)) { _ in
             DispatchQueue.main.async { handlePendingIntentNavigation() }
+        }
+    }
+
+    // MARK: - Swipe navigation
+
+    /// Advances to the adjacent swipeable tab, clamping at the ends (no wrap).
+    private func selectAdjacentTab(forward: Bool) {
+        guard let index = swipeableTabTags.firstIndex(of: selectedTab) else { return }
+        let target = forward ? index + 1 : index - 1
+        guard swipeableTabTags.indices.contains(target) else { return }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            selectedTab = swipeableTabTags[target]
         }
     }
 

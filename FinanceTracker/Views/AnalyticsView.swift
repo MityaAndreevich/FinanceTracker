@@ -61,6 +61,14 @@ struct AnalyticsView: View {
                 content
             }
         }
+        // Swipe cycles the three sub-screens (wrap-around). Chart scrubbing inside
+        // Pulse/Horizon is a descendant gesture and wins over this paging, so a
+        // horizontal drag on a chart scrubs; a drag on inert area pages.
+        .horizontalSwipeNavigation(
+            onNext: { cycleScreen(forward: true) },
+            onPrevious: { cycleScreen(forward: false) }
+        )
+        .sensoryFeedback(.selection, trigger: screen)
         .navigationTitle("title.analytics")
         .onAppear {
             #if DEBUG
@@ -130,6 +138,19 @@ struct AnalyticsView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Swipe navigation
+
+    /// Cycles to the adjacent sub-screen, wrapping around at the ends.
+    private func cycleScreen(forward: Bool) {
+        let all = Screen.allCases
+        guard let index = all.firstIndex(of: screen) else { return }
+        let count = all.count
+        let target = forward ? (index + 1) % count : (index - 1 + count) % count
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            screen = all[target]
+        }
     }
 
     // MARK: - Deep link
