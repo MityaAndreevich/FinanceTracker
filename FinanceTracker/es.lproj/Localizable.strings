@@ -64,7 +64,7 @@
 "settings.general" = "General";
 "settings.premium" = "Premium";
 "settings.data" = "Datos";
-"settings.categories" = "Categorías y fuentes";
+"settings.categories" = "Categorías y cuentas";
 "settings.about" = "Acerca de";
 
 // MARK: - Help & Tips (Brief 28I N1)
@@ -129,7 +129,7 @@
 
 "general.restart_onboarding" = "Reiniciar onboarding";
 "general.reset_transactions" = "Restablecer transacciones";
-"general.reset_hint" = "Se eliminarán las transacciones, pero se mantendrán categorías y fuentes.";
+"general.reset_hint" = "Se eliminarán las transacciones, pero se mantendrán categorías y cuentas.";
 
 
 /* Alerts */
@@ -220,7 +220,7 @@
 "tutorial.page3.bullet2" = "Sin cuentas, sin anuncios, sin rastreo";
 "tutorial.page3.bullet3" = "Voz procesada localmente con el framework de Apple";
 "tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
-"dashboard.empty.title" = "Empieza a registrar en segundos";
+"dashboard.empty.title" = "Añade tu primer gasto para ver a dónde va tu dinero";
 "dashboard.empty.caption" = "Escribe o habla arriba — Budget Crab hace el resto";
 "transactions.empty.title" = "Todavía no hay transacciones";
 "transactions.empty.cta" = "Añadir la primera";
@@ -277,7 +277,7 @@
 "dashboard.insights.top_expenses.title" = "Mayores gastos";
 "dashboard.insights.top_expenses.subtitle" = "Te ayuda a ver dónde se fuga el dinero.";
 "dashboard.insights.top_income_sources.title" = "Principales cuentas de ingresos";
-"dashboard.insights.top_income_sources.subtitle" = "Útil cuando tienes varias fuentes.";
+"dashboard.insights.top_income_sources.subtitle" = "Útil cuando tienes varias cuentas.";
 "dashboard.unknown_source" = "Cuenta desconocida";
 "dashboard.spent_this_month" = "Gastado este mes";
 "dashboard.income_caption" = "+ %@ de ingresos";

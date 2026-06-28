@@ -633,8 +633,8 @@
 "tutorial.page3.bullet2" = "Никаких аккаунтов, рекламы и слежки";
 "tutorial.page3.bullet3" = "Голос обрабатывается локально с помощью Apple";
 "tutorial.page3.demo_offer" = "Добавить пример данных для знакомства";
-"dashboard.empty.title" = "Начните отслеживать за секунды";
-"dashboard.empty.caption" = "Напишите или скажите выше — мы сделаем остальное";
+"dashboard.empty.title" = "Добавьте первую трату, чтобы увидеть куда уходят деньги";
+"dashboard.empty.caption" = "Напишите или скажите выше, чтобы добавить операцию";
 "transactions.empty.title" = "Транзакций пока нет";
 "transactions.empty.cta" = "Добавить первую";
 "analytics.empty.title" = "Здесь появится аналитика";

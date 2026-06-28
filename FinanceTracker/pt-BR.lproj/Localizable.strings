@@ -64,7 +64,7 @@
 "settings.general" = "Geral";
 "settings.premium" = "Premium";
 "settings.data" = "Dados";
-"settings.categories" = "Categorias e fontes";
+"settings.categories" = "Categorias e contas";
 "settings.about" = "Sobre";
 
 // MARK: - Help & Tips (Brief 28I N1)
@@ -225,7 +225,7 @@
 "tutorial.page3.bullet2" = "Sem contas, sem anúncios, sem rastreamento";
 "tutorial.page3.bullet3" = "Voz processada localmente com o framework da Apple";
 "tutorial.page3.demo_offer" = "Adicionar dados de exemplo para explorar";
-"dashboard.empty.title" = "Comece a registrar em segundos";
+"dashboard.empty.title" = "Adicione sua primeira despesa para ver para onde vai seu dinheiro";
 "dashboard.empty.caption" = "Digite ou fale acima — Budget Crab cuida do resto";
 "transactions.empty.title" = "Nenhuma transação ainda";
 "transactions.empty.cta" = "Adicionar a primeira";
@@ -282,7 +282,7 @@
 "dashboard.insights.top_expenses.title" = "Maiores despesas";
 "dashboard.insights.top_expenses.subtitle" = "Ajuda a ver onde o dinheiro escapa.";
 "dashboard.insights.top_income_sources.title" = "Principais contas de receita";
-"dashboard.insights.top_income_sources.subtitle" = "Útil quando você tem várias fontes.";
+"dashboard.insights.top_income_sources.subtitle" = "Útil quando você tem várias contas.";
 "dashboard.unknown_source" = "Conta desconhecida";
 "dashboard.spent_this_month" = "Gasto neste mês";
 "dashboard.income_caption" = "+ %@ de receita";

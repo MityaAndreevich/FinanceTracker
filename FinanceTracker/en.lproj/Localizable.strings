@@ -326,7 +326,7 @@
 "edit.section.category" = "Category";
 "edit.category.picker" = "Category";
 
-"edit.source.picker" = "Source";
+"edit.source.picker" = "Account";
 "edit.section.date" = "Date";
 "edit.date.picker" = "Date";
 "edit.section.note" = "Note (optional)";
@@ -623,8 +623,8 @@
 "tutorial.page3.bullet2" = "No accounts, no ads, no tracking";
 "tutorial.page3.bullet3" = "Voice processed locally with Apple's framework";
 "tutorial.page3.demo_offer" = "Add sample data to explore";
-"dashboard.empty.title" = "Start tracking in seconds";
-"dashboard.empty.caption" = "Type or speak above — we'll do the rest";
+"dashboard.empty.title" = "Add your first expense to see where your money goes";
+"dashboard.empty.caption" = "Type or speak above to add a transaction";
 "transactions.empty.title" = "No transactions yet";
 "transactions.empty.cta" = "Add your first";
 "analytics.empty.title" = "Insights appear here";
