@@ -222,7 +222,7 @@
 "dashboard.earned_more" = "Earned more than spent";
 "dashboard.this_week" = "This week";
 
-"dashboard.day0.title" = "Smart insights coming soon";
+"dashboard.day0.title" = "Insights coming as you track";
 "dashboard.day0.message.singular" = "Keep tracking — insights unlock as you build history";
 "dashboard.day0.message.plural" = "Add %d more transactions to see your first insight.";
 "dashboard.day0.cta" = "Add transaction →";
@@ -547,7 +547,7 @@
 "addtx.recurring.header" = "RECURRING";
 "addtx.recurring.toggle" = "Repeat this transaction";
 "addtx.recurring.frequency" = "Frequency";
-"addtx.recurring.footer" = "We'll remind you each period to log this charge.";
+"addtx.recurring.footer" = "Budget Crab reminds you each period to log this charge.";
 "addtx.recurring.weekly" = "Weekly";
 "addtx.recurring.monthly" = "Monthly";
 "addtx.recurring.yearly" = "Yearly";
@@ -585,7 +585,7 @@
 "quick_entry.privacy_chip" = "Stays on your iPhone";
 "quick_entry.save" = "Save";
 "quick_entry.use_form" = "Use detailed form";
-"quick_entry.fail_unparseable" = "We couldn't read that — try the detailed form";
+"quick_entry.fail_unparseable" = "Couldn't read that — try the detailed form";
 "quick_entry.placeholder.1" = "$5.50 Starbucks";
 "quick_entry.placeholder.2" = "lunch 12";
 "quick_entry.placeholder.3" = "67 gas";
@@ -616,7 +616,7 @@
 "tutorial.cta.get_started" = "Get started";
 "tutorial.page1.headline" = "Type or speak — Budget Crab handles the rest";
 "tutorial.page1.caption" = "Tap + or just talk. We figure out the category automatically.";
-"tutorial.page2.headline" = "Gets smarter with every transaction";
+"tutorial.page2.headline" = "Gets sharper with every transaction";
 "tutorial.page2.caption" = "Budget Crab remembers your choices. No cloud — all on your iPhone.";
 "tutorial.page3.headline" = "Your data stays yours";
 "tutorial.page3.bullet1" = "100% on-device — no cloud, no servers";

@@ -233,7 +233,7 @@
 "dashboard.earned_more" = "Доходы превышают расходы";
 "dashboard.this_week" = "На этой неделе";
 
-"dashboard.day0.title" = "Умные подсказки скоро появятся";
+"dashboard.day0.title" = "Аналитика появится по мере добавления данных";
 "dashboard.day0.message.singular" = "Продолжайте отслеживать — аналитика появится с накопленной историей";
 "dashboard.day0.message.plural" = "Добавьте ещё %d транзакций, чтобы увидеть первую подсказку.";
 "dashboard.day0.cta" = "Добавить транзакцию →";
@@ -557,7 +557,7 @@
 "addtx.recurring.header" = "ПОВТОР";
 "addtx.recurring.toggle" = "Повторять эту транзакцию";
 "addtx.recurring.frequency" = "Периодичность";
-"addtx.recurring.footer" = "Будем напоминать вам записывать этот платёж каждый период.";
+"addtx.recurring.footer" = "Budget Crab напомнит вам записывать этот платёж каждый период.";
 "addtx.recurring.weekly" = "Еженедельно";
 "addtx.recurring.monthly" = "Ежемесячно";
 "addtx.recurring.yearly" = "Ежегодно";
@@ -626,7 +626,7 @@
 "tutorial.cta.get_started" = "Начать";
 "tutorial.page1.headline" = "Печатайте или диктуйте — Budget Crab всё поймёт";
 "tutorial.page1.caption" = "Нажмите + или просто говорите. Категорию мы определим сами.";
-"tutorial.page2.headline" = "Умнеет с каждой транзакцией";
+"tutorial.page2.headline" = "Учится с каждой транзакцией";
 "tutorial.page2.caption" = "Budget Crab запоминает ваш выбор. Без облака — всё на вашем iPhone.";
 "tutorial.page3.headline" = "Ваши данные — только ваши";
 "tutorial.page3.bullet1" = "100% на устройстве — без облака и серверов";

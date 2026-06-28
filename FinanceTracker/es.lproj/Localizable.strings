@@ -221,7 +221,7 @@
 "tutorial.page3.bullet3" = "Voz procesada localmente con el framework de Apple";
 "tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
 "dashboard.empty.title" = "Empieza a registrar en segundos";
-"dashboard.empty.caption" = "Escribe o habla arriba — nosotros hacemos el resto";
+"dashboard.empty.caption" = "Escribe o habla arriba — Budget Crab hace el resto";
 "transactions.empty.title" = "Todavía no hay transacciones";
 "transactions.empty.cta" = "Añadir la primera";
 "analytics.empty.title" = "Los insights aparecerán aquí";
@@ -490,7 +490,7 @@
 "addtx.recurring.header" = "RECURRENTE";
 "addtx.recurring.toggle" = "Repetir esta transacción";
 "addtx.recurring.frequency" = "Frecuencia";
-"addtx.recurring.footer" = "Te recordaremos cada periodo registrar este cargo.";
+"addtx.recurring.footer" = "Budget Crab te recordará cada periodo registrar este cargo.";
 "addtx.recurring.weekly" = "Semanal";
 "addtx.recurring.monthly" = "Mensual";
 "addtx.recurring.yearly" = "Anual";
