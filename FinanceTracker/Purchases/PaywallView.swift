@@ -22,12 +22,7 @@ struct PaywallView: View {
                     headerSection
                         .padding(.top, 12)
 
-                    if pm.products.isEmpty {
-                        ProgressView("paywall.loading")
-                            .padding(.vertical, 8)
-                    } else {
-                        planCardsSection
-                    }
+                    productSection
 
                     if let msg = pm.lastErrorMessage {
                         Text(msg)
@@ -70,6 +65,46 @@ struct PaywallView: View {
                 .padding(.horizontal, 24)
         }
     }
+
+    /// Plan cards or the loading indicator. Under the paywall screenshot capture
+    /// (DEBUG-only), StoreKit products can't load via `simctl launch`, so a
+    /// deterministic mock of the plan cards is shown instead. Production builds
+    /// always use the live StoreKit path.
+    @ViewBuilder
+    private var productSection: some View {
+        #if DEBUG
+        if ScreenshotMode.usesMockPaywall {
+            mockPlanCardsSection
+        } else {
+            liveProductSection
+        }
+        #else
+        liveProductSection
+        #endif
+    }
+
+    @ViewBuilder
+    private var liveProductSection: some View {
+        if pm.products.isEmpty {
+            ProgressView("paywall.loading")
+                .padding(.vertical, 8)
+        } else {
+            planCardsSection
+        }
+    }
+
+    #if DEBUG
+    /// Screenshot-only mock. Prices are the exact App Store Connect base values
+    /// (USD); every other string is the production localized key, so the cards
+    /// render identically to the live paywall. Purchase actions are no-ops.
+    private var mockPlanCardsSection: some View {
+        VStack(spacing: 12) {
+            YearlyPlanCard(displayPrice: "$34.99") {}
+            LifetimePlanCard(displayPrice: "$99.99") {}
+            MonthlyPlanCard(displayPrice: "$4.99") {}
+        }
+    }
+    #endif
 
     private var planCardsSection: some View {
         VStack(spacing: 12) {
@@ -147,15 +182,15 @@ struct PaywallView: View {
     private func planCard(product: Product, kind: ProductKind) -> some View {
         switch kind {
         case .yearly:
-            YearlyPlanCard(product: product) {
+            YearlyPlanCard(displayPrice: product.displayPrice) {
                 Task { await pm.purchase(product) }
             }
         case .lifetime:
-            LifetimePlanCard(product: product) {
+            LifetimePlanCard(displayPrice: product.displayPrice) {
                 Task { await pm.purchase(product) }
             }
         case .monthly:
-            MonthlyPlanCard(product: product) {
+            MonthlyPlanCard(displayPrice: product.displayPrice) {
                 Task { await pm.purchase(product) }
             }
         case .unknown:
@@ -176,7 +211,7 @@ struct PaywallView: View {
 // MARK: - Plan Cards
 
 private struct YearlyPlanCard: View {
-    let product: Product
+    let displayPrice: String
     let action: () -> Void
 
     var body: some View {
@@ -196,7 +231,7 @@ private struct YearlyPlanCard: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(product.displayPrice)
+                    Text(displayPrice)
                         .font(.headline)
                         .monospacedDigit()
                     Text("paywall.yearly.per_month")
@@ -234,7 +269,7 @@ private struct YearlyPlanCard: View {
 }
 
 private struct LifetimePlanCard: View {
-    let product: Product
+    let displayPrice: String
     let action: () -> Void
 
     var body: some View {
@@ -248,7 +283,7 @@ private struct LifetimePlanCard: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text(product.displayPrice)
+                Text(displayPrice)
                     .font(.headline)
                     .monospacedDigit()
             }
@@ -287,7 +322,7 @@ private struct LifetimePlanCard: View {
 }
 
 private struct MonthlyPlanCard: View {
-    let product: Product
+    let displayPrice: String
     let action: () -> Void
 
     var body: some View {
@@ -301,7 +336,7 @@ private struct MonthlyPlanCard: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(product.displayPrice)
+            Text(displayPrice)
                 .font(.subheadline)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)

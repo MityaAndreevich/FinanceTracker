@@ -45,6 +45,14 @@ enum ScreenshotMode {
         value(for: "--demo-locale") ?? "en"
     }
 
+    /// True only while capturing the paywall storyboard screen (08). StoreKit
+    /// products can't load under `simctl launch`, so the paywall substitutes a
+    /// deterministic mock of the plan cards for that capture. DEBUG-gated via
+    /// `requestedScreen`, so a Release build always returns `false`.
+    static var usesMockPaywall: Bool {
+        requestedScreen == .lifetime
+    }
+
     // MARK: - Argument parsing
 
     /// Returns the value following `flag` in the launch arguments, e.g. for
