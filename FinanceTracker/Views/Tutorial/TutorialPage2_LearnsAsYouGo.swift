@@ -9,7 +9,7 @@ struct TutorialPage2_LearnsAsYouGo: View {
     @State private var phase: Int = 0
     @State private var animTask: Task<Void, Never>?
 
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
+    private let mintColor = Color.brand
 
     var body: some View {
         VStack(spacing: 0) {

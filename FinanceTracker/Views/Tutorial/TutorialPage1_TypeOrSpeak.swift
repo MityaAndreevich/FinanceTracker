@@ -10,7 +10,7 @@ struct TutorialPage1_TypeOrSpeak: View {
     @State private var showPreviewCard: Bool = false
     @State private var animationPhase: Int = 0
 
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
+    private let mintColor = Color.brand
     private let targetText = "67 gas"
 
     var body: some View {

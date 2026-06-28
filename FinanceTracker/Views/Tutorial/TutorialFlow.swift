@@ -16,7 +16,7 @@ struct TutorialFlow: View {
     @State private var offerDemoData: Bool = false
 
     private let totalPages = 3
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
+    private let mintColor = Color.brand
 
     var body: some View {
         ZStack {

@@ -8,8 +8,6 @@
 import SwiftUI
 import StoreKit
 
-private let paywallMint = Color(red: 0.239, green: 0.863, blue: 0.592) // #3DDC97
-
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var pm = PurchaseManager.shared
@@ -189,7 +187,7 @@ private struct YearlyPlanCard: View {
                         Text("paywall.plan.yearly")
                             .font(.headline)
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(paywallMint)
+                            .foregroundStyle(Color.brand)
                             .font(.system(size: 16, weight: .medium))
                     }
                     Text("paywall.plan.yearly.subtitle")
@@ -219,7 +217,7 @@ private struct YearlyPlanCard: View {
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(paywallMint)
+                    .background(Color.brand)
                     .foregroundStyle(.black)
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
@@ -229,7 +227,7 @@ private struct YearlyPlanCard: View {
         .background(.thinMaterial)
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(paywallMint, lineWidth: 1.5)
+                .strokeBorder(Color.brand, lineWidth: 1.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
@@ -343,10 +341,10 @@ private struct BadgeLabel: View {
             Text(textKey)
                 .font(.system(size: 11, weight: .medium))
         }
-        .foregroundStyle(paywallMint)
+        .foregroundStyle(Color.brand)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(paywallMint.opacity(0.12))
+        .background(Color.brand.opacity(0.12))
         .clipShape(Capsule())
     }
 }

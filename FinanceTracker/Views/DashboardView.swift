@@ -374,14 +374,12 @@ struct DashboardView: View {
 private struct DashboardEmptyState: View {
     let animateArrow: Bool
 
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
-
     var body: some View {
         VStack(spacing: 12) {
             // Arrow pointing up at QuickAddBar
             Image(systemName: "arrow.up")
                 .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(mintColor)
+                .foregroundStyle(Color.brand)
                 .opacity(animateArrow ? 1 : 0.35)
                 .offset(y: animateArrow ? -4 : 4)
                 .animation(
@@ -416,13 +414,11 @@ private struct DashboardEmptyState: View {
 private struct Day0EducationalCard: View {
     @Binding var showAddTransaction: Bool
 
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "lightbulb.fill")
-                    .foregroundStyle(mintColor)
+                    .foregroundStyle(Color.brand)
                 Text("dashboard.day0.title")
                     .font(.headline)
             }
@@ -440,7 +436,7 @@ private struct Day0EducationalCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(mintColor.opacity(0.10))
+        .background(Color.brand.opacity(0.10))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
@@ -451,13 +447,11 @@ private struct QuickAddBar: View {
     @Binding var text: String
     let onSubmit: (QuickAddParsedInput) -> Void
 
-    private let mintColor = Color(red: 61 / 255, green: 220 / 255, blue: 151 / 255)
-
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 18))
-                .foregroundStyle(mintColor)
+                .foregroundStyle(Color.brand)
 
             TextField("quickadd.placeholder", text: $text)
                 .submitLabel(.done)
@@ -469,7 +463,7 @@ private struct QuickAddBar: View {
                 Button { handleSubmit() } label: {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(mintColor)
+                        .foregroundStyle(Color.brand)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("common.add"))
