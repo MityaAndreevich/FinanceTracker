@@ -47,6 +47,10 @@
 
 /* Onboarding */
 "onboarding.language.picker" = "Idioma";
+"onboarding.language.title" = "Escolha seu idioma";
+"onboarding.language.subtitle" = "Você pode mudar isso em Ajustes";
+"onboarding.next" = "Continuar";
+"onboarding.back" = "Voltar";
 
 "onboarding.currency.title" = "Escolher moeda";
 "onboarding.currency.subtitle" = "Será usada por defeito para novas transações.";

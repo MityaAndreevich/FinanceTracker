@@ -75,6 +75,10 @@
    Onboarding
    ====================================================== */
 "onboarding.language.picker" = "Язык";
+"onboarding.language.title" = "Выберите язык";
+"onboarding.language.subtitle" = "Можно поменять в настройках позже";
+"onboarding.next" = "Продолжить";
+"onboarding.back" = "Назад";
 "onboarding.search.languages" = "Поиск языков";
 "onboarding.language.more" = "Больше языков";
 "onboarding.language.all" = "Все языки";

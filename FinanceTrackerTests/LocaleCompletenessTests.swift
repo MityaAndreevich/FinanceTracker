@@ -38,7 +38,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // language auto-detect (onboarding.language.title/subtitle, onboarding.next/back). Was 464.
         // Bumped 2026-06-28 (Fix 1): +4 Horizon mode-toggle keys
         // (analytics.horizon.mode.net/expenses/income/combined). Was 460.
-        XCTAssertEqual(enKeys.count, 464, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-28 (Fix 5): +4 restored onboarding language-screen keys
+        // (onboarding.language.title/subtitle, onboarding.next/back). Was 464.
+        XCTAssertEqual(enKeys.count, 468, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

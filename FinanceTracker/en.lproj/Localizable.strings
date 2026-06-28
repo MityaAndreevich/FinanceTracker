@@ -64,6 +64,10 @@
    Onboarding
    ====================================================== */
 "onboarding.language.picker" = "Language";
+"onboarding.language.title" = "Choose your language";
+"onboarding.language.subtitle" = "You can change this in Settings later";
+"onboarding.next" = "Continue";
+"onboarding.back" = "Back";
 "onboarding.search.languages" = "Search languages";
 "onboarding.language.more" = "More languages";
 "onboarding.language.all" = "All languages";

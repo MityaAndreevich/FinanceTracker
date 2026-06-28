@@ -4,10 +4,12 @@
 //
 //  Created by Dmitry Logachev (USA) on 02.02.2026.
 //
-//  First-run flow. The language is auto-detected from the device (Brief: Wave 3
-//  Fix #14) so the user lands one tap from value — only the currency, which is
-//  genuinely ambiguous from language alone, still needs confirming. Manual
-//  language override lives in Settings → Language for later.
+//  First-run flow: language → currency. The language is auto-detected from the
+//  device and pre-selected, but the user explicitly confirms (or overrides) it —
+//  multilingual phones and app-specific preferences make a silent guess a poor
+//  default, and an explicit screen is more discoverable. Currency follows, since
+//  it's genuinely ambiguous from language alone. Both are changeable later in
+//  Settings.
 //
 
 import SwiftUI
@@ -17,49 +19,165 @@ struct OnboardingView: View {
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    // Auto-detected on appear; not user-facing anymore (no language screen).
-    @State private var selectedLanguage: SupportedLanguage = .system
+    private enum Step { case language, currency }
+    @State private var step: Step = .language
+
+    @State private var selectedLanguage: SupportedLanguage = .en
     @State private var selectedCurrency: SupportedCurrency = .usd
 
     @State private var showFullCurrencyList = false
 
+    /// The four explicitly shippable locales (System is implicit via fallback).
+    private let offeredLanguages: [SupportedLanguage] = [.en, .ru, .es, .pt]
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // MARK: Hero icon
-                Image(systemName: "dollarsign.circle")
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.top, 24)
-
-                // MARK: Title + subtitle
-                VStack(spacing: 8) {
-                    Text("onboarding.currency.title")
-                        .font(.largeTitle.weight(.bold))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
-
-                    Text("onboarding.currency.subtitle")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
+            Group {
+                switch step {
+                case .language: languageStep
+                case .currency: currencyStep
                 }
-                .padding(.bottom, 12)
-
-                Spacer(minLength: 6)
-
-                // MARK: Currency selection + escape hatch to the full list
-                currencySelector
-
-                Spacer(minLength: 6)
-
-                primaryButton
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
             }
             .onAppear(perform: autoDetectDefaults)
+            .toolbar {
+                if step == .currency {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.25)) { step = .language }
+                        } label: {
+                            Label("onboarding.back", systemImage: "chevron.left")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Language step
+
+    private var languageStep: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "globe")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.accentColor)
+                .padding(.top, 24)
+
+            VStack(spacing: 8) {
+                Text("onboarding.language.title")
+                    .font(.largeTitle.weight(.bold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+
+                Text("onboarding.language.subtitle")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .padding(.bottom, 24)
+
+            Spacer(minLength: 6)
+
+            VStack(spacing: 12) {
+                ForEach(offeredLanguages) { lang in
+                    languageCard(lang)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            Spacer(minLength: 6)
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) { step = .currency }
+            } label: {
+                Text("onboarding.next")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.accentColor)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+        }
+    }
+
+    private func languageCard(_ lang: SupportedLanguage) -> some View {
+        let isSelected = selectedLanguage == lang
+        return Button {
+            selectLanguage(lang)
+        } label: {
+            HStack(spacing: 14) {
+                Text(lang.flag)
+                    .font(.title2)
+                Text(lang.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color(.tertiaryLabel))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isSelected ? Color.accentColor : .clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("onboarding.language.\(lang.id)")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    /// Confirms a language. Applies it live (so the rest of onboarding renders in
+    /// the chosen language) and re-guesses the currency to match.
+    private func selectLanguage(_ lang: SupportedLanguage) {
+        guard selectedLanguage != lang else { return }
+        selectedLanguage = lang
+        appLanguageCode = lang.id
+        applyAppleLanguagesOverride(for: lang.id)
+        selectedCurrency = defaultCurrency(for: lang)
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    // MARK: - Currency step
+
+    private var currencyStep: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "dollarsign.circle")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.accentColor)
+                .padding(.top, 24)
+
+            VStack(spacing: 8) {
+                Text("onboarding.currency.title")
+                    .font(.largeTitle.weight(.bold))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+
+                Text("onboarding.currency.subtitle")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .padding(.bottom, 12)
+
+            Spacer(minLength: 6)
+
+            currencySelector
+
+            Spacer(minLength: 6)
+
+            primaryButton
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
         }
     }
 
@@ -132,15 +250,15 @@ struct OnboardingView: View {
                 ?? defaultCurrency(for: pinned)
         } else {
             let detected = detectDeviceLanguage()
-            selectedLanguage = detected
-            selectedCurrency = defaultCurrency(for: detected)
+            // Unsupported device languages pre-select the English fallback so the
+            // user still sees a highlighted card rather than nothing.
+            selectedLanguage = detected == .system ? .en : detected
+            selectedCurrency = defaultCurrency(for: selectedLanguage)
         }
     }
 
     /// Maps the device's preferred language to one of our four shipped locales.
-    /// Unsupported languages resolve to `.system`, which renders the English base
-    /// strings at runtime (no `<lang>.lproj` to match) — graceful fallback, no
-    /// confirmation screen needed.
+    /// Unsupported languages resolve to `.system` (handled as English above).
     private func detectDeviceLanguage() -> SupportedLanguage {
         guard let preferred = Locale.preferredLanguages.first else { return .system }
         switch Locale(identifier: preferred).language.languageCode?.identifier {
