@@ -34,7 +34,9 @@ final class LocaleCompletenessTests: XCTestCase {
         let enKeys = Set(en.keys)
         // Bumped 2026-06-28 (Wave 1 Fix #3): +3 yearly plan framing keys
         // (paywall.yearly.best_value, paywall.yearly.save_amount, paywall.yearly.per_month). Was 461 before this pass.
-        XCTAssertEqual(enKeys.count, 464, "English baseline changed; update the expected count.")
+        // Lowered 2026-06-28 (Wave 3 Fix #14 prune): −4 onboarding keys made dead by
+        // language auto-detect (onboarding.language.title/subtitle, onboarding.next/back). Was 464.
+        XCTAssertEqual(enKeys.count, 460, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

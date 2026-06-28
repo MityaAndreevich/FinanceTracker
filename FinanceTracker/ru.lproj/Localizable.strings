@@ -74,8 +74,6 @@
 /* ======================================================
    Onboarding
    ====================================================== */
-"onboarding.language.title" = "Выбор языка";
-"onboarding.language.subtitle" = "Вы сможете изменить его позже в настройках.";
 "onboarding.language.picker" = "Язык";
 "onboarding.search.languages" = "Поиск языков";
 "onboarding.language.more" = "Больше языков";
@@ -88,10 +86,8 @@
 "onboarding.currency.more" = "Больше валют";
 "onboarding.currency.all" = "Все валюты";
 
-"onboarding.next" = "Далее";
 "onboarding.start" = "Начать";
 "onboarding.cta.start_tracking" = "Начать учёт";
-"onboarding.back" = "Назад";
 
 /* ======================================================
    Settings (root)

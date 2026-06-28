@@ -63,8 +63,6 @@
 /* ======================================================
    Onboarding
    ====================================================== */
-"onboarding.language.title" = "Choose language";
-"onboarding.language.subtitle" = "You can change this anytime in Settings.";
 "onboarding.language.picker" = "Language";
 "onboarding.search.languages" = "Search languages";
 "onboarding.language.more" = "More languages";
@@ -77,10 +75,8 @@
 "onboarding.currency.more" = "More currencies";
 "onboarding.currency.all" = "All currencies";
 
-"onboarding.next" = "Next";
 "onboarding.start" = "Start";
 "onboarding.cta.start_tracking" = "Start tracking";
-"onboarding.back" = "Back";
 
 /* ======================================================
    Settings (root)

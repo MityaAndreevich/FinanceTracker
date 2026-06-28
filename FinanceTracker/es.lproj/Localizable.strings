@@ -46,18 +46,14 @@
 "empty.addFirstTransaction" = "Añade tu primera transacción para empezar.";
 
 /* Onboarding */
-"onboarding.language.title" = "Elige idioma";
-"onboarding.language.subtitle" = "Puedes cambiarlo en Ajustes en cualquier momento.";
 "onboarding.language.picker" = "Idioma";
 
 "onboarding.currency.title" = "Elige moneda";
 "onboarding.currency.subtitle" = "Se usará por defecto para nuevas transacciones.";
 "onboarding.currency.picker" = "Moneda";
 
-"onboarding.next" = "Siguiente";
 "onboarding.start" = "Empezar";
 "onboarding.cta.start_tracking" = "Empezar seguimiento";
-"onboarding.back" = "Atrás";
 
 /* Settings */
 "settings.title" = "Ajustes";
