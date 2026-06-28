@@ -18,7 +18,13 @@ struct OpenQuickEntryIntent: AppIntent {
     static var openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
-        UserDefaults.appGroup.set(true, forKey: "pendingPresentQuickEntry")
+        let defaults = UserDefaults.appGroup
+        defaults.set(true, forKey: "pendingPresentQuickEntry")
+        // Clear the sibling analytics flag so the two intents can never
+        // cross-contaminate (a missed-consumption race would otherwise let a
+        // stale flag fire on the next unrelated launch).
+        defaults.set(false, forKey: "pendingNavigateToAnalytics")
+        NotificationCenter.default.post(name: .budgetCrabPendingIntent, object: nil)
         return .result()
     }
 }

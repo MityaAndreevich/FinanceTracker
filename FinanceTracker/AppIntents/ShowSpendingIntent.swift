@@ -21,8 +21,16 @@ struct ShowSpendingIntent: AppIntent {
     var period: PeriodAppEnum
 
     func perform() async throws -> some IntentResult {
-        UserDefaults.appGroup.set(period.rawValue, forKey: "pendingAnalyticsPeriod")
-        UserDefaults.appGroup.set(true, forKey: "pendingNavigateToAnalytics")
+        let defaults = UserDefaults.appGroup
+        defaults.set(period.rawValue, forKey: "pendingAnalyticsPeriod")
+        defaults.set(true, forKey: "pendingNavigateToAnalytics")
+        // Clear any stale Quick Entry flag so it can't fire on this launch. A
+        // leftover `pendingPresentQuickEntry` (written by a prior Quick Entry run
+        // whose consumption was missed by the scenePhase/.task race) was being
+        // consumed when *this* intent foregrounds the app, so "Show Spending"
+        // surfaced the Quick Entry sheet instead of Analytics.
+        defaults.set(false, forKey: "pendingPresentQuickEntry")
+        NotificationCenter.default.post(name: .budgetCrabPendingIntent, object: nil)
         return .result()
     }
 }

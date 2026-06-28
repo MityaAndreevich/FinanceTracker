@@ -7,6 +7,14 @@
 //
 
 import AppIntents
+import Foundation
+
+extension Notification.Name {
+    /// Posted by app-opening intents right after they write their pending-navigation
+    /// flag. ContentView observes it so consumption happens *after* the write, even
+    /// when the app is already foreground and no scenePhase change fires.
+    static let budgetCrabPendingIntent = Notification.Name("budgetCrabPendingIntent")
+}
 
 struct BudgetCrabShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {

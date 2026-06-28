@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 
 /// Root tab view. Onboarding is gated upstream by RootView, so by the time
 /// this view appears we know `hasCompletedOnboarding == true`.
@@ -115,6 +116,13 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }
+        }
+        // App-opening intents post this right after writing their flag, so the
+        // app consumes the *fresh* flag even when it's already foreground and no
+        // scenePhase transition fires. Without it, "Show Spending" could land on a
+        // stale Quick Entry flag left over from an earlier missed consumption.
+        .onReceive(NotificationCenter.default.publisher(for: .budgetCrabPendingIntent)) { _ in
+            DispatchQueue.main.async { handlePendingIntentNavigation() }
         }
     }
 
