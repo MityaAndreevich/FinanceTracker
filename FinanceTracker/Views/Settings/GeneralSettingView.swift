@@ -175,6 +175,10 @@ struct GeneralSettingsView: View {
             Text("general.language_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                // Bug 10: RU/UK copy is ~30-40% longer than EN and was truncating
+                // mid-sentence ("…при следующем открытии Budget…"). fixedSize forces
+                // full vertical wrap instead of clipping to the row's default height.
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

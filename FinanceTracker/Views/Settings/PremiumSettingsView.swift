@@ -66,6 +66,7 @@ struct PremiumSettingsView: View {
                     Text("premium.redeem_hint")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)   // Bug 10: full wrap for longer RU/UK copy
                 }
             }
         }
