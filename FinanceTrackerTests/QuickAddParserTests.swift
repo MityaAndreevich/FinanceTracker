@@ -36,7 +36,7 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("12,99 spotify")
         #expect(result?.amountCents == 1299)
         #expect(result?.typeRaw == "expense")
-        #expect(result?.merchant == "spotify")
+        #expect(result?.merchant == "Spotify")
         #expect(result?.suggestedCategoryName == "Subscriptions")
     }
 
@@ -70,7 +70,7 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("200 gané en supermercado")
         #expect(result?.amountCents == 20000)
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "supermercado")
+        #expect(result?.merchant == "Supermercado")
     }
 
     @Test func parse_prefixStrip_es() {
@@ -102,7 +102,7 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("300 gagné de supermarché")
         #expect(result?.amountCents == 30000)
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "supermarché")
+        #expect(result?.merchant == "Supermarché")
     }
 
     @Test func parse_prefixStrip_fr() {
@@ -118,7 +118,7 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("500 ganhei de mercado")
         #expect(result?.amountCents == 50000)
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "mercado")
+        #expect(result?.merchant == "Mercado")
     }
 
     @Test func parse_prefixStrip_ptBR() {
@@ -244,7 +244,7 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("bought 3 eggs for 7")
         #expect(result?.amountCents == 700)   // price after "for", not the quantity 3
         #expect(result?.typeRaw == "expense")
-        #expect(result?.merchant?.contains("eggs") == true)
+        #expect(result?.merchant?.lowercased().contains("eggs") == true)
     }
 
     @Test func parse_multinumber_kupil_5_eggs_for_7() {
@@ -278,28 +278,28 @@ struct QuickAddParserTests {
         let result = QuickAddParser.parse("получил зп 200")
         #expect(result?.typeRaw == "income")
         #expect(result?.amountCents == 20000)
-        #expect(result?.merchant == "зп")               // not nil, not "получил"
+        #expect(result?.merchant == "Зп")               // not nil, not "получил"; capitalized per Bug 5
         #expect(result?.suggestedCategoryName == "Income")
     }
 
     @Test func parse_income_zarplata_alone() {
         let result = QuickAddParser.parse("зарплата 50000")
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "зарплата")
+        #expect(result?.merchant == "Зарплата")
         #expect(result?.suggestedCategoryName == "Income")
     }
 
     @Test func parse_income_salary_english() {
         let result = QuickAddParser.parse("salary 5000")
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "salary")
+        #expect(result?.merchant == "Salary")
         #expect(result?.suggestedCategoryName == "Income")
     }
 
     @Test func parse_income_bonus_keeps_merchant() {
         let result = QuickAddParser.parse("bonus 1000")
         #expect(result?.typeRaw == "income")
-        #expect(result?.merchant == "bonus")
+        #expect(result?.merchant == "Bonus")
         #expect(result?.suggestedCategoryName == "Income")
     }
 
@@ -322,25 +322,25 @@ struct QuickAddParserTests {
 
     @Test func parse_trailing_za_stripped_ru() {
         let result = QuickAddParser.parse("продал яйца за 7")
-        #expect(result?.merchant == "яйца")   // not "яйца за"
+        #expect(result?.merchant == "Яйца")   // not "яйца за"; capitalized per Bug 5
         #expect(result?.typeRaw == "income")
     }
 
     @Test func parse_trailing_for_stripped_en() {
         let result = QuickAddParser.parse("coffee for 5")
-        #expect(result?.merchant == "coffee") // not "coffee for"
+        #expect(result?.merchant == "Coffee") // not "coffee for"; capitalized per Bug 5
     }
 
     @Test func parse_trailing_por_stripped_es() {
         let result = QuickAddParser.parse("huevos por 7")
-        #expect(result?.merchant == "huevos") // not "huevos por"
+        #expect(result?.merchant == "Huevos") // not "huevos por"; capitalized per Bug 5
     }
 
     // MARK: - Leading orphan conjunction stripping (Brief 28E P1-2)
 
     @Test func parse_leading_orphan_a_stripped_ru() {
         let result = QuickAddParser.parse("получил а зарплату 50000")
-        #expect(result?.merchant == "зарплату")  // not "а зарплату"
+        #expect(result?.merchant == "Зарплату")  // not "а зарплату"; capitalized per Bug 5
         #expect(result?.typeRaw == "income")
     }
 
@@ -348,24 +348,24 @@ struct QuickAddParserTests {
 
     @Test func parse_strip_baksov_ru() {
         let result = QuickAddParser.parse("50 баксов за кофе")
-        #expect(result?.merchant == "кофе")     // not "баксов за кофе"
+        #expect(result?.merchant == "Кофе")     // not "баксов за кофе"; capitalized per Bug 5
         #expect(result?.amountCents == 5000)
     }
 
     @Test func parse_strip_dollars_en() {
         let result = QuickAddParser.parse("12 dollars coffee")
-        #expect(result?.merchant == "coffee")
+        #expect(result?.merchant == "Coffee")
         #expect(result?.amountCents == 1200)
     }
 
     @Test func parse_strip_euros_es() {
         let result = QuickAddParser.parse("7 euros café")
-        #expect(result?.merchant == "café")
+        #expect(result?.merchant == "Café")
     }
 
     @Test func parse_strip_reais_pt() {
         let result = QuickAddParser.parse("5 reais café")
-        #expect(result?.merchant == "café")
+        #expect(result?.merchant == "Café")
     }
 
     // MARK: - Expense-indicator word stripping (Brief 28J P6)
@@ -573,4 +573,32 @@ struct QuickAddParserTests {
         #expect(result?.amountCents == 1500)
         #expect(result?.typeRaw == "expense")
     }
+
+    // MARK: - Bug 5 (P0): merchant first letter capitalized — but NOT via .capitalized
+    //
+    // Voice-added transactions used to land with lowercase merchants ("кофе",
+    // "coffee", "café"), which read like rough notes rather than transaction
+    // labels. Capitalize the first letter only — using `.capitalized` would
+    // lowercase mid-word characters and break "iPhone" → "Iphone".
+
+    @Test func parse_bug5_merchant_first_letter_capitalized_ru() {
+        let result = QuickAddParser.parse("кофе 20")
+        #expect(result?.merchant == "Кофе")
+    }
+
+    @Test func parse_bug5_merchant_first_letter_capitalized_en() {
+        let result = QuickAddParser.parse("coffee 5")
+        #expect(result?.merchant == "Coffee")
+    }
+
+    @Test func parse_bug5_preserves_internal_casing_iphone() {
+        // "iPhone" must NOT degrade to "Iphone" — verifies we capitalize first
+        // letter only, never use Foundation's `.capitalized` (which lowercases
+        // the rest of the word).
+        let result = QuickAddParser.parse("iPhone 1000")
+        #expect(result?.merchant == "IPhone")
+        // The "i" gets uppercased to "I", but "Phone" stays mixed-case rather
+        // than collapsing to "Iphone". Documented behaviour.
+    }
+
 }

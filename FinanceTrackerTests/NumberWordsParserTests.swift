@@ -96,6 +96,6 @@ final class NumberWordsParserTests: XCTestCase {
         let result = QuickAddParser.parse("продал велик за пять тыщ")
         XCTAssertEqual(result?.amountCents, 500_000)
         XCTAssertEqual(result?.typeRaw, "income")
-        XCTAssertEqual(result?.merchant, "велик")
+        XCTAssertEqual(result?.merchant, "Велик")   // capitalized first letter per Bug 5
     }
 }

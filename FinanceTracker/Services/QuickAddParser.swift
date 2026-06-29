@@ -69,7 +69,12 @@ enum QuickAddParser {
         let verbWordsStripped = stripWholeWords(noiseWordsToStrip, from: verbStripped)
         let cleanMerchant = normalizeMerchant(nounWordsStripped)
         let merchantText = cleanMerchant.isEmpty ? normalizeMerchant(verbWordsStripped) : cleanMerchant
-        let merchant: String? = merchantText.isEmpty ? nil : merchantText
+        // Bug 5 (P0): capitalize first letter of merchant so voice-added rows read like
+        // proper labels ("Кофе"/"Coffee" instead of "кофе"/"coffee"). Done at the last
+        // step so trailing-preposition / orphan-conjunction stripping isn't affected by
+        // the case. We deliberately do NOT use `.capitalized` — that would lowercase
+        // the rest of the word and break brand names like "iPhone" → "Iphone".
+        let merchant: String? = merchantText.isEmpty ? nil : merchantText.capitalizedFirst
 
         // 4. Suggest category. The taxonomy has a single income category, so any
         //    income transaction maps to "Income" rather than falling back to "Other"
@@ -364,5 +369,18 @@ enum QuickAddParser {
         }
 
         return Money.parseCents(from: s)
+    }
+}
+
+// MARK: - String capitalization helper
+
+private extension String {
+    /// Returns the string with the first character uppercased; the remainder is
+    /// preserved verbatim. Unlike `.capitalized`, this does NOT lowercase
+    /// mid-word characters, so brand names like "iPhone" and acronyms like
+    /// "AT&T" survive intact.
+    var capitalizedFirst: String {
+        guard let first = first else { return self }
+        return first.uppercased() + dropFirst()
     }
 }
