@@ -19,6 +19,11 @@ struct DaySpendingSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
+    // Bug 4 ext: rebuild the bar chart on a live language switch so the category
+    // axis labels re-format under the new locale (Swift Charts otherwise caches
+    // the Locale from first render).
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var allTransactions: [Transaction]
 
@@ -142,5 +147,6 @@ struct DaySpendingSheet: View {
         }
         .frame(height: CGFloat(max(1, categorySlices.count)) * 38 + 16)
         .padding(.vertical, Spacing.xs)
+        .id(localizedBundle.languageCode ?? "system")
     }
 }

@@ -19,6 +19,12 @@ struct AnalyticsBreakdownView: View {
     @State private var typeFilter: TypeFilter = .expense
     @State private var selectedCategory: CategoryTotal?
 
+    // Bug 4 ext: Swift Charts captures Locale at first render and ignores later
+    // environment(\.locale) updates, so labels stay stale until restart. Key the
+    // chart on the active language to discard + rebuild it on a live switch.
+    // Bug 3's fix covered Pulse + Horizon; Breakdown was missed.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     struct CategoryTotal: Identifiable, Hashable {
         let id: UUID
         let name: String
@@ -119,6 +125,7 @@ struct AnalyticsBreakdownView: View {
             }
         }
         .accessibilityChartDescriptor(self)
+        .id(localizedBundle.languageCode ?? "system")
     }
 
     @ViewBuilder
