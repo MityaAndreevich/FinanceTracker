@@ -605,6 +605,7 @@
 "quick_entry.voice.stop" = "Зупинити голосове введення";
 "quick_entry.voice.denied_open_settings" = "Увімкніть мікрофон у Налаштуваннях";
 "quick_entry.voice.unavailable" = "Голос недоступний для цієї мови";
+"voice.unavailable_for_lang" = "Голосове введення недоступне для вашої мови. Введіть вручну.";
 "quick_entry.voice.fail_start" = "Не вдалося почати голос — спробуйте ще раз";
 "quick_entry.voice.settings" = "Налаштування";
 

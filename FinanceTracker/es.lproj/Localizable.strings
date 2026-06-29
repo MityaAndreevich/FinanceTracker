@@ -192,6 +192,7 @@
 "quick_entry.voice.stop" = "Detener entrada de voz";
 "quick_entry.voice.denied_open_settings" = "Habilita el micrófono en Ajustes";
 "quick_entry.voice.unavailable" = "Voz no disponible para este idioma";
+"voice.unavailable_for_lang" = "Entrada por voz no disponible para tu idioma. Escribe manualmente.";
 "quick_entry.voice.fail_start" = "No se pudo iniciar — inténtalo de nuevo";
 "quick_entry.voice.settings" = "Ajustes";
 

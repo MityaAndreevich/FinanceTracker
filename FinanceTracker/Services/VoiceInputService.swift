@@ -69,6 +69,10 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
             candidates = ["en_US", "en_GB", "en_AU", "en_CA", "en_IE", "en"]
         case "ru":
             candidates = ["ru_RU", "ru"]
+        case "uk":
+            // Bug 7: Ukrainian was missing entirely and fell through to
+            // Locale.current, so uk users never got a uk recognizer.
+            candidates = ["uk_UA", "uk"]
         case "es":
             // Brief 28H reorder: generic "es" + Castilian "es_ES" first because
             // they are the most widely installed Spanish dictation packs on iPhones

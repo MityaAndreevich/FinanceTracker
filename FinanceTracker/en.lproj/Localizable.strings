@@ -598,6 +598,7 @@
 "quick_entry.voice.stop" = "Stop voice input";
 "quick_entry.voice.denied_open_settings" = "Enable microphone in Settings";
 "quick_entry.voice.unavailable" = "Voice not available for this language";
+"voice.unavailable_for_lang" = "Voice input not available for your language. Type instead.";
 "quick_entry.voice.fail_start" = "Couldn't start voice — try again";
 "quick_entry.voice.settings" = "Settings";
 

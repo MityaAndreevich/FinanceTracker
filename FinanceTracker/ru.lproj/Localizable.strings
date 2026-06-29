@@ -608,6 +608,7 @@
 "quick_entry.voice.stop" = "Остановить голосовой ввод";
 "quick_entry.voice.denied_open_settings" = "Включите микрофон в Настройках";
 "quick_entry.voice.unavailable" = "Голосовой ввод недоступен для этого языка";
+"voice.unavailable_for_lang" = "Голосовой ввод недоступен для вашего языка. Введите вручную.";
 "quick_entry.voice.fail_start" = "Не удалось запустить — попробуйте ещё раз";
 "quick_entry.voice.settings" = "Настройки";
 

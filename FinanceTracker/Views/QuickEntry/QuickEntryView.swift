@@ -452,9 +452,12 @@ struct QuickEntryView: View {
     private var bottomBar: some View {
         VStack(spacing: 10) {
             HStack(spacing: 12) {
-                if voice.isAvailable {
-                    micButton
-                }
+                // Bug 7: always show the mic so voice is discoverable in every
+                // locale. When on-device recognition isn't installed for the
+                // user's language, tapping surfaces a friendly "type instead"
+                // toast (toggleVoice → .deviceUnavailable) rather than hiding the
+                // control with no explanation.
+                micButton
 
                 Button {
                     handleSave()
@@ -592,7 +595,10 @@ struct QuickEntryView: View {
                 }
             case .denied:
                 showVoiceError("quick_entry.voice.denied_open_settings", showSettings: true)
-            case .restricted, .deviceUnavailable:
+            case .deviceUnavailable:
+                // On-device recognition isn't installed for this language.
+                showVoiceError("voice.unavailable_for_lang", showSettings: false)
+            case .restricted:
                 showVoiceError("quick_entry.voice.unavailable", showSettings: false)
             case .undetermined:
                 break

@@ -79,6 +79,14 @@ struct VoiceLocaleResolutionTests {
         #expect(service.isListening == false)
     }
 
+    @Test("uk code creates a Ukrainian recognizer (no crash)")
+    func ukrainian_locale_no_crash() {
+        set("uk")
+        defer { clear() }
+        let service = VoiceInputService()
+        #expect(service.isListening == false)
+    }
+
     @Test("unknown language code falls back without crash")
     func unknown_code_fallback() {
         set("klingon")
