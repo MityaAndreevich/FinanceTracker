@@ -224,6 +224,11 @@ enum QuickAddParser {
         "from ", "via ", "on ", "at ", "by ", "for ",
         // Spanish / Portuguese-BR / French — longer prefixes first
         "desde ", "depuis ", "de ", "en ", "por ", "do ", "da ", "na ", "no ", "em ", "à ", "par ",
+        // Spanish / Portuguese articles ("tomé un café" → "café", "tomei um café" → "café").
+        // Bug 1 (P0): the verb is whole-word-stripped by stripWholeWords, but the
+        // dangling article "un"/"um" survived into the merchant.
+        "un ", "una ", "unos ", "unas ",   // Spanish
+        "um ", "uma ", "uns ", "umas ",    // Portuguese
         // German
         "von ", "bei ", "aus ", "an ",
         // Japanese
@@ -290,8 +295,11 @@ enum QuickAddParser {
     /// reuse the same root ("got paid") are stripped earlier by verbIncomeKeywords, so
     /// listing "got"/"paid" here can't change a transaction's income/expense type.
     private static let expenseVerbKeywords = [
-        // Russian
+        // Russian — "взял/взяла/взяли" added per Bug 1 (P0): "Взял кофе за 20"
+        // was leaking the verb into the merchant ("взял кофе") because it wasn't
+        // in this strip list. Case is handled by stripWholeWords's regex flag.
         "купил", "купила", "купили",
+        "взял", "взяла", "взяли",
         "потратил", "потратила", "потратили", "потратился",
         "заплатил", "заплатила", "заплатили",
         "оплатил", "оплатила", "оплатили", "оплата", "оплату",
@@ -299,10 +307,12 @@ enum QuickAddParser {
         "отдал", "отдала", "отдали",
         // English
         "bought", "paid", "spent", "purchased", "got",
-        // Spanish
+        // Spanish — "tomé/tomó/tomamos" cover "Tomé un café" / "Tomamos cerveza".
         "compré", "compre", "pagué", "pague", "gasté", "gaste", "aboné", "abone", "adquirí", "adquiri",
-        // Portuguese (Brazil)
+        "tomé", "tome", "tomó", "tomo", "tomamos",
+        // Portuguese (Brazil) — "tomei/tomou/tomamos" cover "Tomei um café".
         "comprei", "paguei", "gastei", "adquiri",
+        "tomei", "tomou",
     ]
 
     private static let noiseWordsToStrip = currencyWordsToStrip + expenseIndicatorWords + expenseVerbKeywords

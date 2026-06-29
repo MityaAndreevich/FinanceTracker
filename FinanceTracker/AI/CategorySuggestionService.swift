@@ -115,10 +115,13 @@ enum CategorySuggestionService {
         ("салат", "Food & Drink"), ("суп", "Food & Drink"),
         ("сок", "Food & Drink"), ("шоколад", "Food & Drink"), ("конфеты", "Food & Drink"),
         ("мороженое", "Food & Drink"),
-        // ES — common groceries
+        // ES — common groceries + meals & drinks (Bug 1 P0)
         ("huevos", "Food & Drink"), ("pan", "Food & Drink"), ("leche", "Food & Drink"),
         ("queso", "Food & Drink"), ("carne", "Food & Drink"), ("pollo", "Food & Drink"),
         ("pescado", "Food & Drink"), ("frutas", "Food & Drink"), ("verduras", "Food & Drink"),
+        ("café", "Food & Drink"), ("cafe", "Food & Drink"), ("té", "Food & Drink"), ("te", "Food & Drink"),
+        ("almuerzo", "Food & Drink"), ("cena", "Food & Drink"), ("desayuno", "Food & Drink"),
+        ("cerveza", "Food & Drink"), ("vino", "Food & Drink"), ("pizza", "Food & Drink"),
         // DE
         ("eier", "Food & Drink"), ("brot", "Food & Drink"), ("milch", "Food & Drink"),
         ("käse", "Food & Drink"), ("fleisch", "Food & Drink"), ("hähnchen", "Food & Drink"),
@@ -128,10 +131,13 @@ enum CategorySuggestionService {
         ("lait", "Food & Drink"), ("fromage", "Food & Drink"), ("viande", "Food & Drink"),
         ("poulet", "Food & Drink"), ("poisson", "Food & Drink"),
         ("légumes", "Food & Drink"),
-        // PT
+        // PT — groceries + meals & drinks (Bug 1 P0)
         ("ovos", "Food & Drink"), ("pão", "Food & Drink"), ("leite", "Food & Drink"),
         ("queijo", "Food & Drink"), ("frango", "Food & Drink"),
         ("peixe", "Food & Drink"),
+        ("café", "Food & Drink"), ("cafe", "Food & Drink"), ("chá", "Food & Drink"), ("cha", "Food & Drink"),
+        ("almoço", "Food & Drink"), ("jantar", "Food & Drink"),
+        ("cerveja", "Food & Drink"), ("vinho", "Food & Drink"), ("pizza", "Food & Drink"),
 
         // ── Transport ───────────────────────────────────────────────────────────
         // EN — fuel

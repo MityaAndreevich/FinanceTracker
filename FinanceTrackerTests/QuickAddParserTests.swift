@@ -601,4 +601,53 @@ struct QuickAddParserTests {
         // than collapsing to "Iphone". Documented behaviour.
     }
 
+    // MARK: - Bug 1 (P0): RU/EN/ES/PT "взял/got/tomé/tomei <noun>" food cases
+    //
+    // Real-device gap: "Взял кофе за 20" landed as merchant "взял кофе" and
+    // category "Other". Three fixes needed:
+    //   1. Add взял/взяла/взяли to expenseVerbKeywords so verb-strip removes it.
+    //   2. Add ES "tomé/tome/tomó" and PT "tomei/tomou" so "Tomé un café" parses.
+    //   3. Add un/una/um/uma article prefixes so the article is stripped.
+    //   4. Add ES/PT food keywords (café, té, almoço, cerveja, vinho, pizza, etc.)
+    //      to CategorySuggestionService so Food & Drink is suggested.
+
+    @Test func parse_bug1_ru_capitalized_verb_kofe() {
+        let result = QuickAddParser.parse("Взял кофе за 20")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == "Кофе")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+    }
+
+    @Test func parse_bug1_en_got_coffee_for_5() {
+        let result = QuickAddParser.parse("Got coffee for 5")
+        #expect(result?.amountCents == 500)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == "Coffee")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+    }
+
+    @Test func parse_bug1_es_tome_un_cafe_por_3() {
+        let result = QuickAddParser.parse("Tomé un café por 3")
+        #expect(result?.amountCents == 300)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == "Café")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+    }
+
+    @Test func parse_bug1_pt_tomei_um_cafe_por_4() {
+        let result = QuickAddParser.parse("Tomei um café por 4")
+        #expect(result?.amountCents == 400)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == "Café")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+    }
+
+    // Regression check: lowercase "взял" still strips (case-insensitive verb match).
+    @Test func parse_bug1_ru_lowercase_vzyal_kofe() {
+        let result = QuickAddParser.parse("взял кофе за 20")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.merchant == "Кофе")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+    }
 }
