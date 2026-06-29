@@ -178,6 +178,11 @@
 "general.currency" = "Валюта";
 "general.language" = "Язык";
 "general.language_hint" = "Большинство надписей обновятся сразу. Некоторые — при следующем открытии Budget Crab.";
+"settings.quickadd.sensitivity.label" = "Чувствительность быстрого ввода";
+"settings.quickadd.sensitivity.caption" = "Выше = чаще показ предпросмотра. Ниже = чаще мгновенно.";
+"settings.quickadd.sensitivity.confirm" = "Подтверждать";
+"settings.quickadd.sensitivity.balanced" = "Баланс";
+"settings.quickadd.sensitivity.instant" = "Мгновенно";
 "settings.language.restart_required.title" = "Язык обновлён";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Некоторые надписи обновятся после повторного открытия приложения.";

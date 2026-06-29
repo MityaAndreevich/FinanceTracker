@@ -122,6 +122,11 @@
 "general.currency" = "Moneda";
 "general.language" = "Idioma";
 "general.language_hint" = "La mayoría de los textos se actualizan al instante. Algunos cambian la próxima vez que abras Budget Crab.";
+"settings.quickadd.sensitivity.label" = "Sensibilidad de Quick Add";
+"settings.quickadd.sensitivity.caption" = "Más alto = más vista previa. Más bajo = guardar al instante.";
+"settings.quickadd.sensitivity.confirm" = "Confirmar";
+"settings.quickadd.sensitivity.balanced" = "Equilibrado";
+"settings.quickadd.sensitivity.instant" = "Instantáneo";
 "settings.language.restart_required.title" = "Idioma actualizado";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Algunas etiquetas se actualizarán cuando vuelvas a abrir la app.";

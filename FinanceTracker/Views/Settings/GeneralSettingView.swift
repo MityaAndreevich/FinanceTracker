@@ -17,6 +17,9 @@ struct GeneralSettingsView: View {
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
 
+    // Q1=C confidence-gated auto-save (commit cb79b57) is user-tunable here.
+    @AppStorage("quickAddConfidenceThreshold") private var quickAddThreshold: Double = 0.75
+
     // Single source of truth for the two picker sheets. Using .sheet(item:) rather
     // than two .sheet(isPresented:) modifiers prevents "Attempt to present … which is
     // already presenting …" when one sheet's content changes while another resolves.
@@ -49,6 +52,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         List {
             preferencesSection
+            quickAddSensitivitySection
             tutorialDemoSection
             maintenanceSection
         }
@@ -129,6 +133,50 @@ struct GeneralSettingsView: View {
             Button("common.delete", role: .destructive) {
                 DemoDataController.clearDemoData(modelContext: modelContext)
             }
+        }
+    }
+
+    // MARK: - Quick Add sensitivity (Q1=C threshold override)
+
+    /// Discrete confidence thresholds behind the segmented picker. "Confirm" uses
+    /// a sentinel above the 1.0 confidence maximum so even a textbook-perfect parse
+    /// still previews — i.e. it always confirms, matching the label.
+    private enum QuickAddSensitivity: Double, CaseIterable, Identifiable {
+        case confirm = 1.1
+        case balanced = 0.75
+        case instant = 0.5
+
+        var id: Double { rawValue }
+        var labelKey: LocalizedStringKey {
+            switch self {
+            case .confirm:  return "settings.quickadd.sensitivity.confirm"
+            case .balanced: return "settings.quickadd.sensitivity.balanced"
+            case .instant:  return "settings.quickadd.sensitivity.instant"
+            }
+        }
+    }
+
+    private var quickAddSensitivityBinding: Binding<QuickAddSensitivity> {
+        Binding(
+            get: { QuickAddSensitivity(rawValue: quickAddThreshold) ?? .balanced },
+            set: { quickAddThreshold = $0.rawValue }
+        )
+    }
+
+    private var quickAddSensitivitySection: some View {
+        Section {
+            Picker("settings.quickadd.sensitivity.label", selection: quickAddSensitivityBinding) {
+                ForEach(QuickAddSensitivity.allCases) { level in
+                    Text(level.labelKey).tag(level)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("settings.quickadd.sensitivity.picker")
+        } header: {
+            Text("settings.quickadd.sensitivity.label")
+        } footer: {
+            Text("settings.quickadd.sensitivity.caption")
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

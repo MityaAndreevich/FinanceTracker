@@ -167,6 +167,11 @@
 "general.currency" = "Currency";
 "general.language" = "Language";
 "general.language_hint" = "Most labels update right away. A few update the next time you open Budget Crab.";
+"settings.quickadd.sensitivity.label" = "Quick Add sensitivity";
+"settings.quickadd.sensitivity.caption" = "Higher = preview more often. Lower = save instantly more often.";
+"settings.quickadd.sensitivity.confirm" = "Confirm";
+"settings.quickadd.sensitivity.balanced" = "Balanced";
+"settings.quickadd.sensitivity.instant" = "Instant";
 "settings.language.restart_required.title" = "Language updated";
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Some labels will update after you reopen the app.";

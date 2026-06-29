@@ -41,6 +41,8 @@ struct DashboardView: View {
     @State private var quickAddToast: LocalizedStringKey? = nil
     @State private var quickAddSavedTx: Transaction? = nil   // last auto-saved row (toast target)
     @State private var quickAddEditingTx: Transaction? = nil // drives the edit sheet on toast tap
+    // User-tunable auto-save threshold (Settings → Quick Add sensitivity).
+    @AppStorage("quickAddConfidenceThreshold") private var quickAddThreshold: Double = 0.75
 
     private var currentMonthTransactions: [Transaction] {
         PeriodScope.currentMonth.filter(transactions)
@@ -168,7 +170,7 @@ struct DashboardView: View {
                 // Q1 (option C): a confident parse (amount + merchant + concrete
                 // category) saves immediately and offers an edit toast — the
                 // preview chip stays as the escape hatch for unsure parses only.
-                if parsed.confidence >= QuickAddParsedInput.highConfidenceThreshold,
+                if parsed.confidence >= quickAddThreshold,
                    let saved = autoSaveQuickAdd(parsed) {
                     quickAddSavedTx = saved
                     quickAddText = ""

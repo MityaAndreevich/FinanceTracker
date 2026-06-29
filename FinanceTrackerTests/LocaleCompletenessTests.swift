@@ -52,7 +52,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // (voice.unavailable_for_lang). Was 492.
         // Bumped 2026-06-29 (Bug 12/Q1-C): +1 auto-save toast key
         // (quickadd.saved.tap_to_edit). Was 493.
-        XCTAssertEqual(enKeys.count, 494, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-29 (Quick Add sensitivity setting): +5 keys — label,
+        // caption, and 3 segment labels (confirm/balanced/instant). The brief
+        // estimated +3, but a 3-position picker plus its label and caption needs
+        // 5 distinct strings. Was 494.
+        XCTAssertEqual(enKeys.count, 499, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
