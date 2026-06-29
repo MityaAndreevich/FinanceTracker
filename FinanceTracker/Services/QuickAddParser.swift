@@ -121,8 +121,9 @@ enum QuickAddParser {
         }
         guard !candidates.isEmpty else { return nil }
 
-        // Heuristic 1: number after a price-marker preposition
-        let pricePrepositions = [" for ", " за ", " at ", " по ", " à ", " por ", " für "]
+        // Heuristic 1: number after a price-marker preposition.
+        // "на" ("продукты на 100") works like "за" for amount selection.
+        let pricePrepositions = [" for ", " за ", " на ", " at ", " по ", " à ", " por ", " für "]
         let lower = input.lowercased()
         for prep in pricePrepositions {
             if let prepRange = lower.range(of: prep) {
@@ -248,9 +249,9 @@ enum QuickAddParser {
     /// matching prevents one entry from clobbering a longer one ("доллар" won't match
     /// inside "долларов").
     private static let currencyWordsToStrip = [
-        // RU
+        // RU — "р" is the bare ruble abbreviation ("молоко 50р" → "молоко").
         "баксов", "баксы", "бакс", "долларов", "доллары", "доллар",
-        "евро", "евра", "рублей", "рубли", "рубль", "руб",
+        "евро", "евра", "рублей", "рубли", "рубль", "руб", "р",
         "юаней", "юаня", "юань",
         // EN
         "dollars", "dollar", "bucks", "buck",
@@ -276,7 +277,22 @@ enum QuickAddParser {
         "despesas", "despesa",
     ]
 
-    private static let noiseWordsToStrip = currencyWordsToStrip + expenseIndicatorWords
+    /// Expense transaction verbs/lead-in nouns ("купил молоко за 15" → "молоко",
+    /// "оплата интернета 500" → "интернета"). Unlike income verbs these don't change
+    /// the type (expense is the default) — they only describe the *act* of spending,
+    /// not the thing bought, so they're stripped from merchant text. Russian-only for
+    /// now: the EN/ES/PT real-device gaps were all income-side; adding expense verbs in
+    /// those languages risks regressing existing merchant tests ("bought 3 eggs…").
+    private static let expenseVerbKeywords = [
+        "купил", "купила", "купили",
+        "потратил", "потратила", "потратили", "потратился",
+        "заплатил", "заплатила", "заплатили",
+        "оплатил", "оплатила", "оплатили", "оплата", "оплату",
+        "приобрёл", "приобрел", "приобрела", "приобрели",
+        "отдал", "отдала", "отдали",
+    ]
+
+    private static let noiseWordsToStrip = currencyWordsToStrip + expenseIndicatorWords + expenseVerbKeywords
 
     /// Removes whole words from `words` (case-insensitive, Unicode word boundaries
     /// so Cyrillic matches) and leaves a space so adjacent words don't merge.
@@ -295,12 +311,17 @@ enum QuickAddParser {
     /// single trailing preposition.
     /// "  desde Empresa " → "Empresa", "от Сбербанк" → "Сбербанк", "яйца за" → "яйца".
     private static func normalizeMerchant(_ text: String) -> String {
+        // Trim whitespace AND edge punctuation. iOS dictation appends a sentence
+        // period ("купил молоко за 15 руб." → "молоко ."), and the bare period
+        // otherwise survives into the description. Internal punctuation (e.g. "AT&T",
+        // "7-eleven") is preserved — only leading/trailing marks are trimmed.
+        let trimChars = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
         var s = text
             .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: trimChars)
         let lower = s.lowercased()
         for prefix in merchantPrefixesToStrip where lower.hasPrefix(prefix) {
-            s = String(s.dropFirst(prefix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+            s = String(s.dropFirst(prefix.count)).trimmingCharacters(in: trimChars)
             break
         }
         // Trailing prepositions can stack once the amount and a multi-word number
@@ -310,7 +331,7 @@ enum QuickAddParser {
             strippedSuffix = false
             let lowerNow = s.lowercased()
             for suffix in merchantSuffixesToStrip where lowerNow.hasSuffix(suffix) {
-                s = String(s.dropLast(suffix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+                s = String(s.dropLast(suffix.count)).trimmingCharacters(in: trimChars)
                 strippedSuffix = true
                 break
             }

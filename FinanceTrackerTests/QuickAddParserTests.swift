@@ -382,4 +382,59 @@ struct QuickAddParserTests {
         #expect(result?.typeRaw == "expense")
         #expect(result?.merchant == nil)
     }
+
+    // MARK: - RU expense verb prefix stripping + "за/на" preposition (Bug 8)
+    //
+    // Real-device gap: "купил молоко за 15" left the spending verb (and a trailing
+    // sentence period from dictation) in the description. Merchant is compared
+    // case-insensitively because iOS dictation capitalizes the first word.
+
+    @Test func parse_ru_kupil_moloko_za_15() {
+        let result = QuickAddParser.parse("купил молоко за 15")
+        #expect(result?.amountCents == 1500)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "молоко")
+    }
+
+    @Test func parse_ru_moloko_za_50_rubley() {
+        let result = QuickAddParser.parse("Молоко за 50 рублей")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "молоко")
+    }
+
+    @Test func parse_ru_oplata_interneta_500() {
+        let result = QuickAddParser.parse("оплата интернета 500")
+        #expect(result?.amountCents == 50000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "интернета")
+    }
+
+    @Test func parse_ru_poluchil_zp_30000() {
+        let result = QuickAddParser.parse("получил зп 30000")
+        #expect(result?.amountCents == 3_000_000)
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant?.lowercased() == "зп")
+    }
+
+    @Test func parse_ru_produkty_na_100() {
+        let result = QuickAddParser.parse("продукты на 100")
+        #expect(result?.amountCents == 10000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "продукты")
+    }
+
+    @Test func parse_ru_amount_first_100_produkty() {
+        let result = QuickAddParser.parse("100 продукты")
+        #expect(result?.amountCents == 10000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "продукты")
+    }
+
+    @Test func parse_ru_moloko_50r() {
+        let result = QuickAddParser.parse("молоко 50р")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "молоко")
+    }
 }
