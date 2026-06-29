@@ -104,4 +104,59 @@ struct AddTransactionIntentTests {
         #expect(TransactionTypeAppEnum.expense.rawValue == "expense")
         #expect(TransactionTypeAppEnum.income.rawValue == "income")
     }
+
+    // MARK: - Bug 8: sign + income-vocabulary direction detection
+
+    @Test func test_effectiveType_incomeVocabularyPromotesDefaultExpense() {
+        // "+50 paycheck": defaulted expense, but "paycheck" is income vocabulary.
+        #expect(AddTransactionIntent.effectiveTypeRaw(
+            explicitType: "expense", merchant: "paycheck", amount: 50) == "income")
+    }
+
+    @Test func test_effectiveType_plainMerchantStaysExpense() {
+        #expect(AddTransactionIntent.effectiveTypeRaw(
+            explicitType: "expense", merchant: "milk", amount: 12) == "expense")
+    }
+
+    @Test func test_effectiveType_negativeAmountForcesExpense() {
+        // A negative amount is an expense even if the merchant reads like income.
+        #expect(AddTransactionIntent.effectiveTypeRaw(
+            explicitType: "expense", merchant: "salary", amount: -50) == "expense")
+    }
+
+    @Test func test_effectiveType_explicitIncomeAlwaysWins() {
+        #expect(AddTransactionIntent.effectiveTypeRaw(
+            explicitType: "income", merchant: "random", amount: 30) == "income")
+    }
+
+    @Test func test_effectiveType_nilMerchantDefaultsExpense() {
+        #expect(AddTransactionIntent.effectiveTypeRaw(
+            explicitType: "expense", merchant: nil, amount: 5) == "expense")
+    }
+
+    // Income "paycheck" resolves to the Income category, not Other/Food.
+    @Test func test_income_paycheck_resolvesIncomeCategory() throws {
+        let ctx = try makeIntentContext()
+        seedCategory(name: "Income", kindRaw: "income", ctx: ctx)
+        seedCategory(name: "Other", ctx: ctx)
+        try ctx.save()
+
+        // Mirrors the intent's parsed-input path: income type + Income category.
+        let parsed = QuickAddParsedInput(
+            amountCents: 5000,
+            typeRaw: "income",
+            merchant: "paycheck",
+            suggestedCategoryName: "Income"
+        )
+        let income = seededIncome(ctx: ctx)
+        let tx = try QuickAddSaveService.save(
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", overrideCategory: income)
+        #expect(tx.typeRaw == "income")
+        #expect(tx.category.name == "Income")
+    }
+
+    private func seededIncome(ctx: ModelContext) -> FinanceTracker.Category {
+        let all = (try? ctx.fetch(FetchDescriptor<FinanceTracker.Category>())) ?? []
+        return all.first { $0.name == "Income" }!
+    }
 }

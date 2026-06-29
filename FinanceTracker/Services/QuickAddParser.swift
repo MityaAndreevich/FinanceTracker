@@ -116,6 +116,17 @@ enum QuickAddParser {
         )
     }
 
+    /// True when `text` signals income — a leading "+" or any income verb/noun
+    /// in the supported vocabularies. Exposed for the App Intent (Bug 8), which
+    /// builds a transaction from structured parameters but must still apply the
+    /// same income heuristics so e.g. "paycheck" isn't filed as an expense.
+    static func isIncome(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        return text.hasPrefix("+")
+            || verbIncomeKeywords.contains { lower.contains($0) }
+            || nounIncomeKeywords.contains { lower.contains($0) }
+    }
+
     // MARK: - Amount detection
 
     /// Regex for a single amount token: optional currency symbol, then a number

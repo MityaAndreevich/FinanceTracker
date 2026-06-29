@@ -52,26 +52,60 @@ struct AddTransactionIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ReturnsValue<TransactionEntity> {
-        let cents = Int((amount * 100).rounded())
-        let typeRawValue = type.rawValue
+        // Bug 8: a negative amount means expense; otherwise income vocabulary in
+        // the merchant ("paycheck", "salary", "+…") drives the direction even when
+        // the (defaulted) type parameter says expense. The amount magnitude is the
+        // absolute value — the sign only conveys direction.
+        let cents = Int((abs(amount) * 100).rounded())
         let merchantValue = merchant?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
-        let categoryID = category?.id
+        let typeRawValue = Self.effectiveTypeRaw(
+            explicitType: type.rawValue,
+            merchant: merchantValue,
+            amount: amount
+        )
+
+        // Bug 8: when the user named no category and we can't confidently guess one
+        // for an expense (no keyword match), ask rather than silently defaulting —
+        // App Intents resolves the parameter interactively.
+        var chosenCategory = category
+        if chosenCategory == nil,
+           typeRawValue == TransactionType.expense.raw,
+           merchantValue.flatMap({ CategorySuggestionService.suggest(forMerchant: $0) }) == nil {
+            chosenCategory = try? await $category.requestValue(IntentDialog("Which category?"))
+        }
+        let categoryID = chosenCategory?.id
 
         // Run SwiftData work on the main actor, then return the entity to the caller.
         let entity: TransactionEntity = try await MainActor.run {
             let ctx = SharedModelContainer.shared.mainContext
             let currencyCode = UserDefaults.appGroup.string(forKey: "defaultCurrencyCode") ?? "USD"
+            let all = (try? ctx.fetch(FetchDescriptor<Category>())) ?? []
 
+            func category(named name: String, kind: String? = nil) -> Category? {
+                if let kind {
+                    if let m = all.first(where: { $0.name == name && $0.kindRaw == kind }) { return m }
+                }
+                return all.first { $0.name == name }
+            }
+
+            // Resolve the category deterministically: explicit pick → income's
+            // dedicated "Income" → merchant keyword suggestion → "Other". Never
+            // borrow an unrelated default (Bug 8).
             let resolvedCategory: Category = try {
-                if let cid = categoryID,
-                   let cat = (try? ctx.fetch(FetchDescriptor<Category>(
-                       predicate: #Predicate { $0.uuid == cid }
-                   )))?.first {
+                if let cid = categoryID, let cat = all.first(where: { $0.uuid == cid }) {
                     return cat
                 }
-                if let other = (try? ctx.fetch(FetchDescriptor<Category>(
-                    predicate: #Predicate { $0.name == "Other" }
-                )))?.first {
+                if typeRawValue == TransactionType.income.raw,
+                   let income = category(named: "Income", kind: TransactionType.income.raw) {
+                    return income
+                }
+                if typeRawValue == TransactionType.expense.raw,
+                   let m = merchantValue,
+                   let suggested = CategorySuggestionService.suggest(forMerchant: m),
+                   let cat = category(named: suggested, kind: TransactionType.expense.raw) {
+                    return cat
+                }
+                if let other = category(named: "Other", kind: typeRawValue) ?? category(named: "Other") {
                     return other
                 }
                 throw IntentError.custom("No categories found. Open Budget Crab to set up categories.")
@@ -84,15 +118,29 @@ struct AddTransactionIntent: AppIntent {
                 suggestedCategoryName: resolvedCategory.name
             )
 
+            // Pass the resolved category as an override so the save path uses it
+            // verbatim (honoring an explicit pick / our income logic) instead of
+            // re-running merchant suggestion.
             let tx = try QuickAddSaveService.save(
                 parsed: parsed,
                 modelContext: ctx,
-                defaultCurrencyCode: currencyCode
+                defaultCurrencyCode: currencyCode,
+                overrideCategory: resolvedCategory
             )
 
             return TransactionEntity(from: tx)
         }
         return .result(value: entity)
+    }
+
+    /// Direction for an intent invocation: an explicit `income` pick wins; a
+    /// negative amount is always an expense; otherwise income vocabulary in the
+    /// merchant promotes a defaulted expense to income (Bug 8). Pure + testable.
+    static func effectiveTypeRaw(explicitType: String, merchant: String?, amount: Double) -> String {
+        if explicitType == TransactionType.income.raw { return TransactionType.income.raw }
+        if amount < 0 { return TransactionType.expense.raw }
+        if let merchant, QuickAddParser.isIncome(merchant) { return TransactionType.income.raw }
+        return TransactionType.expense.raw
     }
 }
 
