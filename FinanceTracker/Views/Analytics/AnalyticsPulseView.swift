@@ -22,6 +22,13 @@ struct AnalyticsPulseView: View {
     @State private var stickySelectedDate: Date?
     @State private var detailDay: DailyTotal?
 
+    // Bug 3 (P2): Swift Charts axis labels use `.dateTime.month(.abbreviated)`,
+    // which captures the locale at first render and ignores `environment(\.locale)`
+    // changes. Observe the in-app language so we can force a full chart rebuild
+    // via `.id()` when the user switches languages — refreshes "Jan/Feb" to
+    // "янв/фев" without an app restart.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     struct DailyTotal: Identifiable {
         let id = UUID()
         let date: Date
@@ -176,6 +183,10 @@ struct AnalyticsPulseView: View {
         }
         .frame(height: 240)
         .padding(.vertical, 8)
+        // Bug 3: rebuild the chart when in-app language changes so axis labels
+        // re-format under the new locale. `.dateTime.month(.abbreviated)` cached
+        // its locale otherwise.
+        .id(localizedBundle.languageCode ?? "system")
         .onChange(of: rawSelectedDate) { _, newValue in
             // Ignore touch-end reset; commit live scrub into the sticky selection.
             guard let newValue, let nearest = nearestDay(to: newValue) else { return }

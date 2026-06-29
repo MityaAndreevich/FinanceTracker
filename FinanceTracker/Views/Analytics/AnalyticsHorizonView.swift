@@ -31,6 +31,11 @@ struct AnalyticsHorizonView: View {
     @State private var stickySelectedDate: Date?
     @State private var detailMonth: MonthlyTotal?
 
+    // Bug 3 (P2): observe in-app language to force a chart rebuild on language
+    // switch — Swift Charts caches `.dateTime.month(.abbreviated)` locale at
+    // first render and ignores `environment(\.locale)` updates.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     struct MonthlyTotal: Identifiable {
         let id = UUID()
         let date: Date
@@ -175,6 +180,8 @@ struct AnalyticsHorizonView: View {
             }
         }
         .frame(height: 320)
+        // Bug 3: rebuild on language switch so month axis re-formats.
+        .id(localizedBundle.languageCode ?? "system")
         .onChange(of: rawSelectedDate) { _, newValue in
             // Ignore the touch-end reset (newValue == nil); commit live scrub
             // positions into the sticky selection so it persists after release.
