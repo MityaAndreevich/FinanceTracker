@@ -98,4 +98,35 @@ final class NumberWordsParserTests: XCTestCase {
         XCTAssertEqual(result?.typeRaw, "income")
         XCTAssertEqual(result?.merchant, "Велик")   // capitalized first letter per Bug 5
     }
+
+    // MARK: - Cross-locale number words (Bug 2)
+    //
+    // iOS dictation can transcribe in a different language than the app UI, so a
+    // spelled-out number must parse regardless of the active app language.
+
+    func test_crossLocale_fifteen_resolves_in_any_app_language() {
+        XCTAssertEqual(NumberWordsParser.normalize("fifteen", primaryLocale: "ru"), "15")
+        XCTAssertEqual(NumberWordsParser.normalize("пятнадцать", primaryLocale: "en"), "15")
+        XCTAssertEqual(NumberWordsParser.normalize("quince", primaryLocale: "en"), "15")
+        XCTAssertEqual(NumberWordsParser.normalize("quinze", primaryLocale: "en"), "15")
+    }
+
+    func test_crossLocale_primary_wins_when_it_matches() {
+        // RU primary converts its own word; no fallback needed.
+        XCTAssertEqual(NumberWordsParser.normalize("семь", primaryLocale: "ru"), "7")
+    }
+
+    func test_crossLocale_digit_present_skips_fallback() {
+        // Already has a digit → no cross-language guessing on surrounding words.
+        XCTAssertEqual(NumberWordsParser.normalize("una pizza 5", primaryLocale: "ru"), "una pizza 5")
+    }
+
+    func test_crossLocale_parser_ru_app_english_spoken() {
+        UserDefaults.standard.set("ru", forKey: "appLanguageCode")
+        defer { UserDefaults.standard.removeObject(forKey: "appLanguageCode") }
+
+        let result = QuickAddParser.parse("bought pizza for fifteen")
+        XCTAssertEqual(result?.amountCents, 1500)
+        XCTAssertEqual(result?.typeRaw, "expense")
+    }
 }

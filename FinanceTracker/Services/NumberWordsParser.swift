@@ -55,6 +55,39 @@ enum NumberWordsParser {
         return output.joined(separator: " ")
     }
 
+    // MARK: - Cross-locale normalization (Bug 2)
+
+    /// Languages with a number-word dictionary, used by the cross-locale fallback.
+    private static let supportedLanguages = ["en", "ru", "es", "de", "fr", "pt", "ja", "zh"]
+
+    /// Two-letter language prefix used for dictionary dispatch.
+    private static func languagePrefix(for locale: String) -> String {
+        if locale == "system" || locale.isEmpty {
+            return String(Locale.current.identifier.prefix(2))
+        }
+        return String(locale.prefix(2))
+    }
+
+    /// Tries the app's language first, then every other supported language when the
+    /// input still carries no digit. iOS dictation may transcribe in a different
+    /// language than the app UI — e.g. a Russian-UI user who says "fifteen", or an
+    /// English-UI user who says "quince" — and gating only by the app language left
+    /// the amount unparsed (Save disabled). The digit guard prevents a cross-language
+    /// false positive (e.g. Spanish "una"→1) when the amount is already present.
+    static func normalize(_ input: String, primaryLocale: String) -> String {
+        let primaryResult = normalize(input, locale: primaryLocale)
+        if primaryResult != input { return primaryResult }
+        // An amount is already spelled in digits — let the amount regex find it.
+        if input.contains(where: \.isNumber) { return primaryResult }
+
+        let primaryLang = languagePrefix(for: primaryLocale)
+        for lang in supportedLanguages where lang != primaryLang {
+            let result = normalize(input, locale: lang)
+            if result != input { return result }
+        }
+        return input
+    }
+
     // MARK: - Combine adjacent number-words into integer
 
     /// Combines a sequence of number-words into a single integer.

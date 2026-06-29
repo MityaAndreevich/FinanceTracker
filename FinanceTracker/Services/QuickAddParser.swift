@@ -48,7 +48,9 @@ enum QuickAddParser {
         // iOS dictation spells out numbers ("семь" not "7") in most locales, which
         // would otherwise leave the amount regex with nothing to match.
         let langCode = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
-        let input = NumberWordsParser.normalize(stripped, locale: langCode)
+        // Bug 2: try the app language first, then all supported locales, so mixed
+        // language input (e.g. RU UI + spoken English "fifteen") still parses.
+        let input = NumberWordsParser.normalize(stripped, primaryLocale: langCode)
         guard !input.isEmpty else { return nil }
 
         // 1. Detect amount — smart multi-number selection so "bought 3 eggs for 7"
