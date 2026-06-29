@@ -52,12 +52,23 @@ enum SharedModelContainer {
     /// this update. No-op if the App Group store already exists (migration already done or
     /// fresh install).
     static func migrateLegacyStoreIfNeeded() {
+        // Cold-start win: the migration is one-time, but this ran an App Group
+        // containerURL lookup (an XPC round-trip) on EVERY launch. Skip it entirely
+        // once we've checked — the copy below is still guarded by fileExists, so the
+        // flag only removes the redundant per-launch lookup, never a needed copy.
+        let checkedKey = "legacyStoreMigrationChecked"
+        guard !UserDefaults.standard.bool(forKey: checkedKey) else { return }
+        // Mark complete only at definitive outcomes (nothing to migrate / copied),
+        // never on a transient failure — otherwise a failed copy would orphan the
+        // legacy store with no retry.
+        func markChecked() { UserDefaults.standard.set(true, forKey: checkedKey) }
+
         guard let groupURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupID
         ) else { return }
 
         let dst = groupURL.appendingPathComponent("Vela.sqlite") // legacy filename — see note above
-        guard !FileManager.default.fileExists(atPath: dst.path) else { return }
+        guard !FileManager.default.fileExists(atPath: dst.path) else { markChecked(); return }
 
         // Default SwiftData location when no URL is specified in ModelConfiguration.
         guard let supportDir = FileManager.default.urls(
@@ -65,7 +76,7 @@ enum SharedModelContainer {
         ).first else { return }
 
         let src = supportDir.appendingPathComponent("default.store")
-        guard FileManager.default.fileExists(atPath: src.path) else { return }
+        guard FileManager.default.fileExists(atPath: src.path) else { markChecked(); return }
 
         do {
             try FileManager.default.copyItem(at: src, to: dst)
@@ -76,10 +87,12 @@ enum SharedModelContainer {
                     try FileManager.default.copyItem(at: s, to: d)
                 }
             }
+            markChecked()
             #if DEBUG
             print("[SharedModelContainer] Legacy store migrated → App Group.")
             #endif
         } catch {
+            // Leave the flag unset so the next launch retries the migration.
             #if DEBUG
             print("[SharedModelContainer] ⚠️ Migration failed: \(error.localizedDescription)")
             #endif

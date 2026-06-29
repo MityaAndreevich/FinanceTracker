@@ -7,6 +7,18 @@
 
 import SwiftUI
 import SwiftData
+import os
+
+// MARK: - Cold-start tracing
+//
+// Signposts are visible in Instruments → os_signpost / Time Profiler; the DEBUG
+// print gives a quick console number. Used to profile time-to-first-view and to
+// confirm where the synchronous launch cost lives (ModelContainer init).
+let coldStartLog = OSLog(subsystem: "com.dmitrylogachev.budgetcrab", category: "ColdStart")
+
+/// Captured at first access (app init), i.e. as early as Swift lets us, to measure
+/// time-to-first-view. A global `let` is lazily initialised on first reference.
+let appLaunchClock = CFAbsoluteTimeGetCurrent()
 
 @main
 struct FinanceTrackerApp: App {
@@ -21,6 +33,9 @@ struct FinanceTrackerApp: App {
     @ObservedObject private var localizedBundle = LocalizedBundle.shared
 
     init() {
+        os_signpost(.event, log: coldStartLog, name: "app_init_start")
+        _ = appLaunchClock   // prime the launch clock as early as possible
+
         // Must run before SharedModelContainer.shared is first accessed so the
         // lazily-created App Group store is seeded with existing user data.
         SharedModelContainer.migrateLegacyStoreIfNeeded()
@@ -57,6 +72,13 @@ struct FinanceTrackerApp: App {
                 .environment(\.locale, appLocale)
                 .environmentObject(localizedBundle)
                 .applyLayoutDirection(overrideLayoutDirection)
+                .onAppear {
+                    os_signpost(.event, log: coldStartLog, name: "first_view_appeared")
+                    #if DEBUG
+                    let ms = (CFAbsoluteTimeGetCurrent() - appLaunchClock) * 1000
+                    print(String(format: "⏱ cold start → first view: %.0fms", ms))
+                    #endif
+                }
                 // NOTE: deliberately no `.id(appLanguageCode)` here. Re-creating the
                 // whole view tree on language change dismissed any in-flight sheet,
                 // which caused the Language picker to "bounce back" on the first try.
