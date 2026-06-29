@@ -30,6 +30,10 @@ struct CategoriesSourcesView: View {
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
+    // Bug 9: categories/sources already refresh instantly via @Query — this toast
+    // just makes the silent add visible so the user doesn't wonder whether it worked.
+    @State private var toastMessage: LocalizedStringKey?
+
     // MARK: - Derived
 
     private var expenseCategories: [Category] {
@@ -54,8 +58,8 @@ struct CategoriesSourcesView: View {
         .listStyle(.insetGrouped)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
-            case .source:   AddSourceSheet()
-            case .category: AddCategorySheet()
+            case .source:   AddSourceSheet { toastMessage = "cs.toast.source_added" }
+            case .category: AddCategorySheet { _ in toastMessage = "cs.toast.category_added" }
             }
         }
         .alert("cs.alert.cant_delete.title", isPresented: $showBlockedDeleteAlert) {
@@ -63,6 +67,7 @@ struct CategoriesSourcesView: View {
         } message: {
             Text(blockedDeleteMessage)
         }
+        .confirmationToast($toastMessage)
     }
 
     // MARK: - Sections
@@ -297,6 +302,9 @@ private struct AddSourceSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
+    /// Fired after a source is successfully inserted (not on cancel).
+    var onAdded: (() -> Void)? = nil
+
     @State private var name = ""
     @State private var note = ""
 
@@ -325,6 +333,7 @@ private struct AddSourceSheet: View {
 
                         modelContext.insert(source)
                         try? modelContext.save()
+                        onAdded?()
                         dismiss()
                     }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

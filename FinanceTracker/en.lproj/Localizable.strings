@@ -433,6 +433,8 @@
 "cs.sources.empty" = "No accounts yet";
 "cs.sources.add" = "Add Account";
 "cs.categories.add" = "Add Category";
+"cs.toast.category_added" = "Category added";
+"cs.toast.source_added" = "Account added";
 
 "cs.alert.cant_delete.title" = "Can’t delete";
 "cs.alert.used_in_transactions.format" = "“%@” is used in %d transaction(s).";

@@ -439,6 +439,8 @@
 "cs.sources.empty" = "Счетов пока нет";
 "cs.sources.add" = "Добавить счёт";
 "cs.categories.add" = "Добавить категорию";
+"cs.toast.category_added" = "Категория добавлена";
+"cs.toast.source_added" = "Счёт добавлен";
 
 "cs.alert.cant_delete.title" = "Нельзя удалить";
 "cs.alert.used_in_transactions.format" = "«%@» используется в %d транзакциях.";

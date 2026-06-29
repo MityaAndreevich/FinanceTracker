@@ -43,7 +43,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // Bumped 2026-06-28 (Round 10 i18n leak fix): +21 keys referenced in code but
         // missing from ALL locales — 10 tx_detail.* (raw-key leak in TransactionDetailView),
         // 10 data.* import/export results (DataSettingsView), premium.section.manage. Was 468.
-        XCTAssertEqual(enKeys.count, 489, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-29 (Bug 9): +2 add-confirmation toast keys
+        // (cs.toast.category_added, cs.toast.source_added). Was 489.
+        XCTAssertEqual(enKeys.count, 491, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

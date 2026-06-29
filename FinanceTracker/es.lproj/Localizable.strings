@@ -432,6 +432,8 @@
 "cs.sources.empty" = "Aún no hay cuentas";
 "cs.sources.add" = "Agregar cuenta";
 "cs.categories.add" = "Agregar categoría";
+"cs.toast.category_added" = "Categoría agregada";
+"cs.toast.source_added" = "Cuenta agregada";
 "cs.alert.cant_delete.title" = "No se puede eliminar";
 "cs.alert.used_in_transactions.format" = "“%@” se usa en %d transacción(es).";
 "cs.source_sheet.title" = "Agregar cuenta";
