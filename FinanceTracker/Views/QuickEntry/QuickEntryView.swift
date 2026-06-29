@@ -31,6 +31,12 @@ struct QuickEntryView: View {
     @State private var activeSheet: ActiveSheet? = nil
     @State private var dismissAfterSheet = false
     @State private var saveError = false
+    // Re-entrancy guard. `dismiss()` is animated/async, so a fast double-tap (or an
+    // accessibility double-fire, or a late voice .ended event re-enabling the button)
+    // could call handleSave() again before the view tears down — persisting the same
+    // transaction 2-3×. Set once on the first successful entry and only reset on
+    // failure so a retry is still possible. See Bug 7 (duplicate voice transactions).
+    @State private var isSaving = false
     @State private var placeholderIndex = 0
     @State private var parseTask: Task<Void, Never>? = nil
     @State private var appeared = false
@@ -478,7 +484,7 @@ struct QuickEntryView: View {
                     .scaleEffect(savePulseOn ? 1.02 : 1.0)
                     .shadow(color: parsed == nil ? .clear : Color.accentColor.opacity(0.4), radius: 8, y: 4)
                 }
-                .disabled(parsed == nil)
+                .disabled(parsed == nil || isSaving)
                 .accessibilityLabel(saveA11yLabel)
             }
 
@@ -606,7 +612,11 @@ struct QuickEntryView: View {
     // MARK: - Save
 
     private func handleSave() {
-        guard let p = parsed else { return }
+        // Re-entrancy guard: ignore repeat invocations while the first save is still
+        // in flight (the view dismisses on success, so isSaving is intentionally not
+        // reset on the happy path).
+        guard let p = parsed, !isSaving else { return }
+        isSaving = true
         withAnimation(.easeInOut(duration: 0.1)) { savePulseOn = false }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         do {
@@ -621,6 +631,7 @@ struct QuickEntryView: View {
             dismiss()
         } catch {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
+            isSaving = false   // allow a retry after a genuine failure
             withAnimation {
                 saveError = true
             }
