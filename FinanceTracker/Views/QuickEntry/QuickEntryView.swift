@@ -44,6 +44,12 @@ struct QuickEntryView: View {
     @State private var micPulseOn = false
     @FocusState private var isInputFocused: Bool
 
+    // Bug 1 (P0): the preview chip's category name is code-resolved (not a SwiftUI
+    // `Text(LocalizedStringKey:)`), so it must route through the active language's
+    // bundle or it leaks the launch language (EN) while the rest of the app is RU.
+    // Observing this also re-renders the chip when the user switches language live.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
+
     @StateObject private var voice = VoiceInputService()
     @State private var voiceErrorMessage: LocalizedStringKey? = nil
     @State private var voiceErrorShowSettings = false
@@ -68,7 +74,7 @@ struct QuickEntryView: View {
 
     private var resolvedCategoryName: String? {
         guard let p = parsed else { return nil }
-        return effectiveCategory(for: p)?.displayName()
+        return effectiveCategory(for: p)?.displayName(bundle: localizedBundle.bundle)
     }
 
     /// Category that will actually be saved for a parsed input.
@@ -407,7 +413,8 @@ struct QuickEntryView: View {
                     .foregroundStyle(tint)
                     .frame(width: 26, height: 26)
                     .background(tint.opacity(0.16), in: Circle())
-                Text(category?.displayName() ?? String(localized: "quickadd.preview.no_category"))
+                Text(category?.displayName(bundle: localizedBundle.bundle)
+                     ?? String(localized: "quickadd.preview.no_category", bundle: localizedBundle.bundle))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 Image(systemName: "chevron.down")
@@ -421,7 +428,7 @@ struct QuickEntryView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("quickadd.a11y.change_category"))
-        .accessibilityValue(Text(category?.displayName() ?? ""))
+        .accessibilityValue(Text(category?.displayName(bundle: localizedBundle.bundle) ?? ""))
     }
 
     // MARK: - Error banner

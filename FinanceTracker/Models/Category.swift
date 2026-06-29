@@ -91,6 +91,26 @@ extension Category {
         return name
     }
 
+    /// Same resolution as `displayName()` but resolves the localization key
+    /// against an explicit `bundle` instead of `Bundle.main`. Needed where a
+    /// plain `NSLocalizedString` would leak the launch language despite an
+    /// in-app language override — e.g. the Quick Entry preview chip (Bug 1).
+    /// Pass `LocalizedBundle.shared.bundle` for the active app language.
+    func displayName(bundle: Bundle) -> String {
+        if let custom = nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !custom.isEmpty {
+            return custom
+        }
+
+        if let key = nameKey?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !key.isEmpty {
+            let localized = bundle.localizedString(forKey: key, value: key, table: nil)
+            if localized != key { return localized }
+        }
+
+        return name
+    }
+
     /// Ключ/текст для `Text(LocalizedStringKey(...))`
     /// 1) custom text (покажется как есть)
     /// 2) localization key (локализуется через Localizable.strings)

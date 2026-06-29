@@ -29,6 +29,16 @@ final class LocalizedBundle: ObservableObject {
 
     private init() {}
 
+    /// The bundle that code-resolved string lookups should use for the active
+    /// language. When an explicit override is set this is the chosen language's
+    /// `.lproj` bundle; otherwise it's `Bundle.main` (system launch language).
+    ///
+    /// Use this for `bundle.localizedString(forKey:value:table:)` at call-sites
+    /// where SwiftUI's `Text(LocalizedStringKey:)` isn't available and a plain
+    /// `NSLocalizedString` would otherwise read only the launch language — e.g.
+    /// the Quick Entry preview chip's category name (Bug 1).
+    var bundle: Bundle { LanguageBundle.overrideBundle ?? .main }
+
     /// Points code-resolved string lookups at `code`'s `.lproj`. Pass "system"
     /// (or nil) to hand resolution back to the OS launch language.
     func setLanguage(_ code: String?) {
