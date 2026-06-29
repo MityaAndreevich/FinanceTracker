@@ -86,14 +86,26 @@ extension View {
 private struct EdgeSwipeForward: ViewModifier {
     var onNext: () -> Void
 
-    /// Width of the active zone at the right edge.
-    private let edgeWidth: CGFloat = 30
-    /// Minimum horizontal travel before a swipe counts.
-    private let distanceThreshold: CGFloat = 60
+    /// Width of the active zone at the right edge. Bug 4 (P1): widened from 30pt
+    /// to 50pt because iOS reserves ~15pt of the trailing edge for its own system
+    /// gestures, leaving the previous 30pt zone with an effective ~15pt landing
+    /// strip. 50pt yields ~35pt of usable area, which testers reliably hit.
+    private let edgeWidth: CGFloat = 50
+    /// Minimum horizontal travel for a *slow* swipe (no velocity component).
+    private let distanceThreshold: CGFloat = 50
+    /// Reduced distance threshold when the swipe is fast — a flick covers less
+    /// distance but still expresses clear intent. Combined with `velocityFast`.
+    private let distanceThresholdFast: CGFloat = 30
+    /// Points-per-second above which the swipe is considered a deliberate flick.
+    /// 300 pt/s is roughly the lower bound for a "casual flick" on iOS; lower
+    /// would catch accidental scrolls, higher would feel sluggish.
+    private let velocityFast: CGFloat = 300
     /// Maximum vertical drift tolerated (strict, so scrolls never page).
     private let verticalTolerance: CGFloat = 40
 
     @State private var width: CGFloat = UIScreen.main.bounds.width
+    /// Touch-down time, used to compute average velocity over the drag.
+    @State private var touchDownAt: Date?
 
     func body(content: Content) -> some View {
         content
@@ -106,11 +118,25 @@ private struct EdgeSwipeForward: ViewModifier {
             )
             .gesture(
                 DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                    .onChanged { _ in
+                        if touchDownAt == nil { touchDownAt = Date() }
+                    }
                     .onEnded { value in
                         let startX = value.startLocation.x
                         let dx = value.translation.width
                         let dy = value.translation.height
-                        guard abs(dx) > distanceThreshold,
+
+                        // Velocity (pt/s). DragGesture.Value doesn't expose
+                        // velocity directly on iOS 17, so we estimate from drag
+                        // duration. Fall back to "slow" if timing is missing.
+                        let duration = touchDownAt.map { max(Date().timeIntervalSince($0), 0.001) } ?? 1.0
+                        touchDownAt = nil
+                        let velocity = abs(dx) / CGFloat(duration)
+
+                        let meetsDistance = abs(dx) > distanceThreshold
+                        let meetsFlick = abs(dx) > distanceThresholdFast && velocity > velocityFast
+
+                        guard (meetsDistance || meetsFlick),
                               abs(dy) < verticalTolerance,
                               abs(dx) > abs(dy) else { return }
 
