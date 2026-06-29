@@ -216,9 +216,9 @@ enum QuickAddParser {
         // Russian
         "на ", "от ", "из ", "в ", "за ", "по ",
         // English
-        "from ", "via ", "on ", "at ", "by ",
+        "from ", "via ", "on ", "at ", "by ", "for ",
         // Spanish / Portuguese-BR / French — longer prefixes first
-        "desde ", "depuis ", "de ", "en ", "por ", "do ", "da ", "em ", "à ", "par ",
+        "desde ", "depuis ", "de ", "en ", "por ", "do ", "da ", "na ", "no ", "em ", "à ", "par ",
         // German
         "von ", "bei ", "aus ", "an ",
         // Japanese
@@ -278,18 +278,26 @@ enum QuickAddParser {
     ]
 
     /// Expense transaction verbs/lead-in nouns ("купил молоко за 15" → "молоко",
-    /// "оплата интернета 500" → "интернета"). Unlike income verbs these don't change
-    /// the type (expense is the default) — they only describe the *act* of spending,
-    /// not the thing bought, so they're stripped from merchant text. Russian-only for
-    /// now: the EN/ES/PT real-device gaps were all income-side; adding expense verbs in
-    /// those languages risks regressing existing merchant tests ("bought 3 eggs…").
+    /// "bought milk for 12" → "milk", "compré leche por 12" → "leche"). Unlike income
+    /// verbs these don't change the type (expense is the default) — they only describe
+    /// the *act* of spending, not the thing bought, so they're stripped from merchant
+    /// text via stripWholeWords (whole-word, case-insensitive). Income-side phrases that
+    /// reuse the same root ("got paid") are stripped earlier by verbIncomeKeywords, so
+    /// listing "got"/"paid" here can't change a transaction's income/expense type.
     private static let expenseVerbKeywords = [
+        // Russian
         "купил", "купила", "купили",
         "потратил", "потратила", "потратили", "потратился",
         "заплатил", "заплатила", "заплатили",
         "оплатил", "оплатила", "оплатили", "оплата", "оплату",
         "приобрёл", "приобрел", "приобрела", "приобрели",
         "отдал", "отдала", "отдали",
+        // English
+        "bought", "paid", "spent", "purchased", "got",
+        // Spanish
+        "compré", "compre", "pagué", "pague", "gasté", "gaste", "aboné", "abone", "adquirí", "adquiri",
+        // Portuguese (Brazil)
+        "comprei", "paguei", "gastei", "adquiri",
     ]
 
     private static let noiseWordsToStrip = currencyWordsToStrip + expenseIndicatorWords + expenseVerbKeywords

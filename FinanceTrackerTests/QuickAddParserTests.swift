@@ -437,4 +437,140 @@ struct QuickAddParserTests {
         #expect(result?.typeRaw == "expense")
         #expect(result?.merchant?.lowercased() == "молоко")
     }
+
+    // MARK: - EN expense verb prefix stripping + preposition handling (Bug 12)
+    //
+    // Mirrors the RU pattern (Bug 8) for English: strip the spending verb so the
+    // merchant is the thing bought, not the action. Merchant is compared
+    // case-insensitively because iOS dictation capitalizes the first word.
+
+    @Test func parse_en_bought_milk_for_12() {
+        let result = QuickAddParser.parse("bought milk for 12")
+        #expect(result?.amountCents == 1200)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "milk")
+    }
+
+    @Test func parse_en_spent_20_on_tennis() {
+        let result = QuickAddParser.parse("spent 20 on tennis")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "tennis")
+    }
+
+    @Test func parse_en_paid_starbucks_coffee() {
+        let result = QuickAddParser.parse("paid $5.50 for Starbucks coffee")
+        #expect(result?.amountCents == 550)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant == "Starbucks coffee")
+    }
+
+    @Test func parse_en_purchased_headphones_for_80() {
+        let result = QuickAddParser.parse("purchased headphones for 80")
+        #expect(result?.amountCents == 8000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "headphones")
+    }
+
+    // Regression guard: income verb still wins; "on" preposition still strips.
+    @Test func parse_en_earned_on_amazon_still_income() {
+        let result = QuickAddParser.parse("earned on amazon 20")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant?.lowercased() == "amazon")
+    }
+
+    // Regression guard: amount-first expense with no verb unchanged.
+    @Test func parse_en_12_on_heineken() {
+        let result = QuickAddParser.parse("12 on Heineken")
+        #expect(result?.amountCents == 1200)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "heineken")
+    }
+
+    // MARK: - ES expense verb prefix stripping (Bug 12)
+
+    @Test func parse_es_compre_leche_por_12() {
+        let result = QuickAddParser.parse("compré leche por 12")
+        #expect(result?.amountCents == 1200)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "leche")
+    }
+
+    @Test func parse_es_gaste_20_en_tenis() {
+        let result = QuickAddParser.parse("gasté 20 en tenis")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "tenis")
+    }
+
+    @Test func parse_es_gane_100_en_amazon_income() {
+        let result = QuickAddParser.parse("gané 100 en Amazon")
+        #expect(result?.amountCents == 10000)
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant?.lowercased() == "amazon")
+    }
+
+    @Test func parse_es_pague_50_por_gasolina() {
+        let result = QuickAddParser.parse("pagué 50 por gasolina")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "gasolina")
+    }
+
+    @Test func parse_es_compre_no_accent_pan() {
+        let result = QuickAddParser.parse("compre pan por 3")
+        #expect(result?.amountCents == 300)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "pan")
+    }
+
+    @Test func parse_es_adquiri_libro_por_15() {
+        let result = QuickAddParser.parse("adquirí un libro por 15")
+        #expect(result?.amountCents == 1500)
+        #expect(result?.typeRaw == "expense")
+    }
+
+    // MARK: - PT expense verb prefix stripping (Bug 12)
+
+    @Test func parse_pt_comprei_leite_por_12() {
+        let result = QuickAddParser.parse("comprei leite por 12")
+        #expect(result?.amountCents == 1200)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "leite")
+    }
+
+    @Test func parse_pt_gastei_20_em_tenis() {
+        let result = QuickAddParser.parse("gastei 20 em tênis")
+        #expect(result?.amountCents == 2000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "tênis")
+    }
+
+    @Test func parse_pt_ganhei_100_na_amazon_income() {
+        let result = QuickAddParser.parse("ganhei 100 na Amazon")
+        #expect(result?.amountCents == 10000)
+        #expect(result?.typeRaw == "income")
+        #expect(result?.merchant?.lowercased() == "amazon")
+    }
+
+    @Test func parse_pt_paguei_50_por_gasolina() {
+        let result = QuickAddParser.parse("paguei 50 por gasolina")
+        #expect(result?.amountCents == 5000)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "gasolina")
+    }
+
+    @Test func parse_pt_comprei_cafe_por_5() {
+        let result = QuickAddParser.parse("comprei café por 5")
+        #expect(result?.amountCents == 500)
+        #expect(result?.typeRaw == "expense")
+        #expect(result?.merchant?.lowercased() == "café")
+    }
+
+    @Test func parse_pt_adquiri_livro_por_15() {
+        let result = QuickAddParser.parse("adquiri um livro por 15")
+        #expect(result?.amountCents == 1500)
+        #expect(result?.typeRaw == "expense")
+    }
 }
