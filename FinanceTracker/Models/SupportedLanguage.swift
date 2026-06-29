@@ -16,6 +16,7 @@ enum SupportedLanguage: String, CaseIterable, Identifiable {
     case ru
     case es
     case pt  // pt-BR maps to the "pt" enum case (iOS resolves it to pt-BR.lproj)
+    case uk  // Ukrainian — resources live in uk.lproj
 
     var id: String { rawValue }
 
@@ -26,6 +27,7 @@ enum SupportedLanguage: String, CaseIterable, Identifiable {
         case .ru: return "Русский"
         case .es: return "Español"
         case .pt: return "Português (Brasil)"
+        case .uk: return "Українська"
         }
     }
 
@@ -36,6 +38,7 @@ enum SupportedLanguage: String, CaseIterable, Identifiable {
         case .ru: return "🇷🇺"
         case .es: return "🇪🇸"
         case .pt: return "🇧🇷"
+        case .uk: return "🇺🇦"
         }
     }
 

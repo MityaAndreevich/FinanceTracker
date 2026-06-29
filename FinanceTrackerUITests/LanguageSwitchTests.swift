@@ -65,6 +65,14 @@ final class LanguageSwitchTests: XCTestCase {
         runSwitch(startCode: "pt", targetCode: "en")
     }
 
+    func testLanguageSwitchNoBounce_RU_to_UK() throws {
+        runSwitch(startCode: "ru", targetCode: "uk")
+    }
+
+    func testLanguageSwitchNoBounce_UK_to_EN() throws {
+        runSwitch(startCode: "uk", targetCode: "en")
+    }
+
     // MARK: - Shared flow
 
     private func runSwitch(startCode: String,

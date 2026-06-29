@@ -27,8 +27,8 @@ struct OnboardingView: View {
 
     @State private var showFullCurrencyList = false
 
-    /// The four explicitly shippable locales (System is implicit via fallback).
-    private let offeredLanguages: [SupportedLanguage] = [.en, .ru, .es, .pt]
+    /// The explicitly shippable locales (System is implicit via fallback).
+    private let offeredLanguages: [SupportedLanguage] = [.en, .ru, .es, .pt, .uk]
 
     var body: some View {
         NavigationStack {
@@ -266,6 +266,7 @@ struct OnboardingView: View {
         case "ru": return .ru
         case "es": return .es
         case "pt": return .pt
+        case "uk": return .uk
         default:   return .system
         }
     }
@@ -281,6 +282,7 @@ struct OnboardingView: View {
         case .es: return .mxn
         case .pt: return .brl
         case .ru: return .rub
+        case .uk: return .uah
         case .en, .system: return .usd
         }
     }

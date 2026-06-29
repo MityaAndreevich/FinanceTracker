@@ -2,10 +2,11 @@
 //  LocaleCompletenessTests.swift
 //  FinanceTrackerTests
 //
-//  Guards the Brief 28E decision: v1.0 ships exactly 4 fully-translated
-//  locales (EN, RU, ES, pt-BR), each with the same key set as English.
-//  A drifting count means a key was added without translating it — which
-//  would surface raw keys (e.g. "common.done") in the UI and risk rejection.
+//  Guards the locale parity decision: v1.0 ships 5 fully-translated locales
+//  (EN, RU, ES, pt-BR, UK), each with the same key set as English (491 keys ×
+//  5 locales = 2,455 entries). A drifting count means a key was added without
+//  translating it — which would surface raw keys (e.g. "common.done") in the UI
+//  and risk rejection.
 //
 
 import XCTest
@@ -13,7 +14,7 @@ import XCTest
 
 final class LocaleCompletenessTests: XCTestCase {
 
-    private let locales = ["en", "ru", "es", "pt-BR"]
+    private let locales = ["en", "ru", "es", "pt-BR", "uk"]
 
     private func strings(for localization: String) -> [String: String]? {
         guard let path = Bundle.main.path(
@@ -146,10 +147,10 @@ final class LocaleCompletenessTests: XCTestCase {
         return keys
     }
 
-    func test_supported_language_enum_has_exactly_five_cases() {
-        // System + EN + RU + ES + pt — anything else means a locale crept back in.
-        XCTAssertEqual(SupportedLanguage.allCases.count, 5)
+    func test_supported_language_enum_has_exactly_six_cases() {
+        // System + EN + RU + ES + pt + uk — anything else means a locale drifted.
+        XCTAssertEqual(SupportedLanguage.allCases.count, 6)
         XCTAssertEqual(Set(SupportedLanguage.allCases.map(\.id)),
-                       ["system", "en", "ru", "es", "pt"])
+                       ["system", "en", "ru", "es", "pt", "uk"])
     }
 }

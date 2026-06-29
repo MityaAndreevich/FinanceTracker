@@ -1,0 +1,693 @@
+/* ======================================================
+   Ukrainian (uk) — AI-generated baseline, awaiting native
+   speaker review. Mirrors en.lproj key-for-key (491 keys).
+   Ukrainian is a distinct language from Russian — natural
+   Ukrainian syntax/grammar, not a calque from ru.lproj.
+   ====================================================== */
+
+/* ======================================================
+   Tabs
+   ====================================================== */
+"tab.dashboard" = "Огляд";
+"tab.transactions" = "Транзакції";
+"tab.add" = "Додати";
+"tab.analytics" = "Аналітика";
+"tab.settings" = "Налаштування";
+
+/* ======================================================
+   Navigation titles
+   ====================================================== */
+"title.dashboard" = "Огляд";
+"title.transactions" = "Транзакції";
+"title.add" = "Додати";
+"title.analytics" = "Аналітика";
+"title.settings" = "Налаштування";
+
+/* ======================================================
+   Common
+   ====================================================== */
+"common.ok" = "OK";
+"common.cancel" = "Скасувати";
+"common.close" = "Закрити";
+"common.done" = "Готово";
+"common.add" = "Додати";
+"common.save" = "Зберегти";
+"common.edit" = "Редагувати";
+"common.delete" = "Видалити";
+"common.none" = "Немає";
+"common.select" = "Вибрати…";
+"common.today" = "Сьогодні";
+"common.yesterday" = "Учора";
+"common.unknown" = "Невідомо";
+"common.search" = "Пошук";
+"common.error" = "Помилка";
+
+/* ======================================================
+   Authentication / Lock screen
+   ====================================================== */
+"auth.required.title" = "Застосунок заблоковано";
+"auth.required.message" = "Пройдіть автентифікацію для доступу до фінансових даних.";
+"auth.retry" = "Спробувати ще раз";
+"auth.setting.title" = "Вимагати автентифікацію";
+"auth.setting.always" = "Завжди";
+"auth.setting.after_5min" = "Через 5 хвилин";
+"auth.setting.never" = "Ніколи";
+
+/* ======================================================
+   Scope / Period
+   ====================================================== */
+"scope.picker.title" = "Період";
+"scope.month" = "Цей місяць";
+"scope.all" = "Усі";
+
+/* ======================================================
+   Empty states
+   ====================================================== */
+"empty.noData" = "Поки немає даних";
+"empty.noTransactions" = "Немає транзакцій";
+"empty.addFirstTransaction" = "Додайте першу транзакцію, щоб почати.";
+
+/* ======================================================
+   Onboarding
+   ====================================================== */
+"onboarding.language.picker" = "Мова";
+"onboarding.language.title" = "Виберіть мову";
+"onboarding.language.subtitle" = "Це можна змінити пізніше в Налаштуваннях";
+"onboarding.next" = "Продовжити";
+"onboarding.back" = "Назад";
+"onboarding.search.languages" = "Пошук мов";
+"onboarding.language.more" = "Більше мов";
+"onboarding.language.all" = "Усі мови";
+
+"onboarding.currency.title" = "Виберіть валюту";
+"onboarding.currency.subtitle" = "Вона використовуватиметься за замовчуванням для нових транзакцій.";
+"onboarding.currency.picker" = "Валюта";
+"onboarding.search.currencies" = "Пошук валют";
+"onboarding.currency.more" = "Більше валют";
+"onboarding.currency.all" = "Усі валюти";
+
+"onboarding.start" = "Почати";
+"onboarding.cta.start_tracking" = "Почати облік";
+
+/* ======================================================
+   Settings (root)
+   ====================================================== */
+"settings.title" = "Налаштування";
+"settings.general" = "Загальні";
+"settings.premium" = "Premium";
+"settings.data" = "Дані";
+"settings.categories" = "Категорії та рахунки";
+"settings.about" = "Про застосунок";
+
+// MARK: - Help & Tips
+"settings.help" = "Довідка та поради";
+
+"help.getting_started.title" = "Початок роботи";
+"help.advanced.title" = "Розширені функції";
+"help.privacy.title" = "Конфіденційність";
+"help.contact.title" = "Контакти";
+
+"help.quick_add" = "Швидке додавання";
+"help.voice_entry" = "Голосове введення";
+"help.categories" = "Категорії";
+"help.analytics" = "Аналітика";
+"help.widget" = "Віджет";
+"help.siri" = "Siri";
+"help.privacy_local_storage" = "Локальне зберігання";
+"help.language_change" = "Зміна мови";
+
+"help.quick_add.title" = "Як працює швидке додавання";
+"help.quick_add.body" = "Напишіть, як ви витратили чи заробили гроші, звичайною мовою — наприклад «кава 4.50» або «зарплата 3200». Budget Crab зчитує суму, визначає, дохід це чи витрата, і виділяє продавця. Торкніться чипа категорії, щоб обрати, куди це належить, потім збережіть. Усе обробляється на вашому iPhone — нічого нікуди не надсилається.";
+
+"help.voice_entry.title" = "Голосове введення";
+"help.voice_entry.body" = "Торкніться мікрофона у швидкому введенні та скажіть, що ви витратили чи заробили, наприклад «дванадцять доларів продукти». Мовлення обробляється на вашому iPhone за допомогою розпізнавання Apple на пристрої — ваше аудіо ніколи не надсилається на сервер. Якщо кнопка мікрофона не з’являється, на вашому iPhone не встановлено диктування на пристрої для поточної мови.";
+
+"help.categories.title" = "Керування категоріями";
+"help.categories.body" = "Budget Crab починає з набору поширених категорій. Додавайте, перейменовуйте, упорядковуйте або приховуйте їх у Налаштування → Категорії та рахунки. Коли ви виправляєте категорію транзакції, Budget Crab запам’ятовує цього продавця та наступного разу пропонує ту саму категорію.";
+
+"help.analytics.title" = "Розуміння аналітики";
+"help.analytics.body" = "Вкладка «Аналітика» має три види. Пульс показує грошовий потік цього місяця день за днем — проведіть по графіку, щоб прочитати будь-який день. Розподіл ділить витрати цього місяця за категоріями; торкніться сегмента чи рядка, щоб побачити транзакції за ним. Горизонт відображає ваш баланс за останні 12 місяців — проведіть для перегляду, потім торкніться місяця, щоб відкрити його транзакції.";
+
+"help.widget.title" = "Використання віджета";
+"help.widget.body" = "Додайте віджет Budget Crab з головного екрана: торкніться й утримуйте порожню ділянку, торкніться плюса в кутку, потім знайдіть Budget Crab. Він показує баланс цього місяця з першого погляду й оновлюється щодня. Торкніться його, щоб відкрити застосунок.";
+
+"help.siri.title" = "Команди Siri";
+"help.siri.body" = "Скажіть «Привіт, Siri, додай десять доларів продукти в Budget Crab» — і транзакцію буде збережено без відкриття застосунку. Також можна сказати «відкрий швидке введення в Budget Crab». Додавайте чи перейменовуйте власні фрази в застосунку «Команди» в розділі Budget Crab.";
+
+"help.privacy_local_storage.title" = "Ваші дані на вашому iPhone";
+"help.privacy.body" = "Budget Crab зберігає все в захищеному контейнері застосунку на вашому iPhone. Немає облікових записів, серверів і відстеження — ваші фінансові дані ніколи не залишають пристрій. Експорти (CSV, Excel, PDF) створюються за запитом і надсилаються лише тоді, коли ви цього захочете.";
+
+"help.language_change.title" = "Зміна мови";
+"help.language_change.body" = "Коли ви змінюєте мову застосунку, більшість підписів оновлюються одразу. Деякі — як-от підсумок на огляді — оновлюються наступного разу під час відкриття застосунку. Повністю закрийте Budget Crab (проведіть угору знизу та змахніть його) і відкрийте знову, щоб застосувати зміни всюди.";
+
+"help.contact_support" = "Написати в підтримку";
+"help.online_faq" = "Онлайн-FAQ";
+"help.copy_email" = "Скопіювати email";
+"help.open_in_mail" = "Відкрити в Пошті";
+"help.email_copied" = "Email скопійовано в буфер обміну";
+"settings.privacy" = "Конфіденційність";
+
+/* ======================================================
+   Privacy Settings
+   ====================================================== */
+"settings.privacy.title" = "Ваші дані залишаються на вашому пристрої";
+"settings.privacy.subtitle" = "Budget Crab створено з принципом конфіденційності за задумом. Без хмарного облікового запису. Без передавання даних. Усе залишається на вашому iPhone.";
+"privacy.section.ondevice" = "ЗАХИСТ НА ПРИСТРОЇ";
+"privacy.section.whatwedonot" = "ЧОГО МИ НЕ РОБИМО";
+"privacy.claim.no_bank_login" = "Не потрібен вхід у банк";
+"privacy.claim.no_cloud_account" = "Не потрібен хмарний обліковий запис";
+"privacy.claim.no_data_uploaded" = "Дані не завантажуються на наші сервери";
+"privacy.claim.no_data_sold" = "Дані не продаються та не передаються";
+"privacy.claim.no_ad_tracking" = "Без рекламного відстеження";
+"privacy.claim.no_sdk" = "Без сторонньої аналітики чи рекламних SDK";
+"privacy.policy.link" = "Політика конфіденційності";
+"privacy.policy.hint" = "Прочитайте повну політику конфіденційності, щоб дізнатися, як захищено ваші дані.";
+
+/* ======================================================
+   General settings
+   ====================================================== */
+"general.title" = "Загальні";
+
+"general.section.preferences" = "Параметри";
+"general.section.maintenance" = "Обслуговування";
+
+"general.currency" = "Валюта";
+"general.language" = "Мова";
+"general.language_hint" = "Більшість підписів оновлюються одразу. Деякі — наступного разу під час відкриття Budget Crab.";
+"settings.language.restart_required.title" = "Мову оновлено";
+"settings.language.restart_required.cta" = "OK";
+"settings.language.restart_required.message" = "Деякі підписи оновляться після повторного відкриття застосунку.";
+
+"general.restart_onboarding" = "Перезапустити налаштування";
+"general.reset_transactions" = "Скинути транзакції";
+"general.reset_hint" = "Скидання транзакцій видаляє всі транзакції, але зберігає ваші категорії та рахунки.";
+
+/* Alerts / buttons */
+"general.alert.info.title" = "Інформація";
+"general.alert.ok" = "OK";
+"general.alert.cancel" = "Скасувати";
+
+"general.alert.reset_tx.title" = "Скинути транзакції?";
+"general.alert.reset_tx.message" = "Це назавжди видалить усі транзакції на цьому пристрої.";
+"general.alert.reset" = "Скинути";
+
+"general.alert.restart_onboarding.title" = "Перезапустити налаштування?";
+"general.alert.restart_onboarding.message" = "Ви знову побачите налаштування мови та валюти. Ваші транзакції залишаться недоторканими.";
+"general.alert.restart" = "Перезапустити";
+
+/* ======================================================
+   Transactions
+   ====================================================== */
+"transactions.search.prompt" = "Пошук";
+"transactions.filter.all" = "Усі";
+"transactions.filter.income" = "Дохід";
+"transactions.filter.expense" = "Витрата";
+"transactions.empty.month" = "Додайте транзакцію, щоб побачити її тут.";
+"transactions.empty.all" = "Додайте транзакцію, щоб побачити її тут.";
+
+/* ======================================================
+   Dashboard
+   ====================================================== */
+"dashboard.summary.income" = "Дохід";
+"dashboard.summary.expenses" = "Витрати";
+"dashboard.summary.net" = "Баланс";
+
+"dashboard.insights.top_expenses.title" = "Найбільші витрати";
+"dashboard.insights.top_expenses.subtitle" = "Це допомагає помітити, куди витікають гроші.";
+
+"dashboard.insights.top_income_sources.title" = "Основні джерела доходу";
+"dashboard.insights.top_income_sources.subtitle" = "Корисно, коли у вас кілька джерел.";
+
+"dashboard.unknown_source" = "Невідомий рахунок";
+
+"dashboard.spent_this_month" = "Витрачено цього місяця";
+"dashboard.income_caption" = "+ %@ дохід";
+"dashboard.based_on_tracked" = "На основі врахованих транзакцій";
+"dashboard.net_this_month" = "Баланс цього місяця";
+"dashboard.spent_earned_caption" = "Витрачено %@ · Зароблено %@";
+"dashboard.spent_more" = "Витрачено більше, ніж зароблено";
+"dashboard.earned_more" = "Зароблено більше, ніж витрачено";
+"dashboard.this_week" = "Цей тиждень";
+
+"dashboard.day0.title" = "Інсайти з’являться з обліком";
+"dashboard.day0.message.singular" = "Продовжуйте облік — інсайти відкриваються, коли накопичується історія";
+"dashboard.day0.message.plural" = "Додайте ще %d транзакцій, щоб побачити перший інсайт.";
+"dashboard.day0.cta" = "Додати транзакцію →";
+
+"dashboard.empty.headline" = "Додайте першу транзакцію";
+"dashboard.empty.body" = "Торкніться +, щоб записати дохід або витрату за 3 секунди.";
+"dashboard.empty.cta" = "Почати →";
+
+/* Month navigation */
+"scope.previous_month" = "Попередній місяць";
+"scope.next_month" = "Наступний місяць";
+"scope.this_month_button" = "Сьогодні";
+
+/* ======================================================
+   Analytics
+   ====================================================== */
+"analytics.title" = "Аналітика";
+"analytics.chart.picker.title" = "Графік";
+"analytics.chart.pie" = "Кругова";
+"analytics.chart.bars" = "Стовпці";
+"analytics.chart.line" = "Лінія";
+
+"analytics.empty.message" = "Додайте транзакції, щоб побачити аналітику.";
+
+"analytics.section.combined.title" = "Дохід • Витрата";
+"analytics.section.expenses_by_category.title" = "Витрати за категоріями";
+"analytics.section.income_by_source.title" = "Дохід за рахунками";
+
+"analytics.label.income" = "Дохід";
+"analytics.label.expense" = "Витрата";
+"analytics.label.net" = "Баланс";
+
+"analytics.empty.no_expenses" = "Немає витрат за цей період.";
+"analytics.empty.no_income" = "Немає доходу за цей період.";
+
+/* chart legend */
+"analytics.legend.income" = "Дохід";
+"analytics.legend.expense" = "Витрата";
+
+/* ======================================================
+   Add Transaction
+   ====================================================== */
+"add.type.picker.title" = "Тип";
+"add.type.expense" = "Витрата";
+"add.type.income" = "Дохід";
+
+"add.section.amount" = "Сума";
+"add.amount.placeholder" = "0.00";
+"add.tax.placeholder" = "Податок (необов’язково)";
+
+"add.section.title" = "Назва (необов’язково)";
+"add.title.placeholder" = "напр., Starbucks, Оренда, Зарплата";
+
+"add.section.category" = "Категорія";
+"add.category.add" = "Додати категорію";
+"add.category.empty_income" = "Поки немає категорій доходу.";
+"add.category.empty_expense" = "Поки немає категорій витрат.";
+
+"add.section.source" = "Рахунок";
+"add.section.source_optional" = "Рахунок (необов’язково)";
+"add.source.add" = "Додати рахунок";
+"add.source.tip" = "Використовуйте рахунок, щоб відстежувати, яку картку, банк чи гаманець було використано.";
+"add.source.expense_disabled_hint" = "Рахунок доступний лише для транзакцій доходу.";
+
+"add.section.date" = "Дата";
+"add.section.note" = "Нотатка (необов’язково)";
+"add.note.placeholder" = "Коментар";
+"add.keyboard.hide" = "Сховати клавіатуру";
+
+/* Add Category Sheet */
+"add.category_sheet.nav_title" = "Додати категорію";
+"add.category_sheet.section.title" = "Категорія";
+"add.category_sheet.name.placeholder" = "Назва категорії";
+"add.category_sheet.icon.placeholder" = "SF Symbol (необов’язково)";
+"add.category_sheet.type_income" = "Категорія доходу";
+"add.category_sheet.type_expense" = "Категорія витрат";
+
+/* Add Account Sheet */
+"add.source_sheet.nav_title" = "Додати рахунок";
+"add.source_sheet.section.title" = "Рахунок";
+"add.source_sheet.name.placeholder" = "Назва рахунку";
+"add.source_sheet.note.placeholder" = "Нотатка (необов’язково)";
+
+/* ======================================================
+   Edit Transaction
+   ====================================================== */
+"edit.title" = "Редагувати";
+"edit.section.type" = "Тип";
+"edit.type.picker" = "Тип";
+
+"edit.section.amount" = "Сума";
+"edit.amount.placeholder" = "0.00";
+"edit.tax.placeholder" = "Податок (необов’язково)";
+
+"edit.section.currency" = "Валюта";
+"edit.currency.picker" = "Валюта";
+
+"edit.section.merchant" = "Назва (необов’язково)";
+"edit.merchant.placeholder" = "напр., Starbucks, Оренда, Зарплата";
+
+"edit.section.category" = "Категорія";
+"edit.category.picker" = "Категорія";
+
+"edit.source.picker" = "Рахунок";
+"edit.section.date" = "Дата";
+"edit.date.picker" = "Дата";
+"edit.section.note" = "Нотатка (необов’язково)";
+"edit.note.placeholder" = "Коментар";
+
+/* errors */
+"edit.error.unknown" = "Щось пішло не так.";
+"edit.error.select_category" = "Будь ласка, виберіть категорію.";
+"edit.error.invalid_amount" = "Недійсна сума.";
+"edit.error.save_failed" = "Не вдалося зберегти.";
+
+/* ======================================================
+   Input validation
+   ====================================================== */
+"validation.amount.out_of_range" = "Сума має бути від 0,01 до 100 000 000 000,00.";
+"validation.merchant.too_long" = "Назва має містити не більше 200 символів.";
+"validation.note.too_long" = "Нотатка має містити не більше 2 000 символів.";
+"validation.date.out_of_range" = "Дата має бути між 1990 роком і одним роком від сьогодні.";
+
+/* ======================================================
+   Premium / Paywall
+   ====================================================== */
+"premium.section.status" = "Статус";
+"premium.status.active" = "Активний";
+"premium.status.free" = "Безкоштовний";
+
+"premium.upgrade" = "Перейти на Premium";
+"premium.manage_subscription" = "Керувати підпискою";
+"premium.redeem_code" = "Активувати код";
+"premium.restore" = "Відновити покупки";
+"premium.redeem_hint" = "Скористайтеся активацією коду, якщо у вас є промокод на Premium.";
+
+"paywall.title" = "Володійте грошима, назавжди на вашому iPhone";
+"paywall.subtitle" = "Усе залишається на вашому iPhone — без серверів, облікових записів і відстеження.";
+"paywall.loading" = "Завантаження планів…";
+/* Paywall features */
+"paywall.features.header" = "Кожен план включає";
+"paywall.feature.unlimited_transactions" = "Необмежені транзакції";
+"paywall.feature.alltime_exports" = "Експорти за весь час (CSV / PDF / Excel)";
+"paywall.feature.privacy_ondevice" = "Усе на пристрої — без хмари";
+"paywall.feature.unlimited_csv" = "Необмежений імпорт CSV";
+"paywall.feature.custom_fields" = "Власні поля";
+"paywall.feature.advanced_filters" = "Розширені фільтри";
+
+/* Plans */
+"paywall.yearly.best_value" = "Найвигідніше";
+"paywall.yearly.save_amount" = "Заощадьте 42%";
+"paywall.yearly.per_month" = "$2.92/місяць, оплата раз на рік";
+"paywall.plan.yearly" = "Річний";
+"paywall.plan.yearly.subtitle" = "7 днів безкоштовно, потім $34.99/рік";
+"paywall.plan.monthly" = "Місячний";
+"paywall.plan.monthly.subtitle" = "Скасування будь-коли";
+"paywall.plan.lifetime" = "Назавжди";
+"paywall.plan.lifetime.subtitle" = "Одноразово, без підписки";
+"paywall.plan.lifetime.subline" = "Зафіксуйте сьогоднішню ціну. Включає всі майбутні функції. Ціни на підписку можуть зрости.";
+
+/* Lifetime badges */
+"paywall.badge.family_sharing" = "Можна ділитися через Сімейний доступ";
+"paywall.badge.founders_edition" = "Видання засновника";
+
+/* CTAs */
+"paywall.cta.yearly" = "Почати безкоштовний період";
+"paywall.cta.lifetime" = "Придбати назавжди";
+"paywall.cta.monthly" = "Оформити щомісячно";
+
+/* Legal disclosure (Apple-required for subscriptions) */
+"paywall.legal.auto_renew" = "Підписки автоматично поновлюються наприкінці кожного періоду до скасування. Ви можете керувати ними або скасувати будь-коли в Налаштування → Apple ID → Підписки. Оплата стягується з вашого облікового запису Apple ID під час підтвердження покупки.";
+"paywall.legal.terms" = "Умови використання";
+"paywall.legal.privacy" = "Політика конфіденційності";
+"paywall.legal.and" = " та ";
+
+"purchase.restored" = "Ваші покупки відновлено.";
+"purchase.no_previous_purchases" = "Попередніх покупок не знайдено.";
+"purchase.pending_approval" = "Ваша покупка очікує підтвердження. Вас сповістять, коли її буде завершено.";
+
+/* ======================================================
+   Data
+   ====================================================== */
+"data.title" = "Дані";
+
+"data.section.export" = "Експорт";
+"data.export.csv.month" = "Експорт CSV (цей місяць)";
+"data.export.csv.all" = "Експорт CSV (усе)";
+"data.export.pdf.month" = "Експорт PDF (цей місяць)";
+"data.export.pdf.all" = "Експорт PDF (усе)";
+"data.export.excel.month" = "Експорт Excel (цей місяць)";
+"data.export.excel.all" = "Експорт Excel (усе)";
+
+"data.section.import" = "Імпорт";
+"data.import.csv" = "Імпорт CSV";
+"data.premium_hint" = "Доступно в Premium.";
+"data.import.progress.format" = "Імпорт %d з %d…";
+"data.import.in_progress" = "Імпорт…";
+"csv.import.error.too_many_rows.format" = "Файл містить %d рядків; максимум — 10 000.";
+"csv.import.error.field_too_long.format" = "Рядок %d пропущено: поле перевищує 1024 символи.";
+
+/* ======================================================
+   Categories & Accounts
+   ====================================================== */
+"cs.section.sources" = "Рахунки";
+"cs.section.expense_categories" = "Категорії витрат";
+"cs.section.income_categories" = "Категорії доходу";
+
+"cs.sources.empty" = "Поки немає рахунків";
+"cs.sources.add" = "Додати рахунок";
+"cs.categories.add" = "Додати категорію";
+"cs.toast.category_added" = "Категорію додано";
+"cs.toast.source_added" = "Рахунок додано";
+
+"cs.alert.cant_delete.title" = "Не можна видалити";
+"cs.alert.used_in_transactions.format" = "«%@» використовується у %d транзакціях.";
+
+/* Add/Edit Account sheets */
+"cs.source_sheet.title" = "Додати рахунок";
+"cs.source_sheet.section" = "Рахунок";
+"cs.source_sheet.name.placeholder" = "Назва рахунку";
+"cs.source_sheet.note.placeholder" = "Нотатка (необов’язково)";
+
+"cs.category_sheet.title" = "Додати категорію";
+"cs.category_sheet.section" = "Категорія";
+"addcat.section.suggested" = "Запропоновані";
+"addcat.section.custom" = "Власні";
+"addcat.preset.bills" = "Рахунки";
+"addcat.preset.pets" = "Домашні улюбленці";
+"addcat.preset.gifts" = "Подарунки";
+"addcat.preset.education" = "Освіта";
+"addcat.preset.fitness" = "Фітнес";
+"addcat.preset.kids" = "Діти";
+"addcat.preset.salary" = "Зарплата";
+"addcat.preset.bonus" = "Бонус";
+"addcat.preset.freelance" = "Фриланс";
+"addcat.preset.investment" = "Інвестиції";
+"addcat.preset.refund" = "Повернення";
+"cs.category_sheet.name.placeholder" = "Назва категорії";
+"cs.category_sheet.icon.placeholder" = "SF Symbol (необов’язково)";
+"cs.category_sheet.type.expense" = "Витрата";
+"cs.category_sheet.type.income" = "Дохід";
+
+/* ======================================================
+   About
+   ====================================================== */
+"about.title" = "Про застосунок";
+"about.app" = "Застосунок";
+"about.app_name" = "Budget Crab";
+"about.version" = "Версія";
+"about.privacy_hint" = "Ваші дані залишаються на вашому iPhone. Без облікових записів і серверів.";
+"about.rate" = "Оцінити Budget Crab";
+"about.tell_friend" = "Розповісти другові";
+"about.tell_friend.share" = "Спробуйте Budget Crab Money Tracker — приватний фінансовий застосунок на пристрої.";
+
+/* ======================================================
+   System categories
+   ====================================================== */
+"category.food" = "Їжа";
+"category.gas" = "Пальне";
+"category.rent" = "Оренда";
+"category.supplies" = "Товари";
+"category.other" = "Інше";
+"category.income" = "Дохід";
+
+"common.choose" = "Вибрати";
+"icons.title" = "Виберіть значок";
+"icons.search" = "Пошук символів";
+"icons.clear" = "Без значка";
+
+/* ======================================================
+   PDF report
+   ====================================================== */
+"pdf.report.title" = "Звіт Budget Crab";
+"pdf.range.month" = "Цей місяць";
+"pdf.range.all" = "За весь час";
+"pdf.label.income" = "Дохід";
+"pdf.label.expenses" = "Витрати";
+"pdf.label.net" = "Баланс";
+"pdf.header.date" = "Дата";
+"pdf.header.title" = "Назва";
+"pdf.header.category" = "Категорія";
+"pdf.header.amount" = "Сума";
+"pdf.footer.page.format" = "Сторінка %d з %d";
+
+"cs.expense.empty" = "Поки немає категорій витрат";
+"cs.income.empty" = "Поки немає категорій доходу";
+
+"cs.category_sheet.icon_hint" = "Порада: виберіть значок, щоб категорії було легше розрізняти.";
+
+/* Demo-mode categories (legacy keys kept for backwards compat) */
+"category.coffee" = "Кава";
+"category.transit" = "Транспорт";
+"category.subscriptions" = "Підписки";
+"category.entertainment" = "Розваги";
+"category.health" = "Здоров’я";
+
+/* New taxonomy — primary categories */
+"category.food_drink" = "Їжа та напої";
+"category.transport" = "Транспорт";
+"category.housing" = "Житло";
+"category.shopping" = "Покупки";
+
+/* New taxonomy — secondary categories */
+"category.travel" = "Подорожі";
+"category.personal_care" = "Особистий догляд";
+"category.utilities" = "Комунальні послуги";
+
+/* Progressive disclosure picker */
+"category.show_all" = "Показати всі";
+"category.show_fewer" = "Показати менше";
+"category.auto_detected" = "Визначено автоматично: %@";
+"category.tip_pick_other" = "Виберіть категорію для кращих інсайтів";
+
+/* CategoriesSourcesView — isPrimary toggle */
+"cs.category.shown_by_default" = "Показано за замовчуванням";
+"cs.category.primary_label" = "Показано за замовчуванням";
+"cs.category.secondary_label" = "У розділі «Показати всі»";
+
+/* ======================================================
+   Recurring transactions
+   ====================================================== */
+"settings.recurring" = "Регулярні";
+
+"addtx.recurring.header" = "РЕГУЛЯРНІ";
+"addtx.recurring.toggle" = "Повторювати цю транзакцію";
+"addtx.recurring.frequency" = "Періодичність";
+"addtx.recurring.footer" = "Budget Crab нагадуватиме вам щоперіоду записати цей платіж.";
+"addtx.recurring.weekly" = "Щотижня";
+"addtx.recurring.monthly" = "Щомісяця";
+"addtx.recurring.yearly" = "Щороку";
+"addtx.suggestion.pill" = "Пропозиція: %@ — торкніться, щоб підтвердити або змінити";
+
+"recurring.prompt.title" = "Час регулярного платежу";
+"recurring.prompt.add" = "Додати %@ за цей період (%@)?";
+"recurring.prompt.add_button" = "Додати";
+"recurring.prompt.skip_button" = "Пропустити";
+"recurring.prompt.edit_button" = "Редагувати";
+
+"recurring.notif.title" = "Майбутній регулярний платіж";
+"recurring.notif.body" = "%@ (%@) очікується завтра.";
+"recurring.notif.fallback_merchant" = "Регулярний платіж";
+
+"recurring.settings.empty" = "Поки немає регулярних транзакцій.";
+"recurring.settings.footer" = "Проведіть пальцем уліво по елементу, щоб припинити повторення. Початкову транзакцію збережено.";
+"recurring.settings.stop" = "Припинити";
+
+/* Widget */
+"widget.spent.format" = "Витрачено %@";
+"widget.earned.format" = "Зароблено %@";
+
+/* Quick Add */
+"quickadd.placeholder" = "Швидке додавання: $5.50 Starbucks";
+"quickadd.preview.save" = "Зберегти";
+"quickadd.preview.edit" = "Редагувати";
+"quickadd.preview.no_category" = "[Торкніться, щоб вибрати]";
+"quickadd.pick_category" = "Виберіть категорію";
+"category.picker.add_new" = "Додати нову категорію";
+"quickadd.a11y.change_category" = "Змінити категорію";
+
+/* Quick Entry hero sheet */
+"quick_entry.title" = "Швидке введення";
+"quick_entry.privacy_chip" = "Залишається на вашому iPhone";
+"quick_entry.save" = "Зберегти";
+"quick_entry.use_form" = "Використати детальну форму";
+"quick_entry.fail_unparseable" = "Не вдалося розпізнати — спробуйте детальну форму";
+"quick_entry.placeholder.1" = "$5.50 Starbucks";
+"quick_entry.placeholder.2" = "обід 12";
+"quick_entry.placeholder.3" = "67 пальне";
+"quick_entry.placeholder.4" = "+2800 зарплата";
+"quick_entry.placeholder.5" = "стрижка 25";
+"quick_entry.voice.start" = "Почати голосове введення";
+"quick_entry.voice.stop" = "Зупинити голосове введення";
+"quick_entry.voice.denied_open_settings" = "Увімкніть мікрофон у Налаштуваннях";
+"quick_entry.voice.unavailable" = "Голос недоступний для цієї мови";
+"quick_entry.voice.fail_start" = "Не вдалося почати голос — спробуйте ще раз";
+"quick_entry.voice.settings" = "Налаштування";
+
+/* Quick Entry accessibility */
+"quick_entry.a11y.input_label" = "Введення транзакції";
+"quick_entry.a11y.input_hint" = "Введіть або продиктуйте суму та продавця";
+"quick_entry.a11y.input_empty" = "Порожньо";
+"quick_entry.a11y.mic_listening" = "Голосове введення активне, торкніться, щоб зупинити";
+"quick_entry.a11y.mic_idle" = "Почати голосове введення";
+"quick_entry.a11y.mic_hint" = "Диктування на пристрої";
+"quick_entry.a11y.save_dynamic" = "Зберегти %@ у %@";
+"quick_entry.a11y.privacy_chip" = "Конфіденційність: дані залишаються на вашому iPhone";
+
+/* ======================================================
+   Tutorial & empty states
+   ====================================================== */
+"tutorial.skip" = "Пропустити";
+"tutorial.cta.next" = "Далі";
+"tutorial.cta.get_started" = "Почати";
+"tutorial.page1.headline" = "Пишіть або говоріть — Budget Crab зробить решту";
+"tutorial.page1.caption" = "Торкніться + або просто говоріть. Ми автоматично визначаємо категорію.";
+"tutorial.page2.headline" = "Стає точнішим із кожною транзакцією";
+"tutorial.page2.caption" = "Budget Crab запам’ятовує ваш вибір. Без хмари — усе на вашому iPhone.";
+"tutorial.page3.headline" = "Ваші дані належать вам";
+"tutorial.page3.bullet1" = "100% на пристрої — без хмари та серверів";
+"tutorial.page3.bullet2" = "Без облікових записів, реклами та відстеження";
+"tutorial.page3.bullet3" = "Голос обробляється локально за допомогою фреймворку Apple";
+"tutorial.page3.demo_offer" = "Додати зразкові дані для ознайомлення";
+"dashboard.empty.title" = "Додайте першу витрату, щоб бачити, куди йдуть гроші";
+"dashboard.empty.caption" = "Введіть або скажіть вище, щоб додати транзакцію";
+"transactions.empty.title" = "Поки немає транзакцій";
+"transactions.empty.cta" = "Додайте першу";
+"analytics.empty.title" = "Інсайти з’являться тут";
+"analytics.empty.caption" = "Додайте кілька транзакцій, щоб побачити свої витрати";
+"search.empty.title" = "Немає збігів";
+"search.empty.caption" = "Спробуйте інше слово або суму";
+"settings.section.tutorial_demo" = "Посібник і зразкові дані";
+"settings.demo.add" = "Додати зразкові дані";
+"settings.demo.clear" = "Очистити зразкові дані";
+"settings.tutorial.replay" = "Повторити посібник";
+
+// Analytics redesign — Pulse / Breakdown / Horizon
+"analytics.screen.picker" = "Вид";
+"analytics.filter.picker" = "Тип";
+"analytics.filter.expense" = "Витрати";
+"analytics.filter.income" = "Дохід";
+"analytics.pulse.title" = "Пульс";
+"analytics.breakdown.title" = "Розподіл";
+"analytics.horizon.title" = "Горизонт";
+"analytics.net_this_month" = "Баланс цього місяця";
+"analytics.total" = "Усього";
+"analytics.earned_total" = "Зароблено";
+"analytics.spent_total" = "Витрачено";
+"analytics.horizon.hint" = "Проведіть по графіку для перегляду";
+"analytics.category_total" = "Усього за категорією";
+"analytics.transactions_count" = "%d транзакцій";
+"analytics.horizon.tap_hint" = "Показати транзакції цього місяця";
+"analytics.horizon.mode.net" = "Баланс";
+"analytics.horizon.mode.expenses" = "Витрати";
+"analytics.horizon.mode.income" = "Дохід";
+"analytics.horizon.mode.combined" = "Разом";
+"analytics.pulse.tap_hint" = "Показати транзакції цього дня";
+"analytics.selection.clear" = "Очистити вибір";
+"analytics.day.by_category" = "За категоріями";
+
+/* --- keys referenced in code (TransactionDetailView, DataSettingsView, PremiumSettingsView) --- */
+"tx_detail.title" = "Деталі транзакції";
+"tx_detail.section.summary" = "Підсумок";
+"tx_detail.type" = "Тип";
+"tx_detail.amount" = "Сума";
+"tx_detail.date" = "Дата";
+"tx_detail.section.category" = "Категорія";
+"tx_detail.category" = "Категорія";
+"tx_detail.section.source" = "Рахунок";
+"tx_detail.source" = "Рахунок";
+"tx_detail.section.note" = "Нотатка";
+"data.alert.import_result.title" = "Імпорт завершено";
+"data.alert.export_error.title" = "Помилка експорту";
+"data.export.share_last.format" = "Поділитися %@";
+"data.export.failed.format" = "Помилка експорту: %@";
+"data.import.failed.format" = "Помилка імпорту: %@";
+"data.import.result.imported.format" = "Імпортовано: %d";
+"data.import.result.skipped.format" = "Пропущено: %d";
+"data.import.result.created_categories.format" = "Створено категорій: %d";
+"data.import.result.created_sources.format" = "Створено рахунків: %d";
+"data.import.result.first_error.format" = "Перша помилка: %@";
+"premium.section.manage" = "Керування";
