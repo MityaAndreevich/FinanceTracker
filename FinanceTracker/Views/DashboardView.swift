@@ -43,6 +43,16 @@ struct DashboardView: View {
     @State private var quickAddEditingTx: Transaction? = nil // drives the edit sheet on toast tap
     // User-tunable auto-save threshold (Settings → Quick Add sensitivity).
     @AppStorage("quickAddConfidenceThreshold") private var quickAddThreshold: Double = 0.75
+    // Shake-to-undo: the auto-saved row stays undoable for a 30s rolling window.
+    @State private var quickAddSavedAt: Date? = nil
+    @State private var undoExpiryTask: Task<Void, Never>? = nil
+
+    /// Rolling 30s window during which a shake undoes the last auto-save. Drives
+    /// the conditional ShakeDetector so it only steals first responder briefly.
+    private var undoWindowActive: Bool {
+        guard quickAddSavedTx != nil, let at = quickAddSavedAt else { return false }
+        return Date().timeIntervalSince(at) < 30
+    }
 
     private var currentMonthTransactions: [Transaction] {
         PeriodScope.currentMonth.filter(transactions)
@@ -111,8 +121,18 @@ struct DashboardView: View {
         .sheet(item: $quickAddEditingTx) { tx in
             NavigationStack { EditTransactionView(transaction: tx) }
         }
-        .confirmationToast($quickAddToast, duration: 3.5) {
+        // 5.0s (was 3.5s): industry-standard toast window; RU/UK copy is ~40%
+        // longer than EN and needs the extra reading time (Apple HIG guidance on
+        // time-boxed elements / accessibility).
+        .confirmationToast($quickAddToast, duration: 5.0) {
             quickAddEditingTx = quickAddSavedTx
+        }
+        // Shake-to-undo the last auto-save, only while the 30s window is open so
+        // the detector doesn't hold first responder during normal Quick Add use.
+        .background {
+            if undoWindowActive {
+                Color.clear.onShake { undoLastAutoSave() }
+            }
         }
         .task {
             loadDueRecurring()
@@ -173,6 +193,8 @@ struct DashboardView: View {
                 if parsed.confidence >= quickAddThreshold,
                    let saved = autoSaveQuickAdd(parsed) {
                     quickAddSavedTx = saved
+                    quickAddSavedAt = Date()
+                    scheduleUndoWindowExpiry()
                     quickAddText = ""
                     quickAddToast = "quickadd.saved.tap_to_edit"
                 } else {
@@ -310,6 +332,32 @@ struct DashboardView: View {
             print("QuickAdd save failed: \(error.localizedDescription)")
             #endif
         }
+    }
+
+    /// Closes the shake-undo window after 30s so the ShakeDetector unmounts and a
+    /// stale shake can't delete a long-since-saved row.
+    private func scheduleUndoWindowExpiry() {
+        undoExpiryTask?.cancel()
+        undoExpiryTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+            guard !Task.isCancelled else { return }
+            quickAddSavedTx = nil
+            quickAddSavedAt = nil
+        }
+    }
+
+    /// Deletes the last auto-saved transaction (shake-to-undo). Only the auto-save
+    /// path arms this — manual preview-chip saves are never shake-undoable.
+    private func undoLastAutoSave() {
+        guard undoWindowActive, let tx = quickAddSavedTx else { return }
+        undoExpiryTask?.cancel()
+        modelContext.delete(tx)
+        try? modelContext.save()
+        quickAddSavedTx = nil
+        quickAddSavedAt = nil
+        refreshWidgetSnapshot()
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        quickAddToast = "quickadd.undo.confirmed"
     }
 
     private func openEditForQuickAdd(_ parsed: QuickAddParsedInput) {

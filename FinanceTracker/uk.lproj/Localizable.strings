@@ -591,6 +591,7 @@
 "quickadd.preview.save" = "Зберегти";
 "quickadd.preview.edit" = "Редагувати";
 "quickadd.saved.tap_to_edit" = "Збережено — торкніться, щоб змінити";
+"quickadd.undo.confirmed" = "Транзакція видалена";
 "quickadd.preview.no_category" = "[Торкніться, щоб вибрати]";
 "quickadd.pick_category" = "Виберіть категорію";
 "category.picker.add_new" = "Додати нову категорію";

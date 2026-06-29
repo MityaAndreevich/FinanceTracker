@@ -56,7 +56,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // caption, and 3 segment labels (confirm/balanced/instant). The brief
         // estimated +3, but a 3-position picker plus its label and caption needs
         // 5 distinct strings. Was 494.
-        XCTAssertEqual(enKeys.count, 499, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-29 (shake-to-undo): +1 undo confirmation toast key
+        // (quickadd.undo.confirmed). Was 499.
+        XCTAssertEqual(enKeys.count, 500, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
