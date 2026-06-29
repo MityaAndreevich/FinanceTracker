@@ -257,6 +257,15 @@ private struct YearlyPlanCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
+
+            // Apple §3.1.2(a): the free-trial CTA must disclose trial length,
+            // the auto-renewing amount, and the cancellation path before purchase.
+            Text("paywall.trial.disclosure")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 8)
         }
         .padding(16)
         .background(.thinMaterial)

@@ -389,6 +389,7 @@
 
 /* CTAs */
 "paywall.cta.yearly" = "Start free trial";
+"paywall.trial.disclosure" = "After 7 days free, $34.99/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
 "paywall.cta.lifetime" = "Get Lifetime";
 "paywall.cta.monthly" = "Subscribe monthly";
 

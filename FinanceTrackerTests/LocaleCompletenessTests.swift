@@ -46,7 +46,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // 10 data.* import/export results (DataSettingsView), premium.section.manage. Was 468.
         // Bumped 2026-06-29 (Bug 9): +2 add-confirmation toast keys
         // (cs.toast.category_added, cs.toast.source_added). Was 489.
-        XCTAssertEqual(enKeys.count, 491, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-29 (Bug 5): +1 Apple §3.1.2(a) trial disclosure key
+        // (paywall.trial.disclosure). Was 491.
+        XCTAssertEqual(enKeys.count, 492, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
