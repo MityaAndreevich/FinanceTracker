@@ -588,6 +588,7 @@
 "quickadd.placeholder" = "Быстро: $5.50 Starbucks";
 "quickadd.preview.save" = "Сохранить";
 "quickadd.preview.edit" = "Изменить";
+"quickadd.saved.tap_to_edit" = "Сохранено — нажмите для изменения";
 "quickadd.preview.no_category" = "[Выбрать категорию]";
 "quickadd.pick_category" = "Выберите категорию";
 "category.picker.add_new" = "Новая категория";

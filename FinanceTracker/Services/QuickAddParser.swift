@@ -14,6 +14,26 @@ struct QuickAddParsedInput: Equatable {
     let typeRaw: String           // "income" | "expense"
     let merchant: String?
     let suggestedCategoryName: String?
+
+    /// Heuristic 0...1 confidence in the parse, used to decide whether Quick Add
+    /// can commit immediately (Q1 option C) or should surface a preview for the
+    /// user to confirm. Weighting: amount detected +0.4, a real merchant +0.3,
+    /// a concrete (non-"Other", non-nil) category +0.3.
+    var confidence: Double {
+        var score = 0.0
+        if amountCents > 0 { score += 0.4 }
+        if let m = merchant?.trimmingCharacters(in: .whitespacesAndNewlines), !m.isEmpty {
+            score += 0.3
+        }
+        if let c = suggestedCategoryName?.lowercased(), !c.isEmpty, c != "other" {
+            score += 0.3
+        }
+        return score
+    }
+
+    /// At or above this, Quick Add saves immediately and offers an edit toast
+    /// instead of showing a confirmation preview.
+    static let highConfidenceThreshold = 0.75
 }
 
 enum QuickAddParser {

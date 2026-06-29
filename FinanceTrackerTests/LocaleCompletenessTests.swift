@@ -50,7 +50,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // (paywall.trial.disclosure). Was 491.
         // Bumped 2026-06-29 (Bug 7): +1 voice fallback key
         // (voice.unavailable_for_lang). Was 492.
-        XCTAssertEqual(enKeys.count, 493, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-29 (Bug 12/Q1-C): +1 auto-save toast key
+        // (quickadd.saved.tap_to_edit). Was 493.
+        XCTAssertEqual(enKeys.count, 494, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

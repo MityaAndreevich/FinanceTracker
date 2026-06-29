@@ -650,4 +650,49 @@ struct QuickAddParserTests {
         #expect(result?.merchant == "Кофе")
         #expect(result?.suggestedCategoryName == "Food & Drink")
     }
+
+    // MARK: - Bug 12 / Q1-C: confidence-gated auto-save vs preview
+    //
+    // amount +0.4, merchant +0.3, concrete (non-"Other") category +0.3.
+    // ≥ 0.75 → auto-save path; < 0.75 → confirmation preview.
+
+    @Test func confidence_high_for_full_parse_ru() {
+        // amount + merchant + Food & Drink = 1.0
+        let result = QuickAddParser.parse("Взял кофе за 20")
+        #expect((result?.confidence ?? 0) >= QuickAddParsedInput.highConfidenceThreshold)
+    }
+
+    @Test func confidence_high_for_grocery_ru() {
+        // "Молоко за 5" → amount + merchant + Food & Drink (NOT Other) = 1.0
+        let result = QuickAddParser.parse("Молоко за 5")
+        #expect(result?.suggestedCategoryName == "Food & Drink")
+        #expect((result?.confidence ?? 0) >= QuickAddParsedInput.highConfidenceThreshold)
+    }
+
+    @Test func confidence_low_for_unknown_merchant() {
+        // amount + merchant, but no category match → 0.7 < 0.75
+        let result = QuickAddParser.parse("Что-то непонятное 50")
+        #expect(result?.suggestedCategoryName == nil)
+        #expect((result?.confidence ?? 1) < QuickAddParsedInput.highConfidenceThreshold)
+    }
+
+    @Test func confidence_low_for_amount_only() {
+        // amount only = 0.4
+        let result = QuickAddParser.parse("12")
+        #expect(result?.merchant == nil)
+        #expect((result?.confidence ?? 1) < QuickAddParsedInput.highConfidenceThreshold)
+    }
+
+    // ES/PT Transport + Utilities keyword coverage (Bug 12 Part A).
+    @Test func category_es_gasolina_is_transport() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "gasolina") == "Transport")
+    }
+
+    @Test func category_pt_onibus_is_transport() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "ônibus") == "Transport")
+    }
+
+    @Test func category_es_luz_is_housing() {
+        #expect(CategorySuggestionService.suggest(forMerchant: "luz") == "Housing")
+    }
 }

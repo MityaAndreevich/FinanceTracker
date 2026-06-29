@@ -18,6 +18,9 @@ import SwiftUI
 struct ConfirmationToastModifier: ViewModifier {
     @Binding var message: LocalizedStringKey?
     var duration: TimeInterval = 2.0
+    /// Optional tap handler. When set, the toast becomes a button (e.g. "Saved —
+    /// tap to edit", Bug 12 Q1-C) and dismisses itself after the action runs.
+    var onTap: (() -> Void)? = nil
 
     @State private var dismissTask: Task<Void, Never>? = nil
 
@@ -25,7 +28,7 @@ struct ConfirmationToastModifier: ViewModifier {
         content
             .overlay(alignment: .bottom) {
                 if let message {
-                    toast(message)
+                    toastContainer(message)
                         .padding(.bottom, 28)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -43,6 +46,22 @@ struct ConfirmationToastModifier: ViewModifier {
             }
     }
 
+    @ViewBuilder
+    private func toastContainer(_ message: LocalizedStringKey) -> some View {
+        if let onTap {
+            Button {
+                onTap()
+                self.message = nil
+            } label: {
+                toast(message)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+        } else {
+            toast(message)
+        }
+    }
+
     private func toast(_ message: LocalizedStringKey) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
@@ -56,14 +75,18 @@ struct ConfirmationToastModifier: ViewModifier {
         .background(Color.accentColor, in: Capsule())
         .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isStaticText)
     }
 }
 
 extension View {
     /// Shows a transient confirmation toast at the bottom of the view while `message`
-    /// is non-nil. The toast auto-dismisses and fires a light success haptic.
-    func confirmationToast(_ message: Binding<LocalizedStringKey?>) -> some View {
-        modifier(ConfirmationToastModifier(message: message))
+    /// is non-nil. The toast auto-dismisses and fires a light success haptic. When
+    /// `onTap` is provided the toast is tappable (and runs the action on tap).
+    func confirmationToast(
+        _ message: Binding<LocalizedStringKey?>,
+        duration: TimeInterval = 2.0,
+        onTap: (() -> Void)? = nil
+    ) -> some View {
+        modifier(ConfirmationToastModifier(message: message, duration: duration, onTap: onTap))
     }
 }

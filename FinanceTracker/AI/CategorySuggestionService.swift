@@ -158,6 +158,14 @@ enum CategorySuggestionService {
         ("такси", "Transport"), ("автобус", "Transport"), ("метро", "Transport"),
         ("шиномонтаж", "Transport"), ("парковка", "Transport"),
         ("отель", "Transport"), ("гостиница", "Transport"), ("перелёт", "Transport"),
+        ("поезд", "Transport"), ("рынок", "Food & Drink"),
+        // ES — fuel & transit (Bug 12: ES/PT had no Transport coverage)
+        ("gasolina", "Transport"), ("billete", "Transport"),
+        ("autobús", "Transport"), ("autobus", "Transport"),
+        ("tren", "Transport"), ("estacionamiento", "Transport"),
+        // PT — fuel & transit (Bug 12)
+        ("bilhete", "Transport"), ("ônibus", "Transport"), ("onibus", "Transport"),
+        ("trem", "Transport"), ("metrô", "Transport"), ("estacionamento", "Transport"),
 
         // ── Housing ─────────────────────────────────────────────────────────────
         ("rent", "Housing"), ("mortgage", "Housing"), ("landlord", "Housing"),
@@ -165,7 +173,11 @@ enum CategorySuggestionService {
         ("internet", "Housing"), ("wifi", "Housing"),
         ("аренда", "Housing"), ("квартплата", "Housing"), ("ипотека", "Housing"),
         ("свет", "Housing"), ("вода", "Housing"), ("интернет", "Housing"),
-        ("коммуналка", "Housing"),
+        ("коммуналка", "Housing"), ("газ", "Housing"),
+        // ES/PT — utilities (Bug 12: ES/PT had no Housing coverage). "gas" is
+        // intentionally omitted because the EN "gas"→Transport (fuel) entry wins
+        // first; Spanish/PT fuel is covered by "gasolina".
+        ("luz", "Housing"), ("agua", "Housing"), ("água", "Housing"),
 
         // ── Shopping ────────────────────────────────────────────────────────────
         ("clothes", "Shopping"), ("clothing", "Shopping"),

@@ -36,6 +36,11 @@ struct DashboardView: View {
     @State private var quickAddParsed: QuickAddParsedInput? = nil
     @State private var showQuickAddEdit = false
     @State private var quickAddEditPrefill: AddTransactionPrefill? = nil
+    // Q1 (option C): high-confidence parses save immediately and surface a
+    // tappable "Saved — tap to edit" toast instead of a confirmation preview.
+    @State private var quickAddToast: LocalizedStringKey? = nil
+    @State private var quickAddSavedTx: Transaction? = nil   // last auto-saved row (toast target)
+    @State private var quickAddEditingTx: Transaction? = nil // drives the edit sheet on toast tap
 
     private var currentMonthTransactions: [Transaction] {
         PeriodScope.currentMonth.filter(transactions)
@@ -99,6 +104,14 @@ struct DashboardView: View {
                 NavigationStack { AddTransactionView(prefill: quickAddEditPrefill) }
             }
         }
+        // Edits the transaction just auto-saved by a high-confidence Quick Add
+        // (the toast's "tap to edit") — opens the existing row, never a new one.
+        .sheet(item: $quickAddEditingTx) { tx in
+            NavigationStack { EditTransactionView(transaction: tx) }
+        }
+        .confirmationToast($quickAddToast, duration: 3.5) {
+            quickAddEditingTx = quickAddSavedTx
+        }
         .task {
             loadDueRecurring()
             refreshWidgetSnapshot()
@@ -152,8 +165,18 @@ struct DashboardView: View {
     private var quickAddSection: some View {
         VStack(spacing: 8) {
             QuickAddBar(text: $quickAddText) { parsed in
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                    quickAddParsed = parsed
+                // Q1 (option C): a confident parse (amount + merchant + concrete
+                // category) saves immediately and offers an edit toast — the
+                // preview chip stays as the escape hatch for unsure parses only.
+                if parsed.confidence >= QuickAddParsedInput.highConfidenceThreshold,
+                   let saved = autoSaveQuickAdd(parsed) {
+                    quickAddSavedTx = saved
+                    quickAddText = ""
+                    quickAddToast = "quickadd.saved.tap_to_edit"
+                } else {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                        quickAddParsed = parsed
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -244,6 +267,28 @@ struct DashboardView: View {
 
     private func resolveCategoryForQuickAdd(_ parsed: QuickAddParsedInput) -> Category? {
         QuickAddSaveService.resolveCategory(for: parsed, in: modelContext)
+    }
+
+    /// Saves a high-confidence parse immediately. Returns the created transaction
+    /// (for the edit toast) or nil if the save fails, in which case the caller
+    /// falls back to the confirmation preview.
+    private func autoSaveQuickAdd(_ parsed: QuickAddParsedInput) -> Transaction? {
+        do {
+            let tx = try QuickAddSaveService.save(
+                parsed: parsed,
+                modelContext: modelContext,
+                defaultCurrencyCode: defaultCurrencyCode
+            )
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            refreshWidgetSnapshot()
+            RatingPromptCoordinator.recordTransactionSaved()
+            return tx
+        } catch {
+            #if DEBUG
+            print("QuickAdd auto-save failed: \(error.localizedDescription)")
+            #endif
+            return nil
+        }
     }
 
     private func saveQuickAdd(_ parsed: QuickAddParsedInput, category: Category?) {

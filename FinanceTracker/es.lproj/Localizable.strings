@@ -515,6 +515,7 @@
 "quickadd.placeholder" = "Agregar rápido: $5.50 Starbucks";
 "quickadd.preview.save" = "Guardar";
 "quickadd.preview.edit" = "Editar";
+"quickadd.saved.tap_to_edit" = "Guardado — toca para editar";
 "quickadd.preview.no_category" = "[Toca para elegir]";
 "quickadd.pick_category" = "Elegir categoría";
 "category.picker.add_new" = "Agregar nueva categoría";
