@@ -34,6 +34,12 @@ struct GeneralSettingsView: View {
     @State private var showResetTransactionsAlert = false
     @State private var showRestartOnboardingAlert = false
 
+    // Demo data is opt-in and reversible, but both adding (inserts ~25 sample
+    // transactions) and clearing it are bulk operations, so each is gated behind
+    // an explicit confirmation (Bug 11 — demo data must never appear silently).
+    @State private var showAddDemoAlert = false
+    @State private var showClearDemoAlert = false
+
     // Универсальный Info Alert
     @State private var showInfoAlert = false
     @State private var infoTitleKey: String = "general.alert.info.title"
@@ -107,6 +113,22 @@ struct GeneralSettingsView: View {
             Button("general.alert.restart", role: .destructive) { restartOnboarding() }
         } message: {
             Text("general.alert.restart_onboarding.message")
+        }
+
+        // Add sample data confirm
+        .alert("settings.demo.add", isPresented: $showAddDemoAlert) {
+            Button("general.alert.cancel", role: .cancel) {}
+            Button("common.add") { DemoDataController.seedDemoData() }
+        } message: {
+            Text("tutorial.page3.demo_offer")
+        }
+
+        // Clear sample data confirm
+        .alert("settings.demo.clear", isPresented: $showClearDemoAlert) {
+            Button("general.alert.cancel", role: .cancel) {}
+            Button("common.delete", role: .destructive) {
+                DemoDataController.clearDemoData(modelContext: modelContext)
+            }
         }
     }
 
@@ -218,11 +240,11 @@ struct GeneralSettingsView: View {
         Section("settings.section.tutorial_demo") {
             if DemoDataController.isDemoDataActive {
                 Button("settings.demo.clear", role: .destructive) {
-                    DemoDataController.clearDemoData(modelContext: modelContext)
+                    showClearDemoAlert = true
                 }
             } else {
                 Button("settings.demo.add") {
-                    DemoDataController.seedDemoData()
+                    showAddDemoAlert = true
                 }
             }
 
@@ -266,6 +288,11 @@ struct GeneralSettingsView: View {
             let all = try modelContext.fetch(FetchDescriptor<Transaction>())
             all.forEach { modelContext.delete($0) }
             try modelContext.save()
+
+            // Reset wipes every transaction, including any demo-flagged ones, so the
+            // demo-active flag must follow — otherwise Settings would keep showing
+            // "Clear sample data" (and block re-adding) with no demo data present.
+            DemoDataController.isDemoDataActive = false
 
             showInfo(
                 titleKey: "general.alert.info.title",

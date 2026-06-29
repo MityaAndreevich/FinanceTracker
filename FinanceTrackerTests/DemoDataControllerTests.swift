@@ -80,6 +80,21 @@ final class DemoDataControllerTests: XCTestCase {
         XCTAssertFalse(DemoDataController.isDemoDataActive)
     }
 
+    // MARK: - Fresh install stays empty (Bug 11)
+
+    /// A fresh database must seed default *categories* but never any transactions —
+    /// a clean install shows $0 totals and no demo amounts until the user adds data.
+    func test_freshDatabase_seedsCategoriesButNoTransactions() throws {
+        SeedService.seedIfNeeded(modelContext: context)
+
+        let categories = try context.fetch(FetchDescriptor<FinanceTracker.Category>())
+        let transactions = try context.fetch(FetchDescriptor<Transaction>())
+
+        XCTAssertFalse(categories.isEmpty, "Fresh install should seed default categories")
+        XCTAssertEqual(transactions.count, 0, "Fresh install must have zero transactions (no demo leak)")
+        XCTAssertFalse(DemoDataController.isDemoDataActive, "Demo must not be active on a fresh install")
+    }
+
     // MARK: - isDemo field on Transaction
 
     func test_transaction_isDemo_defaultsFalse() throws {
