@@ -30,6 +30,14 @@ struct CategoriesSourcesView: View {
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
+    // Pending destructive deletion — set by the swipe gesture, performed only after
+    // the user confirms in the alert below (data-loss safety, Bug 10).
+    @State private var pendingDelete: PendingDelete?
+    private enum PendingDelete {
+        case sources(IndexSet)
+        case categories(subset: [Category], offsets: IndexSet)
+    }
+
     // Bug 9: categories/sources already refresh instantly via @Query — this toast
     // just makes the silent add visible so the user doesn't wonder whether it worked.
     @State private var toastMessage: LocalizedStringKey?
@@ -67,6 +75,17 @@ struct CategoriesSourcesView: View {
         } message: {
             Text(blockedDeleteMessage)
         }
+        // Confirm destructive category/account deletion before touching the store.
+        .alert(
+            "common.delete",
+            isPresented: Binding(
+                get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } }
+            )
+        ) {
+            Button("common.cancel", role: .cancel) { pendingDelete = nil }
+            Button("common.delete", role: .destructive) { performPendingDelete() }
+        }
         .confirmationToast($toastMessage)
     }
 
@@ -82,7 +101,7 @@ struct CategoriesSourcesView: View {
                 ForEach(sources, id: \.uuid) { source in
                     SourceRow(source: source)
                 }
-                .onDelete(perform: deleteSources)
+                .onDelete { offsets in pendingDelete = .sources(offsets) }
             }
 
             Button { activeSheet = .source } label: {
@@ -104,7 +123,7 @@ struct CategoriesSourcesView: View {
                     CategoryRow(category: cat)
                 }
                 .onDelete { offsets in
-                    deleteCategories(from: expenseCategories, at: offsets)
+                    pendingDelete = .categories(subset: expenseCategories, offsets: offsets)
                 }
             }
 
@@ -127,7 +146,7 @@ struct CategoriesSourcesView: View {
                     CategoryRow(category: cat)
                 }
                 .onDelete { offsets in
-                    deleteCategories(from: incomeCategories, at: offsets)
+                    pendingDelete = .categories(subset: incomeCategories, offsets: offsets)
                 }
             }
 
@@ -139,9 +158,29 @@ struct CategoriesSourcesView: View {
         }
     }
 
+    // MARK: - Confirmed deletion dispatch
+
+    /// Runs the pending deletion after the user confirms. Deferred to the next
+    /// runloop so the confirmation alert finishes dismissing before a follow-up
+    /// "can't delete" alert (for in-use items) can present.
+    private func performPendingDelete() {
+        let request = pendingDelete
+        pendingDelete = nil
+        DispatchQueue.main.async {
+            switch request {
+            case .sources(let offsets):
+                performDeleteSources(at: offsets)
+            case .categories(let subset, let offsets):
+                performDeleteCategories(from: subset, at: offsets)
+            case .none:
+                break
+            }
+        }
+    }
+
     // MARK: - Delete Sources
 
-    private func deleteSources(at offsets: IndexSet) {
+    private func performDeleteSources(at offsets: IndexSet) {
         let toDelete = offsets.map { sources[$0] }
 
         var blocked: [(String, Int)] = []
@@ -172,7 +211,7 @@ struct CategoriesSourcesView: View {
 
     // MARK: - Delete Categories
 
-    private func deleteCategories(from subset: [Category], at offsets: IndexSet) {
+    private func performDeleteCategories(from subset: [Category], at offsets: IndexSet) {
         let toDelete = offsets.map { subset[$0] }
 
         var blocked: [(String, Int)] = []

@@ -22,6 +22,10 @@ struct TransactionsView: View {
     @State private var editTx: Transaction?
     @State private var presentQuickEntry = false
 
+    // Pending destructive deletion — set by the swipe / context-menu trash button,
+    // performed only after the user confirms in the alert below (data-loss safety).
+    @State private var pendingDeleteTx: Transaction?
+
     // MARK: - Derived
 
     private var filtered: [Transaction] {
@@ -111,6 +115,19 @@ struct TransactionsView: View {
         .sheet(isPresented: $presentQuickEntry) {
             QuickEntryView()
         }
+        .alert(
+            "common.delete",
+            isPresented: Binding(
+                get: { pendingDeleteTx != nil },
+                set: { if !$0 { pendingDeleteTx = nil } }
+            )
+        ) {
+            Button("common.cancel", role: .cancel) { pendingDeleteTx = nil }
+            Button("common.delete", role: .destructive) {
+                if let tx = pendingDeleteTx { delete(tx) }
+                pendingDeleteTx = nil
+            }
+        }
     }
 
     private var filterChips: some View {
@@ -177,7 +194,7 @@ struct TransactionsView: View {
                 .buttonStyle(.plain)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
 
-                    Button(role: .destructive) { delete(tx) } label: {
+                    Button(role: .destructive) { pendingDeleteTx = tx } label: {
                         Label("common.delete", systemImage: "trash")
                     }
 
@@ -191,7 +208,7 @@ struct TransactionsView: View {
                         Label("common.edit", systemImage: "pencil")
                     }
 
-                    Button(role: .destructive) { delete(tx) } label: {
+                    Button(role: .destructive) { pendingDeleteTx = tx } label: {
                         Label("common.delete", systemImage: "trash")
                     }
                 }

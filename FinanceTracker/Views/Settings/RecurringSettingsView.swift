@@ -19,6 +19,9 @@ struct RecurringSettingsView: View {
     )
     private var recurring: [Transaction]
 
+    // Pending "stop recurrence" — confirmed via the alert below before mutating.
+    @State private var pendingStop: Transaction?
+
     var body: some View {
         List {
             if recurring.isEmpty {
@@ -32,7 +35,7 @@ struct RecurringSettingsView: View {
                         row(for: tx)
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    RecurrenceService.stopRecurrence(for: tx, modelContext: modelContext)
+                                    pendingStop = tx
                                 } label: {
                                     Label("recurring.settings.stop", systemImage: "xmark.circle")
                                 }
@@ -45,6 +48,21 @@ struct RecurringSettingsView: View {
         }
         .navigationTitle("settings.recurring")
         .listStyle(.insetGrouped)
+        .alert(
+            "recurring.settings.stop",
+            isPresented: Binding(
+                get: { pendingStop != nil },
+                set: { if !$0 { pendingStop = nil } }
+            )
+        ) {
+            Button("common.cancel", role: .cancel) { pendingStop = nil }
+            Button("recurring.settings.stop", role: .destructive) {
+                if let tx = pendingStop {
+                    RecurrenceService.stopRecurrence(for: tx, modelContext: modelContext)
+                }
+                pendingStop = nil
+            }
+        }
     }
 
     @ViewBuilder
