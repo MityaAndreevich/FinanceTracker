@@ -68,4 +68,56 @@ struct NewCategoryViewModelTests {
         #expect(category.name == "Groceries")
         #expect(category.nameCustom == "Groceries")
     }
+
+    // MARK: - Bug 18: duplicate name is rejected, never silently inserted
+
+    @Test func testSaveDuplicateName_returnsError_doesNotInsert() {
+        let existing = Category(
+            name: "Машина", kindRaw: "expense", icon: nil, order: 0,
+            nameKey: nil, nameCustom: "Машина"
+        )
+        // Same name (case-insensitive, with surrounding space) and same kind.
+        let result = NewCategoryViewModel.makeCategory(
+            name: "  машина ", kindRaw: "expense", icon: "car", order: 1,
+            existing: [existing]
+        )
+        guard case .failure(let error) = result else {
+            Issue.record("expected duplicate failure, got \(result)"); return
+        }
+        #expect(error == .duplicateName)
+    }
+
+    @Test func testDuplicateName_differentKind_isAllowed() {
+        // "Bonus" as an expense must not block an income "Bonus".
+        let existing = Category(
+            name: "Bonus", kindRaw: "expense", icon: nil, order: 0,
+            nameKey: nil, nameCustom: "Bonus"
+        )
+        let result = NewCategoryViewModel.makeCategory(
+            name: "Bonus", kindRaw: "income", icon: nil, order: 0,
+            existing: [existing]
+        )
+        guard case .success = result else {
+            Issue.record("expected success for different kind, got \(result)"); return
+        }
+    }
+
+    @Test func testRenameAfterDuplicate_savesSuccessfully() {
+        let existing = Category(
+            name: "Машина", kindRaw: "expense", icon: nil, order: 0,
+            nameKey: nil, nameCustom: "Машина"
+        )
+        // The user renames after the collision — the icon/type they already
+        // picked are preserved and the save now succeeds.
+        let result = NewCategoryViewModel.makeCategory(
+            name: "Машина 2", kindRaw: "expense", icon: "car", order: 1,
+            existing: [existing]
+        )
+        guard case .success(let category) = result else {
+            Issue.record("expected success after rename, got \(result)"); return
+        }
+        #expect(category.nameCustom == "Машина 2")
+        #expect(category.icon == "car")
+        #expect(category.kindRaw == "expense")
+    }
 }

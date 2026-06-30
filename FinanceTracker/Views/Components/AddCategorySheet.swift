@@ -201,20 +201,22 @@ struct AddCategorySheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        let lowerName = trimmed.lowercased()
-        let existingDuplicate = categories.filter { $0.kindRaw == typeRaw }.first { cat in
-            if let custom = cat.nameCustom?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !custom.isEmpty, custom.lowercased() == lowerName { return true }
-            if let key = cat.nameKey, !key.isEmpty {
-                let loc = NSLocalizedString(key, comment: "").lowercased()
-                return loc != key.lowercased() && loc == lowerName
-            }
-            return false
+        let existingDuplicate = categories.first {
+            NewCategoryViewModel.matchesName(trimmed, kindRaw: typeRaw, category: $0)
         }
         if let existingDuplicate {
-            // Don't create a second copy — return the existing one to the caller.
-            onCreate?(existingDuplicate)
-            dismiss()
+            if let onCreate {
+                // Picker path: typing a name that already exists reuses it rather
+                // than creating a second copy.
+                onCreate(existingDuplicate)
+                dismiss()
+            } else {
+                // Settings path (no callback): surface the collision instead of
+                // dismissing silently (Bug 18). The sheet stays open with the name
+                // intact so the user can rename and retry without re-entering data.
+                saveErrorKey = "category.error.duplicate_name"
+                showSaveError = true
+            }
             return
         }
 
@@ -230,9 +232,15 @@ struct AddCategorySheet: View {
     private func insertValidated(name: String, icon: String, order: Int) {
         guard !isCreating else { return }
         isCreating = true
-        switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: icon, order: order) {
+        switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: icon, order: order, existing: categories) {
         case .failure(.emptyName):
             saveErrorKey = "add.error.select_category"
+            showSaveError = true
+            isCreating = false
+        case .failure(.duplicateName):
+            // Surface instead of silently dropping the input (Bug 18). Presets are
+            // pre-filtered for collisions, so this fires only for the custom field.
+            saveErrorKey = "category.error.duplicate_name"
             showSaveError = true
             isCreating = false
         case .failure(.invalidIcon):
