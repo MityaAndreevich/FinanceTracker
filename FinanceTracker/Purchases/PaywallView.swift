@@ -214,6 +214,11 @@ private struct YearlyPlanCard: View {
     let displayPrice: String
     let action: () -> Void
 
+    // Apple §3.1.2(a): the user must explicitly acknowledge the trial terms
+    // BEFORE the StoreKit purchase sheet appears (Bug 7). The inline disclosure
+    // below stays as always-visible information; this modal is the gate.
+    @State private var showTrialConfirm = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
@@ -246,7 +251,9 @@ private struct YearlyPlanCard: View {
                 BadgeLabel(textKey: "paywall.yearly.save_amount", systemImage: "tag.fill")
             }
 
-            Button(action: action) {
+            Button {
+                showTrialConfirm = true
+            } label: {
                 Text("paywall.cta.yearly")
                     .font(.subheadline)
                     .fontWeight(.semibold)
@@ -257,6 +264,12 @@ private struct YearlyPlanCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
+            .alert("paywall.trial.modal.title", isPresented: $showTrialConfirm) {
+                Button("common.cancel", role: .cancel) {}
+                Button("paywall.cta.yearly") { action() }
+            } message: {
+                Text("paywall.trial.modal.body")
+            }
 
             // Apple §3.1.2(a): the free-trial CTA must disclose trial length,
             // the auto-renewing amount, and the cancellation path before purchase.

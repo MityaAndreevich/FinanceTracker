@@ -415,6 +415,9 @@
 "paywall.badge.founders_edition" = "Edición Fundador";
 "paywall.cta.yearly" = "Iniciar prueba gratis";
 "paywall.trial.disclosure" = "Tras 7 días gratis, se cobrarán $34.99/año automáticamente. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones.";
+/* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
+"paywall.trial.modal.title" = "Detalles de la prueba gratuita";
+"paywall.trial.modal.body" = "Tu prueba gratuita de 7 días comienza hoy. Al terminar, se renovará automáticamente por $34.99/año hasta que la canceles. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones; no se cobrará nada si cancelas antes de que termine la prueba.";
 "paywall.cta.lifetime" = "Obtener De por vida";
 "paywall.cta.monthly" = "Suscribirse mensual";
 "paywall.legal.auto_renew" = "Las suscripciones se renuevan automáticamente al final de cada periodo hasta que las canceles. Puedes administrarlas o cancelarlas cuando quieras en Ajustes → ID de Apple → Suscripciones. El cargo se aplica a tu cuenta de ID de Apple al confirmar la compra.";

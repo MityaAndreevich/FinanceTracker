@@ -419,6 +419,9 @@
 "paywall.badge.founders_edition" = "Edição Fundador";
 "paywall.cta.yearly" = "Iniciar teste grátis";
 "paywall.trial.disclosure" = "Após 7 dias grátis, $34.99/ano cobrado automaticamente. Cancele a qualquer momento em Ajustes › ID Apple › Assinaturas.";
+/* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
+"paywall.trial.modal.title" = "Detalhes do teste grátis";
+"paywall.trial.modal.body" = "Seu teste gratuito de 7 dias começa hoje. Ao terminar, a assinatura de $34.99/ano é renovada automaticamente até você cancelar. Cancele quando quiser em Ajustes › ID Apple › Assinaturas — sem cobrança se você cancelar antes do fim do teste.";
 "paywall.cta.lifetime" = "Obter Vitalício";
 "paywall.cta.monthly" = "Assinar mensal";
 "paywall.legal.auto_renew" = "As assinaturas são renovadas automaticamente ao final de cada período até serem canceladas. Você pode gerenciá-las ou cancelá-las quando quiser em Ajustes → ID Apple → Assinaturas. A cobrança é feita na sua conta do ID Apple ao confirmar a compra.";

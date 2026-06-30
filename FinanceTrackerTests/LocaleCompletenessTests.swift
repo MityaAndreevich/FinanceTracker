@@ -61,7 +61,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // Bumped 2026-06-30 (Bug 17): +4 add-transaction error keys referenced via
         // showErrorKey(...) but missing from ALL locales — they leaked raw to the
         // user (add.error.unknown/select_category/invalid_amount/save_failed). Was 500.
-        XCTAssertEqual(enKeys.count, 504, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-30 (Bug 7): +2 pre-purchase trial disclosure modal keys
+        // (paywall.trial.modal.title, paywall.trial.modal.body). Was 504.
+        XCTAssertEqual(enKeys.count, 506, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

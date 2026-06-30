@@ -401,6 +401,9 @@
 /* CTAs */
 "paywall.cta.yearly" = "Start free trial";
 "paywall.trial.disclosure" = "After 7 days free, $34.99/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
+/* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
+"paywall.trial.modal.title" = "Free trial details";
+"paywall.trial.modal.body" = "Your 7-day free trial starts today. After it ends, $34.99/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
 "paywall.cta.lifetime" = "Get Lifetime";
 "paywall.cta.monthly" = "Subscribe monthly";
 
