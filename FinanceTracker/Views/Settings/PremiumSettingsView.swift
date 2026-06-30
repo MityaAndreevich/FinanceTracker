@@ -12,6 +12,7 @@ import UIKit
 struct PremiumSettingsView: View {
     @StateObject private var pm = PurchaseManager.shared
     @State private var showPaywall = false
+    @State private var showRedeem = false
 
     var body: some View {
         let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
@@ -45,12 +46,14 @@ struct PremiumSettingsView: View {
                     } label: {
                         Label("premium.manage_subscription", systemImage: "gearshape")
                     }
+                }
 
-                    Button {
-                        redeemOfferCode()
-                    } label: {
-                        Label("premium.redeem_code", systemImage: "qrcode")
-                    }
+                // Always available — App Review redeems promo codes here to test
+                // IAPs, regardless of whether products have finished loading (Bug 6).
+                Button {
+                    showRedeem = true
+                } label: {
+                    Label("premium.redeem_code", systemImage: "qrcode")
                 }
 
                 Button {
@@ -60,19 +63,29 @@ struct PremiumSettingsView: View {
                 }
             }
 
-            // Подсказка про redeem имеет смысл только когда есть подписки/коды
-            if pm.hasSubscriptionProducts {
-                Section {
-                    Text("premium.redeem_hint")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)   // Bug 10: full wrap for longer RU/UK copy
-                }
+            // Shown alongside the always-available Redeem Code button (Bug 6).
+            Section {
+                Text("premium.redeem_hint")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)   // Bug 10: full wrap for longer RU/UK copy
             }
         }
         .navigationTitle("settings.premium")
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showPaywall) { PaywallView() }
+        // iOS 16+ native redemption sheet — functional text field + button,
+        // unlike the scene-based presentCodeRedemptionSheet path (Bug 6).
+        .offerCodeRedemption(isPresented: $showRedeem) { result in
+            switch result {
+            case .success:
+                Task { await pm.refreshStatus() }
+            case .failure(let error):
+                #if DEBUG
+                print("Offer code redemption failed: \(error.localizedDescription)")
+                #endif
+            }
+        }
         .task {
             // При заходе на экран — перечитать entitlement
             await pm.refreshStatus()
@@ -84,17 +97,6 @@ struct PremiumSettingsView: View {
     private func openManageSubscriptions() {
         guard let scene = activeWindowScene else { return }
         Task { try? await AppStore.showManageSubscriptions(in: scene) }
-    }
-
-    private func redeemOfferCode() {
-        guard let scene = activeWindowScene else { return }
-
-        if #available(iOS 18.0, *) {
-            Task { try? await AppStore.presentOfferCodeRedeemSheet(in: scene) }
-        } else {
-            // iOS 14–17 fallback (deprecated, but works)
-            SKPaymentQueue.default().presentCodeRedemptionSheet()
-        }
     }
 
     private var activeWindowScene: UIWindowScene? {
