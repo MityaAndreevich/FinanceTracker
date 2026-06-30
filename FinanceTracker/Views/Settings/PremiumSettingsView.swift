@@ -69,6 +69,18 @@ struct PremiumSettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)   // Bug 10: full wrap for longer RU/UK copy
+
+                #if DEBUG
+                // Bug 6 (device test #5): the Redeem sheet's input is disabled when
+                // the app runs against the local FinanceTracker.storekit config —
+                // Apple's local StoreKit environment can't redeem offer codes. The
+                // binding/availability are correct; the real test path is a
+                // TestFlight/App Store build. DEBUG-only so users never see this.
+                Text("premium.redeem.debug_hint")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                #endif
             }
         }
         .navigationTitle("settings.premium")

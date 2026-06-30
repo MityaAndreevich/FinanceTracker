@@ -394,6 +394,7 @@
 "premium.redeem_code" = "Resgatar código";
 "premium.restore" = "Restaurar compras";
 "premium.redeem_hint" = "Use Resgatar código se você tiver um código promocional do Premium.";
+"premium.redeem.debug_hint" = "Versão de depuração: o resgate de código só funciona em uma versão do TestFlight ou da App Store — o StoreKit local não resgata códigos (limitação da Apple).";
 "paywall.title" = "Seu dinheiro, no seu iPhone para sempre";
 "paywall.subtitle" = "Tudo fica no seu iPhone — sem servidores, sem contas, sem rastreamento.";
 "paywall.loading" = "Carregando planos…";

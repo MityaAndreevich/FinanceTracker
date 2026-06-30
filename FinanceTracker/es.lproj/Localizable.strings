@@ -390,6 +390,7 @@
 "premium.redeem_code" = "Canjear código";
 "premium.restore" = "Restaurar compras";
 "premium.redeem_hint" = "Usa Canjear código si tienes un código promocional para Premium.";
+"premium.redeem.debug_hint" = "Compilación de depuración: el canje de códigos solo funciona en una versión de TestFlight o App Store — StoreKit local no admite códigos (limitación de Apple).";
 "paywall.title" = "Tu dinero, en tu iPhone para siempre";
 "paywall.subtitle" = "Todo se queda en tu iPhone — sin servidores, sin cuentas, sin rastreo.";
 "paywall.loading" = "Cargando planes…";

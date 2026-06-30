@@ -375,6 +375,7 @@
 "premium.redeem_code" = "Активировать код";
 "premium.restore" = "Восстановить покупки";
 "premium.redeem_hint" = "Используйте код, если у вас есть промокод.";
+"premium.redeem.debug_hint" = "Debug-сборка: ввод кода работает только в сборке TestFlight или App Store — локальный StoreKit не поддерживает коды (ограничение Apple).";
 
 /* Paywall */
 "paywall.title" = "Финансы под вашим контролем, навсегда на iPhone";

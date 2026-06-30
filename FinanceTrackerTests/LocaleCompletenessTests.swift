@@ -65,7 +65,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // (paywall.trial.modal.title, paywall.trial.modal.body). Was 504.
         // Bumped 2026-06-30 (Sprint B Bug 18): +1 duplicate-category-name error key
         // (category.error.duplicate_name). Was 506.
-        XCTAssertEqual(enKeys.count, 507, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-30 (Sprint B patch Bug 6): +1 DEBUG-only redeem-code hint
+        // documenting the local-StoreKit code-redemption limitation
+        // (premium.redeem.debug_hint). Was 507.
+        XCTAssertEqual(enKeys.count, 508, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
