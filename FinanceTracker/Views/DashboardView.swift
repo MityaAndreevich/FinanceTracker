@@ -443,7 +443,7 @@ struct DashboardView: View {
                 .padding(.horizontal, 16)
 
             VStack(spacing: 0) {
-                ForEach(Array(recentTransactions.enumerated()), id: \.offset) { index, tx in
+                ForEach(Array(recentTransactions.enumerated()), id: \.element.uuid) { index, tx in
                     TransactionRow(tx: tx)
                         .padding(.horizontal, 16)
 
