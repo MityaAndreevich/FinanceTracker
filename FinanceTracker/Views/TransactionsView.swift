@@ -187,7 +187,13 @@ struct TransactionsView: View {
         Section(header: sectionHeader(for: day)) {
             let dayItems = grouped[day] ?? []
 
-            ForEach(dayItems) { tx in
+            // Identity on the stable app-level uuid, never the default
+            // persistentModelID: a freshly inserted row's persistentModelID is
+            // temporary until save and flips to permanent on save, which makes a
+            // ForEach keyed on it transiently double-render during rapid saves at
+            // scale (Round 9 ghost duplication, gone after restart). uuid is fixed
+            // at init.
+            ForEach(dayItems, id: \.uuid) { tx in
                 Button { editTx = tx } label: {
                     TransactionRow(tx: tx)
                 }

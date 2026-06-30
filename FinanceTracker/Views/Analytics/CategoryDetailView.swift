@@ -63,7 +63,9 @@ struct CategoryDetailView: View {
                 .listRowBackground(Color.clear)
             }
 
-            ForEach(filtered) { tx in
+            // Stable uuid identity, not the default persistentModelID (temporary
+            // until save) — avoids transient ghost rows at scale (Round 9).
+            ForEach(filtered, id: \.uuid) { tx in
                 TransactionRow(tx: tx)
             }
         }

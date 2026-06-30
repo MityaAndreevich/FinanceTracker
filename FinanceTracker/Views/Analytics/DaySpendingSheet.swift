@@ -86,7 +86,9 @@ struct DaySpendingSheet: View {
                 }
 
                 Section {
-                    ForEach(filtered) { tx in
+                    // Stable uuid identity, not the default persistentModelID
+                    // (temporary until save) — avoids transient ghost rows at scale.
+                    ForEach(filtered, id: \.uuid) { tx in
                         NavigationLink {
                             TransactionDetailView(tx: tx)
                         } label: {
