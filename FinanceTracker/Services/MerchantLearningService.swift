@@ -38,8 +38,16 @@ enum MerchantLearningService {
             }
             try context.save()
         } catch {
+            // Round 9: don't let a failed learning write poison the shared
+            // mainContext. A pending invalid change left here makes the NEXT
+            // unrelated save() — e.g. an inline category create on the + screen —
+            // throw, surfacing a spurious "save failed" that only clears on restart.
+            // Roll our change back. Safe because record() always runs AFTER the
+            // caller has already persisted the primary transaction, so there is no
+            // other unsaved work to lose.
+            context.rollback()
             #if DEBUG
-            print("[MerchantLearning] record failed: \(error.localizedDescription)")
+            print("[MerchantLearning] record failed (rolled back): \(error.localizedDescription)")
             #endif
         }
     }

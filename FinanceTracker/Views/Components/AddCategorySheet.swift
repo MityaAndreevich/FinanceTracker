@@ -31,7 +31,7 @@ struct AddCategorySheet: View {
     // Surfaced when validation or the SwiftData save fails, instead of crashing
     // or silently swallowing the error (Bug 16 / Bug 17).
     @State private var showSaveError = false
-    @State private var saveErrorKey = "add.error.save_failed"
+    @State private var saveErrorKey = "category.error.save_failed"
 
     // Re-entrancy guard: a double-tap on Add / a preset (or the sheet briefly
     // re-presenting) must not insert the category more than once (Bug 17: the
@@ -222,7 +222,7 @@ struct AddCategorySheet: View {
 
     /// Single insert path shared by presets and the custom field. Validates the
     /// input (Bug 16: an unrenderable icon no longer reaches `save()`), wraps the
-    /// save in do-catch (Bug 17: no raw "add.error.save_failed" key, no silent
+    /// save in do-catch (Bug 17: no raw "category.error.save_failed" key, no silent
     /// swallow), and rolls back the insert on failure so no half-saved Category
     /// lingers in the context.
     private func insertValidated(name: String, icon: String, order: Int) {
@@ -245,7 +245,7 @@ struct AddCategorySheet: View {
             switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: nil, order: order) {
             case .success(let category): persist(category)
             case .failure:
-                saveErrorKey = "add.error.save_failed"
+                saveErrorKey = "category.error.save_failed"
                 showSaveError = true
                 isCreating = false
             }
@@ -262,7 +262,7 @@ struct AddCategorySheet: View {
             // Roll back so a failed save can't leave a dangling object that a
             // later save would flush (a contributor to the cascade in Bug 17).
             modelContext.delete(category)
-            saveErrorKey = "add.error.save_failed"
+            saveErrorKey = "category.error.save_failed"
             showSaveError = true
             isCreating = false
             #if DEBUG

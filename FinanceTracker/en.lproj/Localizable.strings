@@ -352,6 +352,7 @@
 "add.error.invalid_amount" = "Invalid amount.";
 "add.error.save_failed" = "Couldn't save your transaction. Please try again.";
 "category.error.duplicate_name" = "Category with this name already exists";
+"category.error.save_failed" = "Couldn't save the category. Please try again.";
 
 /* ======================================================
    Input validation (T-18)

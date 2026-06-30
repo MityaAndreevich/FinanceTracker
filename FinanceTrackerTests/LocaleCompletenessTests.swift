@@ -74,7 +74,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // (general.reset_success.message, general.reset_failed.message,
         // general.info.default). testAllLocalizedKeysExist was also strengthened to
         // catch the `…Key:` argument / `…Key =` assignment class. Was 508.
-        XCTAssertEqual(enKeys.count, 511, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-30 (Brief 36 Bug 34.5): +1 category-specific save-error key
+        // (category.error.save_failed). AddCategorySheet was showing the TRANSACTION
+        // error (add.error.save_failed → "Не удалось сохранить транзакцию") when a
+        // category save failed. Was 511.
+        XCTAssertEqual(enKeys.count, 512, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

@@ -385,6 +385,7 @@
 "add.error.invalid_amount" = "Valor inválido.";
 "add.error.save_failed" = "Não foi possível salvar a transação. Tente novamente.";
 "category.error.duplicate_name" = "Já existe uma categoria com este nome";
+"category.error.save_failed" = "Não foi possível guardar a categoria. Tente novamente.";
 "validation.amount.out_of_range" = "O valor deve estar entre 0,01 e 100.000.000.000,00.";
 "validation.merchant.too_long" = "O título deve ter 200 caracteres ou menos.";
 "validation.note.too_long" = "A nota deve ter 2.000 caracteres ou menos.";
