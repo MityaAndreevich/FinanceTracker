@@ -209,4 +209,80 @@ struct QuickAddSaveServiceTests {
         let resolved = QuickAddSaveService.resolveCategory(for: parsed, in: ctx)
         #expect(resolved?.name == otherCat.name, "should fall back to Other when no suggestion")
     }
+
+    // MARK: - previewCategory (voice / + screen) — Sprint B patch (device test #5)
+
+    @Test func test_previewCategory_learnedMerchant_returnsLearned_notOther() throws {
+        let ctx = try makeContext()
+        let mashina = makeCategory(name: "Машина", kindRaw: "expense", in: ctx)
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        // User taught Бензин → Машина (e.g. by manually picking it once).
+        MerchantLearningService.record(merchant: "Бензин", categoryName: "Машина", in: ctx)
+
+        let parsed = QuickAddParsedInput(
+            amountCents: 50_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        let preview = QuickAddSaveService.previewCategory(for: parsed, in: ctx)
+        #expect(preview?.name == mashina.name, "voice preview must honor the learned merchant mapping")
+    }
+
+    @Test func test_previewCategory_unknownMerchant_fallsBackToOther_noKeywordGuess() throws {
+        let ctx = try makeContext()
+        _ = makeCategory(name: "Food & Drink", kindRaw: "expense", in: ctx)
+        let other = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        // "coffee" keyword-maps to Food & Drink, but the + screen must NOT apply a
+        // mere keyword guess to an untaught merchant (Round 8) — it stays Other.
+        let parsed = QuickAddParsedInput(
+            amountCents: 500, typeRaw: "expense", merchant: "coffee", suggestedCategoryName: "Food & Drink"
+        )
+        let preview = QuickAddSaveService.previewCategory(for: parsed, in: ctx)
+        #expect(preview?.name == other.name, "untaught expense stays Other on the + screen — no keyword guess")
+    }
+
+    @Test func testVoicePath_remembersAndLookups() throws {
+        QuickAddSaveService._resetDedupCacheForTesting()
+        let ctx = try makeContext()
+        let mashina = makeCategory(name: "Машина", kindRaw: "expense", in: ctx)
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        // First voice save: the user manually picked Машина (overrideCategory),
+        // which the save path records as learning for "Бензин".
+        let first = QuickAddParsedInput(
+            amountCents: 50_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        _ = try QuickAddSaveService.save(
+            parsed: first, modelContext: ctx, defaultCurrencyCode: "USD",
+            overrideCategory: mashina, now: Date()
+        )
+
+        // Next voice entry of the same merchant, no override: previewCategory must
+        // now look up the learned mapping → Машина, not Без категории.
+        let second = QuickAddParsedInput(
+            amountCents: 20_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        let preview = QuickAddSaveService.previewCategory(for: second, in: ctx)
+        #expect(preview?.name == mashina.name, "voice learns: a taught merchant suggests Машина next time")
+    }
+
+    @Test func testInconsistency_DashboardAndVoice_sameMerchant_sameCategory() throws {
+        let ctx = try makeContext()
+        let mashina = makeCategory(name: "Машина", kindRaw: "expense", in: ctx)
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+        MerchantLearningService.record(merchant: "Бензин", categoryName: "Машина", in: ctx)
+
+        let parsed = QuickAddParsedInput(
+            amountCents: 50_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        let dashboard = QuickAddSaveService.resolveCategory(for: parsed, in: ctx)
+        let voice = QuickAddSaveService.previewCategory(for: parsed, in: ctx)
+        #expect(dashboard?.name == mashina.name)
+        #expect(voice?.name == mashina.name)
+        #expect(dashboard?.uuid == voice?.uuid, "Dashboard and voice resolve the same learned category")
+    }
 }

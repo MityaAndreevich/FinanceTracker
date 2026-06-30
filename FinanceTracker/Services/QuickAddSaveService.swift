@@ -111,6 +111,37 @@ enum QuickAddSaveService {
         return tx
     }
 
+    /// Category for the Quick Entry / voice preview chip (and the save it commits).
+    ///
+    /// Deliberately *not* the same as `resolveCategory`: per the Round 8 decision
+    /// the + screen does not silently apply a keyword *guess* to expenses (it felt
+    /// presumptuous and was often wrong). But a category the user explicitly TAUGHT
+    /// for this merchant is a correction, not a guess — so a learned mapping is
+    /// honored here. Income still resolves fully (one dedicated Income category).
+    ///
+    /// Bug (device test #5): the voice path computed "Other" directly and passed it
+    /// as `overrideCategory`, bypassing learning entirely — so "Бензин" never picked
+    /// up a previously taught "Машина". Routing the + screen through here fixes the
+    /// lookup while keeping keyword guesses suppressed, matching the Dashboard path.
+    static func previewCategory(for parsed: QuickAddParsedInput, in context: ModelContext) -> Category? {
+        if parsed.typeRaw == TransactionType.income.raw {
+            return resolveCategory(for: parsed, in: context)
+        }
+
+        let all = (try? context.fetch(FetchDescriptor<Category>())) ?? []
+
+        if let merchant = parsed.merchant,
+           let learnedName = MerchantLearningService.suggestedCategoryName(for: merchant, in: context),
+           let learned = all.first(where: {
+               $0.kindRaw == parsed.typeRaw && $0.name.lowercased() == learnedName.lowercased()
+           }) {
+            return learned
+        }
+
+        return all.first { $0.name == "Other" && $0.kindRaw == parsed.typeRaw }
+            ?? all.first { $0.name == "Other" }
+    }
+
     /// Priority: learned merchant mapping → parser suggestion → category named "Other".
     static func resolveCategory(for parsed: QuickAddParsedInput, in context: ModelContext) -> Category? {
         let suggestedName = parsed.merchant.flatMap {

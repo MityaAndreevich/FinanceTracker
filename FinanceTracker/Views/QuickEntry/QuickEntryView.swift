@@ -79,20 +79,18 @@ struct QuickEntryView: View {
 
     /// Category that will actually be saved for a parsed input.
     ///
-    /// Round 8 device feedback: silently auto-assigning a *guessed* expense
-    /// category (e.g. "транспорт" for "купил кофе") felt presumptuous and was
-    /// often wrong. So expenses now default to "Other" until the user taps the
-    /// badge to choose — no silent keyword guessing. Income keeps its automatic
-    /// assignment because the taxonomy has a single dedicated "Income" category,
-    /// which is correct rather than a guess.
+    /// A manual pick (`categoryOverride`) always wins. Otherwise resolution is
+    /// delegated to `QuickAddSaveService.previewCategory`, which honors a learned
+    /// merchant mapping but — per the Round 8 decision — does NOT silently apply a
+    /// keyword *guess* to expenses (that felt presumptuous and was often wrong).
+    ///
+    /// Bug (device test #5): this previously returned "Other" for every untaught
+    /// expense AND for taught ones, so voice never learned — "Бензин" stayed
+    /// "Без категории" no matter how often the user picked "Машина". The learned
+    /// lookup now lives in the shared service, so voice matches the Dashboard path.
     private func effectiveCategory(for p: QuickAddParsedInput) -> Category? {
         if let categoryOverride { return categoryOverride }
-        if p.typeRaw == TransactionType.income.raw {
-            return QuickAddSaveService.resolveCategory(for: p, in: modelContext)
-        }
-        let all = (try? modelContext.fetch(FetchDescriptor<Category>())) ?? []
-        return all.first { $0.name == "Other" && $0.kindRaw == p.typeRaw }
-            ?? all.first { $0.name == "Other" }
+        return QuickAddSaveService.previewCategory(for: p, in: modelContext)
     }
 
     private var saveA11yLabel: Text {
