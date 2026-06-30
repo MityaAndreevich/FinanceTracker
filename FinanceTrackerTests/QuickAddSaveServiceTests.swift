@@ -93,6 +93,69 @@ struct QuickAddSaveServiceTests {
         }
     }
 
+    // MARK: - Idempotency / dedup (Bug 4)
+
+    @Test func test_duplicateWithin30s_returnsExisting() throws {
+        QuickAddSaveService._resetDedupCacheForTesting()
+        let ctx = try makeContext()
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        let parsed = QuickAddParsedInput(
+            amountCents: 50_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        let now = Date()
+        let first = try QuickAddSaveService.save(
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now
+        )
+        let second = try QuickAddSaveService.save(
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now.addingTimeInterval(5)
+        )
+
+        #expect(first.uuid == second.uuid, "second save within 30s must return the same transaction")
+        let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
+        #expect(count == 1, "only one row should exist after a duplicate save")
+    }
+
+    @Test func test_sameAmountDifferentMerchant_savesBoth() throws {
+        QuickAddSaveService._resetDedupCacheForTesting()
+        let ctx = try makeContext()
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        let now = Date()
+        let a = QuickAddParsedInput(amountCents: 550, typeRaw: "expense", merchant: "Starbucks", suggestedCategoryName: nil)
+        let b = QuickAddParsedInput(amountCents: 550, typeRaw: "expense", merchant: "Costa", suggestedCategoryName: nil)
+        let txA = try QuickAddSaveService.save(parsed: a, modelContext: ctx, defaultCurrencyCode: "USD", now: now)
+        let txB = try QuickAddSaveService.save(parsed: b, modelContext: ctx, defaultCurrencyCode: "USD", now: now)
+
+        #expect(txA.uuid != txB.uuid)
+        let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
+        #expect(count == 2, "same amount but different merchant are distinct transactions")
+    }
+
+    @Test func test_sameTransactionAfter31s_savesAgain() throws {
+        QuickAddSaveService._resetDedupCacheForTesting()
+        let ctx = try makeContext()
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        let parsed = QuickAddParsedInput(
+            amountCents: 50_000, typeRaw: "expense", merchant: "Бензин", suggestedCategoryName: nil
+        )
+        let now = Date()
+        let first = try QuickAddSaveService.save(
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now
+        )
+        let second = try QuickAddSaveService.save(
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now.addingTimeInterval(31)
+        )
+
+        #expect(first.uuid != second.uuid, "after the 30s window the same input creates a new transaction")
+        let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
+        #expect(count == 2)
+    }
+
     // MARK: - resolveCategory
 
     @Test func test_resolveCategory_learnedWins_overParsedSuggestion() throws {
