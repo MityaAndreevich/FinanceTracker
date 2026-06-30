@@ -200,22 +200,28 @@ enum QuickAddParser {
     // Either list firing flags the transaction as income.
 
     private static let verbIncomeKeywords = [
-        // English
-        "earned", "received", "got paid", "won", "made", "sold",
-        // Russian
+        // English — "found" covers found money (Bug 2: a windfall is income).
+        "earned", "received", "got paid", "won", "made", "sold", "found",
+        // Russian. Bug 2 (device test #3): "выйграла 100" filed as an expense
+        // because no win/found verb existed. Substring matching means the masculine
+        // root also catches -ла/-ли ("выиграл" → "выиграла"/"выиграли"); the common
+        // "выйграл" misspelling (extra й) is listed explicitly.
         "заработал", "заработала", "получил", "получила", "зачислено",
         "пришло", "пришла", "пришёл", "вернули", "перевели",
         "продал", "продала", "продаю", "продали",
+        "выиграл", "выйграл", "нашёл", "нашел", "нашла", "нашли",
         // Voice transliterations (SFSpeechRecognizer EN locale on RU speech)
-        "poluchil", "poluchila",
-        // Spanish
-        "gané", "recibí", "cobré", "vendí", "vendió",
+        "poluchil", "poluchila", "vyigral", "vyigrala",
+        // Spanish — add 1st/3rd-person & accent-free conjugations (Bug 2)
+        "gané", "gane", "ganó", "gano", "ganamos", "recibí", "cobré",
+        "encontré", "encontre", "vendí", "vendió",
         // German
         "verdient", "bekommen", "erhalten", "gutgeschrieben", "verkauft", "verkaufte",
         // French
         "gagné", "reçu", "touché", "perçu", "vendu", "vendue",
-        // Portuguese (Brazil)
-        "ganhei", "recebi", "caiu", "pingou", "vendi", "vendeu",
+        // Portuguese (Brazil) — add 3rd-person & plural conjugations (Bug 2)
+        "ganhei", "ganhou", "ganhamos", "recebi", "encontrei", "caiu", "pingou",
+        "vendi", "vendeu",
         // Japanese
         "稼いだ", "もらった", "入った", "振り込まれた", "売った", "売却",
         // Chinese (Simplified)
@@ -226,21 +232,24 @@ enum QuickAddParser {
         // English
         "paycheck", "salary", "income", "refund", "bonus", "freelance",
         "deposit", "interest", "dividend", "cashback", "payout",
-        "reimbursement", "commission",
-        // Russian
+        "reimbursement", "commission", "prize", "lottery",
+        // Russian. "выигрыш"/"выйгрыш" (Bug 2) + lottery noun so a bare
+        // "лотерея 100" reads as income even without a win verb.
         "зарплата", "зп", "з/п", "доход", "перевод", "премия", "аванс", "выплата",
         "донат", "чаевые", "возврат", "кэшбэк", "кешбэк",
+        "выигрыш", "выйгрыш", "лотерея",
         // Voice transliterations
         "zarplata", "premia", "premiia", "avans", "zp",
         // Spanish
         "salario", "sueldo", "paga", "nómina", "ingreso", "reembolso", "bono",
-        "devolución", "propina",
+        "devolución", "propina", "premio", "lotería", "loteria",
         // German
         "gehalt", "lohn", "einnahme", "rückzahlung",
         // French
         "salaire", "paie", "revenu", "remboursement", "prime", "remise",
         // Portuguese (Brazil)
         "salário", "pagamento", "renda", "bônus", "devolução",
+        "prêmio", "premio", "loteria",
         // Japanese
         "給料", "給与", "ボーナス", "返金", "副業", "入金", "キャッシュバック",
         // Chinese (Simplified)

@@ -216,6 +216,58 @@ struct QuickAddParserTests {
         #expect(result?.amountCents == 700)
     }
 
+    // MARK: - win / found income verbs (Sprint B Bug #2)
+
+    @Test func parse_income_ru_выйграла_misspelled() {
+        // The reported device case: extra "й" misspelling, feminine form.
+        let result = QuickAddParser.parse("Выйграла 100 в лотерею")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 10000)
+    }
+
+    @Test func parse_income_ru_выиграл_correctSpelling() {
+        let result = QuickAddParser.parse("выиграл 250")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 25000)
+    }
+
+    @Test func parse_income_ru_нашёл() {
+        let result = QuickAddParser.parse("нашёл 500")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 50000)
+    }
+
+    @Test func parse_income_en_won() {
+        let result = QuickAddParser.parse("won 50 in a bet")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 5000)
+    }
+
+    @Test func parse_income_en_found() {
+        let result = QuickAddParser.parse("found 20 on the street")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 2000)
+    }
+
+    @Test func parse_income_es_gane_lottery() {
+        let result = QuickAddParser.parse("Gané 200 en lotería")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 20000)
+    }
+
+    @Test func parse_income_pt_ganhou_lottery() {
+        let result = QuickAddParser.parse("Ganhou 100 na loteria")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 10000)
+    }
+
+    @Test func parse_income_ru_лотерея_noun_only() {
+        // Bare lottery noun, no win verb, still reads as income.
+        let result = QuickAddParser.parse("лотерея 300")
+        #expect(result?.typeRaw == "income")
+        #expect(result?.amountCents == 30000)
+    }
+
     @Test func parse_income_prodala() {
         let result = QuickAddParser.parse("продала велик 5000")
         #expect(result?.typeRaw == "income")

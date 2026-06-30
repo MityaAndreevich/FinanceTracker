@@ -205,7 +205,12 @@ enum CategorySuggestionService {
         // ── Income ──────────────────────────────────────────────────────────────
         ("salary", "Income"), ("paycheck", "Income"), ("freelance", "Income"),
         ("bonus", "Income"), ("refund", "Income"), ("dividend", "Income"),
+        ("prize", "Income"), ("lottery", "Income"),
         ("зарплата", "Income"), ("аванс", "Income"), ("гонорар", "Income"),
+        ("выигрыш", "Income"), ("лотерея", "Income"),
+        // ES / PT
+        ("premio", "Income"), ("lotería", "Income"), ("loteria", "Income"),
+        ("prêmio", "Income"),
     ]
 
     // MARK: - Brand lookup table (sorted longest-first to prefer specific keywords)
