@@ -33,6 +33,11 @@ struct AddCategorySheet: View {
     @State private var showSaveError = false
     @State private var saveErrorKey = "add.error.save_failed"
 
+    // Re-entrancy guard: a double-tap on Add / a preset (or the sheet briefly
+    // re-presenting) must not insert the category more than once (Bug 17: the
+    // cascade produced duplicate rows). Reset only when a save actually fails.
+    @State private var isCreating = false
+
     /// Called with the newly created category when one is added (preset or custom).
     /// The Settings path leaves this nil and relies on the @Query refresh.
     private let onCreate: ((Category) -> Void)?
@@ -223,10 +228,13 @@ struct AddCategorySheet: View {
     /// swallow), and rolls back the insert on failure so no half-saved Category
     /// lingers in the context.
     private func insertValidated(name: String, icon: String, order: Int) {
+        guard !isCreating else { return }
+        isCreating = true
         switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: icon, order: order) {
         case .failure(.emptyName):
             saveErrorKey = "add.error.select_category"
             showSaveError = true
+            isCreating = false
         case .failure(.invalidIcon):
             // The picker only offers renderable symbols, so this is defensive:
             // drop the bad icon and retry icon-less rather than block the user.
@@ -235,6 +243,7 @@ struct AddCategorySheet: View {
             case .failure:
                 saveErrorKey = "add.error.save_failed"
                 showSaveError = true
+                isCreating = false
             }
         case .success(let category):
             persist(category)
@@ -251,6 +260,7 @@ struct AddCategorySheet: View {
             modelContext.delete(category)
             saveErrorKey = "add.error.save_failed"
             showSaveError = true
+            isCreating = false
             #if DEBUG
             print("AddCategorySheet save failed: \(error.localizedDescription)")
             #endif

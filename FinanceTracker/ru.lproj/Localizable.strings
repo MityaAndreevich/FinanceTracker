@@ -348,6 +348,12 @@
 "edit.error.invalid_amount" = "Некорректная сумма.";
 "edit.error.save_failed" = "Не удалось сохранить.";
 
+/* Add-transaction errors (shown via Text(LocalizedStringKey(errorMessageKey))) */
+"add.error.unknown" = "Что-то пошло не так.";
+"add.error.select_category" = "Выберите категорию.";
+"add.error.invalid_amount" = "Некорректная сумма.";
+"add.error.save_failed" = "Не удалось сохранить транзакцию. Попробуйте ещё раз.";
+
 /* ======================================================
    Input validation (T-18)
    ====================================================== */

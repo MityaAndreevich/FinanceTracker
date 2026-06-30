@@ -343,6 +343,12 @@
 "edit.error.invalid_amount" = "Invalid amount.";
 "edit.error.save_failed" = "Failed to save.";
 
+/* Add-transaction errors (shown via Text(LocalizedStringKey(errorMessageKey))) */
+"add.error.unknown" = "Something went wrong.";
+"add.error.select_category" = "Please select a category.";
+"add.error.invalid_amount" = "Invalid amount.";
+"add.error.save_failed" = "Couldn't save your transaction. Please try again.";
+
 /* ======================================================
    Input validation (T-18)
    ====================================================== */

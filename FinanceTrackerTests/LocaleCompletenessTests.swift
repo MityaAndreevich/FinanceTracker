@@ -58,7 +58,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // 5 distinct strings. Was 494.
         // Bumped 2026-06-29 (shake-to-undo): +1 undo confirmation toast key
         // (quickadd.undo.confirmed). Was 499.
-        XCTAssertEqual(enKeys.count, 500, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-30 (Bug 17): +4 add-transaction error keys referenced via
+        // showErrorKey(...) but missing from ALL locales — they leaked raw to the
+        // user (add.error.unknown/select_category/invalid_amount/save_failed). Was 500.
+        XCTAssertEqual(enKeys.count, 504, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
@@ -112,6 +115,31 @@ final class LocaleCompletenessTests: XCTestCase {
             missing.sorted().joined(separator: "\n"))
     }
 
+    /// Stronger sibling of `testNoMissingLocalizationKeys`: every key referenced
+    /// in code must exist in **every** shipping locale, not just the EN master.
+    /// This is what would have caught the Bug 17 leak in non-EN locales too.
+    func testAllLocalizedKeysExist() throws {
+        let sourceDir = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("FinanceTracker")
+
+        let referenced = scanCodebaseForLocalizationKeys(in: sourceDir)
+        XCTAssertFalse(referenced.isEmpty, "Scanner found no keys — path wrong? \(sourceDir.path)")
+
+        for locale in locales {
+            guard let dict = strings(for: locale) else {
+                XCTFail("Missing locale: \(locale)")
+                continue
+            }
+            let present = Set(dict.keys)
+            let missing = referenced.subtracting(present)
+            XCTAssertTrue(missing.isEmpty,
+                "\(locale) is missing localization keys referenced in code:\n" +
+                missing.sorted().joined(separator: "\n"))
+        }
+    }
+
     /// Extracts dotted localization keys from Swift localization call-sites.
     /// `systemImage:` / `systemName:` arguments are stripped first so SF Symbol
     /// names (e.g. "house.fill") are never mistaken for keys. Only the first
@@ -121,6 +149,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // swiftlint:disable:next force_try
         let callSite = try! NSRegularExpression(pattern:
             #"(?:NSLocalizedString|String\(localized:|LocalizedStringKey|Text|Section|Button|Label|Toggle|Picker|row|navigationTitle|navigationBarTitle|confirmationDialog|alert|tabItem|header:\s*Text)\s*\(\s*"([^"]+)""#)
+        // Codebase-specific helpers that take a localization key as a plain String
+        // — these are how the add.error.* leak shipped (Bug 17): showErrorKey("…"),
+        // fail(key: "…"), and the `errorMessageKey = "…"` default state value.
+        let helperCallSite = try! NSRegularExpression(pattern:
+            #"(?:showErrorKey\s*\(|fail\s*\(\s*key:|errorMessageKey[^"\n]*=)\s*"([^"]+)""#)
         let symbolArg = try! NSRegularExpression(pattern: #"system(?:Image|Name):\s*"[^"]+""#)
         let dotted = try! NSRegularExpression(pattern: #"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$"#)
 
@@ -137,10 +170,12 @@ final class LocaleCompletenessTests: XCTestCase {
             src = symbolArg.stringByReplacingMatches(
                 in: src, range: NSRange(src.startIndex..., in: src), withTemplate: "systemImage: SYMBOL")
             let range = NSRange(src.startIndex..., in: src)
-            callSite.enumerateMatches(in: src, range: range) { match, _, _ in
-                guard let m = match, let r = Range(m.range(at: 1), in: src) else { return }
-                let key = String(src[r])
-                if isDotted(key) { keys.insert(key) }
+            for regex in [callSite, helperCallSite] {
+                regex.enumerateMatches(in: src, range: range) { match, _, _ in
+                    guard let m = match, let r = Range(m.range(at: 1), in: src) else { return }
+                    let key = String(src[r])
+                    if isDotted(key) { keys.insert(key) }
+                }
             }
         }
         return keys

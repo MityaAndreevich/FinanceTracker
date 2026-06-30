@@ -350,6 +350,12 @@
 "edit.error.invalid_amount" = "Недійсна сума.";
 "edit.error.save_failed" = "Не вдалося зберегти.";
 
+/* Add-transaction errors (shown via Text(LocalizedStringKey(errorMessageKey))) */
+"add.error.unknown" = "Щось пішло не так.";
+"add.error.select_category" = "Будь ласка, виберіть категорію.";
+"add.error.invalid_amount" = "Недійсна сума.";
+"add.error.save_failed" = "Не вдалося зберегти транзакцію. Спробуйте ще раз.";
+
 /* ======================================================
    Input validation
    ====================================================== */
