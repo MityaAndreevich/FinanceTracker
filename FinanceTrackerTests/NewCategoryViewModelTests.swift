@@ -102,6 +102,43 @@ struct NewCategoryViewModelTests {
         }
     }
 
+    // Sprint B patch (device test #5): the inline category-create flows (Add
+    // Transaction, Quick Entry picker) and Settings all share this gate. A
+    // .duplicateName result is what drives AddCategorySheet to show the alert and
+    // to NOT call onCreate — so the caller never selects/commits a half-created
+    // category and the transaction isn't filed against one. These pin that gate
+    // per entry point (the SwiftUI plumbing itself is covered on-device).
+
+    @Test func testAddTransactionInlineCategoryCreate_duplicateName_showsAlertAndAbortsSave() {
+        let existing = Category(
+            name: "Тест", kindRaw: "expense", icon: nil, order: 0,
+            nameKey: nil, nameCustom: "Тест"
+        )
+        let result = NewCategoryViewModel.makeCategory(
+            name: "Тест", kindRaw: "expense", icon: "tag", order: 1,
+            existing: [existing]
+        )
+        guard case .failure(.duplicateName) = result else {
+            Issue.record("inline create must report .duplicateName, got \(result)"); return
+        }
+    }
+
+    @Test func testQuickEntryInlineCategoryCreate_duplicateName_showsAlertAndAbortsSave() {
+        // Quick Entry picker defaults to the parsed transaction's kind; a same-kind
+        // collision must gate identically to the Settings/Add-Transaction paths.
+        let existing = Category(
+            name: "Кафе", kindRaw: "expense", icon: nil, order: 0,
+            nameKey: nil, nameCustom: "Кафе"
+        )
+        let result = NewCategoryViewModel.makeCategory(
+            name: "  кафе ", kindRaw: "expense", icon: nil, order: 2,
+            existing: [existing]
+        )
+        guard case .failure(.duplicateName) = result else {
+            Issue.record("Quick Entry inline create must report .duplicateName, got \(result)"); return
+        }
+    }
+
     @Test func testRenameAfterDuplicate_savesSuccessfully() {
         let existing = Category(
             name: "Машина", kindRaw: "expense", icon: nil, order: 0,

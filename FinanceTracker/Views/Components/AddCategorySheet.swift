@@ -201,22 +201,18 @@ struct AddCategorySheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        let existingDuplicate = categories.first {
+        // Duplicate name → surface the SAME alert from EVERY entry point (Settings,
+        // Add Transaction inline, Quick Entry picker) and keep the sheet open with
+        // the name intact so the user can rename and retry. The earlier silent
+        // reuse-and-dismiss (device test #5) was invisible inline and even showed a
+        // misleading "category added" toast in Settings. By not invoking onCreate,
+        // the caller's selection/commit stays gated — no half-created category and
+        // no transaction filed against one (Bug 18).
+        if categories.contains(where: {
             NewCategoryViewModel.matchesName(trimmed, kindRaw: typeRaw, category: $0)
-        }
-        if let existingDuplicate {
-            if let onCreate {
-                // Picker path: typing a name that already exists reuses it rather
-                // than creating a second copy.
-                onCreate(existingDuplicate)
-                dismiss()
-            } else {
-                // Settings path (no callback): surface the collision instead of
-                // dismissing silently (Bug 18). The sheet stays open with the name
-                // intact so the user can rename and retry without re-entering data.
-                saveErrorKey = "category.error.duplicate_name"
-                showSaveError = true
-            }
+        }) {
+            saveErrorKey = "category.error.duplicate_name"
+            showSaveError = true
             return
         }
 
