@@ -28,6 +28,11 @@ struct AddCategorySheet: View {
 
     @State private var showIconPicker = false
 
+    // Surfaced when validation or the SwiftData save fails, instead of crashing
+    // or silently swallowing the error (Bug 16 / Bug 17).
+    @State private var showSaveError = false
+    @State private var saveErrorKey = "add.error.save_failed"
+
     /// Called with the newly created category when one is added (preset or custom).
     /// The Settings path leaves this nil and relies on the @Query refresh.
     private let onCreate: ((Category) -> Void)?
@@ -101,6 +106,11 @@ struct AddCategorySheet: View {
             }
             .sheet(isPresented: $showIconPicker) {
                 SFSymbolPicker(selected: $icon)
+            }
+            .alert("common.error", isPresented: $showSaveError) {
+                Button("common.ok", role: .cancel) {}
+            } message: {
+                Text(LocalizedStringKey(saveErrorKey))
             }
         }
         .presentationDetents([.medium, .large])
@@ -179,18 +189,7 @@ struct AddCategorySheet: View {
     private func createPreset(_ preset: Preset) {
         let resolved = NSLocalizedString(preset.labelKey, comment: "")
         let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
-        let category = Category(
-            name: resolved,
-            kindRaw: typeRaw,
-            icon: preset.icon,
-            order: nextOrder,
-            nameKey: nil,
-            nameCustom: resolved
-        )
-        modelContext.insert(category)
-        try? modelContext.save()
-        onCreate?(category)
-        dismiss()
+        insertValidated(name: resolved, icon: preset.icon, order: nextOrder)
     }
 
     private func create() {
@@ -214,20 +213,49 @@ struct AddCategorySheet: View {
             return
         }
 
-        let iconTrimmed = icon.trimmingCharacters(in: .whitespacesAndNewlines)
         let nextOrder = (categories.filter { $0.kindRaw == typeRaw }.map(\.order).max() ?? 0) + 1
+        insertValidated(name: trimmed, icon: icon, order: nextOrder)
+    }
 
-        let category = Category(
-            name: trimmed,
-            kindRaw: typeRaw,
-            icon: iconTrimmed.isEmpty ? nil : iconTrimmed,
-            order: nextOrder,
-            nameKey: nil,
-            nameCustom: trimmed
-        )
+    /// Single insert path shared by presets and the custom field. Validates the
+    /// input (Bug 16: an unrenderable icon no longer reaches `save()`), wraps the
+    /// save in do-catch (Bug 17: no raw "add.error.save_failed" key, no silent
+    /// swallow), and rolls back the insert on failure so no half-saved Category
+    /// lingers in the context.
+    private func insertValidated(name: String, icon: String, order: Int) {
+        switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: icon, order: order) {
+        case .failure(.emptyName):
+            saveErrorKey = "add.error.select_category"
+            showSaveError = true
+        case .failure(.invalidIcon):
+            // The picker only offers renderable symbols, so this is defensive:
+            // drop the bad icon and retry icon-less rather than block the user.
+            switch NewCategoryViewModel.makeCategory(name: name, kindRaw: typeRaw, icon: nil, order: order) {
+            case .success(let category): persist(category)
+            case .failure:
+                saveErrorKey = "add.error.save_failed"
+                showSaveError = true
+            }
+        case .success(let category):
+            persist(category)
+        }
+    }
 
+    private func persist(_ category: Category) {
         modelContext.insert(category)
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            // Roll back so a failed save can't leave a dangling object that a
+            // later save would flush (a contributor to the cascade in Bug 17).
+            modelContext.delete(category)
+            saveErrorKey = "add.error.save_failed"
+            showSaveError = true
+            #if DEBUG
+            print("AddCategorySheet save failed: \(error.localizedDescription)")
+            #endif
+            return
+        }
         onCreate?(category)
         dismiss()
     }
