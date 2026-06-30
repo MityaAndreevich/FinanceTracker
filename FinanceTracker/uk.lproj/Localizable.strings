@@ -186,6 +186,9 @@
 "general.restart_onboarding" = "Перезапустити налаштування";
 "general.reset_transactions" = "Скинути транзакції";
 "general.reset_hint" = "Скидання транзакцій видаляє всі транзакції, але зберігає ваші категорії та рахунки.";
+"general.reset_success.message" = "Усі транзакції видалено.";
+"general.reset_failed.message" = "Не вдалося скинути транзакції. Спробуйте ще раз.";
+"general.info.default" = "Готово.";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Інформація";

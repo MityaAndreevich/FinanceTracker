@@ -135,6 +135,9 @@
 "general.restart_onboarding" = "Reiniciar onboarding";
 "general.reset_transactions" = "Repor transações";
 "general.reset_hint" = "As transações serão apagadas, as categorias mantidas.";
+"general.reset_success.message" = "Todas as transações foram eliminadas.";
+"general.reset_failed.message" = "Não foi possível repor as transações. Tente novamente.";
+"general.info.default" = "Concluído.";
 
 
 /* Alerts */

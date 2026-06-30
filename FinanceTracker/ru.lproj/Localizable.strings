@@ -190,6 +190,9 @@
 "general.restart_onboarding" = "Перезапустить онбординг";
 "general.reset_transactions" = "Сбросить транзакции";
 "general.reset_hint" = "Транзакции будут удалены, категории и счета сохранятся.";
+"general.reset_success.message" = "Все транзакции удалены.";
+"general.reset_failed.message" = "Не удалось сбросить транзакции. Попробуйте ещё раз.";
+"general.info.default" = "Готово.";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Информация";

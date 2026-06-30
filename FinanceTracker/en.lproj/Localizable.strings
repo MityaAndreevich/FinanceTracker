@@ -179,6 +179,9 @@
 "general.restart_onboarding" = "Restart onboarding";
 "general.reset_transactions" = "Reset Transactions";
 "general.reset_hint" = "Reset Transactions removes all transactions but keeps your categories and sources.";
+"general.reset_success.message" = "All transactions were deleted.";
+"general.reset_failed.message" = "Couldn't reset transactions. Please try again.";
+"general.info.default" = "Done.";
 
 /* Alerts / buttons */
 "general.alert.info.title" = "Info";

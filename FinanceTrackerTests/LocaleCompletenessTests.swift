@@ -68,7 +68,13 @@ final class LocaleCompletenessTests: XCTestCase {
         // Bumped 2026-06-30 (Sprint B patch Bug 6): +1 DEBUG-only redeem-code hint
         // documenting the local-StoreKit code-redemption limitation
         // (premium.redeem.debug_hint). Was 507.
-        XCTAssertEqual(enKeys.count, 508, "English baseline changed; update the expected count.")
+        // Bumped 2026-06-30 (Brief 35 Bug 19): +3 general.* keys that leaked raw in the
+        // Reset alert — referenced via the showInfo(titleKey:messageKey:) helper and the
+        // infoMessageKey @State default, so the old scanner never saw them
+        // (general.reset_success.message, general.reset_failed.message,
+        // general.info.default). testAllLocalizedKeysExist was also strengthened to
+        // catch the `…Key:` argument / `…Key =` assignment class. Was 508.
+        XCTAssertEqual(enKeys.count, 511, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
@@ -157,10 +163,24 @@ final class LocaleCompletenessTests: XCTestCase {
         let callSite = try! NSRegularExpression(pattern:
             #"(?:NSLocalizedString|String\(localized:|LocalizedStringKey|Text|Section|Button|Label|Toggle|Picker|row|navigationTitle|navigationBarTitle|confirmationDialog|alert|tabItem|header:\s*Text)\s*\(\s*"([^"]+)""#)
         // Codebase-specific helpers that take a localization key as a plain String
-        // — these are how the add.error.* leak shipped (Bug 17): showErrorKey("…"),
-        // fail(key: "…"), and the `errorMessageKey = "…"` default state value.
+        // — these are how the add.error.* leak shipped (Bug 17): showErrorKey("…")
+        // and fail(key: "…").
         let helperCallSite = try! NSRegularExpression(pattern:
-            #"(?:showErrorKey\s*\(|fail\s*\(\s*key:|errorMessageKey[^"\n]*=)\s*"([^"]+)""#)
+            #"(?:showErrorKey\s*\(|fail\s*\(\s*key:)\s*"([^"]+)""#)
+        // Bug 19: the Reset alert leaked raw keys because they flow through a
+        // showInfo(titleKey:messageKey:) helper and an `infoMessageKey` @State
+        // default — neither a recognized localizing construct nor a
+        // showErrorKey/fail call, so the scanner above never saw them. Generalize
+        // to the whole class: any argument label OR stored property whose name ends
+        // in `Key` carrying a dotted-key string literal. The dotted-shape filter
+        // (isDotted) below discards non-localization matches like
+        // `forKey: "AppleLanguages"`. Covers titleKey:/messageKey:/nameKey:/
+        // labelKey:/textKey: arguments and `saveErrorKey =` / `infoMessageKey:
+        // String = …` assignments and comparisons.
+        let keyTypedArg = try! NSRegularExpression(pattern:
+            #"[A-Za-z_]*[Kk]ey\s*:\s*"([^"]+)""#)
+        let keyTypedAssign = try! NSRegularExpression(pattern:
+            #"[A-Za-z_]*[Kk]ey[^"\n]*=\s*"([^"]+)""#)
         let symbolArg = try! NSRegularExpression(pattern: #"system(?:Image|Name):\s*"[^"]+""#)
         let dotted = try! NSRegularExpression(pattern: #"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$"#)
 
@@ -177,7 +197,7 @@ final class LocaleCompletenessTests: XCTestCase {
             src = symbolArg.stringByReplacingMatches(
                 in: src, range: NSRange(src.startIndex..., in: src), withTemplate: "systemImage: SYMBOL")
             let range = NSRange(src.startIndex..., in: src)
-            for regex in [callSite, helperCallSite] {
+            for regex in [callSite, helperCallSite, keyTypedArg, keyTypedAssign] {
                 regex.enumerateMatches(in: src, range: range) { match, _, _ in
                     guard let m = match, let r = Range(m.range(at: 1), in: src) else { return }
                     let key = String(src[r])
