@@ -161,7 +161,16 @@ struct AddTransactionView: View {
                 // Unified with Settings → Categories: the preset grid (Bills, Pets,
                 // Salary, …) plus a custom field, defaulting to the current type.
                 AddCategorySheet(initialKind: typeRaw) { newCat in
+                    // Bug 34.5: a category the user just created inline is an explicit
+                    // choice — treat it exactly like a manual pick (lines 290–293).
+                    // Without marking it chosen (and cancelling any debounced
+                    // suggestion), a subsequent merchant keyword guess would silently
+                    // overwrite it via applySuggestion, filing the transaction under
+                    // the wrong category even though "Test" was saved.
+                    suggestTask?.cancel()
                     selectedCategoryUUID = newCat.uuid
+                    categoryManuallyChosen = true
+                    showPickCategoryTip = false
                 }
             }
             .sheet(isPresented: $showAddSourceSheet) {
