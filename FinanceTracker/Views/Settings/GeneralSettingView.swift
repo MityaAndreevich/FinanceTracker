@@ -336,11 +336,12 @@ struct GeneralSettingsView: View {
     }
 
     private func resetTransactions() {
-        do {
-            let all = try modelContext.fetch(FetchDescriptor<Transaction>())
-            all.forEach { modelContext.delete($0) }
-            try modelContext.save()
-
+        // Bug 20: decide by what's actually left in the store, not by whether
+        // save() threw. SwiftData can emit non-fatal aggregated validation noise on
+        // a bulk delete even when every row is gone — surfacing that as an error was
+        // a false negative (the data really was wiped).
+        switch TransactionResetService.reset(in: modelContext) {
+        case .success:
             // Reset wipes every transaction, including any demo-flagged ones, so the
             // demo-active flag must follow — otherwise Settings would keep showing
             // "Clear sample data" (and block re-adding) with no demo data present.
@@ -351,15 +352,15 @@ struct GeneralSettingsView: View {
                 messageKey: "general.reset_success.message",
                 extra: nil
             )
-        } catch {
-            // Локализованный текст + опционально деталь (на английском, как приходит от системы)
+        case .failure(let remaining):
+            // Only a genuine failure — rows actually survived the delete.
             showInfo(
                 titleKey: "general.alert.info.title",
                 messageKey: "general.reset_failed.message",
-                extra: error.localizedDescription
+                extra: nil
             )
             #if DEBUG
-            print("Reset failed: \(error.localizedDescription)")
+            print("Reset failed: \(remaining) transaction(s) remain.")
             #endif
         }
     }
