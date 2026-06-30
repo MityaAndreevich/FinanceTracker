@@ -31,6 +31,16 @@ enum SeedService {
         }
     }
 
+    // MARK: - "Uncategorized" fallback (Sprint B Bug 3)
+
+    /// The fallback category's English `name` stays "Other" (a stable matcher used
+    /// across the save/suggest paths); only its localized label changed to
+    /// "Uncategorized"/"Без категории". This SF Symbol replaces the old generic
+    /// "square.grid.2x2" so the draft state reads as "needs a category" without
+    /// alarm. Existing installs are migrated below.
+    static let uncategorizedIcon = "questionmark.folder"
+    private static let legacyOtherIcon = "square.grid.2x2"
+
     // MARK: - Spec table
 
     private struct CategorySpec {
@@ -49,7 +59,7 @@ enum SeedService {
         CategorySpec(name: "Housing",       nameKey: "category.housing",       kindRaw: "expense", icon: "house.fill",         order: 3,   isPrimary: true),
         CategorySpec(name: "Shopping",      nameKey: "category.shopping",      kindRaw: "expense", icon: "bag.fill",           order: 4,   isPrimary: true),
         CategorySpec(name: "Entertainment", nameKey: "category.entertainment", kindRaw: "expense", icon: "film",               order: 5,   isPrimary: true),
-        CategorySpec(name: "Other",         nameKey: "category.other",         kindRaw: "expense", icon: "square.grid.2x2",   order: 6,   isPrimary: true),
+        CategorySpec(name: "Other",         nameKey: "category.other",         kindRaw: "expense", icon: uncategorizedIcon, order: 6,   isPrimary: true),
         // PRIMARY — income (1)
         CategorySpec(name: "Income",        nameKey: "category.income",        kindRaw: "income",  icon: "dollarsign.circle",  order: 100, isPrimary: true),
         // SECONDARY — expense (6); parser still matches these; picker hides behind "Show all"
@@ -174,6 +184,17 @@ enum SeedService {
             modelContext.delete(loser)
             byKey.removeValue(forKey: oldKey)
             didChange = true
+        }
+
+        // Sprint B (Bug 3): give the existing "Other" fallback the new
+        // questionmark.folder symbol — but only if it still carries the old
+        // generic default, so a user who picked their own icon keeps it. The
+        // category's uuid (and every transaction pointing at it) is untouched.
+        for cat in categories where cat.nameKey == "category.other" {
+            if cat.icon == legacyOtherIcon {
+                cat.icon = uncategorizedIcon
+                didChange = true
+            }
         }
 
         // For categories with no nameKey (and not user-defined), try to assign one

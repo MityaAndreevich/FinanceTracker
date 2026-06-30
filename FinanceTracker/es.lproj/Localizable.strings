@@ -161,7 +161,7 @@
 "category.gas" = "Gasolina";
 "category.rent" = "Alquiler";
 "category.supplies" = "Suministros";
-"category.other" = "Otros";
+"category.other" = "Sin categoría";
 "category.income" = "Ingresos";
 "category.food_drink" = "Comida y Bebida";
 "category.transport" = "Transporte";

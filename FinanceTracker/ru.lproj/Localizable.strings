@@ -507,7 +507,7 @@
 "category.gas" = "Топливо";
 "category.rent" = "Аренда";
 "category.supplies" = "Покупки";
-"category.other" = "Другое";
+"category.other" = "Без категории";
 "category.income" = "Доход";
 
 /* ======================================================

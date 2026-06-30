@@ -500,7 +500,7 @@
 "category.gas" = "Gas";
 "category.rent" = "Rent";
 "category.supplies" = "Supplies";
-"category.other" = "Other";
+"category.other" = "Uncategorized";
 "category.income" = "Income";
 
 "common.choose" = "Choose";

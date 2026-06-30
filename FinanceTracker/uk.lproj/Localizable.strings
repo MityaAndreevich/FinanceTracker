@@ -507,7 +507,7 @@
 "category.gas" = "Пальне";
 "category.rent" = "Оренда";
 "category.supplies" = "Товари";
-"category.other" = "Інше";
+"category.other" = "Без категорії";
 "category.income" = "Дохід";
 
 "common.choose" = "Вибрати";
