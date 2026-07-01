@@ -127,7 +127,11 @@
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "CE050BB9",
-          "introductoryOffer" : null,
+          "introductoryOffer" : {
+            "internalID" : "A1F0C7D2",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
           "localizations" : [
             {
               "description" : "",

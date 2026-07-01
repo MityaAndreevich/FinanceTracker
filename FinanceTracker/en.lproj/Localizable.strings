@@ -390,10 +390,10 @@
 
 /* Plans */
 "paywall.yearly.best_value" = "Best value";
-"paywall.yearly.save_amount" = "Save 42%";
-"paywall.yearly.per_month" = "$2.92/month, billed annually";
+"paywall.yearly.save_amount" = "Save 37%";
+"paywall.yearly.per_month" = "$2.50/month, billed annually";
 "paywall.plan.yearly" = "Yearly";
-"paywall.plan.yearly.subtitle" = "7-day free trial, then $34.99/year";
+"paywall.plan.yearly.subtitle" = "7-day free trial, then $29.99/year";
 "paywall.plan.monthly" = "Monthly";
 "paywall.plan.monthly.subtitle" = "Cancel anytime";
 "paywall.plan.lifetime" = "Lifetime";
@@ -406,10 +406,10 @@
 
 /* CTAs */
 "paywall.cta.yearly" = "Start free trial";
-"paywall.trial.disclosure" = "After 7 days free, $34.99/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
+"paywall.trial.disclosure" = "After 7 days free, $29.99/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
 /* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
 "paywall.trial.modal.title" = "Free trial details";
-"paywall.trial.modal.body" = "Your 7-day free trial starts today. After it ends, $34.99/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
+"paywall.trial.modal.body" = "Your 7-day free trial starts today. After it ends, $29.99/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
 "paywall.cta.lifetime" = "Get Lifetime";
 "paywall.cta.monthly" = "Subscribe monthly";
 
