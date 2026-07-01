@@ -21,9 +21,9 @@ final class PurchaseManager: ObservableObject {
     // MARK: - Product IDs
 
     enum ProductID: String, CaseIterable {
-        case premiumMonthly  = "ft_premium_monthly"
-        case premiumYearly   = "ft_premium_yearly"
-        case premiumLifetime = "ft_premium_lifetime"
+        case premiumMonthly  = "bc_premium_monthly"
+        case premiumYearly   = "bc_premium_yearly"
+        case premiumLifetime = "bc_premium_lifetime"
     }
 
     /// Все наши продукты (и подписки, и lifetime)

@@ -25,7 +25,7 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "ft_premium_lifetime",
+      "productID" : "bc_premium_lifetime",
       "referenceName" : "Premium Lifetime",
       "type" : "NonConsumable"
     }
@@ -107,7 +107,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "ft_premium_monthly",
+          "productID" : "bc_premium_monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Premium Monthly",
           "subscriptionGroupID" : "D022D54F",
@@ -135,7 +135,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "ft_premium_yearly",
+          "productID" : "bc_premium_yearly",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Premium Yearly",
           "subscriptionGroupID" : "D022D54F",
