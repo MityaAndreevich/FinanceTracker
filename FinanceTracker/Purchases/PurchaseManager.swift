@@ -22,7 +22,7 @@ final class PurchaseManager: ObservableObject {
 
     enum ProductID: String, CaseIterable {
         case premiumMonthly  = "bc_premium_monthly"
-        case premiumYearly   = "bc_premium_yearly"
+        case premiumYearly   = "bc_premium_annual"
         case premiumLifetime = "bc_premium_lifetime"
     }
 

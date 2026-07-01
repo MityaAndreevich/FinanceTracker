@@ -135,7 +135,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "bc_premium_yearly",
+          "productID" : "bc_premium_annual",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Premium Yearly",
           "subscriptionGroupID" : "D022D54F",
