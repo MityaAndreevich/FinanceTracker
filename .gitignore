@@ -56,3 +56,6 @@ LEGAL_RISK_ASSESSMENT.md
 
 # Generated App Store screenshots (regenerate via AppStore/capture-screenshots.sh)
 AppStore/screenshots/
+
+# Studios (personal reference, not part of app)
+.studios/
