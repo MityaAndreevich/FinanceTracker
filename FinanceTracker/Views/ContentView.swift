@@ -200,7 +200,10 @@ struct ContentView: View {
         case .privacy:    PrivacySettingsView()
         case .categories: CategoriesSourcesView()
         case .export:     DataSettingsView()
-        case .lifetime:   PaywallView()
+        // Slot 08 renders the calm, no-price ownership close — not the mock
+        // paywall. Prices are banned in screenshots and off-brand vs the Ruler
+        // close; the real in-app paywall is unaffected. See OwnershipCloseView.
+        case .lifetime:   OwnershipCloseView()
         default:          EmptyView()
         }
     }
