@@ -15,7 +15,7 @@
   ],
   "products" : [
     {
-      "displayPrice" : "79.99",
+      "displayPrice" : "99.99",
       "familyShareable" : false,
       "internalID" : "FA9FF861",
       "localizations" : [
@@ -95,7 +95,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "3.99",
+          "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "4C6D8F82",
@@ -123,7 +123,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "29.99",
+          "displayPrice" : "34.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "CE050BB9",

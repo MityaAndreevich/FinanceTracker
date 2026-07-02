@@ -99,9 +99,9 @@ struct PaywallView: View {
     /// render identically to the live paywall. Purchase actions are no-ops.
     private var mockPlanCardsSection: some View {
         VStack(spacing: 12) {
-            YearlyPlanCard(displayPrice: "$29.99") {}
-            LifetimePlanCard(displayPrice: "$79.99") {}
-            MonthlyPlanCard(displayPrice: "$3.99") {}
+            YearlyPlanCard(displayPrice: "$34.99") {}
+            LifetimePlanCard(displayPrice: "$99.99") {}
+            MonthlyPlanCard(displayPrice: "$4.99") {}
         }
     }
     #endif
