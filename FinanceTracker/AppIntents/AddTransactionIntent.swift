@@ -13,7 +13,7 @@ import SwiftData
 struct AddTransactionIntent: AppIntent {
     static var title: LocalizedStringResource = "Add Transaction"
     static var description = IntentDescription(
-        "Quickly add a transaction with Siri or Shortcuts.",
+        "Quickly add a transaction with Shortcuts.",
         categoryName: "Money"
     )
 
