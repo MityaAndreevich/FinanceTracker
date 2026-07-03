@@ -120,16 +120,12 @@ struct QuickEntryView: View {
 
             ScrollView {
                 VStack(spacing: 16) {
+                    // Empty-state prompt only; once parsed, the amount lives INSIDE
+                    // the preview card (see previewCard) so there's no giant standalone
+                    // hero eating the vertical budget while the keyboard is up.
                     amountHero
 
                     previewCard(parsed)
-
-                    // B7: chips live INSIDE the scroll area (below the preview) so
-                    // the fixed bottom cluster is only input + Save + link and always
-                    // fits above the keyboard. Previously chips sat in the fixed
-                    // cluster and the squeezed ScrollView clipped the preview card to
-                    // a sliver jammed under them ("каша").
-                    quickChips
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 4)
@@ -155,13 +151,14 @@ struct QuickEntryView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
         }
-        // B7: this is a keyboard-driven input sheet — amount + preview + input +
-        // Save must all coexist above the keyboard. At the largest accessibility
-        // sizes that's physically impossible and the preview card gets clipped by
-        // the input bar. Cap the sheet at accessibility1 (still well above default)
+        // B7: this is a keyboard-driven input sheet — amount + preview + chips +
+        // input + Save must all coexist above the keyboard. At accessibility sizes
+        // that's physically impossible (verified: Ukrainian's long words clip the
+        // preview card against the chips), so cap at the largest STANDARD size,
+        // xxxLarge — still well above default,
         // so text stays large and legible without collapsing the layout. The
         // detailed form (accessed via "Открыть форму") has no such cap.
-        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .animation(
             reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72),
             value: parsed != nil
@@ -331,30 +328,20 @@ struct QuickEntryView: View {
 
     // MARK: - Amount hero (front-and-center, reflects the live parse)
 
+    /// B7: only the empty-state prompt now. Once a parse lands, the amount is
+    /// rendered inside `previewCard` (grouped with its category/merchant), so the
+    /// parsed state no longer carries a tall standalone hero that squeezed the
+    /// scroll and forced the preview / chips to clip under the keyboard.
+    @ViewBuilder
     private var amountHero: some View {
-        VStack(spacing: 8) {
-            if let p = parsed {
-                Text(Money.format(cents: p.amountCents, currencyCode: defaultCurrencyCode))
-                    // B7: 48pt (was 60) leaves the preview card room in the squeezed
-                    // scroll area when the keyboard is up, and keeps long amounts
-                    // (e.g. "3 500,00 ₽") off the screen edges.
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bcTextPrimary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.4)
-                    .contentTransition(.numericText())
-                    .privacySensitive(true)
-                    .accessibilityHidden(true)   // voiced by the Save button label
-            } else {
-                Text("quick_entry.prompt.amount")
-                    .font(.system(size: 24, weight: .medium, design: .rounded))
-                    .foregroundStyle(Color.bcTextMuted)
-                    .multilineTextAlignment(.center)
-                    .accessibilityHidden(true)
-            }
+        if parsed == nil {
+            Text("quick_entry.prompt.amount")
+                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.bcTextMuted)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .accessibilityHidden(true)
         }
-        .frame(maxWidth: .infinity, minHeight: 56)
     }
 
     // MARK: - Quick category chips (one-tap assignment for the most-used)
@@ -433,7 +420,24 @@ struct QuickEntryView: View {
                 let resolvedCategory = effectiveCategory(for: p)
                 let isIncome = p.typeRaw == TransactionType.income.raw
 
-                directionPill(isIncome: isIncome)
+                // Amount now lives here (the standalone hero is gone in the parsed
+                // state, B7). Grouped with the direction pill so the card reads as
+                // one unit and the layout fits above the keyboard.
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(Money.format(cents: p.amountCents, currencyCode: defaultCurrencyCode))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.bcTextPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.4)
+                        .contentTransition(.numericText())
+                        .privacySensitive(true)
+                        .accessibilityHidden(true)   // voiced by the Save button label
+
+                    Spacer(minLength: 8)
+
+                    directionPill(isIncome: isIncome)
+                }
 
                 // Tappable category + merchant row → opens the picker.
                 Button {
@@ -482,7 +486,12 @@ struct QuickEntryView: View {
                 .font(.caption.weight(.semibold))
                 .textCase(.uppercase)
                 .tracking(0.5)
+                // B7: never wrap ("ВИТРА-ТА" on two lines grew the card and clipped
+                // the category subtitle in uk at large type). One line; the amount
+                // beside it yields via its minimumScaleFactor instead.
+                .lineLimit(1)
         }
+        .fixedSize(horizontal: true, vertical: false)
         .foregroundStyle(Color.moneyDirectional(isPositive: isIncome))
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
@@ -565,6 +574,14 @@ struct QuickEntryView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 14) {
+            // B7: chips are ANCHORED in the fixed cluster, directly above the input,
+            // with a fixed 14pt gap. Because they share this VStack with the input,
+            // the keyboard pushes the whole cluster up as a unit — the input can
+            // never ride up over the chip labels (the bug), in any locale or Dynamic
+            // Type size. The scroll region above (prompt/amount + preview) absorbs
+            // any squeeze instead.
+            quickChips
+
             // The NL input bar flips to a live recording panel while dictating —
             // voice is a headline feature, so it takes over rather than hiding in a
             // corner. Both reuse the same on-device services.

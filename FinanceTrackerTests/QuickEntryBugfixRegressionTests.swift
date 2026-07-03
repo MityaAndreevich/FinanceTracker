@@ -111,4 +111,31 @@ struct QuickEntryBugfixRegressionTests {
         #expect(localized == "Еда и напитки")
         #expect(localized != "Food & Drink")   // the raw English seed name must not leak
     }
+
+    // B7 layout guard for the LONGEST-string locales. The + sheet's chip labels
+    // and preview card have a fixed vertical/width budget; an over-long localized
+    // category name is what pushes the input over the chips / clips the preview
+    // subtitle (verified on-device in es-MX and uk). This asserts every non-English
+    // shipping locale resolves the category name (no English leak) and keeps it
+    // within the budget the layout was verified against.
+    @Test func categoryDisplayName_longestLocales_localizedAndBounded() throws {
+        let ctx = try makeContext()
+        let food = seed(name: "Food & Drink", nameKey: "category.food_drink", kind: "expense", in: ctx)
+
+        for code in ["es", "pt-BR", "uk"] {
+            let lproj = try #require(
+                Bundle.main.path(forResource: code, ofType: "lproj"),
+                "missing \(code).lproj"
+            )
+            let bundle = try #require(Bundle(path: lproj))
+            let name = food.displayName(bundle: bundle)
+
+            #expect(!name.isEmpty, "\(code): empty category name")
+            #expect(name != "Food & Drink", "\(code): raw English seed name leaked")
+            // Budget the + sheet was verified against (chip label truncates at one
+            // line; the preview card fits above the keyboard). A future translation
+            // longer than this must be re-checked against the layout.
+            #expect(name.count <= 24, "\(code): '\(name)' (\(name.count)) exceeds the chip/preview label budget")
+        }
+    }
 }
