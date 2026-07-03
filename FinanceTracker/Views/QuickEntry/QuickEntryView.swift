@@ -88,17 +88,19 @@ struct QuickEntryView: View {
     /// Category that will actually be saved for a parsed input.
     ///
     /// A manual pick (`categoryOverride`) always wins. Otherwise resolution is
-    /// delegated to `QuickAddSaveService.previewCategory`, which honors a learned
-    /// merchant mapping but — per the Round 8 decision — does NOT silently apply a
-    /// keyword *guess* to expenses (that felt presumptuous and was often wrong).
+    /// delegated to `QuickAddSaveService.resolveCategory`, which honors a learned
+    /// merchant mapping first, then the parser's keyword suggestion, then "Other".
     ///
-    /// Bug (device test #5): this previously returned "Other" for every untaught
-    /// expense AND for taught ones, so voice never learned — "Бензин" stayed
-    /// "Без категории" no matter how often the user picked "Машина". The learned
-    /// lookup now lives in the shared service, so voice matches the Dashboard path.
+    /// B4 (device test, this pass): the + sheet previously used `previewCategory`,
+    /// which — per the earlier Round 8 decision — suppressed keyword *guesses* for
+    /// expenses, so "50 кофе" showed "Other" here while the Dashboard quick-add
+    /// (which uses `resolveCategory`) correctly showed "Food & Drink". That
+    /// inconsistency read as "category not detected". We now use the same
+    /// keyword-aware resolution on both surfaces; a learned correction still wins,
+    /// and the user can always tap the chip to override.
     private func effectiveCategory(for p: QuickAddParsedInput) -> Category? {
         if let categoryOverride { return categoryOverride }
-        return QuickAddSaveService.previewCategory(for: p, in: modelContext)
+        return QuickAddSaveService.resolveCategory(for: p, in: modelContext)
     }
 
     private var saveA11yLabel: Text {
