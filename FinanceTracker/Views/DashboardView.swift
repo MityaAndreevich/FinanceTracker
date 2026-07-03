@@ -311,9 +311,12 @@ struct DashboardView: View {
 
                 Text("→").foregroundStyle(.secondary)
 
-                Text(parsed.suggestedCategoryName ?? String(localized: "quickadd.preview.no_category"))
+                // B5: show the LOCALIZED display name of the category that will
+                // actually be saved (resolvedCategory), not the raw English
+                // suggestion name ("Food & Drink") which leaked under RU/UK/ES/PT.
+                Text(resolvedCategory?.displayName() ?? String(localized: "quickadd.preview.no_category"))
                     .font(.subheadline)
-                    .foregroundStyle(parsed.suggestedCategoryName == nil ? .secondary : .primary)
+                    .foregroundStyle(resolvedCategory == nil ? .secondary : .primary)
 
                 if let merchant = parsed.merchant {
                     Text("→").foregroundStyle(.secondary)
@@ -395,7 +398,11 @@ struct DashboardView: View {
             _ = try QuickAddSaveService.save(
                 parsed: parsed,
                 modelContext: modelContext,
-                defaultCurrencyCode: defaultCurrencyCode
+                defaultCurrencyCode: defaultCurrencyCode,
+                // B5/B2: commit the *exact* category shown in the preview chip so
+                // the saved row matches what the user confirmed (and so save never
+                // silently re-resolves to a different / nil category).
+                overrideCategory: category
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             withAnimation { quickAddParsed = nil }
@@ -403,6 +410,13 @@ struct DashboardView: View {
             refreshWidgetSnapshot()
             RatingPromptCoordinator.recordTransactionSaved()
         } catch {
+            // B2: never fail silently. A swallowed error left the preview + input
+            // on screen, which read as "Save did nothing" and invited a second tap
+            // (the apparent double-count). Surface it and keep the preview so the
+            // user can retry deliberately.
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            quickAddSavedTx = nil   // don't let the error toast's tap open a stale edit
+            quickAddToast = "add.error.save_failed"
             #if DEBUG
             print("QuickAdd save failed: \(error.localizedDescription)")
             #endif
