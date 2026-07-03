@@ -174,9 +174,18 @@ struct AnalyticsHorizonView: View {
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading) { _ in
+            AxisMarks(position: .leading) { value in
                 AxisGridLine().foregroundStyle(.secondary.opacity(0.15))
-                AxisValueLabel().font(.caption2)
+                // B8: the Y values are amountCents (Int). A bare AxisValueLabel
+                // printed the raw cents ("−300000"), which read as a broken domain.
+                // Show whole currency units, thousands abbreviated.
+                AxisValueLabel {
+                    if let cents = value.as(Int.self)
+                        ?? value.as(Double.self).map({ Int($0) }) {
+                        Text(axisLabel(forCents: cents))
+                    }
+                }
+                .font(.caption2)
             }
         }
         .frame(height: 320)
@@ -206,14 +215,14 @@ struct AnalyticsHorizonView: View {
                 )
                 .foregroundStyle(netTrendGradient)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
 
                 AreaMark(
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.netCents)
                 )
                 .foregroundStyle(netAreaGradient)
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
 
         case .expenses:
@@ -224,14 +233,14 @@ struct AnalyticsHorizonView: View {
                 )
                 .foregroundStyle(Color.bcDanger)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
 
                 AreaMark(
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.expenseCents)
                 )
                 .foregroundStyle(solidAreaGradient(.bcDanger))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
 
         case .income:
@@ -242,14 +251,14 @@ struct AnalyticsHorizonView: View {
                 )
                 .foregroundStyle(Color.bcPositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
 
                 AreaMark(
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.incomeCents)
                 )
                 .foregroundStyle(solidAreaGradient(.bcPositive))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
 
         case .combined:
@@ -263,7 +272,7 @@ struct AnalyticsHorizonView: View {
                 )
                 .foregroundStyle(Color.bcPositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
             ForEach(monthlyTotals) { item in
                 LineMark(
@@ -273,7 +282,7 @@ struct AnalyticsHorizonView: View {
                 )
                 .foregroundStyle(Color.bcDanger)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.monotone)
             }
         }
     }
@@ -378,6 +387,35 @@ struct AnalyticsHorizonView: View {
             startPoint: .top,
             endPoint: .bottom
         )
+    }
+
+    // MARK: - Y-axis label (whole currency units, thousands abbreviated)
+
+    /// Compact axis label so the trend reads in money, not cents: "$3k" / "−$3k"
+    /// / "$450" instead of "300000". Keeps the axis narrow at caption2 (B8).
+    private func axisLabel(forCents cents: Int) -> String {
+        let symbol = Self.currencySymbol(for: currencyCode)
+        let units = Double(cents) / 100
+        let sign = units < 0 ? "−" : ""
+        let m = abs(units)
+        let number: String
+        if m >= 1_000_000 {
+            number = String(format: "%.1fM", m / 1_000_000)
+        } else if m >= 10_000 {
+            number = String(format: "%.0fk", m / 1_000)
+        } else if m >= 1_000 {
+            number = String(format: "%.1fk", m / 1_000)
+        } else {
+            number = String(format: "%.0f", m)
+        }
+        return "\(sign)\(symbol)\(number)"
+    }
+
+    private static func currencySymbol(for code: String) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = code
+        return f.currencySymbol ?? code
     }
 
     private func nearestMonth(to date: Date) -> MonthlyTotal? {
