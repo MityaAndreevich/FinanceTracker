@@ -169,6 +169,11 @@
 "general.title" = "Загальні";
 
 "general.section.preferences" = "Параметри";
+
+"settings.appearance.label" = "Оформлення";
+"settings.appearance.system" = "Системне";
+"settings.appearance.light" = "Світле";
+"settings.appearance.dark" = "Темне";
 "general.section.maintenance" = "Обслуговування";
 
 "general.currency" = "Валюта";

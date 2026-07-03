@@ -117,6 +117,11 @@
 /* General */
 "general.title" = "Geral";
 "general.section.preferences" = "Preferências";
+
+"settings.appearance.label" = "Aparência";
+"settings.appearance.system" = "Sistema";
+"settings.appearance.light" = "Claro";
+"settings.appearance.dark" = "Escuro";
 "general.section.maintenance" = "Manutenção";
 
 "general.currency" = "Moeda";

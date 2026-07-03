@@ -173,6 +173,11 @@
 "general.title" = "Основные";
 
 "general.section.preferences" = "Параметры";
+
+"settings.appearance.label" = "Оформление";
+"settings.appearance.system" = "Системное";
+"settings.appearance.light" = "Светлое";
+"settings.appearance.dark" = "Тёмное";
 "general.section.maintenance" = "Обслуживание";
 
 "general.currency" = "Валюта";

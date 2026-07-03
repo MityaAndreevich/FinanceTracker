@@ -13,6 +13,7 @@ struct GeneralSettingsView: View {
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
+    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.dark.rawValue
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
@@ -182,8 +183,24 @@ struct GeneralSettingsView: View {
 
     // MARK: - Sections
 
+    private var appearanceBinding: Binding<AppearanceMode> {
+        Binding(
+            get: { AppearanceMode(rawValue: appearanceModeRaw) ?? .dark },
+            set: { appearanceModeRaw = $0.rawValue }
+        )
+    }
+
     private var preferencesSection: some View {
         Section("general.section.preferences") {
+
+            Picker(selection: appearanceBinding) {
+                ForEach(AppearanceMode.allCases) { mode in
+                    Text(mode.labelKey).tag(mode)
+                }
+            } label: {
+                Label("settings.appearance.label", systemImage: "moon.stars")
+            }
+            .pickerStyle(.menu)
 
             Button {
                 activeSheet = .currency

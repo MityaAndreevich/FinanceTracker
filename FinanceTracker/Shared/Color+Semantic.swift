@@ -64,4 +64,20 @@ extension Color {
     static func money(isPositive: Bool) -> Color {
         isPositive ? .bcIncome : .bcExpense
     }
+
+    // MARK: - Redesign v2 semantic tokens
+    //
+    // Dark-default token set from `outputs/DESIGN_DIRECTION_v2.md` §1. These are
+    // backed by Asset Catalog color sets (Any + Dark appearances) under
+    // Assets.xcassets, so Xcode auto-generates the type-safe accessors
+    // (`Color.bcPage`, `Color.bcSurface1`, `Color.bcTextPrimary`, `.bcDivider`,
+    // `.bcAccent`, `.bcPositive`, `.bcWarning`, `.bcDanger`, …). No manual
+    // declarations are needed here — adding them would collide with the
+    // generated symbols. New (redesigned) screens reach for these instead of raw
+    // system colors; the older `bcCardFill` / `bcIncome` / `bcExpense` tokens
+    // above stay for screens not yet migrated.
+    //
+    // Rule: expenses are NOT alarm-red. Amounts render in `bcTextPrimary`; red
+    // (`bcDanger`) is reserved for genuine over-budget / alert states. Income
+    // renders in `bcPositive`.
 }

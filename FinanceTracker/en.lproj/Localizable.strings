@@ -162,6 +162,11 @@
 "general.title" = "General";
 
 "general.section.preferences" = "Preferences";
+
+"settings.appearance.label" = "Appearance";
+"settings.appearance.system" = "System";
+"settings.appearance.light" = "Light";
+"settings.appearance.dark" = "Dark";
 "general.section.maintenance" = "Maintenance";
 
 "general.currency" = "Currency";

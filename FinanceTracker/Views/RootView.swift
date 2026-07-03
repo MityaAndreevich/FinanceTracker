@@ -9,8 +9,15 @@ import SwiftUI
 
 struct RootView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    // Dark is the default for the redesigned look (fresh installs land in dark).
+    // Users can switch to System / Light in Settings → General → Appearance.
+    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.dark.rawValue
     @Environment(\.scenePhase) private var scenePhase
     @State private var showPrivacyOverlay = false
+
+    private var appearanceMode: AppearanceMode {
+        AppearanceMode(rawValue: appearanceModeRaw) ?? .dark
+    }
 
     // Branded splash gate. Shown on cold start while we warm up SwiftData +
     // the language bundle, then crossfades to the app. `.task` runs once per
@@ -29,6 +36,7 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: isReady)
+        .preferredColorScheme(appearanceMode.colorScheme)
         .task {
             await waitForReadiness()
             // Floor the splash at 0.8s so an instant-ready launch doesn't flicker.
