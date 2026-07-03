@@ -122,6 +122,11 @@
 "settings.appearance.system" = "Sistema";
 "settings.appearance.light" = "Claro";
 "settings.appearance.dark" = "Escuro";
+"settings.budget.header" = "Orçamento";
+"settings.budget.label" = "Orçamento mensal";
+"settings.budget.placeholder" = "Não definido";
+"settings.budget.caption" = "Defina um orçamento mensal de gastos para o painel mostrar quanto você pode gastar com segurança: o que resta neste mês e quanto por dia.";
+"settings.budget.clear" = "Limpar orçamento";
 "general.section.maintenance" = "Manutenção";
 
 "general.currency" = "Moeda";

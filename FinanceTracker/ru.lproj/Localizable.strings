@@ -178,6 +178,11 @@
 "settings.appearance.system" = "Системное";
 "settings.appearance.light" = "Светлое";
 "settings.appearance.dark" = "Тёмное";
+"settings.budget.header" = "Бюджет";
+"settings.budget.label" = "Месячный бюджет";
+"settings.budget.placeholder" = "Не задан";
+"settings.budget.caption" = "Задайте месячный бюджет расходов, чтобы на главном экране появился режим «доступно к трате» — сколько осталось в этом месяце и сколько в день.";
+"settings.budget.clear" = "Сбросить бюджет";
 "general.section.maintenance" = "Обслуживание";
 
 "general.currency" = "Валюта";

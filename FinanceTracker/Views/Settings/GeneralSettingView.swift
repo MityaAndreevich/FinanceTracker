@@ -21,6 +21,13 @@ struct GeneralSettingsView: View {
     // Q1=C confidence-gated auto-save (commit cb79b57) is user-tunable here.
     @AppStorage("quickAddConfidenceThreshold") private var quickAddThreshold: Double = 0.75
 
+    // Overall monthly budget (cents). 0 == unset. When set, the Dashboard hero
+    // switches from net-this-month to true safe-to-spend. Per-category budgets are
+    // a later feature; this is a single app-wide number, no SwiftData model.
+    @AppStorage("monthlyBudgetCents") private var monthlyBudgetCents: Int = 0
+    @State private var budgetText: String = ""
+    @FocusState private var budgetFieldFocused: Bool
+
     // Single source of truth for the two picker sheets. Using .sheet(item:) rather
     // than two .sheet(isPresented:) modifiers prevents "Attempt to present … which is
     // already presenting …" when one sheet's content changes while another resolves.
@@ -53,13 +60,26 @@ struct GeneralSettingsView: View {
     var body: some View {
         List {
             preferencesSection
+            budgetSection
             quickAddSensitivitySection
             tutorialDemoSection
             maintenanceSection
         }
         .navigationTitle("general.title")
         .listStyle(.insetGrouped)
-        .onAppear { normalizeStoredValuesIfNeeded() }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("common.done") { budgetFieldFocused = false }
+            }
+        }
+        .onAppear {
+            normalizeStoredValuesIfNeeded()
+            syncBudgetText()
+        }
+        .onChange(of: budgetFieldFocused) { _, focused in
+            if !focused { commitBudget() }
+        }
         .onChange(of: appLanguageCode) { _, _ in normalizeStoredValuesIfNeeded() }
         .onChange(of: defaultCurrencyCode) { _, _ in normalizeStoredValuesIfNeeded() }
 
@@ -245,6 +265,58 @@ struct GeneralSettingsView: View {
                 // full vertical wrap instead of clipping to the row's default height.
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    // MARK: - Monthly budget
+
+    private var budgetSection: some View {
+        Section {
+            HStack {
+                Label("settings.budget.label", systemImage: "target")
+                Spacer(minLength: 12)
+                TextField("settings.budget.placeholder", text: $budgetText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .focused($budgetFieldFocused)
+                    .frame(maxWidth: 140)
+                    .accessibilityIdentifier("settings.budget.field")
+                Text(defaultCurrencyCode)
+                    .foregroundStyle(.secondary)
+            }
+
+            if monthlyBudgetCents > 0 {
+                Button("settings.budget.clear", role: .destructive) {
+                    monthlyBudgetCents = 0
+                    budgetText = ""
+                    budgetFieldFocused = false
+                }
+            }
+        } header: {
+            Text("settings.budget.header")
+        } footer: {
+            Text("settings.budget.caption")
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Mirrors the stored cents into the editable text field (on appear / after a
+    /// commit). Empty when unset so the placeholder shows through.
+    private func syncBudgetText() {
+        budgetText = monthlyBudgetCents > 0
+            ? Money.plainDecimalString(cents: monthlyBudgetCents)
+            : ""
+    }
+
+    /// Parses the field into `monthlyBudgetCents` on focus loss. Blank clears the
+    /// budget (0 == unset → hero falls back to net-this-month).
+    private func commitBudget() {
+        let trimmed = budgetText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            monthlyBudgetCents = 0
+        } else {
+            monthlyBudgetCents = max(0, Money.parseCents(from: trimmed) ?? 0)
+        }
+        syncBudgetText()
     }
 
     /// Commits a picker selection after the sheet has fully dismissed. Applying the

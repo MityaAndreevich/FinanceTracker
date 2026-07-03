@@ -167,6 +167,11 @@
 "settings.appearance.system" = "System";
 "settings.appearance.light" = "Light";
 "settings.appearance.dark" = "Dark";
+"settings.budget.header" = "Budget";
+"settings.budget.label" = "Monthly budget";
+"settings.budget.placeholder" = "Not set";
+"settings.budget.caption" = "Set a monthly spending budget to turn the Dashboard into a “safe to spend” view — what's left this month, and how much per day.";
+"settings.budget.clear" = "Clear budget";
 "general.section.maintenance" = "Maintenance";
 
 "general.currency" = "Currency";

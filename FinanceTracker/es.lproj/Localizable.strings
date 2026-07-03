@@ -122,6 +122,11 @@
 "settings.appearance.system" = "Sistema";
 "settings.appearance.light" = "Claro";
 "settings.appearance.dark" = "Oscuro";
+"settings.budget.header" = "Presupuesto";
+"settings.budget.label" = "Presupuesto mensual";
+"settings.budget.placeholder" = "Sin definir";
+"settings.budget.caption" = "Define un presupuesto mensual de gastos para que el panel muestre cuánto puedes gastar con seguridad: lo que queda este mes y cuánto por día.";
+"settings.budget.clear" = "Borrar presupuesto";
 "general.section.maintenance" = "Mantenimiento";
 
 "general.currency" = "Moneda";
