@@ -495,7 +495,9 @@ struct DashboardView: View {
         if budgetIsSet {
             return remainingCents >= 0 ? .bcPositive : .bcDanger
         }
-        return Color.money(isPositive: netCents >= 0)
+        // Net-this-month is a directional value: mint when positive, calm coral
+        // (bcDanger) when negative — not the retired terracotta (locked decision 2).
+        return Color.moneyDirectional(isPositive: netCents >= 0)
     }
 
     private var heroSubtitle: String {
