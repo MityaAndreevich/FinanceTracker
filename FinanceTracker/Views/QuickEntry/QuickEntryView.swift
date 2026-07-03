@@ -123,6 +123,13 @@ struct QuickEntryView: View {
                     amountHero
 
                     previewCard(parsed)
+
+                    // B7: chips live INSIDE the scroll area (below the preview) so
+                    // the fixed bottom cluster is only input + Save + link and always
+                    // fits above the keyboard. Previously chips sat in the fixed
+                    // cluster and the squeezed ScrollView clipped the preview card to
+                    // a sliver jammed under them ("каша").
+                    quickChips
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 4)
@@ -148,6 +155,13 @@ struct QuickEntryView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
         }
+        // B7: this is a keyboard-driven input sheet — amount + preview + input +
+        // Save must all coexist above the keyboard. At the largest accessibility
+        // sizes that's physically impossible and the preview card gets clipped by
+        // the input bar. Cap the sheet at accessibility1 (still well above default)
+        // so text stays large and legible without collapsing the layout. The
+        // detailed form (accessed via "Открыть форму") has no such cap.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .animation(
             reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72),
             value: parsed != nil
@@ -321,7 +335,10 @@ struct QuickEntryView: View {
         VStack(spacing: 8) {
             if let p = parsed {
                 Text(Money.format(cents: p.amountCents, currencyCode: defaultCurrencyCode))
-                    .font(.system(size: 60, weight: .bold, design: .rounded))
+                    // B7: 48pt (was 60) leaves the preview card room in the squeezed
+                    // scroll area when the keyboard is up, and keeps long amounts
+                    // (e.g. "3 500,00 ₽") off the screen edges.
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.bcTextPrimary)
                     .lineLimit(1)
@@ -548,10 +565,6 @@ struct QuickEntryView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 14) {
-            // Quick-chips sit directly above the input so they stay visible above
-            // the keyboard (one-tap category assignment while typing).
-            quickChips
-
             // The NL input bar flips to a live recording panel while dictating —
             // voice is a headline feature, so it takes over rather than hiding in a
             // corner. Both reuse the same on-device services.
