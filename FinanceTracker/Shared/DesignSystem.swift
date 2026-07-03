@@ -98,6 +98,9 @@ extension View {
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(fill)
+                    // D1: soft resting shadow lifts the card off the warm page in
+                    // light mode; resolves to clear in dark mode (border-only depth).
+                    .shadow(color: .bcCardShadow, radius: 10, x: 0, y: 3)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

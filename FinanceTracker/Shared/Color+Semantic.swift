@@ -58,6 +58,16 @@ extension Color {
             : UIColor.black.withAlphaComponent(0.06)
     })
 
+    /// D1: soft resting shadow for `bcCard` surfaces. Light mode only — in dark
+    /// mode depth comes from the layered solid surfaces + hairline border
+    /// (DESIGN_DIRECTION_v2 §2), so this resolves to clear and adds nothing.
+    /// Warms up the light theme so cards read as lifted, not flat-white-on-white.
+    static let bcCardShadow = Color(uiColor: UIColor { trait in
+        trait.userInterfaceStyle == .dark
+            ? UIColor.clear
+            : UIColor.black.withAlphaComponent(0.06)
+    })
+
     // MARK: Helpers
 
     /// Money color for a signed amount (positive = income).
