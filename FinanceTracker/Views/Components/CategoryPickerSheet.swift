@@ -36,8 +36,11 @@ struct CategoryPickerSheet: View {
                             onPick(cat)
                             dismiss()
                         } label: {
-                            Label(cat.displayName(), systemImage: cat.icon ?? "tag")
-                                .foregroundStyle(.primary)
+                            HStack(spacing: 12) {
+                                CategoryIconTile(category: cat, size: 30)
+                                Text(cat.displayName())
+                                    .foregroundStyle(.primary)
+                            }
                         }
                     }
                 }

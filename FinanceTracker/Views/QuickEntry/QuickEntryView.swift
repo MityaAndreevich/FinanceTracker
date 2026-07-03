@@ -359,10 +359,10 @@ struct QuickEntryView: View {
                     .textCase(.uppercase)
                     .tracking(0.5)
             }
-            .foregroundStyle(Color.money(isPositive: isIncome))
+            .foregroundStyle(Color.moneyDirectional(isPositive: isIncome))
             .padding(.horizontal, Spacing.s)
             .padding(.vertical, 5)
-            .background(Color.money(isPositive: isIncome).opacity(0.14), in: Capsule())
+            .background(Color.moneyDirectional(isPositive: isIncome).opacity(0.14), in: Capsule())
             .accessibilityHidden(true)
 
             // Hero amount — 60pt, high contrast (primary label), monospaced.
@@ -401,12 +401,14 @@ struct QuickEntryView: View {
     /// chip so the control reads as a button, not text.
     @ViewBuilder
     private func categoryBadge(_ category: Category?, isIncome: Bool) -> some View {
-        let tint = Color.money(isPositive: isIncome)
+        // The chip carries the *category's* own hue (P1 theme map), not the
+        // income/expense money color — matching the tiles used app-wide.
+        let tint = category?.themeColor ?? Color.bcAccent
         Button {
             activeSheet = .category
         } label: {
             HStack(spacing: Spacing.xs) {
-                Image(systemName: (category?.icon?.isEmpty == false ? category!.icon! : "tag.fill"))
+                Image(systemName: category?.symbolName ?? "tag.fill")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(tint)
                     .frame(width: 26, height: 26)

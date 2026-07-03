@@ -314,12 +314,8 @@ private struct CategoryRow: View {
     @Bindable var category: Category
 
     var body: some View {
-        HStack(spacing: 10) {
-            if let icon = category.icon, !icon.isEmpty {
-                Image(systemName: icon)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 20)
-            }
+        HStack(spacing: 12) {
+            CategoryIconTile(category: category, size: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(LocalizedStringKey(category.displayKeyOrName))
                 Text(LocalizedStringKey(category.isPrimary

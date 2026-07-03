@@ -95,6 +95,8 @@ struct ContentView: View {
             .tabItem { Label("tab.settings", systemImage: "gear") }
             .tag(4)
         }
+        // Active tab + the center "+" render in the brand mint (redesign v2 tokens).
+        .tint(Color.bcAccent)
         // Right-edge swipe advances forward through the main tabs (skipping the
         // "+" tab), clamping at the last so the user is never disoriented by a
         // wrap. Forward-only: a left-edge back swipe was dropped because it
