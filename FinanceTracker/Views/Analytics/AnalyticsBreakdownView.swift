@@ -31,6 +31,12 @@ struct AnalyticsBreakdownView: View {
         let symbol: String
         let cents: Int          // positive magnitude
         let isIncome: Bool
+        let color: Color        // distinct per-category hue (P1 theme map)
+
+        // Identity is the category UUID; Color isn't reliably Hashable, so equate
+        // and hash on id alone (every field is derived from the same category).
+        static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+        func hash(into hasher: inout Hasher) { hasher.combine(id) }
     }
 
     enum TypeFilter: String, CaseIterable, Identifiable {
@@ -105,8 +111,9 @@ struct AnalyticsBreakdownView: View {
                 angularInset: 2.5
             )
             .cornerRadius(6)
-            // Hierarchical by rank — red for expenses, green for income.
-            .foregroundStyle(color(for: cat))
+            // Multi-color: one distinct category hue per slice (P1 theme map),
+            // replacing the old monochrome red/green-by-rank.
+            .foregroundStyle(cat.color)
             .opacity(selectedCategory == nil || selectedCategory == cat ? 1.0 : 0.35)
         }
         .frame(height: 280)
@@ -134,21 +141,24 @@ struct AnalyticsBreakdownView: View {
             if let selected = selectedCategory {
                 Image(systemName: selected.symbol)
                     .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(selected.color)
                 Text(selected.name)
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.bcTextSecondary)
                 Text(Money.format(cents: selected.cents, currencyCode: currencyCode))
                     .font(.system(.title3, design: .rounded).bold().monospacedDigit())
+                    .foregroundStyle(Color.bcTextPrimary)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                     .privacySensitive(true)
             } else {
                 Text("analytics.total")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.bcTextSecondary)
+                    .textCase(.uppercase)
                 Text(Money.format(cents: total, currencyCode: currencyCode))
                     .font(.system(.title2, design: .rounded).bold().monospacedDigit())
+                    .foregroundStyle(Color.bcTextPrimary)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                     .privacySensitive(true)
@@ -156,25 +166,9 @@ struct AnalyticsBreakdownView: View {
         }
     }
 
-    /// Expense = red, income = green; magnitude rank fades opacity so the biggest
-    /// slice reads strongest. Mirrors the +/− color language used elsewhere.
-    private func color(for cat: CategoryTotal) -> Color {
-        let base: Color = cat.isIncome ? .bcIncome : .bcExpense
-        return base.opacity(opacityForRank(cat))
-    }
-
-    private func opacityForRank(_ cat: CategoryTotal) -> Double {
-        guard let rank = sortedCategories.firstIndex(of: cat) else { return 0.5 }
-        // Top 3 slices step down distinctly; rank 4+ clamps to a 0.5 opacity
-        // floor so same-hue slices stay legible instead of fading toward the
-        // background (legend icon + label + % carries finer differentiation).
-        switch rank {
-        case 0:  return 1.0
-        case 1:  return 0.85
-        case 2:  return 0.7
-        default: return 0.5
-        }
-    }
+    /// Largest category magnitude — the progress bars are drawn relative to this so
+    /// the top category fills its bar and the rest read as proportions of it.
+    private var maxCents: Int { sortedCategories.first?.cents ?? 0 }
 
     private var legend: some View {
         VStack(spacing: 8) {
@@ -186,30 +180,7 @@ struct AnalyticsBreakdownView: View {
                         currencyCode: currencyCode
                     )
                 } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: cat.symbol)
-                            .font(.body)
-                            .foregroundStyle(color(for: cat))
-                            .frame(width: 28)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(cat.name).font(.body)
-                            Text(percentLabel(cat))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text(Money.format(cents: cat.cents, currencyCode: currencyCode))
-                            .font(.body.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .privacySensitive(true)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    legendRow(cat)
                 }
                 .buttonStyle(.plain)
                 .simultaneousGesture(TapGesture().onEnded {
@@ -219,6 +190,67 @@ struct AnalyticsBreakdownView: View {
                 })
             }
         }
+    }
+
+    /// A category tile row: colored icon tile + name + % + amount, over a thin
+    /// category-colored progress bar. Solid surface + 1px border, no gradients.
+    private func legendRow(_ cat: CategoryTotal) -> some View {
+        let fraction = maxCents > 0 ? min(max(Double(cat.cents) / Double(maxCents), 0), 1) : 0
+        return VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(cat.color.opacity(0.16))
+                    .frame(width: 36, height: 36)
+                    .overlay(
+                        Image(systemName: cat.symbol)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(cat.color)
+                    )
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(cat.name)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.bcTextPrimary)
+                        .lineLimit(1)
+                    Text(percentLabel(cat))
+                        .font(.system(size: 13))
+                        .monospacedDigit()
+                        .foregroundStyle(Color.bcTextSecondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Text(Money.format(cents: cat.cents, currencyCode: currencyCode))
+                    .font(.system(size: 16, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bcTextPrimary)
+                    .privacySensitive(true)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(Color.bcTextMuted)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.bcSurface2)
+                    Capsule()
+                        .fill(cat.color)
+                        .frame(width: geo.size.width * fraction)
+                }
+            }
+            .frame(height: 6)
+            .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.bcSurface1)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.bcDivider, lineWidth: 1)
+        )
     }
 
     private func percentLabel(_ cat: CategoryTotal) -> String {

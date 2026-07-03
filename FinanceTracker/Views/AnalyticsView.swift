@@ -61,6 +61,7 @@ struct AnalyticsView: View {
                 content
             }
         }
+        .background(Color.bcPage.ignoresSafeArea())
         // Swipe cycles the three sub-screens (wrap-around). Chart scrubbing inside
         // Pulse/Horizon is a descendant gesture and wins over this paging, so a
         // horizontal drag on a chart scrubs; a drag on inert area pages.
@@ -110,34 +111,38 @@ struct AnalyticsView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "chart.pie")
+        VStack(spacing: 14) {
+            Spacer(minLength: 40)
+            Image(systemName: "chart.pie.fill")
                 .font(.system(size: 52))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.bcAccent)
             Text("analytics.empty.title")
-                .font(.headline)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.bcTextPrimary)
             Text("analytics.empty.caption")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 48)
-    }
-
-    private func centeredHint(_ key: LocalizedStringKey) -> some View {
-        VStack {
-            Spacer(minLength: 48)
-            Text(key)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.bcTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
             Spacer()
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func centeredHint(_ key: LocalizedStringKey) -> some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 40)
+            Image(systemName: "tray")
+                .font(.system(size: 40))
+                .foregroundStyle(Color.bcTextMuted)
+            Text(key)
+                .font(.subheadline)
+                .foregroundStyle(Color.bcTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Swipe navigation
@@ -196,7 +201,7 @@ struct AnalyticsView: View {
     }
 
     private func recomputeBreakdown(cal: Calendar, monthStart: Date, today: Date) {
-        struct Acc { var name: String; var symbol: String; var cents: Int; var isIncome: Bool }
+        struct Acc { var name: String; var symbol: String; var color: Color; var cents: Int; var isIncome: Bool }
         // Income and expense categories carry distinct UUIDs in this app's taxonomy,
         // so a single uuid-keyed dictionary never merges directions. The Breakdown
         // view filters by `isIncome` for its segmented Expenses/Income control.
@@ -207,13 +212,13 @@ struct AnalyticsView: View {
             guard day >= monthStart && day <= today else { continue }
             let cat = tx.category
             var cur = sums[cat.uuid]
-                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.icon ?? "tag.fill", cents: 0, isIncome: tx.isIncome)
+                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.symbolName, color: cat.themeColor, cents: 0, isIncome: tx.isIncome)
             cur.cents += tx.amountCents
             sums[cat.uuid] = cur
         }
 
         breakdownCategories = sums.map { id, acc in
-            .init(id: id, name: acc.name, symbol: acc.symbol, cents: acc.cents, isIncome: acc.isIncome)
+            .init(id: id, name: acc.name, symbol: acc.symbol, cents: acc.cents, isIncome: acc.isIncome, color: acc.color)
         }
     }
 

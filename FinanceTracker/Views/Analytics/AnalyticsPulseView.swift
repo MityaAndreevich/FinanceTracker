@@ -84,7 +84,7 @@ struct AnalyticsPulseView: View {
                                 currencyCode: currencyCode
                             ))
                             .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-                            .foregroundStyle(Color.money(isPositive: selectedDay.cents >= 0))
+                            .foregroundStyle(Color.moneyDirectional(isPositive: selectedDay.cents >= 0))
                             .privacySensitive(true)
                             .contentTransition(.numericText())
                             Image(systemName: "chevron.right.circle.fill")
@@ -116,7 +116,7 @@ struct AnalyticsPulseView: View {
                     currencyCode: currencyCode
                 ))
                 .font(.system(size: 48, weight: .bold, design: .rounded).monospacedDigit())
-                .foregroundStyle(Color.money(isPositive: netCents >= 0))
+                .foregroundStyle(Color.moneyDirectional(isPositive: netCents >= 0))
                 .privacySensitive(true)  // hidden in App Switcher per HIG
                 .contentTransition(.numericText(value: Double(netCents) / 100))
             }
@@ -132,37 +132,29 @@ struct AnalyticsPulseView: View {
                     x: .value("analytics.axis.date", item.date),
                     y: .value("analytics.axis.amount", item.cents)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.4),
-                            Color.accentColor.opacity(0.05)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                // Solid low-opacity mint fill (no gradient — DESIGN_DIRECTION_v2 §2).
+                .foregroundStyle(Color.bcAccent.opacity(0.14))
                 .interpolationMethod(.catmullRom)
 
                 LineMark(
                     x: .value("analytics.axis.date", item.date),
                     y: .value("analytics.axis.amount", item.cents)
                 )
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.bcAccent)
                 .interpolationMethod(.catmullRom)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
             }
 
             if let selectedDay {
                 RuleMark(x: .value("analytics.axis.date", selectedDay.date))
-                    .foregroundStyle(Color.accentColor.opacity(0.4))
+                    .foregroundStyle(Color.bcAccent.opacity(0.4))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
 
                 PointMark(
                     x: .value("analytics.axis.date", selectedDay.date),
                     y: .value("analytics.axis.amount", selectedDay.cents)
                 )
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.bcAccent)
                 .symbolSize(120)
             }
         }
@@ -200,17 +192,19 @@ struct AnalyticsPulseView: View {
 
     private var summary: some View {
         VStack(spacing: 12) {
+            // Income is the highlight (green + up-arrow); spend is neutral — a
+            // month's spend is normal, not an alert (DESIGN_DIRECTION_v2 §2).
             summaryRow(
                 icon: "arrow.up.right",
                 label: "analytics.earned_total",
                 value: dailyTotals.filter { $0.cents > 0 }.reduce(0) { $0 + $1.cents },
-                color: .bcIncome
+                color: .bcPositive
             )
             summaryRow(
                 icon: "arrow.down.right",
                 label: "analytics.spent_total",
                 value: abs(dailyTotals.filter { $0.cents < 0 }.reduce(0) { $0 + $1.cents }),
-                color: .bcExpense
+                color: .bcTextSecondary
             )
         }
     }
@@ -221,14 +215,15 @@ struct AnalyticsPulseView: View {
                 .font(.body.weight(.bold))
                 .foregroundStyle(color)
                 .frame(width: 24)
-            Text(label).font(.body)
+            Text(label)
+                .font(.body)
+                .foregroundStyle(Color.bcTextPrimary)
             Spacer()
             Text(Money.format(cents: value, currencyCode: currencyCode))
                 .font(.body.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.bcTextSecondary)
                 .privacySensitive(true)
         }
-        .padding(Spacing.compact)
-        .cardSurface(cornerRadius: CornerRadius.card)
+        .bcCard(padding: 14)
     }
 }

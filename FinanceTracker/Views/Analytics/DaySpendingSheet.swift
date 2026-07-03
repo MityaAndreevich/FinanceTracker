@@ -49,22 +49,23 @@ struct DaySpendingSheet: View {
         let id: UUID
         let name: String
         let symbol: String
+        let color: Color
         let cents: Int
         let isIncome: Bool
     }
 
     private var categorySlices: [CategorySlice] {
-        struct Acc { var name: String; var symbol: String; var cents: Int; var isIncome: Bool }
+        struct Acc { var name: String; var symbol: String; var color: Color; var cents: Int; var isIncome: Bool }
         var sums: [UUID: Acc] = [:]
         for tx in filtered {
             let cat = tx.category
             var cur = sums[cat.uuid]
-                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.icon ?? "tag.fill", cents: 0, isIncome: tx.isIncome)
+                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.symbolName, color: cat.themeColor, cents: 0, isIncome: tx.isIncome)
             cur.cents += tx.amountCents
             sums[cat.uuid] = cur
         }
         return sums
-            .map { CategorySlice(id: $0.key, name: $0.value.name, symbol: $0.value.symbol, cents: $0.value.cents, isIncome: $0.value.isIncome) }
+            .map { CategorySlice(id: $0.key, name: $0.value.name, symbol: $0.value.symbol, color: $0.value.color, cents: $0.value.cents, isIncome: $0.value.isIncome) }
             .sorted { $0.cents > $1.cents }
     }
 
@@ -92,7 +93,7 @@ struct DaySpendingSheet: View {
                         NavigationLink {
                             TransactionDetailView(tx: tx)
                         } label: {
-                            TransactionRow(tx: tx)
+                            CategoryTileRow(tx: tx)
                         }
                     }
                 }
@@ -117,7 +118,7 @@ struct DaySpendingSheet: View {
                 currencyCode: currencyCode
             ))
             .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
-            .foregroundStyle(Color.money(isPositive: netCents >= 0))
+            .foregroundStyle(Color.moneyDirectional(isPositive: netCents >= 0))
             .privacySensitive(true)
             Text(String(format: NSLocalizedString("analytics.transactions_count", comment: ""), filtered.count))
                 .font(.caption)
@@ -132,7 +133,7 @@ struct DaySpendingSheet: View {
                 y: .value("analytics.axis.category", slice.name)
             )
             .cornerRadius(5)
-            .foregroundStyle(Color.money(isPositive: slice.isIncome))
+            .foregroundStyle(slice.color)
             .annotation(position: .trailing, alignment: .leading) {
                 Text(Money.format(cents: slice.cents, currencyCode: currencyCode))
                     .font(.caption2.monospacedDigit())

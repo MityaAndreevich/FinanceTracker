@@ -280,69 +280,6 @@ struct TransactionsView: View {
     }
 }
 
-// MARK: - Row
-
-struct TransactionRow: View {
-    let tx: Transaction
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(primaryTitle)
-                    .font(.headline)
-
-                HStack(spacing: 6) {
-                    Text(LocalizedStringKey(tx.category.displayKeyOrName))
-
-                    if let sourceName = tx.source?.name, !sourceName.isEmpty {
-                        Text("•")
-                        Text(sourceName)
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            // ✅ Color-blind safe: explicit sign + arrow icon, color is decorative.
-            HStack(spacing: 4) {
-                Image(systemName: tx.isIncome ? "arrow.up.right" : "arrow.down.right")
-                    .font(.caption.weight(.bold))
-                    .accessibilityHidden(true)
-
-                Text(signedAmount)
-                    .font(.headline)
-                    .monospacedDigit()
-                    .privacySensitive(true)
-            }
-            .foregroundStyle(Color.money(isPositive: tx.isIncome))
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(
-                Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")
-                + Text(", ")
-                + Text(Money.format(cents: tx.amountCents, currencyCode: tx.currency))
-            )
-        }
-        .contentShape(Rectangle())
-        .padding(.vertical, 4)
-    }
-
-    private var primaryTitle: String {
-        let merchant = (tx.merchant ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if !merchant.isEmpty { return merchant }
-        return tx.category.displayName()
-    }
-
-    private var signedAmount: String {
-        Money.formatSigned(
-            cents: tx.amountCents,
-            isPositive: tx.isIncome,
-            currencyCode: tx.currency
-        )
-    }
-}
-
 // MARK: - Type filter
 
 enum TransactionFilter: String, CaseIterable, Identifiable {

@@ -45,7 +45,7 @@ struct MonthDetailSheet: View {
                             currencyCode: currencyCode
                         ))
                         .font(.system(size: 28, weight: .bold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(Color.money(isPositive: month.netCents >= 0))
+                        .foregroundStyle(Color.moneyDirectional(isPositive: month.netCents >= 0))
                         .privacySensitive(true)
                         Text(String(format: NSLocalizedString("analytics.transactions_count", comment: ""), filtered.count))
                             .font(.caption)
@@ -59,7 +59,7 @@ struct MonthDetailSheet: View {
                 // Stable uuid identity, not the default persistentModelID (temporary
                 // until save) — avoids transient ghost rows at scale (Round 9).
                 ForEach(filtered, id: \.uuid) { tx in
-                    TransactionRow(tx: tx)
+                    CategoryTileRow(tx: tx)
                 }
             }
             .listStyle(.insetGrouped)

@@ -144,17 +144,17 @@ struct AnalyticsHorizonView: View {
             return (Money.formatSigned(cents: total.netCents,
                                        isPositive: total.netCents >= 0,
                                        currencyCode: currencyCode),
-                    Color.money(isPositive: total.netCents >= 0))
+                    Color.moneyDirectional(isPositive: total.netCents >= 0))
         case .expenses:
             return (Money.formatSigned(cents: total.expenseCents,
                                        isPositive: false,
                                        currencyCode: currencyCode),
-                    .bcExpense)
+                    .bcDanger)
         case .income:
             return (Money.formatSigned(cents: total.incomeCents,
                                        isPositive: true,
                                        currencyCode: currencyCode),
-                    .bcIncome)
+                    .bcPositive)
         }
     }
 
@@ -222,7 +222,7 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.expenseCents)
                 )
-                .foregroundStyle(Color.bcExpense)
+                .foregroundStyle(Color.bcDanger)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
 
@@ -230,7 +230,7 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.expenseCents)
                 )
-                .foregroundStyle(solidAreaGradient(.bcExpense))
+                .foregroundStyle(solidAreaGradient(.bcDanger))
                 .interpolationMethod(.catmullRom)
             }
 
@@ -240,7 +240,7 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.incomeCents)
                 )
-                .foregroundStyle(Color.bcIncome)
+                .foregroundStyle(Color.bcPositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
 
@@ -248,7 +248,7 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", item.date),
                     y: .value("analytics.axis.amount", item.incomeCents)
                 )
-                .foregroundStyle(solidAreaGradient(.bcIncome))
+                .foregroundStyle(solidAreaGradient(.bcPositive))
                 .interpolationMethod(.catmullRom)
             }
 
@@ -261,7 +261,7 @@ struct AnalyticsHorizonView: View {
                     y: .value("analytics.axis.amount", item.incomeCents),
                     series: .value("series", "income")
                 )
-                .foregroundStyle(Color.bcIncome)
+                .foregroundStyle(Color.bcPositive)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
             }
@@ -271,7 +271,7 @@ struct AnalyticsHorizonView: View {
                     y: .value("analytics.axis.amount", item.expenseCents),
                     series: .value("series", "expense")
                 )
-                .foregroundStyle(Color.bcExpense)
+                .foregroundStyle(Color.bcDanger)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .interpolationMethod(.catmullRom)
             }
@@ -291,34 +291,34 @@ struct AnalyticsHorizonView: View {
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.netCents)
                 )
-                .foregroundStyle(Color.money(isPositive: selectedTotal.netCents >= 0))
+                .foregroundStyle(Color.moneyDirectional(isPositive: selectedTotal.netCents >= 0))
                 .symbolSize(120)
             case .expenses:
                 PointMark(
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.expenseCents)
                 )
-                .foregroundStyle(Color.bcExpense)
+                .foregroundStyle(Color.bcDanger)
                 .symbolSize(120)
             case .income:
                 PointMark(
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.incomeCents)
                 )
-                .foregroundStyle(Color.bcIncome)
+                .foregroundStyle(Color.bcPositive)
                 .symbolSize(120)
             case .combined:
                 PointMark(
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.incomeCents)
                 )
-                .foregroundStyle(Color.bcIncome)
+                .foregroundStyle(Color.bcPositive)
                 .symbolSize(110)
                 PointMark(
                     x: .value("analytics.axis.month", selectedTotal.date),
                     y: .value("analytics.axis.amount", selectedTotal.expenseCents)
                 )
-                .foregroundStyle(Color.bcExpense)
+                .foregroundStyle(Color.bcDanger)
                 .symbolSize(110)
             }
         }
@@ -329,8 +329,9 @@ struct AnalyticsHorizonView: View {
     // The Net trend is a single *net* line (income − expense). It used to be
     // drawn entirely in `Color.accentColor`, so a month with net spending looked
     // identical to a month with net income. We split the line/area at the zero
-    // line: emerald (`.bcIncome`) above zero, terracotta (`.bcExpense`) below.
-    // Expenses/Income modes plot a single absolute series in one semantic color.
+    // line: mint-green (`.bcPositive`) above zero, calm coral (`.bcDanger`) below
+    // — the directional red/green language (DESIGN_DIRECTION_v2 §2). Expenses /
+    // Income modes plot a single absolute series in one semantic color.
 
     /// Position of the zero line within the value range, as a fraction from the
     /// top (0) to the bottom (1) of the chart's plotted bounding box.
@@ -347,10 +348,10 @@ struct AnalyticsHorizonView: View {
     private var netTrendGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: .bcIncome, location: 0),
-                .init(color: .bcIncome, location: zeroFraction),
-                .init(color: .bcExpense, location: zeroFraction),
-                .init(color: .bcExpense, location: 1),
+                .init(color: .bcPositive, location: 0),
+                .init(color: .bcPositive, location: zeroFraction),
+                .init(color: .bcDanger, location: zeroFraction),
+                .init(color: .bcDanger, location: 1),
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -360,10 +361,10 @@ struct AnalyticsHorizonView: View {
     private var netAreaGradient: LinearGradient {
         LinearGradient(
             stops: [
-                .init(color: .bcIncome.opacity(0.28), location: 0),
-                .init(color: .bcIncome.opacity(0.04), location: zeroFraction),
-                .init(color: .bcExpense.opacity(0.04), location: zeroFraction),
-                .init(color: .bcExpense.opacity(0.28), location: 1),
+                .init(color: .bcPositive.opacity(0.28), location: 0),
+                .init(color: .bcPositive.opacity(0.04), location: zeroFraction),
+                .init(color: .bcDanger.opacity(0.04), location: zeroFraction),
+                .init(color: .bcDanger.opacity(0.28), location: 1),
             ],
             startPoint: .top,
             endPoint: .bottom
