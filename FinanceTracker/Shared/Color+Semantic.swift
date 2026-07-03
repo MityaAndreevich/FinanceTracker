@@ -61,8 +61,23 @@ extension Color {
     // MARK: Helpers
 
     /// Money color for a signed amount (positive = income).
+    ///
+    /// Legacy: this paints expenses in terracotta (`bcExpense`), the monochrome
+    /// look retired in redesign v2. Prefer `moneyDirectional` for net / delta /
+    /// budget readouts (where direction is the message) and `bcTextPrimary` for a
+    /// single expense amount (which is normal, not an alert). Kept only for the few
+    /// pre-redesign surfaces not yet migrated.
     static func money(isPositive: Bool) -> Color {
         isPositive ? .bcIncome : .bcExpense
+    }
+
+    /// Directional money color for **net / delta / over-budget** values, where the
+    /// sign is the message: `bcPositive` (green) when up/positive, calm `bcDanger`
+    /// (coral) when down/negative. Pair with an up/down arrow. Distinct from an
+    /// individual expense amount, which renders neutral in `bcTextPrimary`.
+    /// (DESIGN_DIRECTION_v2 §Locked decision 2.)
+    static func moneyDirectional(isPositive: Bool) -> Color {
+        isPositive ? .bcPositive : .bcDanger
     }
 
     // MARK: - Redesign v2 semantic tokens

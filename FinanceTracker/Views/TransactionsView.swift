@@ -12,6 +12,8 @@ struct TransactionsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.locale) private var locale
 
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
@@ -80,6 +82,8 @@ struct TransactionsView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(Color.bcPage.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
             // PeriodSelector + filter chips live ABOVE the list, below the search
             // drawer. Keeping them out of the List avoids a hit-test conflict that
@@ -146,9 +150,9 @@ struct TransactionsView: View {
                     .padding(.vertical, 6)
                     .background(
                         Capsule()
-                            .fill(typeFilter == filter ? Color.accentColor : Color(.tertiarySystemFill))
+                            .fill(typeFilter == filter ? Color.bcAccent : Color.bcSurface2)
                     )
-                    .foregroundStyle(typeFilter == filter ? Color.white : Color.primary)
+                    .foregroundStyle(typeFilter == filter ? Color.black : Color.bcTextPrimary)
                 }
                 .buttonStyle(.plain)
             }
@@ -157,34 +161,35 @@ struct TransactionsView: View {
     }
 
     private var emptyStateRow: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Image(systemName: "list.bullet.rectangle")
-                .font(.system(size: 52))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 48))
+                .foregroundStyle(Color.bcTextMuted)
 
             Text("transactions.empty.title")
-                .font(.headline)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.bcTextPrimary)
 
             Button {
                 presentQuickEntry = true
             } label: {
                 Text("transactions.empty.cta")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.black)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Capsule().fill(Color.accentColor))
+                    .background(Capsule().fill(Color.bcAccent))
             }
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
+        .padding(.vertical, 48)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
     }
 
     private func daySection(for day: Date) -> some View {
-        Section(header: sectionHeader(for: day)) {
+        Section {
             let dayItems = grouped[day] ?? []
 
             // Identity on the stable app-level uuid, never the default
@@ -195,9 +200,11 @@ struct TransactionsView: View {
             // at init.
             ForEach(dayItems, id: \.uuid) { tx in
                 Button { editTx = tx } label: {
-                    TransactionRow(tx: tx)
+                    CategoryTileRow(tx: tx)
                 }
                 .buttonStyle(.plain)
+                .listRowBackground(Color.bcSurface1)
+                .listRowSeparatorTint(Color.bcDivider)
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
 
                     Button(role: .destructive) { pendingDeleteTx = tx } label: {
@@ -218,6 +225,30 @@ struct TransactionsView: View {
                         Label("common.delete", systemImage: "trash")
                     }
                 }
+            }
+        } header: {
+            dayHeader(for: day)
+        }
+    }
+
+    /// Day header: relative/formatted date + a calm neutral subtotal of that day's
+    /// spending (running clarity). Neutral, not alarm-colored — a day's spend is
+    /// normal, not a status.
+    private func dayHeader(for day: Date) -> some View {
+        let items = grouped[day] ?? []
+        let spend = items.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
+        return HStack {
+            sectionHeader(for: day)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.bcTextSecondary)
+                .textCase(nil)
+            Spacer()
+            if spend > 0 {
+                Text(Money.format(cents: spend, currencyCode: defaultCurrencyCode))
+                    .font(.system(size: 13, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bcTextMuted)
+                    .privacySensitive(true)
             }
         }
     }
