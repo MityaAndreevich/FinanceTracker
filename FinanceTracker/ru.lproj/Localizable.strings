@@ -620,7 +620,7 @@
 "widget.earned.format" = "Доходы: %@";
 
 /* Quick Add */
-"quickadd.placeholder" = "Быстро: 350 ₽ кофе";
+"quickadd.placeholder" = "Быстро: кофе 350";
 "quickadd.preview.save" = "Сохранить";
 "quickadd.preview.edit" = "Изменить";
 "quickadd.saved.tap_to_edit" = "Сохранено — нажмите для изменения";
@@ -640,7 +640,7 @@
 "quick_entry.save" = "Сохранить";
 "quick_entry.use_form" = "Открыть форму";
 "quick_entry.fail_unparseable" = "Не удалось распознать — откройте форму";
-"quick_entry.placeholder.1" = "350₽ кофе";
+"quick_entry.placeholder.1" = "кофе 350";
 "quick_entry.placeholder.2" = "обед 800";
 "quick_entry.placeholder.3" = "3000 бензин";
 "quick_entry.placeholder.4" = "+200000 зарплата";

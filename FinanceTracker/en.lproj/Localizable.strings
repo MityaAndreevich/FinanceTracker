@@ -610,7 +610,7 @@
 "widget.earned.format" = "Earned %@";
 
 /* Quick Add */
-"quickadd.placeholder" = "Quick add: $5.50 Starbucks";
+"quickadd.placeholder" = "Quick add: Starbucks 5.50";
 "quickadd.preview.save" = "Save";
 "quickadd.preview.edit" = "Edit";
 "quickadd.saved.tap_to_edit" = "Saved — tap to edit";
@@ -630,7 +630,7 @@
 "quick_entry.save" = "Save";
 "quick_entry.use_form" = "Use detailed form";
 "quick_entry.fail_unparseable" = "Couldn't read that — try the detailed form";
-"quick_entry.placeholder.1" = "$5.50 Starbucks";
+"quick_entry.placeholder.1" = "Starbucks 5.50";
 "quick_entry.placeholder.2" = "lunch 12";
 "quick_entry.placeholder.3" = "67 gas";
 "quick_entry.placeholder.4" = "+2800 paycheck";

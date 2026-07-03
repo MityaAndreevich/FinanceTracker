@@ -210,7 +210,7 @@
 "quick_entry.save" = "Salvar";
 "quick_entry.use_form" = "Usar formulário detalhado";
 "quick_entry.fail_unparseable" = "Não foi possível ler — use o formulário";
-"quick_entry.placeholder.1" = "R$ 12 café";
+"quick_entry.placeholder.1" = "café 12";
 "quick_entry.placeholder.2" = "almoço 35";
 "quick_entry.placeholder.3" = "67 gasolina";
 "quick_entry.placeholder.4" = "+2800 salário";
@@ -552,7 +552,7 @@
 "recurring.settings.stop" = "Parar";
 "widget.spent.format" = "Gasto %@";
 "widget.earned.format" = "Ganho %@";
-"quickadd.placeholder" = "Adição rápida: R$5,50 Starbucks";
+"quickadd.placeholder" = "Adição rápida: Starbucks 12";
 "quickadd.preview.save" = "Salvar";
 "quickadd.preview.edit" = "Editar";
 "quickadd.saved.tap_to_edit" = "Salvo — toque para editar";
