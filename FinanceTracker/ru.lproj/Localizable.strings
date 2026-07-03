@@ -620,7 +620,7 @@
 "widget.earned.format" = "Доходы: %@";
 
 /* Quick Add */
-"quickadd.placeholder" = "Быстро: $5.50 Starbucks";
+"quickadd.placeholder" = "Быстро: 350 ₽ кофе";
 "quickadd.preview.save" = "Сохранить";
 "quickadd.preview.edit" = "Изменить";
 "quickadd.saved.tap_to_edit" = "Сохранено — нажмите для изменения";

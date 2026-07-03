@@ -128,7 +128,10 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAddSheet) {
-            QuickEntryView()
+            // testHookInput is nil in normal use; under the screenshot capture with
+            // --screenshot-quickentry-parsed it preloads a locale-appropriate parsed
+            // transaction so frame 03 shows the rich parsed-preview state.
+            QuickEntryView(testHookInput: ScreenshotMode.quickEntryParsedInput)
         }
         .fullScreenCover(item: $screenshotCover) { screen in
             NavigationStack { screenshotDestination(for: screen) }

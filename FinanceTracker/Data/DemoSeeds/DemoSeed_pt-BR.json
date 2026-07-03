@@ -1,6 +1,7 @@
 {
   "locale": "pt-BR",
   "currencyCode": "BRL",
+  "budgetMinor": 750000,
   "sources": [
     {
       "key": "checking",
@@ -8,7 +9,7 @@
     },
     {
       "key": "credit",
-      "name": "Cartão de crédito"
+      "name": "Cartão"
     },
     {
       "key": "cash",
@@ -17,23 +18,47 @@
   ],
   "transactions": [
     {
-      "daysAgo": 60,
+      "dayOfMonth": 1,
       "category": "Income",
       "source": "checking",
-      "minor": 350000,
+      "minor": 550000,
       "merchant": "Salário",
       "type": "income"
     },
     {
-      "daysAgo": 58,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 18000,
-      "merchant": "Pão de Açúcar",
+      "dayOfMonth": 16,
+      "category": "Income",
+      "source": "checking",
+      "minor": 180000,
+      "merchant": "Freelance",
+      "type": "income"
+    },
+    {
+      "dayOfMonth": 2,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 200000,
+      "merchant": "Aluguel",
       "type": "expense"
     },
     {
-      "daysAgo": 58,
+      "dayOfMonth": 4,
+      "category": "Utilities",
+      "source": "checking",
+      "minor": 18000,
+      "merchant": "Enel",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Utilities",
+      "source": "credit",
+      "minor": 12000,
+      "merchant": "Vivo",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
       "category": "Subscriptions",
       "source": "credit",
       "minor": 2190,
@@ -41,47 +66,7 @@
       "type": "expense"
     },
     {
-      "daysAgo": 55,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 12000,
-      "merchant": "Posto Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 50,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 3500,
-      "merchant": "iFood",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 1800,
-      "merchant": "Uber",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 47,
+      "dayOfMonth": 5,
       "category": "Subscriptions",
       "source": "credit",
       "minor": 3990,
@@ -89,15 +74,15 @@
       "type": "expense"
     },
     {
-      "daysAgo": 46,
-      "category": "Income",
-      "source": "checking",
-      "minor": 350000,
-      "merchant": "Salário",
-      "type": "income"
+      "dayOfMonth": 8,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 9990,
+      "merchant": "Academia",
+      "type": "expense"
     },
     {
-      "daysAgo": 44,
+      "dayOfMonth": 2,
       "category": "Food & Drink",
       "source": "credit",
       "minor": 18000,
@@ -105,267 +90,195 @@
       "type": "expense"
     },
     {
-      "daysAgo": 44,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
+      "dayOfMonth": 7,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 14000,
+      "merchant": "Carrefour",
       "type": "expense"
     },
     {
-      "daysAgo": 41,
+      "dayOfMonth": 12,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 22000,
+      "merchant": "Extra",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 18,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 16000,
+      "merchant": "Carrefour",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 6500,
+      "merchant": "iFood",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Food & Drink",
+      "source": "cash",
+      "minor": 3500,
+      "merchant": "Habib's",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 15,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 8900,
+      "merchant": "Outback",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 21,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 7200,
+      "merchant": "China in Box",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 1,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1200,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 5,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1000,
+      "merchant": "Café",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1300,
+      "merchant": "Kopenhagen",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 13,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1100,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 19,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1250,
+      "merchant": "Café",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 1050,
+      "merchant": "Kopenhagen",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
       "category": "Transport",
       "source": "credit",
-      "minor": 12000,
+      "minor": 15000,
       "merchant": "Posto Shell",
       "type": "expense"
     },
     {
-      "daysAgo": 41,
-      "category": "Utilities",
-      "source": "checking",
-      "minor": 13000,
-      "merchant": "Conta de Luz",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 38,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 38,
-      "category": "Health",
+      "dayOfMonth": 10,
+      "category": "Transport",
       "source": "credit",
       "minor": 2500,
+      "merchant": "Uber",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 16,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 14000,
+      "merchant": "Ipiranga",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 2800,
+      "merchant": "99",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 12000,
+      "merchant": "Magazine Luiza",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 14,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 25000,
+      "merchant": "Amazon",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 26,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 8000,
+      "merchant": "Renner",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 11,
+      "category": "Health",
+      "source": "credit",
+      "minor": 6000,
       "merchant": "Drogasil",
       "type": "expense"
     },
     {
-      "daysAgo": 35,
+      "dayOfMonth": 20,
       "category": "Health",
       "source": "credit",
-      "minor": 9000,
-      "merchant": "Academia",
+      "minor": 9900,
+      "merchant": "Dentista",
       "type": "expense"
     },
     {
-      "daysAgo": 35,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 150000,
-      "merchant": "Aluguel",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 32,
-      "category": "Income",
-      "source": "checking",
-      "minor": 350000,
-      "merchant": "Salário",
-      "type": "income"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 18000,
-      "merchant": "Pão de Açúcar",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 28,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 2190,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 3500,
-      "merchant": "iFood",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 12000,
-      "merchant": "Posto Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
+      "dayOfMonth": 8,
       "category": "Entertainment",
       "source": "credit",
-      "minor": 3000,
-      "merchant": "Livraria",
+      "minor": 4500,
+      "merchant": "Cinemark",
       "type": "expense"
     },
     {
-      "daysAgo": 18,
-      "category": "Income",
-      "source": "checking",
-      "minor": 350000,
-      "merchant": "Salário",
-      "type": "income"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 18000,
-      "merchant": "Pão de Açúcar",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 3990,
-      "merchant": "Netflix",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
+      "dayOfMonth": 23,
       "category": "Entertainment",
       "source": "credit",
-      "minor": 3000,
-      "merchant": "Cinema",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 1800,
-      "merchant": "Uber",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 12,
-      "category": "Health",
-      "source": "credit",
-      "minor": 9000,
-      "merchant": "Academia",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 10,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 150000,
-      "merchant": "Aluguel",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Transport",
-      "source": "credit",
       "minor": 12000,
-      "merchant": "Posto Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 6,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 24000,
-      "merchant": "Pão de Açúcar",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 4,
-      "category": "Income",
-      "source": "checking",
-      "minor": 350000,
-      "merchant": "Salário",
-      "type": "income"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 3500,
-      "merchant": "iFood",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 2,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 2190,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 1800,
-      "merchant": "Uber",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 0,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 800,
-      "merchant": "Cafeteria",
+      "merchant": "Show",
       "type": "expense"
     }
   ]

@@ -158,9 +158,13 @@ capture_locale() {
     local out="$out_dir/$name.png"
 
     xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
+    # Quick Entry (frame 03) preloads a parsed transaction so the capture shows the
+    # populated parsed-preview state, not the bare idle. DEBUG-only launch flag.
+    local qe_flag=""
+    [ "$screen" = "quickentry" ] && qe_flag="--screenshot-quickentry-parsed"
     # Each launch wipes + re-seeds the locale demo data, then routes to one screen.
     xcrun simctl launch "$UDID" "$BUNDLE_ID" \
-      --demo-mode-debug-only --demo-locale "$SEED" --screenshot-screen "$screen" \
+      --demo-mode-debug-only --demo-locale "$SEED" --screenshot-screen "$screen" $qe_flag \
       -AppleLanguages "($LANG_CODE)" -AppleLocale "$APPLE_LOCALE" \
       -hasCompletedOnboarding 1 -hasSeenFeatureTour 1 -requireAuthMode never \
       >/dev/null

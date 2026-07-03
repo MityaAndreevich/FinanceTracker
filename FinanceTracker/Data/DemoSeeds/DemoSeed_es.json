@@ -1,6 +1,7 @@
 {
   "locale": "es",
-  "currencyCode": "EUR",
+  "currencyCode": "MXN",
+  "budgetMinor": 3200000,
   "sources": [
     {
       "key": "checking",
@@ -8,7 +9,7 @@
     },
     {
       "key": "credit",
-      "name": "Tarjeta de crédito"
+      "name": "Tarjeta"
     },
     {
       "key": "cash",
@@ -17,355 +18,267 @@
   ],
   "transactions": [
     {
-      "daysAgo": 60,
+      "dayOfMonth": 1,
       "category": "Income",
       "source": "checking",
-      "minor": 180000,
+      "minor": 2500000,
       "merchant": "Nómina",
       "type": "income"
     },
     {
-      "daysAgo": 58,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 6500,
-      "merchant": "Mercadona",
+      "dayOfMonth": 16,
+      "category": "Income",
+      "source": "checking",
+      "minor": 800000,
+      "merchant": "Freelance",
+      "type": "income"
+    },
+    {
+      "dayOfMonth": 2,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 1200000,
+      "merchant": "Renta",
       "type": "expense"
     },
     {
-      "daysAgo": 58,
+      "dayOfMonth": 4,
+      "category": "Utilities",
+      "source": "checking",
+      "minor": 90000,
+      "merchant": "CFE",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Utilities",
+      "source": "credit",
+      "minor": 60000,
+      "merchant": "Telmex",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
       "category": "Subscriptions",
       "source": "credit",
-      "minor": 1099,
+      "minor": 11500,
       "merchant": "Spotify",
       "type": "expense"
     },
     {
-      "daysAgo": 55,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4500,
-      "merchant": "Repsol",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 50,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 1400,
-      "merchant": "Telepizza",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 850,
-      "merchant": "Cabify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 47,
+      "dayOfMonth": 5,
       "category": "Subscriptions",
       "source": "credit",
-      "minor": 1299,
+      "minor": 21900,
       "merchant": "Netflix",
       "type": "expense"
     },
     {
-      "daysAgo": 46,
-      "category": "Income",
-      "source": "checking",
-      "minor": 180000,
-      "merchant": "Nómina",
-      "type": "income"
+      "dayOfMonth": 8,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 60000,
+      "merchant": "Gimnasio",
+      "type": "expense"
     },
     {
-      "daysAgo": 44,
+      "dayOfMonth": 2,
       "category": "Food & Drink",
       "source": "credit",
-      "minor": 6500,
-      "merchant": "Mercadona",
+      "minor": 80000,
+      "merchant": "Soriana",
       "type": "expense"
     },
     {
-      "daysAgo": 44,
+      "dayOfMonth": 7,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 60000,
+      "merchant": "La Comer",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 12,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 95000,
+      "merchant": "Soriana",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 18,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 72000,
+      "merchant": "Chedraui",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 35000,
+      "merchant": "Rappi",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Food & Drink",
+      "source": "cash",
+      "minor": 22000,
+      "merchant": "Vips",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 15,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 52000,
+      "merchant": "La Casa",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 21,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 46000,
+      "merchant": "Sushi Roll",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 1,
       "category": "Coffee",
       "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
+      "minor": 6000,
+      "merchant": "Starbucks",
       "type": "expense"
     },
     {
-      "daysAgo": 41,
+      "dayOfMonth": 5,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 5500,
+      "merchant": "Cielito",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 6500,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 13,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 5800,
+      "merchant": "Cielito",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 19,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 6200,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 5600,
+      "merchant": "Cielito",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
       "category": "Transport",
       "source": "credit",
-      "minor": 4500,
-      "merchant": "Repsol",
+      "minor": 50000,
+      "merchant": "Pemex",
       "type": "expense"
     },
     {
-      "daysAgo": 41,
-      "category": "Utilities",
-      "source": "checking",
-      "minor": 6000,
-      "merchant": "Endesa Luz",
+      "dayOfMonth": 10,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 8000,
+      "merchant": "Uber",
       "type": "expense"
     },
     {
-      "daysAgo": 38,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
+      "dayOfMonth": 16,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 48000,
+      "merchant": "Pemex",
       "type": "expense"
     },
     {
-      "daysAgo": 38,
+      "dayOfMonth": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 9000,
+      "merchant": "DiDi",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 45000,
+      "merchant": "Liverpool",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 14,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 78000,
+      "merchant": "Amazon",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 26,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 32000,
+      "merchant": "Zara",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 11,
       "category": "Health",
       "source": "credit",
-      "minor": 1500,
+      "minor": 25000,
       "merchant": "Farmacia",
       "type": "expense"
     },
     {
-      "daysAgo": 35,
+      "dayOfMonth": 20,
       "category": "Health",
       "source": "credit",
-      "minor": 3000,
-      "merchant": "Gimnasio",
+      "minor": 48000,
+      "merchant": "Dentista",
       "type": "expense"
     },
     {
-      "daysAgo": 35,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 85000,
-      "merchant": "Alquiler",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 32,
-      "category": "Income",
-      "source": "checking",
-      "minor": 180000,
-      "merchant": "Nómina",
-      "type": "income"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 6500,
-      "merchant": "Mercadona",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 28,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 1099,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 1400,
-      "merchant": "Telepizza",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4500,
-      "merchant": "Repsol",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
+      "dayOfMonth": 8,
       "category": "Entertainment",
       "source": "credit",
-      "minor": 1200,
-      "merchant": "Librería",
+      "minor": 32000,
+      "merchant": "Cinépolis",
       "type": "expense"
     },
     {
-      "daysAgo": 18,
-      "category": "Income",
-      "source": "checking",
-      "minor": 180000,
-      "merchant": "Nómina",
-      "type": "income"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 6500,
-      "merchant": "Mercadona",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 1299,
-      "merchant": "Netflix",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
+      "dayOfMonth": 23,
       "category": "Entertainment",
       "source": "credit",
-      "minor": 900,
-      "merchant": "Cines",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 850,
-      "merchant": "Cabify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 12,
-      "category": "Health",
-      "source": "credit",
-      "minor": 3000,
-      "merchant": "Gimnasio",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 10,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 85000,
-      "merchant": "Alquiler",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4500,
-      "merchant": "Repsol",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 6,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 8800,
-      "merchant": "Mercadona",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 4,
-      "category": "Income",
-      "source": "checking",
-      "minor": 180000,
-      "merchant": "Nómina",
-      "type": "income"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 1400,
-      "merchant": "Telepizza",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 2,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 1099,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 850,
-      "merchant": "Cabify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 0,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 180,
-      "merchant": "Cafetería",
+      "minor": 65000,
+      "merchant": "Concierto",
       "type": "expense"
     }
   ]

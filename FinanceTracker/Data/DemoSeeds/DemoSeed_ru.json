@@ -1,14 +1,15 @@
 {
   "locale": "ru",
   "currencyCode": "RUB",
+  "budgetMinor": 16000000,
   "sources": [
     {
       "key": "checking",
-      "name": "Дебетовая карта"
+      "name": "Счёт"
     },
     {
       "key": "credit",
-      "name": "Кредитная карта"
+      "name": "Кредитка"
     },
     {
       "key": "cash",
@@ -17,295 +18,71 @@
   ],
   "transactions": [
     {
-      "daysAgo": 60,
+      "dayOfMonth": 1,
       "category": "Income",
       "source": "checking",
-      "minor": 8000000,
+      "minor": 12000000,
       "merchant": "Зарплата",
       "type": "income"
     },
     {
-      "daysAgo": 58,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Пятёрочка",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 58,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 29900,
-      "merchant": "Яндекс Плюс",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Лукойл",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 50,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 65000,
-      "merchant": "Теремок",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 45000,
-      "merchant": "Яндекс Go",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 47,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 39900,
-      "merchant": "Кинопоиск",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 46,
+      "dayOfMonth": 16,
       "category": "Income",
       "source": "checking",
-      "minor": 8000000,
-      "merchant": "Зарплата",
+      "minor": 3500000,
+      "merchant": "Фриланс",
       "type": "income"
     },
     {
-      "daysAgo": 44,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Пятёрочка",
+      "dayOfMonth": 2,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 5500000,
+      "merchant": "Аренда",
       "type": "expense"
     },
     {
-      "daysAgo": 44,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 41,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Лукойл",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 41,
+      "dayOfMonth": 4,
       "category": "Utilities",
       "source": "checking",
-      "minor": 380000,
-      "merchant": "ЖКХ",
+      "minor": 320000,
+      "merchant": "Энергосбыт",
       "type": "expense"
     },
     {
-      "daysAgo": 38,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 38,
-      "category": "Health",
-      "source": "credit",
-      "minor": 85000,
-      "merchant": "Аптека",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 35,
-      "category": "Health",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Фитнес-клуб",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 35,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 4500000,
-      "merchant": "Аренда жилья",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 32,
-      "category": "Income",
-      "source": "checking",
-      "minor": 8000000,
-      "merchant": "Зарплата",
-      "type": "income"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Пятёрочка",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 28,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 29900,
-      "merchant": "Яндекс Плюс",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 65000,
-      "merchant": "Теремок",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Лукойл",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Entertainment",
+      "dayOfMonth": 6,
+      "category": "Utilities",
       "source": "credit",
       "minor": 60000,
-      "merchant": "Читай-город",
+      "merchant": "Ростелеком",
       "type": "expense"
     },
     {
-      "daysAgo": 18,
-      "category": "Income",
-      "source": "checking",
-      "minor": 8000000,
-      "merchant": "Зарплата",
-      "type": "income"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Пятёрочка",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
+      "dayOfMonth": 3,
       "category": "Subscriptions",
       "source": "credit",
-      "minor": 39900,
-      "merchant": "Кинопоиск",
+      "minor": 16900,
+      "merchant": "Spotify",
       "type": "expense"
     },
     {
-      "daysAgo": 16,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
-      "category": "Entertainment",
+      "dayOfMonth": 5,
+      "category": "Subscriptions",
       "source": "credit",
-      "minor": 50000,
-      "merchant": "Кинотеатр",
+      "minor": 59900,
+      "merchant": "Netflix",
       "type": "expense"
     },
     {
-      "daysAgo": 14,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 45000,
-      "merchant": "Яндекс Go",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 12,
-      "category": "Health",
+      "dayOfMonth": 8,
+      "category": "Subscriptions",
       "source": "credit",
       "minor": 250000,
-      "merchant": "Фитнес-клуб",
+      "merchant": "Фитнес",
       "type": "expense"
     },
     {
-      "daysAgo": 10,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 4500000,
-      "merchant": "Аренда жилья",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 8,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 250000,
-      "merchant": "Лукойл",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 6,
+      "dayOfMonth": 2,
       "category": "Food & Drink",
       "source": "credit",
       "minor": 350000,
@@ -313,59 +90,195 @@
       "type": "expense"
     },
     {
-      "daysAgo": 4,
-      "category": "Income",
-      "source": "checking",
-      "minor": 8000000,
-      "merchant": "Зарплата",
-      "type": "income"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
+      "dayOfMonth": 7,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 280000,
+      "merchant": "ВкусВилл",
       "type": "expense"
     },
     {
-      "daysAgo": 3,
+      "dayOfMonth": 12,
       "category": "Food & Drink",
       "source": "credit",
-      "minor": 65000,
+      "minor": 420000,
+      "merchant": "Магнит",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 18,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 310000,
+      "merchant": "Лента",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 180000,
+      "merchant": "Додо Пицца",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Food & Drink",
+      "source": "cash",
+      "minor": 120000,
       "merchant": "Теремок",
       "type": "expense"
     },
     {
-      "daysAgo": 2,
-      "category": "Subscriptions",
+      "dayOfMonth": 15,
+      "category": "Food & Drink",
       "source": "credit",
-      "minor": 29900,
-      "merchant": "Яндекс Плюс",
+      "minor": 250000,
+      "merchant": "Кафе Пушкинъ",
       "type": "expense"
     },
     {
-      "daysAgo": 1,
+      "dayOfMonth": 21,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 220000,
+      "merchant": "Тануки",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 1,
       "category": "Coffee",
       "source": "cash",
-      "minor": 22000,
+      "minor": 30000,
+      "merchant": "Кофикс",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 5,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 28000,
       "merchant": "Шоколадница",
       "type": "expense"
     },
     {
-      "daysAgo": 1,
+      "dayOfMonth": 9,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 32000,
+      "merchant": "Кофикс",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 13,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 29000,
+      "merchant": "Даблби",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 19,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 31000,
+      "merchant": "Шоколадница",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 27000,
+      "merchant": "Кофикс",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
       "category": "Transport",
       "source": "credit",
-      "minor": 45000,
-      "merchant": "Яндекс Go",
+      "minor": 200000,
+      "merchant": "Лукойл",
       "type": "expense"
     },
     {
-      "daysAgo": 0,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 22000,
-      "merchant": "Шоколадница",
+      "dayOfMonth": 10,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 35000,
+      "merchant": "Яндекс.Такси",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 16,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 190000,
+      "merchant": "Газпром",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 40000,
+      "merchant": "Яндекс.Такси",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 250000,
+      "merchant": "Wildberries",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 14,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 450000,
+      "merchant": "Ozon",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 26,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 180000,
+      "merchant": "Zara",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 11,
+      "category": "Health",
+      "source": "credit",
+      "minor": 120000,
+      "merchant": "Аптека",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 20,
+      "category": "Health",
+      "source": "credit",
+      "minor": 280000,
+      "merchant": "Клиника",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 8,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 160000,
+      "merchant": "Кинотеатр",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 23,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 350000,
+      "merchant": "Концерт",
       "type": "expense"
     }
   ]

@@ -45,6 +45,28 @@ enum ScreenshotMode {
         value(for: "--demo-locale") ?? "en"
     }
 
+    /// DEBUG-only: a locale-appropriate one-line NL phrase preloaded into Quick
+    /// Entry so the App Store capture (frame 03) shows the populated *parsed*
+    /// preview (amount + merchant + colored category tile) instead of the bare
+    /// idle. The merchants match the seeded demo merchants, so the pre-taught
+    /// merchant→category learning resolves a real category. Currency comes from
+    /// `defaultCurrencyCode` (set by the seeder), so the phrase is amount + name
+    /// only. Nil unless `--screenshot-quickentry-parsed` is passed; always nil in
+    /// Release.
+    static var quickEntryParsedInput: String? {
+        #if DEBUG
+        guard CommandLine.arguments.contains("--screenshot-quickentry-parsed") else { return nil }
+        switch demoLocaleCode {
+        case "ru":    return "3500 Пятёрочка"
+        case "es":    return "180 Soriana"
+        case "pt-BR": return "180 Pão de Açúcar"
+        default:      return "42 Whole Foods"
+        }
+        #else
+        return nil
+        #endif
+    }
+
     /// True only while capturing the paywall storyboard screen (08). StoreKit
     /// products can't load under `simctl launch`, so the paywall substitutes a
     /// deterministic mock of the plan cards for that capture. DEBUG-gated via

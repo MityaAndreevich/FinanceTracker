@@ -1,6 +1,7 @@
 {
   "locale": "en",
   "currencyCode": "USD",
+  "budgetMinor": 400000,
   "sources": [
     {
       "key": "checking",
@@ -17,231 +18,55 @@
   ],
   "transactions": [
     {
-      "daysAgo": 60,
+      "dayOfMonth": 1,
       "category": "Income",
       "source": "checking",
-      "minor": 280000,
+      "minor": 285000,
       "merchant": "Paycheck",
       "type": "income"
     },
     {
-      "daysAgo": 58,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 8700,
-      "merchant": "Whole Foods",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 58,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 999,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 55,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4200,
-      "merchant": "Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 50,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 5800,
-      "merchant": "Sweetgreen",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 48,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 1200,
-      "merchant": "Uber",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 47,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 1549,
-      "merchant": "Netflix",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 46,
+      "dayOfMonth": 16,
       "category": "Income",
       "source": "checking",
-      "minor": 280000,
-      "merchant": "Paycheck",
+      "minor": 90000,
+      "merchant": "Freelance",
       "type": "income"
     },
     {
-      "daysAgo": 44,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 8700,
-      "merchant": "Whole Foods",
+      "dayOfMonth": 2,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 145000,
+      "merchant": "Rent",
       "type": "expense"
     },
     {
-      "daysAgo": 44,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 41,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4200,
-      "merchant": "Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 41,
+      "dayOfMonth": 4,
       "category": "Utilities",
       "source": "checking",
-      "minor": 8700,
-      "merchant": "Electric bill",
+      "minor": 8500,
+      "merchant": "City Power",
       "type": "expense"
     },
     {
-      "daysAgo": 38,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 38,
-      "category": "Health",
+      "dayOfMonth": 6,
+      "category": "Utilities",
       "source": "credit",
-      "minor": 2300,
-      "merchant": "Walgreens",
+      "minor": 6000,
+      "merchant": "Xfinity",
       "type": "expense"
     },
     {
-      "daysAgo": 35,
-      "category": "Health",
-      "source": "credit",
-      "minor": 3500,
-      "merchant": "Gym membership",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 35,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 145000,
-      "merchant": "Rent",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 32,
-      "category": "Income",
-      "source": "checking",
-      "minor": 280000,
-      "merchant": "Paycheck",
-      "type": "income"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 8700,
-      "merchant": "Whole Foods",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 30,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 28,
+      "dayOfMonth": 3,
       "category": "Subscriptions",
       "source": "credit",
-      "minor": 999,
+      "minor": 1099,
       "merchant": "Spotify",
       "type": "expense"
     },
     {
-      "daysAgo": 25,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 5800,
-      "merchant": "Sweetgreen",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 25,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 4200,
-      "merchant": "Shell",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 22,
-      "category": "Entertainment",
-      "source": "credit",
-      "minor": 1900,
-      "merchant": "Bookstore",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 18,
-      "category": "Income",
-      "source": "checking",
-      "minor": 280000,
-      "merchant": "Paycheck",
-      "type": "income"
-    },
-    {
-      "daysAgo": 16,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 8700,
-      "merchant": "Whole Foods",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 16,
+      "dayOfMonth": 5,
       "category": "Subscriptions",
       "source": "credit",
       "minor": 1549,
@@ -249,55 +74,127 @@
       "type": "expense"
     },
     {
-      "daysAgo": 16,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
-      "category": "Entertainment",
-      "source": "credit",
-      "minor": 1600,
-      "merchant": "AMC Theater",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 14,
-      "category": "Transport",
-      "source": "credit",
-      "minor": 1200,
-      "merchant": "Uber",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 12,
-      "category": "Health",
+      "dayOfMonth": 8,
+      "category": "Subscriptions",
       "source": "credit",
       "minor": 3500,
-      "merchant": "Gym membership",
+      "merchant": "Gym",
       "type": "expense"
     },
     {
-      "daysAgo": 10,
-      "category": "Housing",
-      "source": "checking",
-      "minor": 145000,
-      "merchant": "Rent",
+      "dayOfMonth": 2,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 8700,
+      "merchant": "Whole Foods",
       "type": "expense"
     },
     {
-      "daysAgo": 8,
+      "dayOfMonth": 7,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 6200,
+      "merchant": "Trader Joe's",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 12,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 9300,
+      "merchant": "Whole Foods",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 18,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 7100,
+      "merchant": "Trader Joe's",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 3800,
+      "merchant": "Chipotle",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Food & Drink",
+      "source": "cash",
+      "minor": 2400,
+      "merchant": "Sweetgreen",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 15,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 5200,
+      "merchant": "Local Bistro",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 21,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 4600,
+      "merchant": "Thai Place",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 1,
       "category": "Coffee",
       "source": "cash",
-      "minor": 450,
+      "minor": 495,
       "merchant": "Blue Bottle",
       "type": "expense"
     },
     {
-      "daysAgo": 8,
+      "dayOfMonth": 5,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 450,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 525,
+      "merchant": "Philz",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 13,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 480,
+      "merchant": "Blue Bottle",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 19,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 510,
+      "merchant": "Starbucks",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 465,
+      "merchant": "Peet's",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
       "category": "Transport",
       "source": "credit",
       "minor": 4200,
@@ -305,67 +202,83 @@
       "type": "expense"
     },
     {
-      "daysAgo": 6,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 11200,
-      "merchant": "Whole Foods",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 4,
-      "category": "Income",
-      "source": "checking",
-      "minor": 280000,
-      "merchant": "Paycheck",
-      "type": "income"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 3,
-      "category": "Food & Drink",
-      "source": "credit",
-      "minor": 5800,
-      "merchant": "Sweetgreen",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 2,
-      "category": "Subscriptions",
-      "source": "credit",
-      "minor": 999,
-      "merchant": "Spotify",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
-      "type": "expense"
-    },
-    {
-      "daysAgo": 1,
+      "dayOfMonth": 10,
       "category": "Transport",
       "source": "credit",
-      "minor": 1200,
+      "minor": 1800,
       "merchant": "Uber",
       "type": "expense"
     },
     {
-      "daysAgo": 0,
-      "category": "Coffee",
-      "source": "cash",
-      "minor": 450,
-      "merchant": "Blue Bottle",
+      "dayOfMonth": 16,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 3900,
+      "merchant": "Chevron",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 2200,
+      "merchant": "Lyft",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 4500,
+      "merchant": "Target",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 14,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 7800,
+      "merchant": "Amazon",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 26,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 3200,
+      "merchant": "Uniqlo",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 11,
+      "category": "Health",
+      "source": "credit",
+      "minor": 2500,
+      "merchant": "CVS Pharmacy",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 20,
+      "category": "Health",
+      "source": "credit",
+      "minor": 4800,
+      "merchant": "Dental",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 8,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 3200,
+      "merchant": "AMC Theatres",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 23,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 6500,
+      "merchant": "Concert",
       "type": "expense"
     }
   ]

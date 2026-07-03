@@ -60,6 +60,9 @@ enum DemoSeeder {
             // Mirror the seed currency into the app-wide default so every aggregation
             // (Dashboard, Analytics, AppIntents) renders in the in-frame currency.
             applyDemoCurrency(seed.currencyCode)
+            // Set the monthly budget so the Dashboard hero shows the redesigned
+            // "safe to spend" (remaining + $/day + budget bar), not the net fallback.
+            applyDemoBudget(seed.budgetMinor)
 
             let categories = seedDemoCategories(modelContext: modelContext)
             let sources = seedDemoSources(modelContext: modelContext, specs: seed.sources)
@@ -72,6 +75,12 @@ enum DemoSeeder {
             )
 
             try modelContext.save()
+
+            // Teach the merchant→category mappings so the app "knows" this demo
+            // user's merchants — makes the Quick Entry parsed-preview screenshot show
+            // a real colored category tile. Runs AFTER the primary save (record()
+            // rolls back its own context on failure).
+            seedMerchantLearnings(seed: seed, modelContext: modelContext)
 
             #if DEBUG
             print("[DemoSeeder] ✓ Seeded '\(seed.locale)' (\(seed.currencyCode)) — \(categories.count) categories, \(sources.count) sources, \(seed.transactions.count) transactions")
@@ -89,6 +98,7 @@ enum DemoSeeder {
     struct Seed: Decodable {
         let locale: String
         let currencyCode: String
+        let budgetMinor: Int       // overall monthly budget → @AppStorage("monthlyBudgetCents")
         let sources: [SourceSpec]
         let transactions: [TxSpec]
 
@@ -97,7 +107,7 @@ enum DemoSeeder {
             let name: String
         }
         struct TxSpec: Decodable {
-            let daysAgo: Int
+            let dayOfMonth: Int    // 1…28, anchored inside the CURRENT month
             let category: String   // English category name — maps to seedDemoCategories keys
             let source: String?    // source key, matches SourceSpec.key
             let minor: Int         // amount in minor currency units (cents/kopecks/centavos)
@@ -115,7 +125,7 @@ enum DemoSeeder {
         #endif
         if let fallback = decodeSeed(named: "DemoSeed_en") { return fallback }
         // Last-resort empty USD seed so a missing-resource build never crashes.
-        return Seed(locale: "en", currencyCode: "USD", sources: [], transactions: [])
+        return Seed(locale: "en", currencyCode: "USD", budgetMinor: 0, sources: [], transactions: [])
     }
 
     private static func decodeSeed(named name: String) -> Seed? {
@@ -129,6 +139,13 @@ enum DemoSeeder {
     private static func applyDemoCurrency(_ code: String) {
         UserDefaults.standard.set(code, forKey: "defaultCurrencyCode")
         UserDefaults.appGroup.set(code, forKey: "defaultCurrencyCode")
+    }
+
+    /// Writes the demo monthly budget (minor units → cents) that the Dashboard hero
+    /// reads via `@AppStorage("monthlyBudgetCents")`.
+    private static func applyDemoBudget(_ minor: Int) {
+        UserDefaults.standard.set(minor, forKey: "monthlyBudgetCents")
+        UserDefaults.appGroup.set(minor, forKey: "monthlyBudgetCents")
     }
 
     // MARK: - Wipe
@@ -213,13 +230,11 @@ enum DemoSeeder {
 
     // MARK: - Transactions
 
-    /// Inserts the ~44 transactions from the locale seed, spanning the last 60
-    /// days. Amounts are localized per currency but follow the same anchored,
-    /// non-status-signaling profile (median household spending, HIG inclusion).
-    ///
-    /// The 6-days-ago grocery line is intentionally ~30% above the rolling
-    /// average so the Smart Insights screen has a real anomaly to surface
-    /// for screenshot frame #4.
+    /// Inserts the ~33 transactions from the locale seed, anchored to day-of-month
+    /// inside the CURRENT month so the redesigned current-month Dashboard/Analytics
+    /// always look full (regardless of capture date). Amounts are localized per
+    /// currency but follow the same anchored, non-status-signaling profile (median
+    /// household spending, HIG inclusion).
     private static func seedDemoTransactions(
         modelContext: ModelContext,
         seed: Seed,
@@ -228,10 +243,17 @@ enum DemoSeeder {
         markAsDemo: Bool = false
     ) {
         let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
+        let now = Date()
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? cal.startOfDay(for: now)
 
-        func date(_ daysAgo: Int) -> Date {
-            cal.date(byAdding: .day, value: -daysAgo, to: today) ?? today
+        /// Day N of the current month at local noon. Clamped to `now` so a date is
+        /// never in the future — keeps every row inside the analytics
+        /// [monthStart, today] window even when captured early in the month.
+        func date(dayOfMonth: Int) -> Date {
+            let day = max(1, min(dayOfMonth, 28))
+            let base = cal.date(byAdding: .day, value: day - 1, to: monthStart) ?? monthStart
+            let noon = cal.date(bySettingHour: 12, minute: 0, second: 0, of: base) ?? base
+            return min(noon, now)
         }
 
         for e in seed.transactions {
@@ -246,13 +268,25 @@ enum DemoSeeder {
                 typeRaw: e.type,
                 amountCents: e.minor,
                 currency: seed.currencyCode,
-                date: date(e.daysAgo),
+                date: date(dayOfMonth: e.dayOfMonth),
                 category: cat,
                 source: src,
                 merchant: e.merchant,
                 isDemo: markAsDemo
             )
             modelContext.insert(tx)
+        }
+    }
+
+    /// Records the demo user's merchant→category choices so `previewCategory`
+    /// resolves a real colored category in the Quick Entry parsed-preview capture.
+    private static func seedMerchantLearnings(seed: Seed, modelContext: ModelContext) {
+        for e in seed.transactions where e.type == "expense" {
+            MerchantLearningService.record(
+                merchant: e.merchant,
+                categoryName: e.category,
+                in: modelContext
+            )
         }
     }
 }
