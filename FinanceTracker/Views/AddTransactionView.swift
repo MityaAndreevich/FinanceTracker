@@ -508,6 +508,7 @@ struct AddTransactionView: View {
             RatingPromptCoordinator.recordTransactionSaved()
             dismiss()
         } catch {
+            logSaveFailure("AddTransactionView.add", error)
             showErrorKey("add.error.save_failed")
             #if DEBUG
             print("Save failed: \(error.localizedDescription)")

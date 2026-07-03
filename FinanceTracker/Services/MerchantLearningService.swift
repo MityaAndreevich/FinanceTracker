@@ -46,6 +46,7 @@ enum MerchantLearningService {
             // caller has already persisted the primary transaction, so there is no
             // other unsaved work to lose.
             context.rollback()
+            logSaveFailure("MerchantLearningService.record", error)
             #if DEBUG
             print("[MerchantLearning] record failed (rolled back): \(error.localizedDescription)")
             #endif

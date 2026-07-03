@@ -853,6 +853,7 @@ struct QuickEntryView: View {
             RatingPromptCoordinator.recordTransactionSaved()
             dismiss()
         } catch {
+            logSaveFailure("QuickEntryView.handleSave", error)
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             isSaving = false   // allow a retry after a genuine failure
             withAnimation {

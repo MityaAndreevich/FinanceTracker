@@ -386,6 +386,7 @@ struct DashboardView: View {
             RatingPromptCoordinator.recordTransactionSaved()
             return tx
         } catch {
+            logSaveFailure("DashboardView.autoSaveQuickAdd", error)
             #if DEBUG
             print("QuickAdd auto-save failed: \(error.localizedDescription)")
             #endif
@@ -417,6 +418,7 @@ struct DashboardView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             quickAddSavedTx = nil   // don't let the error toast's tap open a stale edit
             quickAddToast = "add.error.save_failed"
+            logSaveFailure("DashboardView.saveQuickAdd", error)
             #if DEBUG
             print("QuickAdd save failed: \(error.localizedDescription)")
             #endif
