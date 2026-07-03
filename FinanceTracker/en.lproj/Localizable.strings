@@ -623,6 +623,10 @@
 /* Quick Entry hero sheet (Brief 23A) */
 "quick_entry.title" = "Quick entry";
 "quick_entry.privacy_chip" = "Stays on your iPhone";
+"quick_entry.prompt.amount" = "Type or say an amount";
+"quick_entry.listening" = "Listening… on-device";
+"quick_entry.preview.hint" = "Details appear here as you type";
+"quick_entry.a11y.quick_categories" = "Quick categories";
 "quick_entry.save" = "Save";
 "quick_entry.use_form" = "Use detailed form";
 "quick_entry.fail_unparseable" = "Couldn't read that — try the detailed form";

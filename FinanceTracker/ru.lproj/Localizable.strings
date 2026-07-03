@@ -633,6 +633,10 @@
 /* Quick Entry hero sheet (Brief 23A) */
 "quick_entry.title" = "Быстрый ввод";
 "quick_entry.privacy_chip" = "Остаётся на iPhone";
+"quick_entry.prompt.amount" = "Введите или скажите сумму";
+"quick_entry.listening" = "Слушаю… на устройстве";
+"quick_entry.preview.hint" = "Детали появятся здесь по мере ввода";
+"quick_entry.a11y.quick_categories" = "Быстрые категории";
 "quick_entry.save" = "Сохранить";
 "quick_entry.use_form" = "Открыть форму";
 "quick_entry.fail_unparseable" = "Не удалось распознать — откройте форму";

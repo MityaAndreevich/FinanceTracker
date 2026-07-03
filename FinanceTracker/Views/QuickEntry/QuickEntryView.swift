@@ -16,9 +16,17 @@ struct QuickEntryView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
+    @Query(sort: \Category.order, order: .forward)
+    private var allCategories: [Category]
+
     @State private var inputText: String = ""
     @State private var parsed: QuickAddParsedInput? = nil
     @State private var categoryOverride: Category? = nil
+    // A manual category pick (quick-chip or picker) sticks while the user keeps
+    // editing the same entry, instead of being wiped by the next keystroke's
+    // re-parse. Cleared only when the field is emptied. Lets the quick-chips be a
+    // genuine one-tap accelerator (chip → keep typing → Save).
+    @State private var categoryManuallyPicked = false
     // Single source of truth for the two sheets. Two stacked `.sheet(isPresented:)`
     // modifiers on the same view collide in SwiftUI (only one presents reliably),
     // which is what silently broke the tappable category badge. One `.sheet(item:)`
@@ -108,28 +116,24 @@ struct QuickEntryView: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            Spacer(minLength: 32)
+            ScrollView {
+                VStack(spacing: 16) {
+                    amountHero
 
-            heroTextField
-                .padding(.horizontal, 32)
-
-            if let p = parsed {
-                previewCard(p)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 32)
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .scale(scale: 0.92, anchor: .top).combined(with: .opacity)
-                    )
+                    previewCard(parsed)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 4)
+                .padding(.bottom, 8)
             }
-
-            Spacer(minLength: 20)
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
 
             if saveError {
                 errorBanner
                     .padding(.horizontal, 24)
                     .padding(.bottom, 8)
+                    .transition(.opacity)
             }
 
             if let voiceErrorMessage {
@@ -139,8 +143,8 @@ struct QuickEntryView: View {
             }
 
             bottomBar
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
         }
         .animation(
             reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72),
@@ -151,20 +155,9 @@ struct QuickEntryView: View {
         .animation(.easeInOut(duration: 0.2), value: voice.isListening)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationBackground {
-            Color(.systemBackground)
-                .overlay(
-                    LinearGradient(
-                        colors: [
-                            Color.accentColor.opacity(0.04),
-                            Color.clear,
-                            Color.accentColor.opacity(0.02)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-        }
+        // Solid page surface — depth comes from layered surfaces, not gradients
+        // (DESIGN_DIRECTION_v2 §2).
+        .presentationBackground(Color.bcPage)
         // MARK: Haptics (state-driven)
         .sensoryFeedback(.selection, trigger: appeared)
         .sensoryFeedback(.impact(weight: .light), trigger: parsed != nil) { old, new in
@@ -208,8 +201,14 @@ struct QuickEntryView: View {
                 voice.stop()
             }
             saveError = false
-            // A fresh parse invalidates any manual category override.
-            categoryOverride = nil
+            // Clearing the field resets everything; otherwise a manual pick sticks
+            // (see categoryManuallyPicked) so continuing to type doesn't wipe it.
+            if newValue.isEmpty {
+                categoryOverride = nil
+                categoryManuallyPicked = false
+            } else if !categoryManuallyPicked {
+                categoryOverride = nil
+            }
             parseTask?.cancel()
             parseTask = Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 250_000_000)
@@ -267,6 +266,7 @@ struct QuickEntryView: View {
             case .category:
                 CategoryPickerSheet(currentType: parsed?.typeRaw ?? TransactionType.expense.raw) { picked in
                     categoryOverride = picked
+                    categoryManuallyPicked = true
                 }
             case .addTxFallback:
                 NavigationStack {
@@ -284,219 +284,284 @@ struct QuickEntryView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(8)
-                    .background(Color(.tertiarySystemFill))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.bcTextSecondary)
+                    .frame(width: 34, height: 34)
+                    .background(Color.bcSurface2)
                     .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(Color.bcDivider, lineWidth: 1))
             }
             .accessibilityLabel(Text("common.close"))
 
             Spacer()
 
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: "lock.iphone")
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.bcAccent)
                     .accessibilityHidden(true)
                 Text("quick_entry.privacy_chip")
-                    .font(.subheadline)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.bcTextSecondary)
             }
-            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(Color.bcSurface2, in: Capsule())
+            .overlay(Capsule().strokeBorder(Color.bcDivider, lineWidth: 1))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("quick_entry.a11y.privacy_chip"))
         }
     }
 
-    // MARK: - Hero text input
+    // MARK: - Amount hero (front-and-center, reflects the live parse)
 
-    private var heroTextField: some View {
-        ZStack {
-            if inputText.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.accentColor.opacity(0.4))
-                    Text(Self.placeholderExamples[placeholderIndex])
-                        .id(placeholderIndex)
-                        .font(.system(size: 28, weight: .medium, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.tertiary)
-                        .transition(.opacity.animation(.easeOut(duration: 0.5)))
-                }
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
+    private var amountHero: some View {
+        VStack(spacing: 8) {
+            if let p = parsed {
+                Text(Money.format(cents: p.amountCents, currencyCode: defaultCurrencyCode))
+                    .font(.system(size: 60, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bcTextPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+                    .contentTransition(.numericText())
+                    .privacySensitive(true)
+                    .accessibilityHidden(true)   // voiced by the Save button label
+            } else {
+                Text("quick_entry.prompt.amount")
+                    .font(.system(size: 24, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color.bcTextMuted)
+                    .multilineTextAlignment(.center)
+                    .accessibilityHidden(true)
             }
+        }
+        .frame(maxWidth: .infinity, minHeight: 56)
+    }
 
-            TextField("", text: $inputText, axis: .vertical)
-                .font(.system(size: 28, weight: .medium, design: .rounded))
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-                .tint(.accentColor)
-                .focused($isInputFocused)
-                .accessibilityLabel(Text("quick_entry.a11y.input_label"))
-                .accessibilityHint(Text("quick_entry.a11y.input_hint"))
-                .accessibilityValue(
-                    inputText.isEmpty ? Text("quick_entry.a11y.input_empty") : Text(verbatim: inputText)
-                )
+    // MARK: - Quick category chips (one-tap assignment for the most-used)
+
+    /// Up to six most-used categories for the current direction — the "primary"
+    /// (shown-by-default) ones from the taxonomy, back-filled with the rest.
+    /// Read on-device from the local store; no network.
+    private var quickChipCategories: [Category] {
+        let kind = parsed?.typeRaw ?? TransactionType.expense.raw
+        let ofKind = allCategories.filter { $0.kindRaw == kind }
+        let primary = ofKind.filter { $0.isPrimary }
+        let ordered = primary + ofKind.filter { !$0.isPrimary }
+        return Array(ordered.prefix(6))
+    }
+
+    @ViewBuilder
+    private var quickChips: some View {
+        if !quickChipCategories.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(quickChipCategories, id: \.uuid) { cat in
+                        quickChip(cat)
+                    }
+                }
+                .padding(.horizontal, 2)
+                .padding(.vertical, 2)
+            }
+            .accessibilityLabel(Text("quick_entry.a11y.quick_categories"))
         }
     }
 
-    // MARK: - Live preview card
-
-    @ViewBuilder
-    private func previewCard(_ p: QuickAddParsedInput) -> some View {
-        let resolvedCategory = effectiveCategory(for: p)
-        let isIncome = p.typeRaw == TransactionType.income.raw
-
-        VStack(spacing: Spacing.compact) {
-            // Direction pill — carries the income/expense color so the amount
-            // itself can stay maximum-contrast (daylight legibility).
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: isIncome ? "arrow.up.right" : "arrow.down.right")
-                    .font(.caption.weight(.bold))
-                Text(isIncome ? "analytics.label.income" : "analytics.label.expense")
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.5)
-            }
-            .foregroundStyle(Color.moneyDirectional(isPositive: isIncome))
-            .padding(.horizontal, Spacing.s)
-            .padding(.vertical, 5)
-            .background(Color.moneyDirectional(isPositive: isIncome).opacity(0.14), in: Capsule())
-            .accessibilityHidden(true)
-
-            // Hero amount — 60pt, high contrast (primary label), monospaced.
-            // The leading +/− already encodes direction (color-blind safe).
-            Text(Money.formatSigned(
-                cents: p.amountCents,
-                isPositive: isIncome,
-                currencyCode: defaultCurrencyCode
-            ))
-            .font(.bcDisplay.monospacedDigit())
-            .foregroundStyle(.primary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .accessibilityHidden(true)   // voiced by the Save button label
-
-            // Category chip + merchant.
-            HStack(spacing: Spacing.xs) {
-                categoryBadge(resolvedCategory, isIncome: isIncome)
-
-                if let merchant = p.merchant {
-                    Text(merchant)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .accessibilityHidden(true)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(Spacing.default)
-        .cardSurface(cornerRadius: CornerRadius.cardLarge)
-    }
-
-    /// Tappable category chip — opens the picker so the user can override the
-    /// auto-detected category. Prominent: category icon sits in a tinted color
-    /// chip so the control reads as a button, not text.
-    @ViewBuilder
-    private func categoryBadge(_ category: Category?, isIncome: Bool) -> some View {
-        // The chip carries the *category's* own hue (P1 theme map), not the
-        // income/expense money color — matching the tiles used app-wide.
-        let tint = category?.themeColor ?? Color.bcAccent
-        Button {
-            activeSheet = .category
+    private func quickChip(_ cat: Category) -> some View {
+        let isSelected = categoryOverride?.uuid == cat.uuid
+        return Button {
+            pickChipCategory(cat)
         } label: {
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: category?.symbolName ?? "tag.fill")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: 26, height: 26)
-                    .background(tint.opacity(0.16), in: Circle())
-                Text(category?.displayName(bundle: localizedBundle.bundle)
-                     ?? String(localized: "quickadd.preview.no_category", bundle: localizedBundle.bundle))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                Image(systemName: "chevron.down")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.secondary)
+            VStack(spacing: 6) {
+                CategoryIconTile(category: cat, size: 46)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 46 * 0.3, style: .continuous)
+                            .strokeBorder(cat.themeColor, lineWidth: isSelected ? 2 : 0)
+                    )
+                Text(cat.displayName())
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Color.bcTextPrimary : Color.bcTextSecondary)
+                    .lineLimit(1)
             }
-            .padding(.leading, 5)
-            .padding(.trailing, Spacing.s)
-            .padding(.vertical, 5)
-            .background(Color.bcSeparator, in: Capsule())
+            .frame(width: 66)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("quickadd.a11y.change_category"))
-        .accessibilityValue(Text(category?.displayName(bundle: localizedBundle.bundle) ?? ""))
+        .accessibilityLabel(Text(cat.displayName()))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    /// Assigns a category from a quick-chip tap. Sticky (survives further typing)
+    /// until the field is cleared. Fast path: chip → Save, no picker needed.
+    private func pickChipCategory(_ cat: Category) {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            if categoryOverride?.uuid == cat.uuid {
+                categoryOverride = nil
+                categoryManuallyPicked = false
+            } else {
+                categoryOverride = cat
+                categoryManuallyPicked = true
+            }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    // MARK: - Live preview card (fills the old void; skeleton before any parse)
+
+    @ViewBuilder
+    private func previewCard(_ parsedOrNil: QuickAddParsedInput?) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let p = parsedOrNil {
+                let resolvedCategory = effectiveCategory(for: p)
+                let isIncome = p.typeRaw == TransactionType.income.raw
+
+                directionPill(isIncome: isIncome)
+
+                // Tappable category + merchant row → opens the picker.
+                Button {
+                    activeSheet = .category
+                } label: {
+                    HStack(spacing: 12) {
+                        categoryTile(resolvedCategory)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(previewTitle(p, resolvedCategory))
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.bcTextPrimary)
+                                .lineLimit(1)
+                            if let sub = previewSubtitle(p, resolvedCategory) {
+                                Text(sub)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.bcTextSecondary)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.bcTextMuted)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("quickadd.a11y.change_category"))
+                .accessibilityValue(Text(resolvedCategory?.displayName(bundle: localizedBundle.bundle) ?? ""))
+            } else {
+                previewSkeleton
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bcCard(padding: 16)
+    }
+
+    private func directionPill(isIncome: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: isIncome ? "arrow.up.right" : "arrow.down.right")
+                .font(.caption2.weight(.bold))
+            Text(isIncome ? "analytics.label.income" : "analytics.label.expense")
+                .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.5)
+        }
+        .foregroundStyle(Color.moneyDirectional(isPositive: isIncome))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Color.moneyDirectional(isPositive: isIncome).opacity(0.14), in: Capsule())
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private func categoryTile(_ category: Category?) -> some View {
+        if let category {
+            CategoryIconTile(category: category, size: 40)
+        } else {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.bcSurface2)
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: "tag")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.bcTextMuted)
+                )
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func previewTitle(_ p: QuickAddParsedInput, _ cat: Category?) -> String {
+        if let m = p.merchant?.trimmingCharacters(in: .whitespacesAndNewlines), !m.isEmpty { return m }
+        return cat?.displayName(bundle: localizedBundle.bundle)
+            ?? String(localized: "quickadd.preview.no_category", bundle: localizedBundle.bundle)
+    }
+
+    /// Subtitle only when the merchant is the title (so we can surface the
+    /// category underneath); otherwise nil so we don't repeat it.
+    private func previewSubtitle(_ p: QuickAddParsedInput, _ cat: Category?) -> String? {
+        guard let m = p.merchant?.trimmingCharacters(in: .whitespacesAndNewlines), !m.isEmpty else { return nil }
+        return cat?.displayName(bundle: localizedBundle.bundle)
+            ?? String(localized: "quickadd.preview.no_category", bundle: localizedBundle.bundle)
+    }
+
+    /// Calm placeholder before anything is parsed — an invitation, not a blank.
+    /// Compact single row so it never crowds the chips + input when the keyboard
+    /// is up; the full detail card replaces it the moment a parse lands.
+    private var previewSkeleton: some View {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.bcSurface2)
+                .frame(width: 34, height: 34)
+                .overlay(
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.bcTextMuted)
+                )
+            Text("quick_entry.preview.hint")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.bcTextMuted)
+                .lineLimit(2)
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("quick_entry.preview.hint"))
     }
 
     // MARK: - Error banner
 
     private var errorBanner: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.bcDanger)
             Text("quick_entry.fail_unparseable")
                 .font(.subheadline)
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.bcDanger)
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color.red.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(Color.bcDanger.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - Bottom CTA bar
+    // MARK: - Bottom cluster (input bar / recording state · Save · form link)
 
     private var bottomBar: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 12) {
-                // Bug 7: always show the mic so voice is discoverable in every
-                // locale. When on-device recognition isn't installed for the
-                // user's language, tapping surfaces a friendly "type instead"
-                // toast (toggleVoice → .deviceUnavailable) rather than hiding the
-                // control with no explanation.
-                micButton
+        VStack(spacing: 14) {
+            // Quick-chips sit directly above the input so they stay visible above
+            // the keyboard (one-tap category assignment while typing).
+            quickChips
 
-                Button {
-                    handleSave()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: parsed == nil ? "questionmark.circle" : "checkmark.circle.fill")
-                            .font(.system(size: 18, weight: .semibold))
-                        Text("quick_entry.save")
-                            .font(.headline)
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        ZStack {
-                            LinearGradient(
-                                colors: parsed == nil
-                                    ? [Color.gray.opacity(0.5), Color.gray.opacity(0.4)]
-                                    : [Color.accentColor, Color.accentColor.opacity(0.82)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            if parsed != nil {
-                                // Subtle shimmer when ready to save.
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.0), Color.white.opacity(0.15), Color.white.opacity(0.0)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            }
-                        }
-                    )
-                    .clipShape(Capsule())
-                    .scaleEffect(savePulseOn ? 1.02 : 1.0)
-                    .shadow(color: parsed == nil ? .clear : Color.accentColor.opacity(0.4), radius: 8, y: 4)
-                }
-                .disabled(parsed == nil || isSaving)
-                .accessibilityLabel(saveA11yLabel)
+            // The NL input bar flips to a live recording panel while dictating —
+            // voice is a headline feature, so it takes over rather than hiding in a
+            // corner. Both reuse the same on-device services.
+            if voice.isListening {
+                recordingBar
+                    .transition(.opacity)
+            } else {
+                inputBar
+                    .transition(.opacity)
             }
+
+            saveButton
 
             Button {
                 dismissAfterSheet = true
@@ -504,41 +569,184 @@ struct QuickEntryView: View {
             } label: {
                 Text("quick_entry.use_form")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.bcTextSecondary)
             }
             .buttonStyle(.plain)
         }
     }
 
-    // MARK: - Mic button
+    // MARK: - Input bar (the one-line NL field)
 
+    private var inputBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.bcAccent)
+                .accessibilityHidden(true)
+
+            ZStack(alignment: .leading) {
+                if inputText.isEmpty {
+                    Text(Self.placeholderExamples[placeholderIndex])
+                        .id(placeholderIndex)
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundStyle(Color.bcTextMuted)
+                        .transition(.opacity.animation(.easeOut(duration: 0.5)))
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                }
+
+                TextField("", text: $inputText, axis: .vertical)
+                    .font(.system(size: 17, weight: .regular, design: .rounded))
+                    .lineLimit(1...3)
+                    .tint(Color.bcAccent)
+                    .foregroundStyle(Color.bcTextPrimary)
+                    .focused($isInputFocused)
+                    .accessibilityLabel(Text("quick_entry.a11y.input_label"))
+                    .accessibilityHint(Text("quick_entry.a11y.input_hint"))
+                    .accessibilityValue(
+                        inputText.isEmpty ? Text("quick_entry.a11y.input_empty") : Text(verbatim: inputText)
+                    )
+            }
+
+            // Bug 7: always show the mic so voice is discoverable in every locale.
+            // When on-device recognition isn't installed for the user's language,
+            // tapping surfaces a friendly "type instead" toast (toggleVoice →
+            // .deviceUnavailable) rather than hiding the control with no explanation.
+            micButton
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.bcSurface2)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(isInputFocused ? Color.bcAccent.opacity(0.6) : Color.bcDivider, lineWidth: 1)
+        )
+    }
+
+    /// Idle mic — a mint affordance inside the input bar. Tapping starts on-device
+    /// dictation and flips the bar to `recordingBar`.
     private var micButton: some View {
         Button {
             toggleVoice()
         } label: {
             ZStack {
-                Circle()
-                    .fill(voice.isListening ? Color.red.opacity(0.15) : Color(.tertiarySystemFill))
-
-                if voice.isListening {
-                    Circle()
-                        .stroke(Color.red.opacity(0.4), lineWidth: 2)
-                        .scaleEffect(micPulseOn ? 1.15 : 1.0)
-                        .opacity(micPulseOn ? 0.2 : 0.8)
-                }
-
-                Image(systemName: voice.isListening ? "waveform" : "mic.fill")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundStyle(voice.isListening ? Color.red : Color.secondary)
-                    .symbolEffect(.variableColor.iterative.reversing, isActive: voice.isListening)
-                    .contentTransition(.symbolEffect(.replace))
+                Circle().fill(Color.bcAccent.opacity(0.16))
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.bcAccent)
             }
-            .frame(width: 60, height: 60)
+            .frame(width: 40, height: 40)
         }
-        .accessibilityLabel(
-            Text(voice.isListening ? "quick_entry.a11y.mic_listening" : "quick_entry.a11y.mic_idle")
-        )
+        .accessibilityLabel(Text("quick_entry.a11y.mic_idle"))
         .accessibilityHint(Text("quick_entry.a11y.mic_hint"))
+    }
+
+    // MARK: - Recording state (alive: waveform + on-device caption + stop)
+
+    private var recordingBar: some View {
+        HStack(spacing: 14) {
+            voiceWaveform
+                .frame(width: 46, height: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("quick_entry.listening")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.bcTextPrimary)
+                if !voice.transcript.isEmpty {
+                    Text(verbatim: voice.transcript)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.bcTextSecondary)
+                        .lineLimit(1)
+                        .privacySensitive(true)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            Button {
+                toggleVoice()
+            } label: {
+                ZStack {
+                    Circle()
+                        .stroke(Color.bcAccent.opacity(0.4), lineWidth: 2)
+                        .scaleEffect(micPulseOn ? 1.2 : 1.0)
+                        .opacity(micPulseOn ? 0.15 : 0.8)
+                    Circle().fill(Color.bcAccent)
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color.black)
+                }
+                .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel(Text("quick_entry.a11y.mic_listening"))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.bcSurface2)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.bcAccent.opacity(0.6), lineWidth: 1.5)
+        )
+    }
+
+    /// Live mint waveform — pure time-driven animation (feedback, not chrome).
+    /// Static bars under Reduce Motion.
+    private var voiceWaveform: some View {
+        let baseHeights: [CGFloat] = [10, 20, 14, 24, 12]
+        return Group {
+            if reduceMotion {
+                HStack(spacing: 3) {
+                    ForEach(0..<baseHeights.count, id: \.self) { i in
+                        Capsule().fill(Color.bcAccent).frame(width: 4, height: baseHeights[i])
+                    }
+                }
+            } else {
+                TimelineView(.animation) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate
+                    HStack(spacing: 3) {
+                        ForEach(0..<baseHeights.count, id: \.self) { i in
+                            let phase = sin(t * 6 + Double(i) * 0.9)
+                            let h = 8 + (phase + 1) / 2 * 18   // 8…26pt
+                            Capsule().fill(Color.bcAccent).frame(width: 4, height: h)
+                        }
+                    }
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    // MARK: - Save button
+
+    private var saveButton: some View {
+        let ready = parsed != nil
+        return Button {
+            handleSave()
+        } label: {
+            HStack(spacing: 8) {
+                if ready {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                Text("quick_entry.save")
+                    .font(.headline)
+            }
+            .foregroundStyle(ready ? Color.black : Color.bcTextMuted)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(ready ? Color.bcAccent : Color.bcSurface2)
+            .clipShape(Capsule())
+            .overlay {
+                if !ready {
+                    Capsule().strokeBorder(Color.bcDivider, lineWidth: 1)
+                }
+            }
+            .scaleEffect(savePulseOn ? 1.02 : 1.0)
+        }
+        .disabled(!ready || isSaving)
+        .accessibilityLabel(saveA11yLabel)
     }
 
     // MARK: - Voice error banner
@@ -548,10 +756,10 @@ struct QuickEntryView: View {
         HStack(spacing: 8) {
             Image(systemName: "mic.slash.fill")
                 .font(.caption)
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.bcDanger)
             Text(message)
                 .font(.caption)
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.bcDanger)
 
             if voiceErrorShowSettings {
                 Button {

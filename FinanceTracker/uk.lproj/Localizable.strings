@@ -630,6 +630,10 @@
 /* Quick Entry hero sheet */
 "quick_entry.title" = "Швидке введення";
 "quick_entry.privacy_chip" = "Залишається на вашому iPhone";
+"quick_entry.prompt.amount" = "Введіть або скажіть суму";
+"quick_entry.listening" = "Слухаю… на пристрої";
+"quick_entry.preview.hint" = "Деталі з’являться тут під час введення";
+"quick_entry.a11y.quick_categories" = "Швидкі категорії";
 "quick_entry.save" = "Зберегти";
 "quick_entry.use_form" = "Використати детальну форму";
 "quick_entry.fail_unparseable" = "Не вдалося розпізнати — спробуйте детальну форму";

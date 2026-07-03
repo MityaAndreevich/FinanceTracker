@@ -198,6 +198,10 @@
 /* Quick Entry hero sheet (Brief 23A) */
 "quick_entry.title" = "Entrada rápida";
 "quick_entry.privacy_chip" = "Permanece en tu iPhone";
+"quick_entry.prompt.amount" = "Escribe o di un importe";
+"quick_entry.listening" = "Escuchando… en el dispositivo";
+"quick_entry.preview.hint" = "Los detalles aparecen aquí mientras escribes";
+"quick_entry.a11y.quick_categories" = "Categorías rápidas";
 "quick_entry.save" = "Guardar";
 "quick_entry.use_form" = "Usar formulario detallado";
 "quick_entry.fail_unparseable" = "No se pudo leer — abre el formulario";
