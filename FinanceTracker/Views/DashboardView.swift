@@ -13,6 +13,10 @@ struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0
+    // Optional monthly budget (cents). 0 == unset → the hero falls back to the
+    // net-this-month view. No SwiftData model yet; a full budgeting engine is
+    // Phase 2. Settable in a future Settings row.
+    @AppStorage("monthlyBudgetCents") private var monthlyBudgetCents: Int = 0
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
@@ -72,11 +76,81 @@ struct DashboardView: View {
         Array(transactions.prefix(5))
     }
 
+    // MARK: - Budget / safe-to-spend
+
+    private var budgetIsSet: Bool { monthlyBudgetCents > 0 }
+
+    /// What's left of the budget this month (can go negative when over budget).
+    private var remainingCents: Int { monthlyBudgetCents - expenseCents }
+
+    /// Days remaining in the current month, today inclusive.
+    private var daysLeftInMonth: Int {
+        let cal = Calendar.current
+        let now = Date()
+        guard let range = cal.range(of: .day, in: .month, for: now) else { return 1 }
+        let today = cal.component(.day, from: now)
+        return max(1, range.count - today + 1)
+    }
+
+    private var perDayCents: Int {
+        remainingCents > 0 ? remainingCents / daysLeftInMonth : 0
+    }
+
+    // MARK: - Category spend aggregation (this month, expenses)
+
+    private struct CategorySpend: Identifiable {
+        let id: String
+        let category: Category
+        let cents: Int
+    }
+
+    private var monthCategorySpend: [CategorySpend] {
+        let expenses = currentMonthTransactions.filter { !$0.isIncome }
+        var byCat: [PersistentIdentifier: (Category, Int)] = [:]
+        for tx in expenses {
+            let cat = tx.category
+            let running = byCat[cat.persistentModelID]?.1 ?? 0
+            byCat[cat.persistentModelID] = (cat, running + tx.amountCents)
+        }
+        return byCat.values
+            .map { CategorySpend(id: $0.0.uuid.uuidString, category: $0.0, cents: $0.1) }
+            .sorted { $0.cents > $1.cents }
+    }
+
+    /// Donut slices: top 6 categories, remainder folded into a gray "Other".
+    private var donutSlices: [CategoryDonutView.Slice] {
+        let sorted = monthCategorySpend
+        let maxSlices = 6
+        func slice(_ s: CategorySpend) -> CategoryDonutView.Slice {
+            CategoryDonutView.Slice(
+                id: s.id,
+                name: s.category.displayName(),
+                cents: s.cents,
+                color: s.category.themeColor
+            )
+        }
+        guard sorted.count > maxSlices else { return sorted.map(slice) }
+        var result = sorted.prefix(maxSlices - 1).map(slice)
+        let tail = sorted.dropFirst(maxSlices - 1).reduce(0) { $0 + $1.cents }
+        result.append(CategoryDonutView.Slice(
+            id: "__other",
+            name: String(localized: "category.other"),
+            cents: tail,
+            color: CategoryTheme.map["other"]?.color ?? .gray
+        ))
+        return result
+    }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                heroSection
+            VStack(alignment: .leading, spacing: 16) {
+                heroCard
                     .padding(.horizontal, 16)
+
+                if !monthCategorySpend.isEmpty {
+                    spendingCard
+                        .padding(.horizontal, 16)
+                }
 
                 insightSection
 
@@ -88,6 +162,7 @@ struct DashboardView: View {
             }
             .padding(.vertical, 12)
         }
+        .background(Color.bcPage.ignoresSafeArea())
         // Pin Quick Add below the nav bar so focusing its field never scrolls it
         // up under the inline title (the month "date").
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -375,41 +450,139 @@ struct DashboardView: View {
         showQuickAddEdit = true
     }
 
-    // MARK: - Hero
+    // MARK: - Hero (safe-to-spend / net fallback)
 
-    private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("dashboard.net_this_month")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    private var heroCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(budgetIsSet ? "dashboard.safe_to_spend" : "dashboard.net_this_month")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(Color.bcTextSecondary)
 
-            // Sign + direction arrow + amount — redundant cues required by WCAG/HIG for CVD safety.
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: netCents >= 0 ? "arrow.up.right" : "arrow.down.right")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(Color.money(isPositive: netCents >= 0))
+            Text(heroBigNumber)
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .minimumScaleFactor(0.55)
+                .lineLimit(1)
+                .foregroundStyle(heroNumberColor)
+                .privacySensitive(true)
 
-                Text((netCents >= 0 ? "+" : "−") + "\u{00A0}" +
-                     Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode))
-                    .font(.system(size: 48, weight: .bold))
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.7)
-                    .lineLimit(1)
-                    .foregroundStyle(Color.money(isPositive: netCents >= 0))
-                    .privacySensitive(true)
+            Text(heroSubtitle)
+                .font(.system(size: 13))
+                .monospacedDigit()
+                .foregroundStyle(Color.bcTextSecondary)
+                .privacySensitive(true)
+
+            if budgetIsSet {
+                budgetProgressBar
+                    .padding(.top, 4)
             }
-
-            Text(String(
-                format: String(localized: "dashboard.spent_earned_caption"),
-                Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
-                Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
-            ))
-            .font(.footnote)
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
-            .privacySensitive(true)
         }
-        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bcCard(padding: 18)
+    }
+
+    /// The large amount in the hero. Budget mode shows the remaining budget
+    /// (locale-formatted, negative when over); fallback shows signed net.
+    private var heroBigNumber: String {
+        if budgetIsSet {
+            return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
+        }
+        return (netCents >= 0 ? "+" : "−") + "\u{00A0}" +
+            Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode)
+    }
+
+    private var heroNumberColor: Color {
+        if budgetIsSet {
+            return remainingCents >= 0 ? .bcPositive : .bcDanger
+        }
+        return Color.money(isPositive: netCents >= 0)
+    }
+
+    private var heroSubtitle: String {
+        if budgetIsSet {
+            if remainingCents >= 0 {
+                return String(
+                    format: String(localized: "dashboard.safe_per_day"),
+                    Money.format(cents: perDayCents, currencyCode: defaultCurrencyCode),
+                    daysLeftInMonth
+                )
+            }
+            return String(
+                format: String(localized: "dashboard.over_budget"),
+                Money.format(cents: -remainingCents, currencyCode: defaultCurrencyCode)
+            )
+        }
+        return String(
+            format: String(localized: "dashboard.spent_earned_caption"),
+            Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
+            Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
+        )
+    }
+
+    /// Spent-vs-budget bar. Fills mint; flips to warning once over budget.
+    private var budgetProgressBar: some View {
+        let fraction = min(max(Double(expenseCents) / Double(max(monthlyBudgetCents, 1)), 0), 1)
+        return GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.bcSurface2)
+                Capsule()
+                    .fill(remainingCents < 0 ? Color.bcWarning : Color.bcAccent)
+                    .frame(width: geo.size.width * fraction)
+            }
+        }
+        .frame(height: 8)
+        .accessibilityHidden(true)
+    }
+
+    // MARK: - Spending by category (donut + legend)
+
+    private var spendingCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("dashboard.spending_by_category")
+                .font(.system(size: 13, weight: .semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bcTextSecondary)
+
+            HStack(alignment: .center, spacing: 18) {
+                CategoryDonutView(
+                    slices: donutSlices,
+                    centerTitle: "dashboard.total_spent",
+                    centerValue: Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
+                    size: 150
+                )
+
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(monthCategorySpend.prefix(4)) { item in
+                        categoryLegendRow(item)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bcCard(padding: 18)
+    }
+
+    @ViewBuilder
+    private func categoryLegendRow(_ item: CategorySpend) -> some View {
+        let pct = expenseCents > 0 ? Int((Double(item.cents) / Double(expenseCents) * 100).rounded()) : 0
+        HStack(spacing: 8) {
+            Circle()
+                .fill(item.category.themeColor)
+                .frame(width: 9, height: 9)
+
+            Text(item.category.displayName())
+                .font(.system(size: 14))
+                .foregroundStyle(Color.bcTextPrimary)
+                .lineLimit(1)
+
+            Spacer(minLength: 4)
+
+            Text("\(pct)%")
+                .font(.system(size: 13, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(Color.bcTextSecondary)
+        }
     }
 
     // MARK: - Insight / Day-0
@@ -437,28 +610,24 @@ struct DashboardView: View {
     private var thisWeekSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("dashboard.this_week")
-                .font(.caption.weight(.semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .textCase(.uppercase)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.bcTextSecondary)
                 .padding(.horizontal, 16)
 
             VStack(spacing: 0) {
                 ForEach(Array(recentTransactions.enumerated()), id: \.element.uuid) { index, tx in
-                    TransactionRow(tx: tx)
-                        .padding(.horizontal, 16)
+                    CategoryTileRow(tx: tx)
 
                     if index < recentTransactions.count - 1 {
-                        Divider()
-                            .padding(.leading, 16)
+                        Rectangle()
+                            .fill(Color.bcDivider)
+                            .frame(height: 1)
+                            .padding(.leading, 48)
                     }
                 }
             }
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(.separator, lineWidth: 0.5)
-            )
+            .bcCard(padding: 14)
             .padding(.horizontal, 16)
         }
     }
@@ -546,7 +715,7 @@ private struct QuickAddBar: View {
         HStack(spacing: 10) {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 18))
-                .foregroundStyle(Color.brand)
+                .foregroundStyle(Color.bcAccent)
 
             TextField("quickadd.placeholder", text: $text)
                 .submitLabel(.done)
@@ -558,18 +727,18 @@ private struct QuickAddBar: View {
                 Button { handleSubmit() } label: {
                     Image(systemName: "arrow.right.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundStyle(Color.brand)
+                        .foregroundStyle(Color.bcAccent)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("common.add"))
             }
         }
         .padding(12)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.bcSurface2)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(.separator, lineWidth: 0.5)
+                .strokeBorder(Color.bcDivider, lineWidth: 1)
         )
     }
 

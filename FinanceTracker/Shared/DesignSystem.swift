@@ -84,6 +84,26 @@ extension View {
             )
             .elevation(Elevation.card)
     }
+
+    /// Redesign v2 elevated card: solid `bcSurface1` fill + 1px `bcDivider`
+    /// border, radius 16. Depth comes from layered solid surfaces, not shadows
+    /// or gradients (DESIGN_DIRECTION_v2 §2). Pads its content, then frames it.
+    func bcCard(
+        padding: CGFloat = 16,
+        cornerRadius: CGFloat = CornerRadius.card,
+        fill: Color = .bcSurface1
+    ) -> some View {
+        self
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(fill)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.bcDivider, lineWidth: 1)
+            )
+    }
 }
 
 // MARK: - Typography scale

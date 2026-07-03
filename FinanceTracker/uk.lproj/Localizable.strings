@@ -241,6 +241,11 @@
 "dashboard.spent_more" = "Витрачено більше, ніж зароблено";
 "dashboard.earned_more" = "Зароблено більше, ніж витрачено";
 "dashboard.this_week" = "Цей тиждень";
+"dashboard.safe_to_spend" = "Можна витратити";
+"dashboard.safe_per_day" = "%1$@/день · залишилось днів: %2$d";
+"dashboard.over_budget" = "Перевищення бюджету на %@";
+"dashboard.spending_by_category" = "Витрати за категоріями";
+"dashboard.total_spent" = "Витрачено";
 
 "dashboard.day0.title" = "Інсайти з’являться з обліком";
 "dashboard.day0.message.singular" = "Продовжуйте облік — інсайти відкриваються, коли накопичується історія";

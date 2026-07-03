@@ -306,6 +306,11 @@
 "dashboard.spent_more" = "Você gastou mais do que ganhou";
 "dashboard.earned_more" = "Você ganhou mais do que gastou";
 "dashboard.this_week" = "Esta semana";
+"dashboard.safe_to_spend" = "Disponível para gastar";
+"dashboard.safe_per_day" = "%1$@/dia · faltam %2$d dias";
+"dashboard.over_budget" = "Orçamento excedido em %@";
+"dashboard.spending_by_category" = "Gastos por categoria";
+"dashboard.total_spent" = "Gasto";
 "dashboard.day0.title" = "Estatísticas em breve";
 "dashboard.day0.message.plural" = "Adicione mais %d transações para ver sua primeira estatística.";
 "dashboard.day0.cta" = "Adicionar transação →";
