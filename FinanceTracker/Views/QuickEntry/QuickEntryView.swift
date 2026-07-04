@@ -650,6 +650,29 @@ struct QuickEntryView: View {
                     .accessibilityValue(
                         inputText.isEmpty ? Text("quick_entry.a11y.input_empty") : Text(verbatim: inputText)
                     )
+                    // B8 (device): with the keyboard up — especially once the preview
+                    // grows the input to 3 lines on an SE/mini — the pinned Save button
+                    // could be squeezed under the keyboard, leaving no way to commit
+                    // without dismissing it. A keyboard-accessory Save always sits
+                    // directly above the keyboard, reachable on every device size and
+                    // Dynamic Type setting. The field uses axis: .vertical (return =
+                    // newline for long voice transcripts), so a toolbar button — not
+                    // submitLabel/onSubmit — is the reliable commit affordance.
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button {
+                                isInputFocused = false
+                                handleSave()
+                            } label: {
+                                Label("quick_entry.save", systemImage: "checkmark.circle.fill")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(parsed != nil ? Color.bcAccent : Color.bcTextMuted)
+                            }
+                            .disabled(parsed == nil || isSaving)
+                            .accessibilityLabel(saveA11yLabel)
+                        }
+                    }
             }
 
             // Bug 7: always show the mic so voice is discoverable in every locale.
