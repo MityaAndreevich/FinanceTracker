@@ -215,6 +215,10 @@ struct ContentView: View {
             selectedTab = 0
             onboarding.startIfNeeded()
         }
+        // Dashboard "Recent → See all": jump to the Transactions tab (device QA round 1 #7).
+        .onReceive(NotificationCenter.default.publisher(for: .budgetCrabNavigateToTransactions)) { _ in
+            selectedTab = 1
+        }
     }
 
     // MARK: - Swipe navigation

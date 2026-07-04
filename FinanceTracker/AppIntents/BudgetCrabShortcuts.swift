@@ -18,6 +18,10 @@ extension Notification.Name {
     /// Posted by Settings → "Replay tutorial" so ContentView re-runs the first-run
     /// coach-mark flow immediately (jumping to the Dashboard) without a relaunch.
     static let budgetCrabReplayOnboarding = Notification.Name("budgetCrabReplayOnboarding")
+
+    /// Posted by the Dashboard "Recent → See all" link so ContentView switches to the
+    /// Transactions tab (device QA round 1 #7).
+    static let budgetCrabNavigateToTransactions = Notification.Name("budgetCrabNavigateToTransactions")
 }
 
 struct BudgetCrabShortcuts: AppShortcutsProvider {

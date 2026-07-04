@@ -270,6 +270,8 @@
 "dashboard.spent_more" = "Расходы превышают доходы";
 "dashboard.earned_more" = "Доходы превышают расходы";
 "dashboard.this_week" = "На этой неделе";
+"dashboard.recent" = "Недавние";
+"dashboard.see_all" = "Все";
 "dashboard.safe_to_spend" = "Можно потратить";
 "dashboard.budget.cta.title" = "Установите месячный бюджет";
 "dashboard.budget.cta.subtitle" = "Смотрите, сколько остаётся тратить в день";

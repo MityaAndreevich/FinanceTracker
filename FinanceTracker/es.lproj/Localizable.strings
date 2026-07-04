@@ -330,6 +330,8 @@
 "dashboard.spent_more" = "Gastaste más de lo que ganaste";
 "dashboard.earned_more" = "Ganaste más de lo que gastaste";
 "dashboard.this_week" = "Esta semana";
+"dashboard.recent" = "Recientes";
+"dashboard.see_all" = "Ver todo";
 "dashboard.safe_to_spend" = "Disponible para gastar";
 "dashboard.budget.cta.title" = "Configura tu presupuesto mensual";
 "dashboard.budget.cta.subtitle" = "Mira cuánto queda para gastar al día";

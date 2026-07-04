@@ -175,7 +175,7 @@ struct DashboardView: View {
                 insightSection
 
                 if !recentTransactions.isEmpty {
-                    thisWeekSection
+                    recentSection
                 }
 
                 Spacer(minLength: 20)
@@ -631,9 +631,14 @@ struct DashboardView: View {
 
     private var heroNumberColor: Color {
         if budgetIsSet {
-            return remainingCents >= 0 ? .bcPositive : .bcDanger
+            // Safe-to-spend is a BUDGET remainder, not income — so it must not render
+            // in income-green (device QA round 1 #8: the green number read as a gain
+            // on the first screen). Neutral primary text while within budget; calm
+            // coral (bcDanger) only when actually over budget. Green stays reserved
+            // for genuine income amounts. The progress bar carries the mint accent.
+            return remainingCents >= 0 ? .bcTextPrimary : .bcDanger
         }
-        // Net-this-month is a directional value: mint when positive, calm coral
+        // Net-this-month IS a directional value: mint when positive, calm coral
         // (bcDanger) when negative — not the retired terracotta (locked decision 2).
         return Color.moneyDirectional(isPositive: netCents >= 0)
     }
@@ -747,13 +752,35 @@ struct DashboardView: View {
 
     // MARK: - This Week
 
-    private var thisWeekSection: some View {
+    private var recentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("dashboard.this_week")
-                .font(.system(size: 13, weight: .semibold))
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bcTextSecondary)
-                .padding(.horizontal, 16)
+            // Device QA round 1 #7: the list is the 5 most-recent rows, not a whole
+            // "week", so the label was contradicting the count. Call it "Recent" and
+            // offer a "See all" link into the Transactions tab for the full history.
+            HStack(alignment: .firstTextBaseline) {
+                Text("dashboard.recent")
+                    .font(.system(size: 13, weight: .semibold))
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bcTextSecondary)
+
+                Spacer(minLength: 8)
+
+                Button {
+                    NotificationCenter.default.post(name: .budgetCrabNavigateToTransactions, object: nil)
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("dashboard.see_all")
+                            .font(.system(size: 13, weight: .semibold))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(Color.bcAccent)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("dashboard.see_all"))
+            }
+            .padding(.horizontal, 16)
 
             VStack(spacing: 0) {
                 ForEach(Array(recentTransactions.enumerated()), id: \.element.uuid) { index, tx in

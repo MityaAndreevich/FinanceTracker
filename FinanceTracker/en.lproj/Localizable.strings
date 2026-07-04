@@ -259,6 +259,8 @@
 "dashboard.spent_more" = "Spent more than earned";
 "dashboard.earned_more" = "Earned more than spent";
 "dashboard.this_week" = "This week";
+"dashboard.recent" = "Recent";
+"dashboard.see_all" = "See all";
 "dashboard.safe_to_spend" = "Safe to spend";
 "dashboard.budget.cta.title" = "Set your monthly budget";
 "dashboard.budget.cta.subtitle" = "See what's left to spend each day";
