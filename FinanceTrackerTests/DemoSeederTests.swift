@@ -62,14 +62,28 @@ final class DemoSeederTests: XCTestCase {
         DemoSeeder.resetAndSeedDemoData(modelContext: context)
         let txs = try context.fetch(FetchDescriptor<Transaction>())
 
-        let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
-        let anomalies = txs.filter { tx in
-            tx.isExpense &&
-            tx.category.nameKey == "category.food_drink" &&
-            tx.date >= sevenDaysAgo &&
-            tx.amountCents > 10_000
-        }
-        XCTAssertFalse(anomalies.isEmpty, "Expected a Food & Drink anomaly > $100 in the last 7 days")
+        // The demo intentionally seeds ONE Food & Drink spending anomaly — a grocery
+        // run ~30% above the normal food spend (DemoSeeder header). We assert that
+        // outlier *structurally* (largest food expense stands well above the median),
+        // NOT via an absolute dollar threshold or a "last 7 days" window:
+        //   • The "no displays of affluence" rule deliberately keeps amounts modest
+        //     ($93, not $487), so the old hardcoded > $100 check is stale by design.
+        //   • Dates are dayOfMonth-anchored and clamped to `now`, so a real-clock
+        //     "last 7 days" filter is fragile (most rows collapse onto today early in
+        //     the month). The anomaly's defining trait is the amount, not the date.
+        let foodExpenses = txs
+            .filter { $0.isExpense && $0.category.nameKey == "category.food_drink" }
+            .map(\.amountCents)
+            .sorted()
+        XCTAssertFalse(foodExpenses.isEmpty, "Demo seed must include Food & Drink expenses")
+
+        let maxFood = foodExpenses.last!
+        let median = foodExpenses[foodExpenses.count / 2]
+        XCTAssertGreaterThanOrEqual(
+            Double(maxFood), Double(median) * 1.3,
+            "Expected a Food & Drink anomaly ≥30% above the median food spend "
+                + "(got max \(maxFood)¢ vs median \(median)¢)"
+        )
     }
 
     func testSeed_no_affluence_amounts() throws {
