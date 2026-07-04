@@ -132,6 +132,9 @@ struct QuickEntryView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 4)
                 .padding(.bottom, 8)
+                // Fade the prompt out/in on focus (device QA round 1 #4) rather than
+                // hard-cutting while the keyboard animates.
+                .animation(.easeInOut(duration: 0.2), value: isInputFocused)
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
@@ -336,12 +339,18 @@ struct QuickEntryView: View {
     /// scroll and forced the preview / chips to clip under the keyboard.
     @ViewBuilder
     private var amountHero: some View {
-        if parsed == nil {
+        // B4 (device QA round 1 #4): hide this prompt once the field is focused. With
+        // the keyboard up, the scroll region is squeezed and the 56pt prompt was
+        // half-clipped/overlapped by the chip row. The input's own placeholder
+        // ("e.g. 50 coffee") already guides the user while typing, so dropping the
+        // redundant prompt on focus keeps the title from ever rendering half-cut.
+        if parsed == nil && !isInputFocused {
             Text("quick_entry.prompt.amount")
                 .font(.system(size: 24, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.bcTextMuted)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 56)
+                .transition(.opacity)
                 .accessibilityHidden(true)
         }
     }
@@ -608,7 +617,10 @@ struct QuickEntryView: View {
             // at the detailed-form button. Empty-state only so it never crowds the
             // tall parsed preview under the keyboard; dismissible and shown once.
             if parsed == nil && !voice.isListening && !hasSeenOpenFormHint {
-                InlineHintBubble(text: "onboarding.hint.openform") {
+                // Points DOWN: the "Use detailed form" button it refers to sits
+                // directly below this hint (device QA round 1 #3 — the hand was
+                // pointing up, away from its target).
+                InlineHintBubble(text: "onboarding.hint.openform", pointing: .down) {
                     withAnimation { hasSeenOpenFormHint = true }
                 }
             }
