@@ -75,8 +75,17 @@ struct ContentView: View {
                 MascotGreetingView(coordinator: onboarding)
                     .zIndex(2)
             case .firstWin:
-                FirstWinView(coordinator: onboarding, onAddNow: { showAddSheet = true })
-                    .zIndex(2)
+                FirstWinView(
+                    coordinator: onboarding,
+                    onAddNow: { showAddSheet = true },
+                    onExploreDemo: {
+                        // Guarded, reversible sandbox seed (Brief 28 Part C). Lands the
+                        // user in a populated dashboard — its own aha — then ends the flow.
+                        try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
+                        onboarding.finishFirstWin()
+                    }
+                )
+                .zIndex(2)
             default:
                 EmptyView()
             }
@@ -177,6 +186,13 @@ struct ContentView: View {
             } else if ScreenshotMode.requestedScreen == nil && !DemoSeeder.isDemoMode {
                 onboarding.startIfNeeded()
             }
+            #if DEBUG
+            // Screenshot seam: seed the reversible onboarding demo sandbox so the
+            // populated dashboard + "Demo data" banner can be captured deterministically.
+            if CommandLine.arguments.contains("--seed-onboarding-demo") {
+                try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
+            }
+            #endif
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }

@@ -96,6 +96,8 @@
 "onboarding.firstwin.add" = "Add one now";
 "onboarding.firstwin.demo" = "Explore with demo data";
 "onboarding.firstwin.later" = "Maybe later";
+"onboarding.demo.banner" = "Demo data";
+"onboarding.demo.clear" = "Clear demo data";
 
 /* ======================================================
    Settings (root)

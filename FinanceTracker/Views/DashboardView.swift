@@ -150,6 +150,12 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                // Brief 28-C: clearly label the reversible demo sandbox + one-tap clear.
+                if hasDemoData {
+                    demoBanner
+                        .padding(.horizontal, 16)
+                }
+
                 heroCard
                     .padding(.horizontal, 16)
 
@@ -485,6 +491,38 @@ struct DashboardView: View {
         withAnimation { quickAddParsed = nil }
         quickAddText = ""
         showQuickAddEdit = true
+    }
+
+    // MARK: - Demo sandbox banner (Brief 28-C)
+
+    private var hasDemoData: Bool { transactions.contains { $0.isDemo } }
+
+    private var demoBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.bcAccent)
+                .accessibilityHidden(true)
+            Text("onboarding.demo.banner")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.bcTextSecondary)
+            Spacer(minLength: 8)
+            Button {
+                DemoSeeder.clearDemoData(modelContext: modelContext)
+            } label: {
+                Text("onboarding.demo.clear")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.bcAccent)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .background(Color.bcAccent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(Color.bcAccent.opacity(0.3), lineWidth: 1))
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Hero (safe-to-spend / net fallback)

@@ -92,6 +92,103 @@ enum DemoSeeder {
         }
     }
 
+    // MARK: - Onboarding demo sandbox (guarded, reversible)
+
+    /// Test seam: forces the guarded onboarding seed to throw AFTER inserting, so the
+    /// delete-on-failure cleanup can be exercised deterministically (the in-memory
+    /// store never throws on its own). Mirrors QuickAddSaveService._forceSaveFailureForTesting.
+    static var _forceOnboardingSeedFailureForTesting = false
+    private struct _SimulatedSeedError: Error {}
+
+    /// Adds the locale-appropriate demo transactions to the CURRENT store (marked
+    /// `isDemo`) for the onboarding "Explore with demo data" sandbox — WITHOUT wiping
+    /// the user's data, unlike `resetAndSeedDemoData`.
+    ///
+    /// Part C safety: every insert is committed by a SINGLE guarded `save()`. If it
+    /// throws, the just-inserted rows are deleted so no poisoned/ghost pending inserts
+    /// leak into the long-lived mainContext (the mid-fix save bug). Reversible: the
+    /// rows are `isDemo`, cleared by `clearDemoData` or Settings → Reset Transactions.
+    @MainActor
+    @discardableResult
+    static func seedOnboardingDemoGuarded(modelContext: ModelContext) throws -> Int {
+        let seed = loadSeed(localeCode: onboardingSeedLocaleCode())
+        let currency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? seed.currencyCode
+
+        // Map to the categories already seeded on launch (by canonical English name);
+        // never insert duplicate categories.
+        let existing = (try? modelContext.fetch(FetchDescriptor<Category>())) ?? []
+        var byName: [String: Category] = [:]
+        for cat in existing where byName[cat.name] == nil { byName[cat.name] = cat }
+
+        var inserted: [Transaction] = []
+        for e in seed.transactions {
+            guard let cat = byName[e.category] else { continue }
+            let tx = Transaction(
+                typeRaw: e.type,
+                amountCents: e.minor,
+                currency: currency,
+                date: demoDate(dayOfMonth: e.dayOfMonth),
+                category: cat,
+                source: nil,
+                merchant: e.merchant,
+                isDemo: true
+            )
+            modelContext.insert(tx)
+            inserted.append(tx)
+        }
+
+        do {
+            if _forceOnboardingSeedFailureForTesting { throw _SimulatedSeedError() }
+            try modelContext.save()
+        } catch {
+            // Delete-on-failure: return the context to a clean, saveable state.
+            for tx in inserted { modelContext.delete(tx) }
+            throw error
+        }
+        return inserted.count
+    }
+
+    /// Removes only the demo sandbox rows, leaving any real transactions untouched.
+    @MainActor
+    static func clearDemoData(modelContext: ModelContext) {
+        let demo = (try? modelContext.fetch(
+            FetchDescriptor<Transaction>(predicate: #Predicate { $0.isDemo })
+        )) ?? []
+        for tx in demo { modelContext.delete(tx) }
+        try? modelContext.save()
+    }
+
+    /// True when any demo sandbox rows are present (drives the Dashboard "Demo data" banner).
+    @MainActor
+    static func hasDemoData(modelContext: ModelContext) -> Bool {
+        var descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.isDemo })
+        descriptor.fetchLimit = 1
+        return ((try? modelContext.fetch(descriptor)) ?? []).isEmpty == false
+    }
+
+    /// Maps the active app language to a bundled DemoSeed file code (falls back to en
+    /// inside loadSeed when the file is missing, e.g. uk).
+    private static func onboardingSeedLocaleCode() -> String {
+        switch UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system" {
+        case "pt": return "pt-BR"
+        case "ru": return "ru"
+        case "es": return "es"
+        default:   return "en"
+        }
+    }
+
+    /// Day N of the current month at local noon, clamped to now (never future) — the
+    /// same anchoring `seedDemoTransactions` uses, hoisted so the guarded seeder shares it.
+    private static func demoDate(dayOfMonth: Int) -> Date {
+        let cal = Calendar.current
+        let now = Date()
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? cal.startOfDay(for: now)
+        let day = max(1, min(dayOfMonth, 28))
+        let base = cal.date(byAdding: .day, value: day - 1, to: monthStart) ?? monthStart
+        let noon = cal.date(bySettingHour: 12, minute: 0, second: 0, of: base) ?? base
+        return min(noon, now)
+    }
+
     // MARK: - Locale-appropriate seed loading
 
     /// Decoded shape of `DemoSeeds/DemoSeed_<locale>.json`.

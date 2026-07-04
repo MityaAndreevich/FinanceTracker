@@ -73,6 +73,8 @@
 "onboarding.firstwin.add" = "Adicionar agora";
 "onboarding.firstwin.demo" = "Explorar com dados de demonstração";
 "onboarding.firstwin.later" = "Talvez depois";
+"onboarding.demo.banner" = "Dados de demonstração";
+"onboarding.demo.clear" = "Limpar dados de demo";
 
 /* Settings */
 "settings.title" = "Definições";

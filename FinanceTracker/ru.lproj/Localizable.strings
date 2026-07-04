@@ -107,6 +107,8 @@
 "onboarding.firstwin.add" = "Добавить сейчас";
 "onboarding.firstwin.demo" = "Посмотреть на демо-данных";
 "onboarding.firstwin.later" = "Позже";
+"onboarding.demo.banner" = "Демо-данные";
+"onboarding.demo.clear" = "Очистить демо-данные";
 
 /* ======================================================
    Settings (root)
