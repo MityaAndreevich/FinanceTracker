@@ -13,7 +13,7 @@ struct GeneralSettingsView: View {
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
-    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.dark.rawValue
+    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
@@ -211,7 +211,7 @@ struct GeneralSettingsView: View {
 
     private var appearanceBinding: Binding<AppearanceMode> {
         Binding(
-            get: { AppearanceMode(rawValue: appearanceModeRaw) ?? .dark },
+            get: { AppearanceMode(rawValue: appearanceModeRaw) ?? .system },
             set: { appearanceModeRaw = $0.rawValue }
         )
     }

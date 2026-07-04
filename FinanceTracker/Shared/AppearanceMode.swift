@@ -2,8 +2,9 @@
 //  AppearanceMode.swift
 //  FinanceTracker
 //
-//  User-selectable app appearance (System / Light / Dark). Dark is the default
-//  for the redesigned Budget Crab look — see outputs/DESIGN_DIRECTION_v2.md §1.
+//  User-selectable app appearance (System / Light / Dark). System is the default
+//  — fresh installs follow the device setting (App Review-friendly). The paywall
+//  forces dark independently for a premium look.
 //  Stored in @AppStorage("appearanceMode") and applied via .preferredColorScheme
 //  at the app root (RootView).
 //

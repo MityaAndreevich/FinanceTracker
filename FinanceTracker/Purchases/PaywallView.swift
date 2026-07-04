@@ -45,6 +45,9 @@ struct PaywallView: View {
                 }
             }
         }
+        // The Pro screen is always dark for a premium look, regardless of the
+        // app-wide appearance default (System). See AppearanceMode.
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Sections

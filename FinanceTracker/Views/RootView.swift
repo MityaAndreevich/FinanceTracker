@@ -9,14 +9,14 @@ import SwiftUI
 
 struct RootView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-    // Dark is the default for the redesigned look (fresh installs land in dark).
-    // Users can switch to System / Light in Settings → General → Appearance.
-    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.dark.rawValue
+    // Fresh installs follow the device setting (System). Users can pin Light / Dark
+    // in Settings → General → Appearance. The paywall forces dark for a premium look.
+    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
     @Environment(\.scenePhase) private var scenePhase
     @State private var showPrivacyOverlay = false
 
     private var appearanceMode: AppearanceMode {
-        AppearanceMode(rawValue: appearanceModeRaw) ?? .dark
+        AppearanceMode(rawValue: appearanceModeRaw) ?? .system
     }
 
     // Branded splash gate. Shown on cold start while we warm up SwiftData +
