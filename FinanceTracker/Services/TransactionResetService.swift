@@ -38,7 +38,19 @@ enum TransactionResetService {
     static func reset(in context: ModelContext) -> Outcome {
         let all = (try? context.fetch(FetchDescriptor<Transaction>())) ?? []
         for tx in all { context.delete(tx) }
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            // Bug 20 swallowed this with `try?`, which ATE the exact NSError the
+            // save/duplication investigation needs — and, worse, a thrown save()
+            // here can leave un-flushed pending DELETES in the long-lived mainContext
+            // that poison every subsequent save() (the "after Reset, every save
+            // fails" report). Log the full error shape (survives into Release via
+            // PersistenceLog / Console.app) so the next device repro reveals the
+            // domain+code. The count check below stays authoritative: if the rows
+            // are actually gone, the reset still reports success (Bug 20).
+            logSaveFailure("TransactionResetService.reset", error)
+        }
 
         let remaining = (try? context.fetchCount(FetchDescriptor<Transaction>())) ?? all.count
         return outcome(remaining: remaining)

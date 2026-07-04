@@ -8,10 +8,17 @@
 
 import Foundation
 import SwiftData
+import os
 
 @MainActor
 enum QuickAddSaveService {
     enum SaveError: Error { case noCategoryResolvable }
+
+    // Diagnostics for the on-device save/duplication investigation. One increment
+    // per `save(...)` call lets the log answer "is Save firing once per tap or
+    // looping?" without exposing any user value. See logSaveFailure for the error
+    // shape; this only records call count + the branch taken.
+    private static var saveCallCount = 0
 
     // MARK: - Idempotency (Bug 4)
 
@@ -37,6 +44,13 @@ enum QuickAddSaveService {
 
     /// Test seam: clears the dedup window so suites don't bleed into each other.
     static func _resetDedupCacheForTesting() { recentSaves.removeAll() }
+
+    /// Test seam: forces the next `save()` to throw AFTER the insert, so the
+    /// anti-poison guard (delete-the-failed-insert) can be exercised deterministically.
+    /// The in-memory store used in tests never throws on its own, which is precisely
+    /// why the on-device duplication couldn't be reproduced in the suite before.
+    static var _forceSaveFailureForTesting = false
+    private struct _SimulatedSaveError: Error {}
 
     private static func dedupKey(for parsed: QuickAddParsedInput) -> DedupKey {
         DedupKey(
@@ -71,6 +85,8 @@ enum QuickAddSaveService {
         overrideCategory: Category? = nil,
         now: Date = .now
     ) throws -> Transaction {
+        saveCallCount += 1
+        let callNo = saveCallCount
         let key = dedupKey(for: parsed)
         pruneRecentSaves(now: now)
 
@@ -78,6 +94,7 @@ enum QuickAddSaveService {
         if let recent = recentSaves[key],
            now.timeIntervalSince(recent.at) < dedupWindowSeconds,
            let existing = transaction(uuid: recent.uuid, in: modelContext) {
+            persistenceLog.info("QuickAddSave #\(callNo, privacy: .public): dedup-hit (returned existing)")
             return existing
         }
 
@@ -98,7 +115,32 @@ enum QuickAddSaveService {
             recurrenceRaw: nil
         )
         modelContext.insert(tx)
-        try modelContext.save()
+        do {
+            if _forceSaveFailureForTesting { throw _SimulatedSaveError() }
+            try modelContext.save()
+        } catch {
+            // Root-cause guard for the device duplication cascade.
+            //
+            // A thrown save() leaves `tx` as an UNCOMMITTED pending insert in the
+            // long-lived mainContext. Because the container's mainContext has
+            // autosave enabled, @Query re-renders that pending row as a visible
+            // "transaction" even though nothing reached disk — which is exactly why
+            // the dupes vanish on force-quit (see DashboardDuplicationStressTest
+            // header) and why the in-memory tests can't reproduce it (the in-memory
+            // store never throws). Each retry tap adds another orphaned pending
+            // insert → the ~10× fan-out, cross-screen total disagreement, and the
+            // follow-on "every save fails" (the next save() re-throws trying to
+            // flush the poisoned pending object).
+            //
+            // Removing our failed insert returns the context to a clean, saveable
+            // state so no ghost leaks and later saves recover. Rethrow so the caller
+            // still surfaces the error (never fail silently — Bug B2). The precise
+            // NSError is logged by the caller via logSaveFailure().
+            persistenceLog.error("QuickAddSave #\(callNo, privacy: .public): save() threw — discarding failed insert to keep context clean")
+            modelContext.delete(tx)
+            throw error
+        }
+        persistenceLog.info("QuickAddSave #\(callNo, privacy: .public): inserted 1 row")
 
         recentSaves[key] = (tx.uuid, now)
 
