@@ -78,7 +78,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // (category.error.save_failed). AddCategorySheet was showing the TRANSACTION
         // error (add.error.save_failed → "Не удалось сохранить транзакцию") when a
         // category save failed. Was 511.
-        XCTAssertEqual(enKeys.count, 512, "English baseline changed; update the expected count.")
+        // Refreshed 2026-07-04 (save/duplication cluster pass): baseline had drifted
+        // to 530 from prior legitimate key additions that never updated this magic
+        // number. Verified all 5 locales carry exactly 530 keys (full parity) before
+        // bumping — no missing/raw keys, just a stale count. Was 512.
+        XCTAssertEqual(enKeys.count, 530, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
