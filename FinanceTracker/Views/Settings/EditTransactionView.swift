@@ -228,20 +228,25 @@ struct EditTransactionView: View {
             return
         }
 
-        transaction.typeRaw = typeRaw
-        transaction.amountCents = amountCents
-        transaction.taxCents = taxCents
-        // Currency is locked to app default — keep the existing one unless the global default changed.
-        transaction.currency = defaultCurrencyCode
-        transaction.merchant = merchant.isEmpty ? nil : merchant
-        transaction.note = cleanNote.isEmpty ? nil : cleanNote
-        transaction.date = date
-        transaction.category = newCategory
-        transaction.source = selectedSource     // Account allowed for both income and expense.
-        transaction.updatedAt = Date()
+        // Route through the guarded edit path: on a thrown save() it rolls the
+        // mutation back so the long-lived mainContext is never poisoned (an
+        // unguarded save() here silently lost the edit AND broke later saves —
+        // the "editing is broken" report, QA round 2 #4).
+        let fields = TransactionEditService.Fields(
+            typeRaw: typeRaw,
+            amountCents: amountCents,
+            taxCents: taxCents,
+            // Currency is locked to app default — keep the existing one unless the global default changed.
+            currency: defaultCurrencyCode,
+            merchant: merchant.isEmpty ? nil : merchant,
+            note: cleanNote.isEmpty ? nil : cleanNote,
+            date: date,
+            category: newCategory,
+            source: selectedSource     // Account allowed for both income and expense.
+        )
 
         do {
-            try modelContext.save()
+            try TransactionEditService.update(transaction, with: fields, in: modelContext)
 
             MerchantLearningService.record(
                 merchant: merchant.isEmpty ? nil : merchant,
