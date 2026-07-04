@@ -49,7 +49,84 @@ enum CategorySuggestionService {
             return category
         }
 
+        // 3. Fuzzy near-miss — typo tolerance (Brief #2). ONLY reached after exact
+        //    matching fails, so it never changes a confident result. Deliberately
+        //    conservative to preserve the "unknown input → nil" guarantee (test
+        //    parse_unknownWord_suggestsNil): a token matches only if it is edit
+        //    distance 1 from a known single-word keyword ≥5 chars long. That length
+        //    floor keeps short words (rent/gas/bar) exact-only, where a 1-char edit
+        //    would collide with unrelated words.
+        if let fuzzy = fuzzyMatch(needle) {
+            return fuzzy
+        }
+
         return nil
+    }
+
+    // MARK: - Fuzzy near-miss (typo tolerance)
+
+    /// Single-word keywords (no spaces) eligible for fuzzy matching, ≥5 chars,
+    /// drawn from both tables. Multi-word brand keys ("blue bottle") are excluded —
+    /// fuzzy matching is per-token. Built once.
+    private static let fuzzyKeywords: [(String, String)] = {
+        (shortKeywords + rawLookup).filter { keyword, _ in
+            keyword.count >= 5 && !keyword.contains(" ")
+        }
+    }()
+
+    /// Matches each whitespace-separated token in `needle` (≥5 chars) against
+    /// `fuzzyKeywords`, returning the category of the first keyword within
+    /// Levenshtein distance 1. Returns nil when nothing is close enough.
+    private static func fuzzyMatch(_ needle: String) -> String? {
+        let tokens = needle.split(whereSeparator: { $0 == " " || $0.isPunctuation })
+            .map(String.init)
+            .filter { $0.count >= 5 }
+        guard !tokens.isEmpty else { return nil }
+
+        for token in tokens {
+            for (keyword, category) in fuzzyKeywords {
+                // Length pre-filter: distance-1 edits can't span a length gap > 1.
+                if abs(keyword.count - token.count) > 1 { continue }
+                if isEditDistanceAtMostOne(token, keyword) {
+                    return category
+                }
+            }
+        }
+        return nil
+    }
+
+    /// True when `a` and `b` are within Levenshtein distance 1 (one insertion,
+    /// deletion, or substitution). Short-circuits early — cheaper than a full DP
+    /// table since we only care about the ≤1 case.
+    private static func isEditDistanceAtMostOne(_ a: String, _ b: String) -> Bool {
+        if a == b { return true }
+        let ac = Array(a), bc = Array(b)
+        let diff = ac.count - bc.count
+        if abs(diff) > 1 { return false }
+
+        if ac.count == bc.count {
+            // Substitution: exactly one differing position.
+            var mismatches = 0
+            for i in 0..<ac.count where ac[i] != bc[i] {
+                mismatches += 1
+                if mismatches > 1 { return false }
+            }
+            return mismatches == 1
+        }
+
+        // Insertion/deletion: walk both, allowing a single skip in the longer one.
+        let (longer, shorter) = ac.count > bc.count ? (ac, bc) : (bc, ac)
+        var i = 0, j = 0, skipped = false
+        while i < longer.count && j < shorter.count {
+            if longer[i] == shorter[j] {
+                i += 1; j += 1
+            } else {
+                if skipped { return false }
+                skipped = true
+                i += 1   // skip one char in the longer string
+            }
+        }
+        return true
     }
 
     // MARK: - Word-boundary helper
