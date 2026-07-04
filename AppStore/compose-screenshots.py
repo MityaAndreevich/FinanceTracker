@@ -22,7 +22,19 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = "AppStore/screenshots"; OUT = "AppStore/composed"
 BG = (15, 20, 32); INK = (242, 245, 249); ACCENT = (61, 220, 151)
-FONT = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
+# Bold font with Latin + Cyrillic coverage (ru/uk). Prefer the bundled Linux
+# Liberation Sans; fall back to macOS Arial Bold / Arial Unicode when running
+# capture locally on a Mac. Override with FONT=/path/to.ttf in the environment.
+_FONT_CANDIDATES = [
+    os.environ.get("FONT", ""),
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/Library/Fonts/Arial Bold.ttf",
+]
+FONT = next((p for p in _FONT_CANDIDATES if p and os.path.exists(p)), None)
+if FONT is None:
+    sys.exit("No usable bold font found. Set FONT=/path/to/font.ttf")
 CANVAS = (1320, 2868)
 FILES = ["01_dashboard", "02_privacy", "03_quickentry", "04_analytics",
          "05_categories", "06_faceid", "07_export", "08_lifetime"]
@@ -31,6 +43,7 @@ CAP = {
  "RU": ["Финансы под спокойным контролем", "Данные остаются на вашем iPhone", "Записывайте траты за секунды", "Видно, куда уходят деньги", "Категории и счета — всё на местах", "Защитите вход через Face ID", "Экспорт в CSV, PDF и Excel", "Останется с вами навсегда"],
  "ES": ["Tus finanzas, bajo control y en calma", "Tus datos se quedan en tu iPhone", "Registra tus gastos en segundos", "Mira a dónde va tu dinero", "Organiza por categoría y cuenta", "Protégelo con Face ID", "Exporta a CSV, PDF o Excel", "Tuyo para siempre"],
  "PT-BR": ["Suas finanças sob controle e tranquilas", "Seus dados ficam no seu iPhone", "Registre gastos em segundos", "Veja para onde vai seu dinheiro", "Organize por categoria e conta", "Proteja com Face ID", "Exporte para CSV, PDF ou Excel", "Seu para sempre"],
+ "UK": ["Ваші фінанси — спокійно під контролем", "Ваші дані залишаються на iPhone", "Записуйте витрати за секунди", "Дивіться, куди йдуть гроші", "Категорії та рахунки — усе на місці", "Захистіть вхід через Face ID", "Експорт у CSV, PDF або Excel", "Залишиться з вами назавжди"],
 }
 
 def wrap(draw, text, font, maxw):

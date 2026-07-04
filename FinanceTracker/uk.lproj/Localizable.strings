@@ -640,7 +640,7 @@
 "widget.earned.format" = "Зароблено %@";
 
 /* Quick Add */
-"quickadd.placeholder" = "Швидке додавання: Starbucks 5.50";
+"quickadd.placeholder" = "Швидке додавання: кава 85";
 "quickadd.preview.save" = "Зберегти";
 "quickadd.preview.edit" = "Редагувати";
 "quickadd.saved.tap_to_edit" = "Збережено — торкніться, щоб змінити";
@@ -660,7 +660,7 @@
 "quick_entry.save" = "Зберегти";
 "quick_entry.use_form" = "Використати детальну форму";
 "quick_entry.fail_unparseable" = "Не вдалося розпізнати — спробуйте детальну форму";
-"quick_entry.placeholder.1" = "Starbucks 5.50";
+"quick_entry.placeholder.1" = "кава 85";
 "quick_entry.placeholder.2" = "обід 12";
 "quick_entry.placeholder.3" = "67 пальне";
 "quick_entry.placeholder.4" = "+2800 зарплата";

@@ -1,0 +1,285 @@
+{
+  "locale": "uk",
+  "currencyCode": "UAH",
+  "budgetMinor": 4000000,
+  "sources": [
+    {
+      "key": "checking",
+      "name": "Рахунок"
+    },
+    {
+      "key": "credit",
+      "name": "Картка"
+    },
+    {
+      "key": "cash",
+      "name": "Готівка"
+    }
+  ],
+  "transactions": [
+    {
+      "dayOfMonth": 1,
+      "category": "Income",
+      "source": "checking",
+      "minor": 4500000,
+      "merchant": "Зарплата",
+      "type": "income"
+    },
+    {
+      "dayOfMonth": 16,
+      "category": "Income",
+      "source": "checking",
+      "minor": 1200000,
+      "merchant": "Фриланс",
+      "type": "income"
+    },
+    {
+      "dayOfMonth": 2,
+      "category": "Housing",
+      "source": "checking",
+      "minor": 1500000,
+      "merchant": "Оренда",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
+      "category": "Utilities",
+      "source": "checking",
+      "minor": 180000,
+      "merchant": "Yasno",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Utilities",
+      "source": "credit",
+      "minor": 40000,
+      "merchant": "Київстар",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 9900,
+      "merchant": "Spotify",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 5,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 29900,
+      "merchant": "Netflix",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 8,
+      "category": "Subscriptions",
+      "source": "credit",
+      "minor": 120000,
+      "merchant": "Спортзал",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 2,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 85000,
+      "merchant": "АТБ",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 7,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 72000,
+      "merchant": "Сільпо",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 12,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 96000,
+      "merchant": "Novus",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 18,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 68000,
+      "merchant": "Ашан",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 3,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 42000,
+      "merchant": "Домінос Піца",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Food & Drink",
+      "source": "cash",
+      "minor": 28000,
+      "merchant": "Пузата Хата",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 15,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 58000,
+      "merchant": "Пузата Хата",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 21,
+      "category": "Food & Drink",
+      "source": "credit",
+      "minor": 51000,
+      "merchant": "Сушия",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 1,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 8500,
+      "merchant": "Aroma Kava",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 5,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 7800,
+      "merchant": "Львівська Майстерня",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 9,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 9000,
+      "merchant": "Aroma Kava",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 13,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 8200,
+      "merchant": "One Love",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 19,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 8700,
+      "merchant": "Львівська Майстерня",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 25,
+      "category": "Coffee",
+      "source": "cash",
+      "minor": 7500,
+      "merchant": "Aroma Kava",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 4,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 90000,
+      "merchant": "WOG",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 10,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 15000,
+      "merchant": "Uklon",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 16,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 85000,
+      "merchant": "OKKO",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 22,
+      "category": "Transport",
+      "source": "credit",
+      "minor": 18000,
+      "merchant": "Bolt",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 6,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 110000,
+      "merchant": "Rozetka",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 14,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 190000,
+      "merchant": "Rozetka",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 26,
+      "category": "Shopping",
+      "source": "credit",
+      "minor": 78000,
+      "merchant": "Zara",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 11,
+      "category": "Health",
+      "source": "credit",
+      "minor": 52000,
+      "merchant": "Аптека АНЦ",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 20,
+      "category": "Health",
+      "source": "credit",
+      "minor": 120000,
+      "merchant": "Клініка",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 8,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 62000,
+      "merchant": "Планета Кіно",
+      "type": "expense"
+    },
+    {
+      "dayOfMonth": 23,
+      "category": "Entertainment",
+      "source": "credit",
+      "minor": 150000,
+      "merchant": "Концерт",
+      "type": "expense"
+    }
+  ]
+}

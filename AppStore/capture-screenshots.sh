@@ -29,7 +29,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 SCHEME="FinanceTracker"
 BUNDLE_ID="com.dmitrylogachev.budgetcrab"
-DEVICE_NAME="${DEVICE:-iPhone 15 Pro Max}"   # 6.7" canvas, 1290 × 2796 (ASC-valid)
+DEVICE_NAME="${DEVICE:-iPhone 16 Pro Max}"   # 6.9" canvas, 1320 × 2868 (ASC primary size)
 RENDER_WAIT="${RENDER_WAIT:-6}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED="$REPO_ROOT/build/screenshots"
@@ -64,7 +64,8 @@ resolve_locale() {
     RU)            SEED=ru;    LANG_CODE=ru;    APPLE_LOCALE=ru_RU; KB="ru_RU@sw=Russian;hw=Automatic" ;;
     ES)            SEED=es;    LANG_CODE=es;    APPLE_LOCALE=es_ES; KB="es_ES@sw=Spanish;hw=Automatic" ;;
     PT-BR|PTBR|PT) SEED=pt-BR; LANG_CODE=pt-BR; APPLE_LOCALE=pt_BR; KB="pt_BR@sw=Portuguese-Brazilian;hw=Automatic" ;;
-    *) die "Unknown locale '$1' (use EN | RU | ES | PT-BR | ALL)" ;;
+    UK|UA)         SEED=uk;    LANG_CODE=uk;    APPLE_LOCALE=uk_UA; KB="uk_UA@sw=Ukrainian;hw=Automatic" ;;
+    *) die "Unknown locale '$1' (use EN | RU | ES | PT-BR | UK | ALL)" ;;
   esac
 }
 
@@ -91,6 +92,10 @@ boot_device() {
   log "Booting $DEVICE_NAME ($UDID)"
   xcrun simctl boot "$UDID" 2>/dev/null || true
   xcrun simctl bootstatus "$UDID" -b >/dev/null
+  # Force DARK for the premium capture look. The app default is now System
+  # (respects the device), so we pin the simulator to dark; each launch also
+  # passes -appearanceMode dark as a belt-and-suspenders override.
+  xcrun simctl ui "$UDID" appearance dark 2>/dev/null || true
   # Clean, deterministic status bar: 9:41, full battery/signal.
   xcrun simctl status_bar "$UDID" override \
     --time "9:41" --batteryState charged --batteryLevel 100 \
@@ -163,9 +168,14 @@ capture_locale() {
     local qe_flag=""
     [ "$screen" = "quickentry" ] && qe_flag="--screenshot-quickentry-parsed"
     # Each launch wipes + re-seeds the locale demo data, then routes to one screen.
+    # -appLanguageCode drives the app's in-app language override (LocalizedBundle),
+    # which is what actually localizes UI chrome. -AppleLanguages alone only affects
+    # OS-level date/number formatting, leaving chrome in the dev-region (English).
     xcrun simctl launch "$UDID" "$BUNDLE_ID" \
       --demo-mode-debug-only --demo-locale "$SEED" --screenshot-screen "$screen" $qe_flag \
       -AppleLanguages "($LANG_CODE)" -AppleLocale "$APPLE_LOCALE" \
+      -appLanguageCode "$LANG_CODE" \
+      -appearanceMode dark \
       -hasCompletedOnboarding 1 -hasSeenFeatureTour 1 -requireAuthMode never \
       >/dev/null
     sleep "$RENDER_WAIT"
@@ -187,7 +197,7 @@ boot_device
 build_and_install
 
 if [ "$(echo "$INPUT" | tr '[:lower:]' '[:upper:]')" = "ALL" ]; then
-  for L in EN RU ES PT-BR; do capture_locale "$L"; done
+  for L in EN RU ES PT-BR UK; do capture_locale "$L"; done
 else
   capture_locale "$INPUT"
 fi
