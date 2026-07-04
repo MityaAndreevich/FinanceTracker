@@ -272,6 +272,9 @@
 "dashboard.empty.caption" = "Digite ou fale acima — Budget Crab cuida do resto";
 "transactions.empty.title" = "Nenhuma transação ainda";
 "transactions.empty.cta" = "Adicionar a primeira";
+"transactions.noresults.title" = "Nenhum resultado";
+"transactions.noresults.clear" = "Limpar busca e filtros";
+"transactions.noneinperiod.title" = "Nenhuma transação neste período";
 "analytics.empty.title" = "Os insights aparecerão aqui";
 "analytics.empty.caption" = "Adicione algumas transações para ver seus padrões de gasto";
 "search.empty.title" = "Nenhum resultado";

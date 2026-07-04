@@ -707,6 +707,9 @@
 "dashboard.empty.caption" = "Напишите или скажите выше, чтобы добавить операцию";
 "transactions.empty.title" = "Транзакций пока нет";
 "transactions.empty.cta" = "Добавить первую";
+"transactions.noresults.title" = "Ничего не найдено";
+"transactions.noresults.clear" = "Сбросить поиск и фильтры";
+"transactions.noneinperiod.title" = "Нет транзакций за этот период";
 "analytics.empty.title" = "Здесь появится аналитика";
 "analytics.empty.caption" = "Добавьте несколько транзакций, чтобы увидеть расходы";
 "search.empty.title" = "Ничего не найдено";

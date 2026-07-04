@@ -93,7 +93,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // (onboarding.hint.openform, onboarding.hint.period, onboarding.hint.got_it). Was 550.
         // 2026-07-05 (device QA round 1 #7): +2 for the honest "Recent" list header
         // and its "See all" link (dashboard.recent, dashboard.see_all). Was 553.
-        XCTAssertEqual(enKeys.count, 555, "English baseline changed; update the expected count.")
+        // Bumped 2026-07-05 (Device QA round 2 #2): +3 honest empty-state keys
+        // (transactions.noresults.title/clear, transactions.noneinperiod.title) so a
+        // search/filter-hidden list reads as "No results", not "Add your first". Was 555.
+        XCTAssertEqual(enKeys.count, 558, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

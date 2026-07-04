@@ -697,6 +697,9 @@
 "dashboard.empty.caption" = "Type or speak above to add a transaction";
 "transactions.empty.title" = "No transactions yet";
 "transactions.empty.cta" = "Add your first";
+"transactions.noresults.title" = "No results";
+"transactions.noresults.clear" = "Clear search & filters";
+"transactions.noneinperiod.title" = "No transactions in this period";
 "analytics.empty.title" = "Insights appear here";
 "analytics.empty.caption" = "Add a few transactions to see your spending patterns";
 "search.empty.title" = "No matches";

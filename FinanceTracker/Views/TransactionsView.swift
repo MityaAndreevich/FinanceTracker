@@ -44,22 +44,22 @@ struct TransactionsView: View {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return base }
 
-        // Diacritic-insensitive, case-insensitive match.
-        // "Cafe" should match "Café", "Senor" should match "Señor".
-        let needle = q.folded()
+        // Multi-token, diacritic/case-insensitive, amount-searchable match.
+        // See TransactionSearch for the documented semantics.
         return base.filter { tx in
-            let merchant = (tx.merchant ?? "").folded()
-            let categoryVisible = tx.category.displayName().folded()
-            let categoryLegacy = tx.category.name.folded()
-            let source = (tx.source?.name ?? "").folded()
-            let note = (tx.note ?? "").folded()
-
-            return merchant.contains(needle)
-            || categoryVisible.contains(needle)
-            || categoryLegacy.contains(needle)
-            || source.contains(needle)
-            || note.contains(needle)
+            TransactionSearch.matches(
+                query: q,
+                fields: [tx.merchant, tx.category.displayName(), tx.category.name, tx.source?.name, tx.note],
+                amountCents: tx.amountCents
+            )
         }
+    }
+
+    /// A search or type filter is actively narrowing the list (period scope
+    /// excluded — that has its own "nothing in this period" message).
+    private var isFiltering: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        || typeFilter != .all
     }
 
     private var grouped: [Date: [Transaction]] {
@@ -76,7 +76,13 @@ struct TransactionsView: View {
     var body: some View {
         List {
             if filtered.isEmpty {
-                emptyStateRow
+                if transactions.isEmpty {
+                    firstRunEmptyRow
+                } else if isFiltering {
+                    noResultsRow
+                } else {
+                    noneInPeriodRow
+                }
             } else {
                 ForEach(sortedDays, id: \.self) { day in
                     daySection(for: day)
@@ -144,6 +150,14 @@ struct TransactionsView: View {
         // Re-localize filter chips, day headers and empty state live on an in-app
         // language change (device QA round 1 #2), navigation preserved.
         .languageReactive()
+        // Drop a stale search when leaving the tab (device QA round 2 #1). Without
+        // this, a search like "Футболка 550" survives a tab switch and silently
+        // hides the whole list on return, reading as data loss. Keep it while
+        // pushing into edit (editTx != nil) so returning from an edit still shows
+        // the same filtered results the user tapped from.
+        .onDisappear {
+            if editTx == nil { searchText = "" }
+        }
     }
 
     private var filterChips: some View {
@@ -172,16 +186,13 @@ struct TransactionsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var emptyStateRow: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "list.bullet.rectangle")
-                .font(.system(size: 48))
-                .foregroundStyle(Color.bcTextMuted)
-
-            Text("transactions.empty.title")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Color.bcTextPrimary)
-
+    /// True empty state — there are zero transactions at all. Only here do we
+    /// invite "Add your first"; showing this while data exists reads as loss.
+    private var firstRunEmptyRow: some View {
+        emptyState(
+            icon: "list.bullet.rectangle",
+            title: "transactions.empty.title"
+        ) {
             Button {
                 presentQuickEntry = true
             } label: {
@@ -193,6 +204,58 @@ struct TransactionsView: View {
                     .background(Capsule().fill(Color.bcAccent))
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    /// Data exists but a search / type filter hides all of it. Never "Add your
+    /// first" here — offer to clear the narrowing instead.
+    private var noResultsRow: some View {
+        emptyState(
+            icon: "magnifyingglass",
+            title: "transactions.noresults.title"
+        ) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    searchText = ""
+                    typeFilter = .all
+                }
+            } label: {
+                Text("transactions.noresults.clear")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Capsule().fill(Color.bcAccent))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    /// Data exists but none falls in the selected period. Neutral — the ‹ ›
+    /// pager is the affordance, so no button here.
+    private var noneInPeriodRow: some View {
+        emptyState(
+            icon: "calendar",
+            title: "transactions.noneinperiod.title"
+        ) { EmptyView() }
+    }
+
+    private func emptyState<Action: View>(
+        icon: String,
+        title: LocalizedStringKey,
+        @ViewBuilder action: () -> Action
+    ) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 48))
+                .foregroundStyle(Color.bcTextMuted)
+
+            Text(title)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(Color.bcTextPrimary)
+                .multilineTextAlignment(.center)
+
+            action()
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
@@ -315,15 +378,6 @@ enum TransactionFilter: String, CaseIterable, Identifiable {
         case .income:  "arrow.up.right"
         case .expense: "arrow.down.right"
         }
-    }
-}
-
-// MARK: - String folding helper
-
-private extension String {
-    /// Lowercase + strip diacritics for substring search.
-    func folded() -> String {
-        folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
     }
 }
 

@@ -704,6 +704,9 @@
 "dashboard.empty.caption" = "Введіть або скажіть вище, щоб додати транзакцію";
 "transactions.empty.title" = "Поки немає транзакцій";
 "transactions.empty.cta" = "Додайте першу";
+"transactions.noresults.title" = "Нічого не знайдено";
+"transactions.noresults.clear" = "Скинути пошук і фільтри";
+"transactions.noneinperiod.title" = "Немає транзакцій за цей період";
 "analytics.empty.title" = "Інсайти з’являться тут";
 "analytics.empty.caption" = "Додайте кілька транзакцій, щоб побачити свої витрати";
 "search.empty.title" = "Немає збігів";
