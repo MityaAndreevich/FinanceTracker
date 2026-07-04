@@ -559,7 +559,12 @@ struct QuickEntryView: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(Color.bcDanger)
-            Text("quick_entry.fail_unparseable")
+            // This banner is driven solely by `saveError`, set in handleSave()'s
+            // catch — which is unreachable unless `parsed != nil`. So it ALWAYS means
+            // "the save failed", never "couldn't parse". Showing the old
+            // "Couldn't read that" copy while the parsed amount is on screen was the
+            // reported contradiction; use the save-failure message instead.
+            Text("add.error.save_failed")
                 .font(.subheadline)
                 .foregroundStyle(Color.bcDanger)
         }
