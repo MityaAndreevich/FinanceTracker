@@ -585,7 +585,14 @@ struct QuickEntryView: View {
             // never ride up over the chip labels (the bug), in any locale or Dynamic
             // Type size. The scroll region above (prompt/amount + preview) absorbs
             // any squeeze instead.
+            //
+            // The extra 10pt bottom padding (on top of the VStack's 14pt spacing =
+            // 24pt total) gives the chip row breathing room from the input line so it
+            // no longer reads as cramped once data is entered. Scoped to this one gap;
+            // input→Save and Save→form-link stay at the 14pt VStack spacing. Chips
+            // render in both empty and parsed states, so the gap never jumps.
             quickChips
+                .padding(.bottom, 10)
 
             // The NL input bar flips to a live recording panel while dictating —
             // voice is a headline feature, so it takes over rather than hiding in a
