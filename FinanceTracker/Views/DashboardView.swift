@@ -49,6 +49,8 @@ struct DashboardView: View {
     @State private var quickAddToastStyle: ToastStyle = .success
     @State private var quickAddSavedTx: Transaction? = nil   // last auto-saved row (toast target)
     @State private var quickAddEditingTx: Transaction? = nil // drives the edit sheet on toast tap
+    // Brief 28-A #1: Dashboard entry point to the (previously Settings-only) budget.
+    @State private var showBudgetSheet = false
     // User-tunable auto-save threshold (Settings → Quick Add sensitivity).
     @AppStorage("quickAddConfidenceThreshold") private var quickAddThreshold: Double = 0.75
     // Shake-to-undo: the auto-saved row stays undoable for a 30s rolling window.
@@ -151,6 +153,13 @@ struct DashboardView: View {
                 heroCard
                     .padding(.horizontal, 16)
 
+                // Brief 28-A #1: when no budget is set the "safe to spend" value is
+                // hidden, so surface a clear CTA to set one right under the hero.
+                if !budgetIsSet {
+                    budgetCTACard
+                        .padding(.horizontal, 16)
+                }
+
                 if !monthCategorySpend.isEmpty {
                     spendingCard
                         .padding(.horizontal, 16)
@@ -177,6 +186,9 @@ struct DashboardView: View {
         }
         .navigationTitle(PeriodScope.currentMonth.label(locale: .current))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showBudgetSheet) {
+            BudgetSetterSheet()
+        }
         .sheet(isPresented: $showAddTransaction) {
             NavigationStack { AddTransactionView() }
         }
@@ -477,9 +489,31 @@ struct DashboardView: View {
 
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(budgetIsSet ? "dashboard.safe_to_spend" : "dashboard.net_this_month")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(Color.bcTextSecondary)
+            // When a budget is set the header doubles as the EDIT entry point (label +
+            // pencil), so the budget is adjustable straight from the Dashboard — not a
+            // bare, inert number (Brief 28-A #1). The unset case shows a plain caption;
+            // the "Set budget" CTA card below the hero handles that path instead.
+            if budgetIsSet {
+                Button {
+                    showBudgetSheet = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("dashboard.safe_to_spend")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(Color.bcTextSecondary)
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color.bcAccent)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("dashboard.budget.edit.a11y"))
+            } else {
+                Text("dashboard.net_this_month")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.bcTextSecondary)
+            }
 
             Text(heroBigNumber)
                 .font(.system(size: 44, weight: .bold, design: .rounded))
@@ -502,6 +536,43 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .bcCard(padding: 18)
+    }
+
+    /// Brief 28-A #1: prominent, obviously-tappable CTA shown under the hero while no
+    /// budget is set — the "safe to spend" value is otherwise invisible and its only
+    /// entry point was buried in Settings.
+    private var budgetCTACard: some View {
+        Button {
+            showBudgetSheet = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.bcAccent.opacity(0.16))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "target")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Color.bcAccent)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("dashboard.budget.cta.title")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.bcTextPrimary)
+                    Text("dashboard.budget.cta.subtitle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.bcTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.bcTextMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .bcCard(padding: 16)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
     }
 
     /// The large amount in the hero. Budget mode shows the remaining budget

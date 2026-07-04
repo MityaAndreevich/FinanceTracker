@@ -82,7 +82,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // to 530 from prior legitimate key additions that never updated this magic
         // number. Verified all 5 locales carry exactly 530 keys (full parity) before
         // bumping — no missing/raw keys, just a stale count. Was 512.
-        XCTAssertEqual(enKeys.count, 530, "English baseline changed; update the expected count.")
+        // 2026-07-04 (Brief 28 Part A): +3 for the Dashboard budget CTA/edit entry
+        // (dashboard.budget.cta.title/subtitle, dashboard.budget.edit.a11y). Was 530.
+        XCTAssertEqual(enKeys.count, 533, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

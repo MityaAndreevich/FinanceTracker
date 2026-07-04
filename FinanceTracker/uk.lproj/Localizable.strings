@@ -247,6 +247,9 @@
 "dashboard.earned_more" = "Зароблено більше, ніж витрачено";
 "dashboard.this_week" = "Цей тиждень";
 "dashboard.safe_to_spend" = "Можна витратити";
+"dashboard.budget.cta.title" = "Встановіть місячний бюджет";
+"dashboard.budget.cta.subtitle" = "Дивіться, скільки залишилось витрачати на день";
+"dashboard.budget.edit.a11y" = "Змінити місячний бюджет";
 "dashboard.safe_per_day" = "%1$@/день · залишилось днів: %2$d";
 "dashboard.over_budget" = "Перевищення бюджету на %@";
 "dashboard.spending_by_category" = "Витрати за категоріями";

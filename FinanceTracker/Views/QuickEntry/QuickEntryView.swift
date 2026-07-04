@@ -602,27 +602,30 @@ struct QuickEntryView: View {
 
             saveButton
 
-            // Secondary escape hatch to the detailed form. Brief #3: it must stay
-            // clearly SECONDARY to Save yet OBVIOUSLY tappable (a prior complaint that
-            // the faint grey footnote read as inert text). Accent-tinted label + a
-            // chevron affordance + a full-width ≥44 pt tap target make it read as a
-            // real button without competing with the filled mint CTA above it.
+            // Secondary escape hatch to the detailed form. Brief 28-A #2: previously a
+            // faint grey footnote that read as inert text. Now a proper BORDERED button
+            // — SF Symbol + label, tinted outline, full-width ≥44 pt target — so it's
+            // unmistakably tappable, while staying clearly SECONDARY to the filled mint
+            // Save above it (outline vs. fill carries the hierarchy).
             Button {
                 dismissAfterSheet = true
                 activeSheet = .addTxFallback
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 15, weight: .semibold))
                     Text("quick_entry.use_form")
-                        .font(.subheadline.weight(.medium))
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
+                        .font(.subheadline.weight(.semibold))
                 }
                 .foregroundStyle(Color.bcAccent)
                 .frame(maxWidth: .infinity)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
+                .frame(height: 46)
+                .background(Color.bcAccent.opacity(0.10), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color.bcAccent.opacity(0.45), lineWidth: 1))
+                .contentShape(Capsule())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("quick_entry.use_form"))
         }
     }
 

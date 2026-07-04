@@ -240,6 +240,9 @@
 "dashboard.earned_more" = "Earned more than spent";
 "dashboard.this_week" = "This week";
 "dashboard.safe_to_spend" = "Safe to spend";
+"dashboard.budget.cta.title" = "Set your monthly budget";
+"dashboard.budget.cta.subtitle" = "See what's left to spend each day";
+"dashboard.budget.edit.a11y" = "Edit monthly budget";
 "dashboard.safe_per_day" = "%1$@/day · %2$d days left";
 "dashboard.over_budget" = "Over budget by %@";
 "dashboard.spending_by_category" = "Spending by category";

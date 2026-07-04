@@ -311,6 +311,9 @@
 "dashboard.earned_more" = "Ganaste más de lo que gastaste";
 "dashboard.this_week" = "Esta semana";
 "dashboard.safe_to_spend" = "Disponible para gastar";
+"dashboard.budget.cta.title" = "Configura tu presupuesto mensual";
+"dashboard.budget.cta.subtitle" = "Mira cuánto queda para gastar al día";
+"dashboard.budget.edit.a11y" = "Editar presupuesto mensual";
 "dashboard.safe_per_day" = "%1$@/día · quedan %2$d días";
 "dashboard.over_budget" = "Presupuesto superado en %@";
 "dashboard.spending_by_category" = "Gastos por categoría";

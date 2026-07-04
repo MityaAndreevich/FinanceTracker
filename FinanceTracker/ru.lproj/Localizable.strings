@@ -251,6 +251,9 @@
 "dashboard.earned_more" = "Доходы превышают расходы";
 "dashboard.this_week" = "На этой неделе";
 "dashboard.safe_to_spend" = "Можно потратить";
+"dashboard.budget.cta.title" = "Установите месячный бюджет";
+"dashboard.budget.cta.subtitle" = "Смотрите, сколько остаётся тратить в день";
+"dashboard.budget.edit.a11y" = "Изменить месячный бюджет";
 "dashboard.safe_per_day" = "%1$@/день · осталось дней: %2$d";
 "dashboard.over_budget" = "Превышение бюджета на %@";
 "dashboard.spending_by_category" = "Расходы по категориям";
