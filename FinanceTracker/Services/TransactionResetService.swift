@@ -41,15 +41,17 @@ enum TransactionResetService {
         do {
             try context.save()
         } catch {
-            // Bug 20 swallowed this with `try?`, which ATE the exact NSError the
-            // save/duplication investigation needs — and, worse, a thrown save()
-            // here can leave un-flushed pending DELETES in the long-lived mainContext
-            // that poison every subsequent save() (the "after Reset, every save
-            // fails" report). Log the full error shape (survives into Release via
-            // PersistenceLog / Console.app) so the next device repro reveals the
-            // domain+code. The count check below stays authoritative: if the rows
-            // are actually gone, the reset still reports success (Bug 20).
+            // Root cause (device NSError 1600, NSValidationRelationshipDeniedDeleteError)
+            // was the `.deny` delete rule on Transaction.category — now `.nullify`, so
+            // this path is no longer hit on a normal reset. It remains the genuine-failure
+            // safety net: a thrown save() leaves un-committable pending DELETES in the
+            // long-lived mainContext that poison every subsequent save() (the "after
+            // Reset, every save fails" report). `rollback()` discards those pending
+            // changes so the context is never left poisoned; the store keeps its rows
+            // and the count check below then reports `.failure(remaining:)` so the user
+            // is told to retry instead of seeing a silent, cascading corruption.
             logSaveFailure("TransactionResetService.reset", error)
+            context.rollback()
         }
 
         let remaining = (try? context.fetchCount(FetchDescriptor<Transaction>())) ?? all.count

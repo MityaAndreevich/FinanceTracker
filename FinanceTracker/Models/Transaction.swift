@@ -34,9 +34,16 @@ final class Transaction {
     var isDemo: Bool = false
 
     // Relationships
-    // .deny: if you try to delete a Category that still has transactions, SwiftData throws.
-    // CategoriesSourcesView already blocks deletion UX-side; this is a safety net.
-    @Relationship(deleteRule: .deny) var category: Category
+    // .nullify (SwiftData default): deleting a Transaction simply detaches it from its
+    // Category. It must NOT be `.deny`: a delete rule governs deletion of the object
+    // that OWNS the relationship (the Transaction), so `.deny` here denied deleting ANY
+    // transaction whose `category` was set — and since `category` is non-optional, that
+    // was every transaction. That surfaced on device as NSCocoaError 1600
+    // (NSValidationRelationshipDeniedDeleteError) on "Reset transactions", whose
+    // un-committable pending deletes then poisoned every later save. Protecting a
+    // Category that still has transactions is a UX concern handled in CategoriesSourcesView
+    // (there is no inverse relationship here for a delete rule to enforce anyway).
+    @Relationship(deleteRule: .nullify) var category: Category
 
     // .nullify: deleting a Source clears the back-reference on transactions.
     @Relationship(deleteRule: .nullify) var source: Source?
