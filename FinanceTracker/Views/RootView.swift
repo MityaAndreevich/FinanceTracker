@@ -58,11 +58,10 @@ struct RootView: View {
 
     private var appContent: some View {
         Group {
-            if hasCompletedOnboarding {
-                AuthGateView()
-            } else {
-                OnboardingView()
-            }
+            // Brief 28 Part E: no language/currency wall. Locale is auto-detected at
+            // launch (FinanceTrackerApp.init) and the first-run experience is now the
+            // in-app coach-mark flow driven by OnboardingCoordinator inside ContentView.
+            AuthGateView()
         }
         .animation(.easeInOut(duration: 0.25), value: hasCompletedOnboarding)
         // T-8: cover screen before iOS takes the app-switcher snapshot.

@@ -40,6 +40,12 @@ struct FinanceTrackerApp: App {
         // lazily-created App Group store is seeded with existing user data.
         SharedModelContainer.migrateLegacyStoreIfNeeded()
 
+        // Silent first-run locale detection (Brief 28 Part E): pins the device
+        // language + region currency before the first frame instead of a setup wall.
+        // Only writes when the keys are unset, so it never overrides a later Settings
+        // choice or an upgrading user's existing selection.
+        LocaleAutoDetect.applyDetectedDefaultsIfUnset()
+
         // Apply the stored language override to Bundle.main *before* the first
         // frame, so code-resolved strings match the chosen language immediately.
         let stored = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"

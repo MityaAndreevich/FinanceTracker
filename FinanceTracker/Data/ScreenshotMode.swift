@@ -67,6 +67,18 @@ enum ScreenshotMode {
         #endif
     }
 
+    /// DEBUG-only: forces the first-run onboarding coordinator to a specific phase on
+    /// launch so each coach-mark step can be screenshotted deterministically under
+    /// `simctl` (which can't tap "Next"). Values: greeting | quickAdd | budget |
+    /// analytics | firstwin. Always nil in Release.
+    static var onboardingStep: String? {
+        #if DEBUG
+        return value(for: "--onboarding-step")
+        #else
+        return nil
+        #endif
+    }
+
     /// True only while capturing the paywall storyboard screen (08). StoreKit
     /// products can't load under `simctl launch`, so the paywall substitutes a
     /// deterministic mock of the plan cards for that capture. DEBUG-gated via

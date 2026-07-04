@@ -81,6 +81,21 @@
 
 "onboarding.start" = "Start";
 "onboarding.cta.start_tracking" = "Start tracking";
+"onboarding.greeting.title" = "Welcome to Budget Crab";
+"onboarding.greeting.privacy" = "Private and on-device — nothing leaves your phone.";
+"onboarding.greeting.cta" = "Show me";
+"onboarding.skip" = "Skip";
+"onboarding.coach.quickadd" = "Type or say an expense — like “coffee 5” — and tap Save.";
+"onboarding.coach.quickadd.a11y" = "Quick add bar";
+"onboarding.coach.budget" = "Set a monthly budget here to see what's left to spend.";
+"onboarding.coach.budget.a11y" = "Set budget";
+"onboarding.coach.analytics" = "See your spending breakdown and trends in the Analytics tab.";
+"onboarding.coach.analytics.a11y" = "Analytics tab";
+"onboarding.firstwin.title" = "Try your first entry";
+"onboarding.firstwin.body" = "Type or say an expense — I'll pick the category for you.";
+"onboarding.firstwin.add" = "Add one now";
+"onboarding.firstwin.demo" = "Explore with demo data";
+"onboarding.firstwin.later" = "Maybe later";
 
 /* ======================================================
    Settings (root)

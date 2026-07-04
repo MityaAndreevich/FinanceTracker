@@ -54,6 +54,19 @@ final class OnboardingCoordinator: ObservableObject {
     /// Greeting "Show me" → first coach-mark.
     func beginCoachmarks() { phase = .coachmark(0) }
 
+    /// DEBUG/screenshot seam: jump straight to a named phase (see
+    /// ScreenshotMode.onboardingStep) so each step can be captured under simctl.
+    func startAtDebugPhase(_ raw: String) {
+        switch raw {
+        case "greeting": phase = .greeting
+        case "quickAdd": phase = .coachmark(0)
+        case "budget":   phase = .coachmark(1)
+        case "analytics":phase = .coachmark(2)
+        case "firstwin": phase = .firstWin
+        default:         phase = .greeting
+        }
+    }
+
     /// Advance the current phase. Walks the coach-marks, then the first-win, then done.
     func advance() {
         switch phase {
@@ -82,6 +95,11 @@ final class OnboardingCoordinator: ObservableObject {
 
     private func complete() {
         defaults.set(true, forKey: Self.completedKey)
+        // The new coach-mark flow replaces the retired feature-tour carousel, but
+        // RatingPromptCoordinator still gates the (post-onboarding) rating prompt on
+        // "hasSeenFeatureTour". Set it here so completing onboarding — by any path —
+        // keeps that gate satisfied without touching the rating logic.
+        defaults.set(true, forKey: "hasSeenFeatureTour")
         phase = .done
     }
 }

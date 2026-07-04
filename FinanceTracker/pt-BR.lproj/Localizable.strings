@@ -58,6 +58,21 @@
 
 "onboarding.start" = "Começar";
 "onboarding.cta.start_tracking" = "Começar a rastrear";
+"onboarding.greeting.title" = "Bem-vindo ao Budget Crab";
+"onboarding.greeting.privacy" = "Privado e no dispositivo — nada sai do seu telefone.";
+"onboarding.greeting.cta" = "Mostrar";
+"onboarding.skip" = "Pular";
+"onboarding.coach.quickadd" = "Digite ou fale um gasto — como «café 5» — e toque em Salvar.";
+"onboarding.coach.quickadd.a11y" = "Barra de adição rápida";
+"onboarding.coach.budget" = "Defina aqui um orçamento mensal para ver quanto resta para gastar.";
+"onboarding.coach.budget.a11y" = "Definir orçamento";
+"onboarding.coach.analytics" = "Veja o detalhamento dos gastos e tendências na aba Análises.";
+"onboarding.coach.analytics.a11y" = "Aba Análises";
+"onboarding.firstwin.title" = "Faça seu primeiro lançamento";
+"onboarding.firstwin.body" = "Digite ou fale um gasto — eu escolho a categoria para você.";
+"onboarding.firstwin.add" = "Adicionar agora";
+"onboarding.firstwin.demo" = "Explorar com dados de demonstração";
+"onboarding.firstwin.later" = "Talvez depois";
 
 /* Settings */
 "settings.title" = "Definições";

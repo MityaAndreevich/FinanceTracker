@@ -157,6 +157,7 @@ struct DashboardView: View {
                 // hidden, so surface a clear CTA to set one right under the hero.
                 if !budgetIsSet {
                     budgetCTACard
+                        .coachmarkTarget(.budget)
                         .padding(.horizontal, 16)
                 }
 
@@ -180,6 +181,7 @@ struct DashboardView: View {
         // up under the inline title (the month "date").
         .safeAreaInset(edge: .top, spacing: 0) {
             quickAddSection
+                .coachmarkTarget(.quickAdd)
                 .padding(.top, 8)
                 .padding(.bottom, 8)
                 .background(.bar)

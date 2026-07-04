@@ -15,7 +15,9 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
 
-    @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
+    // First-run coach-mark flow (Brief 28 Part B) — replaces the retired passive
+    // TutorialFlow carousel. Drives greeting → Dashboard coach-marks → guided first win.
+    @StateObject private var onboarding = OnboardingCoordinator()
     // Teach the edge-swipe affordance on the first few launches, then stop.
     @AppStorage("swipe_hint_shown_count") private var swipeHintShownCount = 0
     @State private var selectedTab: Int = 0
@@ -48,18 +50,38 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             mainTabView
+                // Reads the coach-mark target frames published by `.coachmarkTarget`
+                // on the real Dashboard controls and resolves the active one to a rect
+                // for the overlay. Only rendered during a `.coachmark` phase.
+                .overlayPreferenceValue(CoachmarkAnchorKey.self) { anchors in
+                    if onboarding.currentStep != nil {
+                        GeometryReader { proxy in
+                            CoachmarkOverlay(
+                                coordinator: onboarding,
+                                targetRect: onboarding.currentStep
+                                    .flatMap { anchors[$0] }
+                                    .map { proxy[$0] }
+                            )
+                        }
+                        .ignoresSafeArea()
+                        .zIndex(1)
+                    }
+                }
 
-            // Feature tour. Rendered in-tree (not as a fullScreenCover) so its
-            // opaque background covers the tab view from the very first frame —
-            // a cover presents *after* appearance, which let the Dashboard flash
-            // through before the tour animated up (round 8 feedback).
-            if !hasSeenFeatureTour {
-                TutorialFlow()
-                    .transition(.opacity)
-                    .zIndex(1)
+            // Greeting and guided-first-win phases render as their own centered cards
+            // over a dim backdrop (no anchor needed).
+            switch onboarding.phase {
+            case .greeting:
+                MascotGreetingView(coordinator: onboarding)
+                    .zIndex(2)
+            case .firstWin:
+                FirstWinView(coordinator: onboarding, onAddNow: { showAddSheet = true })
+                    .zIndex(2)
+            default:
+                EmptyView()
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: hasSeenFeatureTour)
+        .animation(.easeInOut(duration: 0.25), value: onboarding.phase)
     }
 
     private var mainTabView: some View {
@@ -146,6 +168,15 @@ struct ContentView: View {
             handlePendingIntentNavigation()
             RatingPromptCoordinator.recordSessionOpen()
             maybeShowSwipeHint()
+            // Start the first-run coach-mark flow on a genuine first launch (or a
+            // Settings replay). Suppressed under screenshot/demo automation so captures
+            // aren't covered by the greeting — except the DEBUG onboarding-step hook,
+            // which forces a specific phase for per-step screenshots.
+            if let step = ScreenshotMode.onboardingStep {
+                onboarding.startAtDebugPhase(step)
+            } else if ScreenshotMode.requestedScreen == nil && !DemoSeeder.isDemoMode {
+                onboarding.startIfNeeded()
+            }
         }
         .onChange(of: scenePhase) { _, new in
             if new == .active { handlePendingIntentNavigation() }

@@ -92,6 +92,21 @@
 
 "onboarding.start" = "Начать";
 "onboarding.cta.start_tracking" = "Начать учёт";
+"onboarding.greeting.title" = "Добро пожаловать в Budget Crab";
+"onboarding.greeting.privacy" = "Приватно и на устройстве — ничего не покидает ваш телефон.";
+"onboarding.greeting.cta" = "Показать";
+"onboarding.skip" = "Пропустить";
+"onboarding.coach.quickadd" = "Введите или скажите расход — например «кофе 5» — и нажмите «Сохранить».";
+"onboarding.coach.quickadd.a11y" = "Строка быстрого добавления";
+"onboarding.coach.budget" = "Задайте здесь месячный бюджет, чтобы видеть, сколько можно потратить.";
+"onboarding.coach.budget.a11y" = "Задать бюджет";
+"onboarding.coach.analytics" = "Смотрите разбивку расходов и тренды во вкладке «Аналитика».";
+"onboarding.coach.analytics.a11y" = "Вкладка «Аналитика»";
+"onboarding.firstwin.title" = "Добавьте первую запись";
+"onboarding.firstwin.body" = "Введите или скажите расход — категорию подберу сам.";
+"onboarding.firstwin.add" = "Добавить сейчас";
+"onboarding.firstwin.demo" = "Посмотреть на демо-данных";
+"onboarding.firstwin.later" = "Позже";
 
 /* ======================================================
    Settings (root)

@@ -84,7 +84,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // bumping — no missing/raw keys, just a stale count. Was 512.
         // 2026-07-04 (Brief 28 Part A): +3 for the Dashboard budget CTA/edit entry
         // (dashboard.budget.cta.title/subtitle, dashboard.budget.edit.a11y). Was 530.
-        XCTAssertEqual(enKeys.count, 533, "English baseline changed; update the expected count.")
+        // 2026-07-04 (Brief 28 Part B/E): +15 for the first-run coach-mark flow
+        // (onboarding.greeting.*, onboarding.skip, onboarding.coach.*, onboarding.firstwin.*).
+        // onboarding.next was reused, not added. Was 533.
+        XCTAssertEqual(enKeys.count, 548, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
