@@ -83,6 +83,8 @@ struct CoachmarkOverlay: View {
                 Button { coordinator.skip() } label: {
                     Text("onboarding.skip")
                         .font(.subheadline.weight(.medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.bcTextSecondary)
                         .frame(minHeight: 44)
                         .padding(.horizontal, 8)
@@ -98,6 +100,8 @@ struct CoachmarkOverlay: View {
                 Button { coordinator.advance() } label: {
                     Text("onboarding.next")
                         .font(.headline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.black)
                         .frame(minHeight: 44)
                         .padding(.horizontal, 22)

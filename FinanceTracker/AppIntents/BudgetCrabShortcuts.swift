@@ -14,6 +14,10 @@ extension Notification.Name {
     /// flag. ContentView observes it so consumption happens *after* the write, even
     /// when the app is already foreground and no scenePhase change fires.
     static let budgetCrabPendingIntent = Notification.Name("budgetCrabPendingIntent")
+
+    /// Posted by Settings → "Replay tutorial" so ContentView re-runs the first-run
+    /// coach-mark flow immediately (jumping to the Dashboard) without a relaunch.
+    static let budgetCrabReplayOnboarding = Notification.Name("budgetCrabReplayOnboarding")
 }
 
 struct BudgetCrabShortcuts: AppShortcutsProvider {

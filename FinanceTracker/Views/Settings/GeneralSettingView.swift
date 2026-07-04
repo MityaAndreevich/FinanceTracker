@@ -396,8 +396,14 @@ struct GeneralSettingsView: View {
             }
 
             Button("settings.tutorial.replay") {
+                // Re-run the first-run coach-mark flow immediately (Brief 28 Part B):
+                // arm the coordinator's one-shot replay flag and ask ContentView to
+                // restart the flow on the Dashboard. hasSeenFeatureTour is reset for the
+                // rating gate's sake; the retired carousel no longer reads it.
+                UserDefaults.standard.set(true, forKey: OnboardingCoordinator.replayKey)
                 hasSeenFeatureTour = false
                 RatingPromptCoordinator.resetForTutorialReplay()
+                NotificationCenter.default.post(name: .budgetCrabReplayOnboarding, object: nil)
             }
         }
     }

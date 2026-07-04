@@ -204,6 +204,12 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .budgetCrabPendingIntent)) { _ in
             DispatchQueue.main.async { handlePendingIntentNavigation() }
         }
+        // Settings → Replay tutorial: jump to the Dashboard and re-run the coach-marks
+        // (the coordinator consumes the one-shot replay flag armed by Settings).
+        .onReceive(NotificationCenter.default.publisher(for: .budgetCrabReplayOnboarding)) { _ in
+            selectedTab = 0
+            onboarding.startIfNeeded()
+        }
     }
 
     // MARK: - Swipe navigation
