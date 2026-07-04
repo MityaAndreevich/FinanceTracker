@@ -113,14 +113,20 @@ struct GeneralSettingsView: View {
         }
 
         // Info alert
-        .alert(infoTitleKey, isPresented: $showInfoAlert) {
+        // B-loc: `infoTitleKey`/`infoMessageKey` are String VARIABLES, so a bare
+        // `.alert(infoTitleKey, …)` / `Text(infoMessageKey)` binds the non-localizing
+        // `StringProtocol` initializer and renders the raw key ("general.alert.info.title",
+        // "general.reset_success.message") verbatim — the device symptom. Wrap them in
+        // LocalizedStringKey to force the localizing lookup. `infoExtra` stays verbatim:
+        // it is genuine dynamic detail (e.g. an error string), not a key.
+        .alert(LocalizedStringKey(infoTitleKey), isPresented: $showInfoAlert) {
             Button("general.alert.ok", role: .cancel) { infoExtra = nil }
         } message: {
             if let infoExtra, !infoExtra.isEmpty {
                 // Сообщение по ключу + деталь отдельной строкой
-                Text(infoMessageKey) + Text("\n\n") + Text(infoExtra)
+                Text(LocalizedStringKey(infoMessageKey)) + Text(verbatim: "\n\n") + Text(verbatim: infoExtra)
             } else {
-                Text(infoMessageKey)
+                Text(LocalizedStringKey(infoMessageKey))
             }
         }
 
