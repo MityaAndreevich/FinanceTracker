@@ -43,6 +43,10 @@ struct DashboardView: View {
     // Q1 (option C): high-confidence parses save immediately and surface a
     // tappable "Saved — tap to edit" toast instead of a confirmation preview.
     @State private var quickAddToast: LocalizedStringKey? = nil
+    // Severity for `quickAddToast`. This one toast carries both the "Saved" success
+    // and the "Couldn't save" failure, so its style must follow the result — a save
+    // failure was previously shown with the success (green ✓) style.
+    @State private var quickAddToastStyle: ToastStyle = .success
     @State private var quickAddSavedTx: Transaction? = nil   // last auto-saved row (toast target)
     @State private var quickAddEditingTx: Transaction? = nil // drives the edit sheet on toast tap
     // User-tunable auto-save threshold (Settings → Quick Add sensitivity).
@@ -199,7 +203,7 @@ struct DashboardView: View {
         // 5.0s (was 3.5s): industry-standard toast window; RU/UK copy is ~40%
         // longer than EN and needs the extra reading time (Apple HIG guidance on
         // time-boxed elements / accessibility).
-        .confirmationToast($quickAddToast, duration: 5.0) {
+        .confirmationToast($quickAddToast, duration: 5.0, style: quickAddToastStyle) {
             quickAddEditingTx = quickAddSavedTx
         }
         // Shake-to-undo the last auto-save, only while the 30s window is open so
@@ -271,6 +275,7 @@ struct DashboardView: View {
                     quickAddSavedAt = Date()
                     scheduleUndoWindowExpiry()
                     quickAddText = ""
+                    quickAddToastStyle = .success
                     quickAddToast = "quickadd.saved.tap_to_edit"
                 } else {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
@@ -417,6 +422,7 @@ struct DashboardView: View {
             // user can retry deliberately.
             UINotificationFeedbackGenerator().notificationOccurred(.error)
             quickAddSavedTx = nil   // don't let the error toast's tap open a stale edit
+            quickAddToastStyle = .error
             quickAddToast = "add.error.save_failed"
             logSaveFailure("DashboardView.saveQuickAdd", error)
             #if DEBUG
@@ -448,6 +454,7 @@ struct DashboardView: View {
         quickAddSavedAt = nil
         refreshWidgetSnapshot()
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        quickAddToastStyle = .success
         quickAddToast = "quickadd.undo.confirmed"
     }
 
