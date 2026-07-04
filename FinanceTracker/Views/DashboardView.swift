@@ -241,6 +241,10 @@ struct DashboardView: View {
         .onChange(of: transactions.count) { _, _ in
             refreshWidgetSnapshot()
         }
+        // Re-localize the Dashboard live on an in-app language change (device QA
+        // round 1 #2): section headers, captions and code-resolved category names
+        // rebuild in the new language without a relaunch.
+        .languageReactive()
     }
 
     private func refreshWidgetSnapshot() {

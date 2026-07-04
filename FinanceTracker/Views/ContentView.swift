@@ -18,6 +18,11 @@ struct ContentView: View {
     // First-run coach-mark flow (Brief 28 Part B) — replaces the retired passive
     // TutorialFlow carousel. Drives greeting → Dashboard coach-marks → guided first win.
     @StateObject private var onboarding = OnboardingCoordinator()
+    // Observing the shared bundle re-runs body on an in-app language change so the
+    // tab-bar item labels re-localize live (device QA round 1 #2). Selection and the
+    // per-tab NavigationStacks keep their identity, so nothing pops — only the labels
+    // re-render. Each tab's content re-localizes via its own `.languageReactive()`.
+    @ObservedObject private var localizedBundle = LocalizedBundle.shared
     // Teach the edge-swipe affordance on the first few launches, then stop.
     @AppStorage("swipe_hint_shown_count") private var swipeHintShownCount = 0
     @State private var selectedTab: Int = 0

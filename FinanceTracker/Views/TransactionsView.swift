@@ -141,6 +141,9 @@ struct TransactionsView: View {
                 pendingDeleteTx = nil
             }
         }
+        // Re-localize filter chips, day headers and empty state live on an in-app
+        // language change (device QA round 1 #2), navigation preserved.
+        .languageReactive()
     }
 
     private var filterChips: some View {

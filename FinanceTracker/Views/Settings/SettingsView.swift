@@ -70,6 +70,9 @@ struct SettingsView: View {
             // Гарантируем актуальный статус, если вернулись с paywall/restore.
             await pm.refreshStatus()
         }
+        // Re-localize the row labels live on an in-app language change (device QA
+        // round 1 #2) without popping the Settings navigation stack.
+        .languageReactive()
     }
 
     private var premiumRow: some View {

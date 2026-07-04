@@ -161,6 +161,11 @@ struct GeneralSettingsView: View {
                 DemoDataController.clearDemoData(modelContext: modelContext)
             }
         }
+        // Re-localize this screen's rows live when the language is changed here
+        // (device QA round 1 #2). Applied below the NavigationStack, so switching
+        // the language keeps the user on this screen — the picker already dismissed
+        // and its pending selection was consumed before this rebuild.
+        .languageReactive()
     }
 
     // MARK: - Quick Add sensitivity (Q1=C threshold override)
@@ -355,6 +360,12 @@ struct GeneralSettingsView: View {
                     defaultCurrencyCode = currency
                 }
                 if let language, language != appLanguageCode {
+                    // Redirect code-resolved (`String(localized:)` / NSLocalizedString)
+                    // lookups to the new language's .lproj *before* the appLanguageCode
+                    // cascade rebuilds the tree (RootView's `.id(appLanguageCode)`), so
+                    // every chrome string is already in the new language on the first
+                    // rebuild pass — no one-frame stale flash, no relaunch.
+                    LocalizedBundle.shared.setLanguage(language)
                     appLanguageCode = language
                     applyAppleLanguagesOverride(for: language)
                 }
