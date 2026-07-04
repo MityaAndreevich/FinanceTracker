@@ -3,9 +3,12 @@
 //  FinanceTracker
 //
 //  Redesigned transaction row (DESIGN_DIRECTION_v2 §3): a 36pt colored category
-//  icon tile + merchant + "category · account" + amount. Expenses render in
-//  `bcTextPrimary` (NOT red); income renders in `bcPositive`. The explicit +/−
-//  sign is the color-blind-safe cue, so color is decorative only.
+//  icon tile + merchant + "category · account" + amount. Amount uses the
+//  directional money color (device QA round 1 #6): income in `bcPositive` (green),
+//  expense in a calm coral (`bcDanger` via `Color.moneyDirectional`) — not the
+//  earlier neutral `bcTextPrimary`, which made expenses read as inert next to green
+//  income. Calm coral, not alarm red. The explicit +/− sign stays the
+//  color-blind-safe cue, so color is a reinforcing accent, not the sole signal.
 //
 //  Reusable — the Dashboard "this week" list uses it now; Transactions adopts it
 //  in Phase 2.
@@ -48,7 +51,11 @@ struct CategoryTileRow: View {
             Text(signedAmount)
                 .font(.system(size: 16, weight: .semibold))
                 .monospacedDigit()
-                .foregroundStyle(tx.isIncome ? Color.bcPositive : Color.bcTextPrimary)
+                // Directional money color (device QA round 1 #6): income green,
+                // expense a calm coral (bcDanger) — NOT the neutral white it rendered
+                // as before, which made expenses read as inert. Calm coral, not alarm
+                // red; the explicit +/- sign remains the color-blind-safe cue.
+                .foregroundStyle(Color.moneyDirectional(isPositive: tx.isIncome))
                 .privacySensitive(true)
         }
         .contentShape(Rectangle())
