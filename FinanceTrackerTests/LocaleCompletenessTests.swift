@@ -89,7 +89,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // onboarding.next was reused, not added. Was 533.
         // 2026-07-04 (Brief 28 Part C): +2 for the demo sandbox banner
         // (onboarding.demo.banner, onboarding.demo.clear). Was 548.
-        XCTAssertEqual(enKeys.count, 550, "English baseline changed; update the expected count.")
+        // 2026-07-04 (Brief 28 Part B hints): +3 for the one-shot inline hints
+        // (onboarding.hint.openform, onboarding.hint.period, onboarding.hint.got_it). Was 550.
+        XCTAssertEqual(enKeys.count, 553, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

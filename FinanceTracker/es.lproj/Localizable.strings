@@ -75,6 +75,9 @@
 "onboarding.firstwin.later" = "Quizás más tarde";
 "onboarding.demo.banner" = "Datos de demo";
 "onboarding.demo.clear" = "Borrar datos de demo";
+"onboarding.hint.openform" = "¿Necesitas categoría, cuenta o fecha? Abre el formulario completo aquí.";
+"onboarding.hint.period" = "Toca ‹ › para cambiar de mes.";
+"onboarding.hint.got_it" = "Entendido";
 
 /* Settings */
 "settings.title" = "Ajustes";

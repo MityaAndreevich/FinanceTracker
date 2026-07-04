@@ -98,6 +98,9 @@
 "onboarding.firstwin.later" = "Maybe later";
 "onboarding.demo.banner" = "Demo data";
 "onboarding.demo.clear" = "Clear demo data";
+"onboarding.hint.openform" = "Need a category, account or date? Open the full form here.";
+"onboarding.hint.period" = "Tap ‹ › to move between months.";
+"onboarding.hint.got_it" = "Got it";
 
 /* ======================================================
    Settings (root)

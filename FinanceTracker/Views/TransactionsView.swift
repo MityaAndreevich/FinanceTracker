@@ -18,6 +18,8 @@ struct TransactionsView: View {
     private var transactions: [Transaction]
 
     @State private var scope: PeriodScope = .currentMonth
+    // One-shot hint teaching the ‹ › month pager, first Transactions visit (Brief 28 Part B).
+    @AppStorage("hasSeenPeriodHint") private var hasSeenPeriodHint = false
     @State private var searchText: String = ""
     @State private var typeFilter: TransactionFilter = .all
 
@@ -93,6 +95,13 @@ struct TransactionsView: View {
             VStack(spacing: 8) {
                 PeriodSelector(scope: $scope)
                     .padding(.horizontal, 12)
+
+                if !hasSeenPeriodHint && scope.isMonth {
+                    InlineHintBubble(text: "onboarding.hint.period") {
+                        withAnimation { hasSeenPeriodHint = true }
+                    }
+                    .padding(.horizontal, 12)
+                }
 
                 filterChips
                     .padding(.horizontal, 12)

@@ -109,6 +109,9 @@
 "onboarding.firstwin.later" = "Позже";
 "onboarding.demo.banner" = "Демо-данные";
 "onboarding.demo.clear" = "Очистить демо-данные";
+"onboarding.hint.openform" = "Нужны категория, счёт или дата? Откройте полную форму здесь.";
+"onboarding.hint.period" = "Нажимайте ‹ ›, чтобы переключать месяцы.";
+"onboarding.hint.got_it" = "Понятно";
 
 /* ======================================================
    Settings (root)

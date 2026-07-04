@@ -75,6 +75,9 @@
 "onboarding.firstwin.later" = "Talvez depois";
 "onboarding.demo.banner" = "Dados de demonstração";
 "onboarding.demo.clear" = "Limpar dados de demo";
+"onboarding.hint.openform" = "Precisa de categoria, conta ou data? Abra o formulário completo aqui.";
+"onboarding.hint.period" = "Toque em ‹ › para mudar de mês.";
+"onboarding.hint.got_it" = "Entendi";
 
 /* Settings */
 "settings.title" = "Definições";

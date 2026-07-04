@@ -15,6 +15,8 @@ struct QuickEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+    // One-shot hint pointing at the "Use detailed form" button, first + sheet only.
+    @AppStorage("hasSeenOpenFormHint") private var hasSeenOpenFormHint = false
 
     @Query(sort: \Category.order, order: .forward)
     private var allCategories: [Category]
@@ -601,6 +603,15 @@ struct QuickEntryView: View {
             }
 
             saveButton
+
+            // One-shot hint (Brief 28 Part B): the first time the + sheet opens, point
+            // at the detailed-form button. Empty-state only so it never crowds the
+            // tall parsed preview under the keyboard; dismissible and shown once.
+            if parsed == nil && !voice.isListening && !hasSeenOpenFormHint {
+                InlineHintBubble(text: "onboarding.hint.openform") {
+                    withAnimation { hasSeenOpenFormHint = true }
+                }
+            }
 
             // Secondary escape hatch to the detailed form. Brief 28-A #2: previously a
             // faint grey footnote that read as inert text. Now a proper BORDERED button
