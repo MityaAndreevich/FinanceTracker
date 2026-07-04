@@ -361,7 +361,7 @@ struct QuickEntryView: View {
     private var quickChips: some View {
         if !quickChipCategories.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
+                HStack(spacing: 10) {
                     ForEach(quickChipCategories, id: \.uuid) { cat in
                         quickChip(cat)
                     }
@@ -374,22 +374,28 @@ struct QuickEntryView: View {
     }
 
     private func quickChip(_ cat: Category) -> some View {
+        // Brief #3: the chip row is a SECONDARY correction tool — it must not
+        // out-shout the hero input + Save on first look. Smaller tiles (40 vs 46),
+        // muted lighter labels, and tighter width keep the multi-color tiles legible
+        // for recognition while visually yielding to the primary action. The selected
+        // chip still lifts (accent ring + primary label) so a made pick reads clearly.
         let isSelected = categoryOverride?.uuid == cat.uuid
+        let tileSize: CGFloat = 40
         return Button {
             pickChipCategory(cat)
         } label: {
-            VStack(spacing: 6) {
-                CategoryIconTile(category: cat, size: 46)
+            VStack(spacing: 5) {
+                CategoryIconTile(category: cat, size: tileSize)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 46 * 0.3, style: .continuous)
+                        RoundedRectangle(cornerRadius: tileSize * 0.3, style: .continuous)
                             .strokeBorder(cat.themeColor, lineWidth: isSelected ? 2 : 0)
                     )
                 Text(cat.displayName())
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? Color.bcTextPrimary : Color.bcTextSecondary)
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? Color.bcTextPrimary : Color.bcTextMuted)
                     .lineLimit(1)
             }
-            .frame(width: 66)
+            .frame(width: 58)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(cat.displayName()))
@@ -415,10 +421,15 @@ struct QuickEntryView: View {
 
     @ViewBuilder
     private func previewCard(_ parsedOrNil: QuickAddParsedInput?) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if let p = parsedOrNil {
-                let resolvedCategory = effectiveCategory(for: p)
-                let isIncome = p.typeRaw == TransactionType.income.raw
+        // Progressive disclosure (Brief #3): the detail card materializes ONLY after a
+        // value is parsed. The old empty-state skeleton ("Details appear here as you
+        // type") duplicated the input placeholder and crowded the first look, so the
+        // empty state now stays calm — just the single prompt line + the hero input.
+        if let p = parsedOrNil {
+            let resolvedCategory = effectiveCategory(for: p)
+            let isIncome = p.typeRaw == TransactionType.income.raw
+
+            VStack(alignment: .leading, spacing: 14) {
 
                 // Amount now lives here (the standalone hero is gone in the parsed
                 // state, B7). Grouped with the direction pill so the card reads as
@@ -470,12 +481,10 @@ struct QuickEntryView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("quickadd.a11y.change_category"))
                 .accessibilityValue(Text(resolvedCategory?.displayName(bundle: localizedBundle.bundle) ?? ""))
-            } else {
-                previewSkeleton
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .bcCard(padding: 16)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .bcCard(padding: 16)
     }
 
     private func directionPill(isIncome: Bool) -> some View {
@@ -530,29 +539,6 @@ struct QuickEntryView: View {
             ?? String(localized: "quickadd.preview.no_category", bundle: localizedBundle.bundle)
     }
 
-    /// Calm placeholder before anything is parsed — an invitation, not a blank.
-    /// Compact single row so it never crowds the chips + input when the keyboard
-    /// is up; the full detail card replaces it the moment a parse lands.
-    private var previewSkeleton: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.bcSurface2)
-                .frame(width: 34, height: 34)
-                .overlay(
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.bcTextMuted)
-                )
-            Text("quick_entry.preview.hint")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.bcTextMuted)
-                .lineLimit(2)
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("quick_entry.preview.hint"))
-    }
-
     // MARK: - Error banner
 
     private var errorBanner: some View {
@@ -589,10 +575,19 @@ struct QuickEntryView: View {
             // The extra 10pt bottom padding (on top of the VStack's 14pt spacing =
             // 24pt total) gives the chip row breathing room from the input line so it
             // no longer reads as cramped once data is entered. Scoped to this one gap;
-            // input→Save and Save→form-link stay at the 14pt VStack spacing. Chips
-            // render in both empty and parsed states, so the gap never jumps.
-            quickChips
-                .padding(.bottom, 10)
+            // input→Save and Save→form-link stay at the 14pt VStack spacing.
+            //
+            // Brief #3: chips are the PRE-parse accelerator (pick a category, then type)
+            // and hide the moment a value is parsed. Two wins: (1) the parsed preview
+            // card gains ~90pt so its category/merchant row is no longer clipped under
+            // the keyboard on a phone-height sheet — previously only the amount showed;
+            // (2) it de-emphasizes the picker in the parsed state, where the card's own
+            // tappable category row is the correction affordance. Progressive disclosure.
+            if parsed == nil {
+                quickChips
+                    .padding(.bottom, 10)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
 
             // The NL input bar flips to a live recording panel while dictating —
             // voice is a headline feature, so it takes over rather than hiding in a
@@ -607,13 +602,25 @@ struct QuickEntryView: View {
 
             saveButton
 
+            // Secondary escape hatch to the detailed form. Brief #3: it must stay
+            // clearly SECONDARY to Save yet OBVIOUSLY tappable (a prior complaint that
+            // the faint grey footnote read as inert text). Accent-tinted label + a
+            // chevron affordance + a full-width ≥44 pt tap target make it read as a
+            // real button without competing with the filled mint CTA above it.
             Button {
                 dismissAfterSheet = true
                 activeSheet = .addTxFallback
             } label: {
-                Text("quick_entry.use_form")
-                    .font(.footnote)
-                    .foregroundStyle(Color.bcTextSecondary)
+                HStack(spacing: 4) {
+                    Text("quick_entry.use_form")
+                        .font(.subheadline.weight(.medium))
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                }
+                .foregroundStyle(Color.bcAccent)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
