@@ -653,6 +653,8 @@
 "quick_entry.preview.hint" = "Details appear here as you type";
 "quick_entry.a11y.quick_categories" = "Quick categories";
 "quick_entry.save" = "Save";
+"quick_entry.save_add_another" = "Save & add another";
+"quick_entry.saved" = "Saved";
 "quick_entry.use_form" = "Use detailed form";
 "quick_entry.fail_unparseable" = "Couldn't read that — try the detailed form";
 "quick_entry.placeholder.1" = "Starbucks 5.50";

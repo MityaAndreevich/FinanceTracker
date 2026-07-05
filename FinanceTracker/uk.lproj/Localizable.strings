@@ -660,6 +660,8 @@
 "quick_entry.preview.hint" = "Деталі з’являться тут під час введення";
 "quick_entry.a11y.quick_categories" = "Швидкі категорії";
 "quick_entry.save" = "Зберегти";
+"quick_entry.save_add_another" = "Зберегти й додати ще";
+"quick_entry.saved" = "Збережено";
 "quick_entry.use_form" = "Використати детальну форму";
 "quick_entry.fail_unparseable" = "Не вдалося розпізнати — спробуйте детальну форму";
 "quick_entry.placeholder.1" = "кава 85";

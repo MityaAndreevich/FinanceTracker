@@ -74,6 +74,43 @@ struct QuickAddSaveServiceTests {
         #expect(learned == "Food & Drink")
     }
 
+    /// Contract behind QuickEntry's "Save & add another": the button re-runs the SAME
+    /// guarded save path and stays on-screen, so logging several entries in a row must
+    /// persist one row per successful save, and a failed save in the middle must roll
+    /// back (leaving the earlier rows intact) rather than advancing. The view-level
+    /// form-clear / re-focus is SwiftUI state and not unit-testable; this pins the
+    /// persistence guarantee the feature depends on.
+    @Test func test_saveAddAnother_sequencePersistsOnePerSave_andFailureRollsBack() throws {
+        let ctx = try makeContext()
+        _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
+        try ctx.save()
+
+        // Two successful "Save & add another" taps (distinct entries to avoid the 30s
+        // dedup window) → exactly two rows.
+        _ = try QuickAddSaveService.save(
+            parsed: QuickAddParsedInput(amountCents: 550, typeRaw: "expense", merchant: "Coffee", suggestedCategoryName: nil),
+            modelContext: ctx, defaultCurrencyCode: "USD"
+        )
+        _ = try QuickAddSaveService.save(
+            parsed: QuickAddParsedInput(amountCents: 900, typeRaw: "expense", merchant: "Lunch", suggestedCategoryName: nil),
+            modelContext: ctx, defaultCurrencyCode: "USD"
+        )
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 2)
+
+        // A failed save (guarded rollback path) must NOT clear/advance: it throws and
+        // leaves the store at the two already-persisted rows.
+        QuickAddSaveService._forceSaveFailureForTesting = true
+        defer { QuickAddSaveService._forceSaveFailureForTesting = false }
+        #expect(throws: (any Error).self) {
+            _ = try QuickAddSaveService.save(
+                parsed: QuickAddParsedInput(amountCents: 1300, typeRaw: "expense", merchant: "Taxi", suggestedCategoryName: nil),
+                modelContext: ctx, defaultCurrencyCode: "USD"
+            )
+        }
+        QuickAddSaveService._forceSaveFailureForTesting = false
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 2)
+    }
+
     @Test func test_save_unresolvableCategory_throws() throws {
         let ctx = try makeContext()
         // No categories at all — resolveCategory returns nil

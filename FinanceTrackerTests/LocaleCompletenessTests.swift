@@ -96,7 +96,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // Bumped 2026-07-05 (Device QA round 2 #2): +3 honest empty-state keys
         // (transactions.noresults.title/clear, transactions.noneinperiod.title) so a
         // search/filter-hidden list reads as "No results", not "Add your first". Was 555.
-        XCTAssertEqual(enKeys.count, 558, "English baseline changed; update the expected count.")
+        // 2026-07-05 (Quick Entry UX polish, Item 1): +2 for the "Save & add another"
+        // secondary action and its success toast (quick_entry.save_add_another,
+        // quick_entry.saved). Was 558.
+        XCTAssertEqual(enKeys.count, 560, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

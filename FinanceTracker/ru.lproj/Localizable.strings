@@ -663,6 +663,8 @@
 "quick_entry.preview.hint" = "Детали появятся здесь по мере ввода";
 "quick_entry.a11y.quick_categories" = "Быстрые категории";
 "quick_entry.save" = "Сохранить";
+"quick_entry.save_add_another" = "Сохранить и добавить ещё";
+"quick_entry.saved" = "Сохранено";
 "quick_entry.use_form" = "Открыть форму";
 "quick_entry.fail_unparseable" = "Не удалось распознать — откройте форму";
 "quick_entry.placeholder.1" = "кофе 350";

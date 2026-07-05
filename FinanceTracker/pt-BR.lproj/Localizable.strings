@@ -228,6 +228,8 @@
 "quick_entry.preview.hint" = "Os detalhes aparecem aqui enquanto você digita";
 "quick_entry.a11y.quick_categories" = "Categorias rápidas";
 "quick_entry.save" = "Salvar";
+"quick_entry.save_add_another" = "Salvar e adicionar outro";
+"quick_entry.saved" = "Salvo";
 "quick_entry.use_form" = "Usar formulário detalhado";
 "quick_entry.fail_unparseable" = "Não foi possível ler — use o formulário";
 "quick_entry.placeholder.1" = "café 12";

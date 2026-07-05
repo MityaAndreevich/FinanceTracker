@@ -41,6 +41,10 @@ struct QuickEntryView: View {
     @State private var activeSheet: ActiveSheet? = nil
     @State private var dismissAfterSheet = false
     @State private var saveError = false
+    // Success toast for the "Save & add another" path only. The primary Save
+    // dismisses the sheet (the list surfaces its own confirmation), so this in-sheet
+    // toast exists to confirm the save when we intentionally STAY on the entry screen.
+    @State private var savedToast: LocalizedStringKey? = nil
     // Re-entrancy guard. `dismiss()` is animated/async, so a fast double-tap (or an
     // accessibility double-fire, or a late voice .ended event re-enabling the button)
     // could call handleSave() again before the view tears down — persisting the same
@@ -176,6 +180,10 @@ struct QuickEntryView: View {
         // Solid page surface — depth comes from layered surfaces, not gradients
         // (DESIGN_DIRECTION_v2 §2).
         .presentationBackground(Color.bcPage)
+        // Confirms a save on the "Save & add another" path, where we stay put. As a
+        // bottom overlay inside the sheet bounds it sits just above the keyboard (which
+        // stays up so the next entry can be typed immediately), so it's never obscured.
+        .confirmationToast($savedToast, duration: 2.0, style: .success)
         // MARK: Haptics (state-driven)
         .sensoryFeedback(.selection, trigger: appeared)
         .sensoryFeedback(.impact(weight: .light), trigger: parsed != nil) { old, new in
@@ -613,6 +621,31 @@ struct QuickEntryView: View {
 
             saveButton
 
+            // Secondary rapid-entry action (v1.0): save the current entry WITHOUT
+            // dismissing, so several transactions can be logged in a row. Deliberately
+            // NOT a post-save "add another?" modal — that would tax the common
+            // single-entry case; instead this is an always-available secondary button
+            // that only appears once there's something to save (parsed != nil), so the
+            // empty state stays calm. Plain tinted text keeps it clearly subordinate to
+            // the filled Save above. Runs the SAME guarded save path; on failure it
+            // rolls back and does NOT clear/advance (see handleSave(addAnother:)).
+            if parsed != nil {
+                Button {
+                    handleSave(addAnother: true)
+                } label: {
+                    Text("quick_entry.save_add_another")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.bcAccent)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 30)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(isSaving)
+                .transition(.opacity)
+                .accessibilityLabel(Text("quick_entry.save_add_another"))
+            }
+
             // One-shot hint (Brief 28 Part B): the first time the + sheet opens, point
             // at the detailed-form button. Empty-state only so it never crowds the
             // tall parsed preview under the keyboard; dismissible and shown once.
@@ -932,10 +965,17 @@ struct QuickEntryView: View {
 
     // MARK: - Save
 
-    private func handleSave() {
-        // Re-entrancy guard: ignore repeat invocations while the first save is still
-        // in flight (the view dismisses on success, so isSaving is intentionally not
-        // reset on the happy path).
+    /// Saves the current parsed entry through the guarded save path.
+    ///
+    /// - Parameter addAnother: when `true`, STAY on the entry screen (clear the form,
+    ///   confirm with a toast, re-focus the input for the next entry) instead of
+    ///   dismissing. The save mechanics — the `QuickAddSaveService.save` call and its
+    ///   rollback-on-failure behavior — are identical either way; only the success tail
+    ///   differs. A failed save rolls back and does NOT clear/advance in either mode.
+    private func handleSave(addAnother: Bool = false) {
+        // Re-entrancy guard: ignore repeat invocations while a save is still in flight.
+        // On the single-entry happy path the view dismisses, so isSaving is intentionally
+        // not reset there; the add-another path re-enables it via resetForNextEntry().
         guard let p = parsed, !isSaving else { return }
         isSaving = true
         withAnimation(.easeInOut(duration: 0.1)) { savePulseOn = false }
@@ -949,7 +989,11 @@ struct QuickEntryView: View {
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             RatingPromptCoordinator.recordTransactionSaved()
-            dismiss()
+            if addAnother {
+                resetForNextEntry()
+            } else {
+                dismiss()
+            }
         } catch {
             logSaveFailure("QuickEntryView.handleSave", error)
             UINotificationFeedbackGenerator().notificationOccurred(.error)
@@ -958,6 +1002,27 @@ struct QuickEntryView: View {
                 saveError = true
             }
         }
+    }
+
+    /// Returns the screen to a neutral, ready-to-type state after a successful
+    /// "Save & add another" — clears the input and derived parse, drops any manual
+    /// category pick, shows the success toast, and re-focuses the input so the next
+    /// entry can be typed immediately. Only reached after a save actually persisted.
+    private func resetForNextEntry() {
+        parseTask?.cancel()
+        voice.stop()
+        withAnimation(
+            reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.38, dampingFraction: 0.72)
+        ) {
+            inputText = ""
+            parsed = nil
+            categoryOverride = nil
+            categoryManuallyPicked = false
+            saveError = false
+        }
+        isSaving = false
+        savedToast = "quick_entry.saved"
+        isInputFocused = true
     }
 }
 
