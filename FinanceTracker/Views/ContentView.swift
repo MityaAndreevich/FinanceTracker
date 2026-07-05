@@ -86,7 +86,7 @@ struct ContentView: View {
                     onExploreDemo: {
                         // Guarded, reversible sandbox seed (Brief 28 Part C). Lands the
                         // user in a populated dashboard — its own aha — then ends the flow.
-                        try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
+                        _ = try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
                         onboarding.finishFirstWin()
                     }
                 )
@@ -195,7 +195,7 @@ struct ContentView: View {
             // Screenshot seam: seed the reversible onboarding demo sandbox so the
             // populated dashboard + "Demo data" banner can be captured deterministically.
             if CommandLine.arguments.contains("--seed-onboarding-demo") {
-                try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
+                _ = try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
             }
             #endif
         }
