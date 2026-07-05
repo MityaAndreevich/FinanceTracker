@@ -21,7 +21,15 @@ struct CategoryPickerSheet: View {
     @Query(sort: \Category.order) private var allCategories: [Category]
 
     private var filtered: [Category] {
-        let typeMatched = allCategories.filter { $0.kindRaw == currentType }
+        Self.visibleCategories(allCategories, kind: currentType, search: search)
+    }
+
+    /// Categories shown for a given direction and search query: the COMPLETE kind-set
+    /// (primary and secondary, including user-created), optionally narrowed by a
+    /// case-insensitive name search. Pure and static so the "see them all in one step"
+    /// guarantee is unit-testable without standing up the view.
+    static func visibleCategories(_ all: [Category], kind: String, search: String) -> [Category] {
+        let typeMatched = all.filter { $0.kindRaw == kind }
         let q = search.trimmingCharacters(in: .whitespaces).lowercased()
         guard !q.isEmpty else { return typeMatched }
         return typeMatched.filter { $0.displayName().lowercased().contains(q) }

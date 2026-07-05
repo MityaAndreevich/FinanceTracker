@@ -59,8 +59,10 @@ struct AddTransactionView: View {
     @State private var categoryManuallyChosen: Bool = false
     @State private var suggestTask: Task<Void, Never>?
 
-    // Progressive disclosure picker
-    @State private var showAllCategories = false
+    // Drives the full-category bottom sheet (CategoryPickerSheet) — the same sheet
+    // Quick Entry uses. Replaces the old primary-subset Picker + "Show all" toggle so
+    // the complete set is one tap away, in place, instead of a two-step reveal.
+    @State private var showCategoryPicker = false
     // True when auto-defaulted to "Other" and user hasn't manually picked
     @State private var showPickCategoryTip = false
     // Non-nil when opened from Quick Add with a pre-detected category
@@ -74,25 +76,6 @@ struct AddTransactionView: View {
 
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
-    }
-
-    /// Categories shown in the picker: primary only unless expanded or selected is secondary.
-    private var displayedCategories: [Category] {
-        let filtered = filteredCategories
-        if showAllCategories { return filtered }
-        var primary = filtered.filter { $0.isPrimary }
-        // Always reveal the currently selected category even if it is secondary
-        if let sel = selectedCategoryUUID,
-           !primary.contains(where: { $0.uuid == sel }),
-           let selectedCat = filtered.first(where: { $0.uuid == sel }) {
-            primary.append(selectedCat)
-            primary.sort { $0.order < $1.order }
-        }
-        return primary
-    }
-
-    private var hasSecondaryCategories: Bool {
-        filteredCategories.contains { !$0.isPrimary }
     }
 
     private var selectedCategory: Category? {
@@ -146,7 +129,6 @@ struct AddTransactionView: View {
                 ensureValidCategorySelection()
             }
             .onChange(of: typeRaw) { _, _ in
-                showAllCategories = false
                 showPickCategoryTip = false
                 ensureValidCategorySelection()
                 suggestedCategoryName = nil
@@ -178,6 +160,13 @@ struct AddTransactionView: View {
                     selectedSourceUUID = newSource.uuid
                 }
                 .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showCategoryPicker) {
+                // Same full-list, searchable, add-new picker Quick Entry uses. Filtered
+                // by the current direction; a pick routes through applyCategoryPick.
+                CategoryPickerSheet(currentType: typeRaw) { picked in
+                    applyCategoryPick(picked)
+                }
             }
         }
     }
@@ -243,35 +232,11 @@ struct AddTransactionView: View {
                     suggestionPill(suggested)
                 }
 
-                // Progressive disclosure picker
-                Picker("", selection: categoryPickerBinding) {
-                    Text("common.select").tag(Optional<UUID>.none)
-                    ForEach(displayedCategories, id: \.uuid) { category in
-                        Text(LocalizedStringKey(category.displayKeyOrName))
-                            .tag(Optional(category.uuid))
-                    }
-                }
-                .labelsHidden()
-
-                // "Show all / Show fewer" toggle for secondary categories
-                if hasSecondaryCategories {
-                    Button {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-                            showAllCategories.toggle()
-                        }
-                    } label: {
-                        if showAllCategories {
-                            Text("category.show_fewer")
-                                .font(.footnote)
-                                .foregroundStyle(Color.accentColor)
-                        } else {
-                            Text("\(String(localized: "category.show_all")) (\(filteredCategories.count))")
-                                .font(.footnote)
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
+                // Full-set category picker: tapping this row opens CategoryPickerSheet
+                // (the same searchable, all-categories, add-new bottom sheet Quick Entry
+                // uses), so the complete list is one tap away in place — no primary-only
+                // subset and no separate "Show all" step.
+                categorySelectRow
 
                 // Tip shown when "Other" was auto-selected (cleared on first manual pick)
                 if showPickCategoryTip && !categoryManuallyChosen {
@@ -289,20 +254,43 @@ struct AddTransactionView: View {
         }
     }
 
-    /// Custom binding so a *user* pick is distinguishable from a programmatic
-    /// one: this setter only fires on direct UI interaction, never on our own
-    /// assignments (suggestion / prefill / auto-select).
-    private var categoryPickerBinding: Binding<UUID?> {
-        Binding(
-            get: { selectedCategoryUUID },
-            set: { newValue in
-                selectedCategoryUUID = newValue
-                categoryManuallyChosen = true
-                suggestedCategoryName = nil
-                showPickCategoryTip = false
-                prefillDetectedCategoryName = nil
+    /// Tappable row showing the current category selection; opens the full-set
+    /// bottom sheet. Mirrors a standard Form disclosure row (value + chevron).
+    private var categorySelectRow: some View {
+        Button {
+            showCategoryPicker = true
+        } label: {
+            HStack(spacing: 12) {
+                if let cat = selectedCategory {
+                    CategoryIconTile(category: cat, size: 28)
+                    Text(cat.displayName())
+                        .foregroundStyle(.primary)
+                } else {
+                    Text("common.select")
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
             }
-        )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("edit.category.picker"))
+        .accessibilityValue(Text(selectedCategory?.displayName() ?? ""))
+    }
+
+    /// Applies a pick from CategoryPickerSheet. A pick here is a direct user choice,
+    /// so it marks the selection manual (same semantics as the old picker binding's
+    /// setter): clears any pending suggestion, the "pick Other" tip, and the Quick Add
+    /// prefill pill so a later merchant guess can't silently overwrite it.
+    private func applyCategoryPick(_ category: Category) {
+        selectedCategoryUUID = category.uuid
+        categoryManuallyChosen = true
+        suggestedCategoryName = nil
+        showPickCategoryTip = false
+        prefillDetectedCategoryName = nil
     }
 
     private func suggestionPill(_ name: String) -> some View {
@@ -596,12 +584,19 @@ struct AddTransactionView: View {
         }
 
         if selectedCategoryUUID == nil {
-            // Prefer "Other" over the first alphabetical/order category —
-            // "Other" is a safe default that doesn't mislead analytics.
-            let other = subset.first { $0.nameKey == "category.other" }
-            selectedCategoryUUID = (other ?? subset.first)?.uuid
-            showPickCategoryTip = other != nil && !categoryManuallyChosen
+            let (defaultCat, isOther) = Self.defaultCategory(from: subset)
+            selectedCategoryUUID = defaultCat?.uuid
+            // Only nudge with the "pick a real category" tip when we fell back to Other.
+            showPickCategoryTip = isOther && !categoryManuallyChosen
         }
+    }
+
+    /// Default category when none is chosen: prefer "Other" (a safe bucket that does not
+    /// mislead analytics) over the first ordered category. Pure and static so the
+    /// default-to-Other behavior is unit-testable without standing up the view.
+    static func defaultCategory(from subset: [Category]) -> (category: Category?, isOther: Bool) {
+        let other = subset.first { $0.nameKey == "category.other" }
+        return (other ?? subset.first, other != nil)
     }
 
     private func resetFormKeepType() {
