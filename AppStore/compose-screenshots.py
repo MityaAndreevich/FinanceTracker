@@ -38,12 +38,17 @@ if FONT is None:
 CANVAS = (1320, 2868)
 FILES = ["01_dashboard", "02_privacy", "03_quickentry", "04_analytics",
          "05_categories", "06_faceid", "07_export", "08_lifetime"]
+# Captions are OCR-indexed by Apple (2026) — keyword-rich, top-left, ≥40pt.
+# Sequence (ASC_METADATA_FINAL "Screenshot captions"): Private/on-device →
+# No bank linking → Track in 10s → Safe to spend → Export → Cancel anytime.
+# Mapped onto the 8 fixed storyboard screens; slots 2 combines the top-2
+# privacy props (highest-attention slot), slot 8 closes on honest billing.
 CAP = {
- "EN": ["Your money, calmly in control", "Your data stays on your iPhone", "Log spending in seconds", "See where your money goes", "Organize by category and account", "Lock it behind Face ID", "Export to CSV, PDF, or Excel", "Yours to keep, for life"],
- "RU": ["Финансы под спокойным контролем", "Данные остаются на вашем iPhone", "Записывайте траты за секунды", "Видно, куда уходят деньги", "Категории и счета — всё на местах", "Защитите вход через Face ID", "Экспорт в CSV, PDF и Excel", "Останется с вами навсегда"],
- "ES": ["Tus finanzas, bajo control y en calma", "Tus datos se quedan en tu iPhone", "Registra tus gastos en segundos", "Mira a dónde va tu dinero", "Organiza por categoría y cuenta", "Protégelo con Face ID", "Exporta a CSV, PDF o Excel", "Tuyo para siempre"],
- "PT-BR": ["Suas finanças sob controle e tranquilas", "Seus dados ficam no seu iPhone", "Registre gastos em segundos", "Veja para onde vai seu dinheiro", "Organize por categoria e conta", "Proteja com Face ID", "Exporte para CSV, PDF ou Excel", "Seu para sempre"],
- "UK": ["Ваші фінанси — спокійно під контролем", "Ваші дані залишаються на iPhone", "Записуйте витрати за секунди", "Дивіться, куди йдуть гроші", "Категорії та рахунки — усе на місці", "Захистіть вхід через Face ID", "Експорт у CSV, PDF або Excel", "Залишиться з вами назавжди"],
+ "EN": ["Safe to spend, every day", "Private & on-device · No bank linking", "Track spending in 10 seconds", "See where your money goes", "Organize by category & account", "Locked with Face ID", "Export anytime · CSV / PDF / Excel", "Cancel anytime · no ads"],
+ "RU": ["Сколько можно тратить — каждый день", "Приватно, на устройстве · Без привязки банка", "Записывайте траты за 10 секунд", "Видно, куда уходят деньги", "Категории и счета — всё на местах", "Защита входа через Face ID", "Экспорт в любой момент · CSV / PDF / Excel", "Отмена в любой момент · без рекламы"],
+ "ES": ["Cuánto puedes gastar, cada día", "Privado, en tu iPhone · Sin vincular banco", "Registra gastos en 10 segundos", "Mira a dónde va tu dinero", "Organiza por categoría y cuenta", "Protegido con Face ID", "Exporta cuando quieras · CSV / PDF / Excel", "Cancela cuando quieras · sin anuncios"],
+ "PT-BR": ["Quanto dá para gastar, todo dia", "Privado, no seu iPhone · Sem vincular banco", "Registre gastos em 10 segundos", "Veja para onde vai seu dinheiro", "Organize por categoria e conta", "Protegido com Face ID", "Exporte quando quiser · CSV / PDF / Excel", "Cancele quando quiser · sem anúncios"],
+ "UK": ["Скільки можна витрачати — щодня", "Приватно, на пристрої · Без прив'язки банку", "Записуйте витрати за 10 секунд", "Дивіться, куди йдуть гроші", "Категорії та рахунки — усе на місці", "Захист входу через Face ID", "Експорт будь-коли · CSV / PDF / Excel", "Скасування будь-коли · без реклами"],
 }
 
 def wrap(draw, text, font, maxw):
@@ -65,11 +70,13 @@ def compose(locale, idx):
     if not os.path.exists(raw): return None
     dev = Image.open(raw).convert("RGB")
     canvas = Image.new("RGB", CANVAS, BG); dr = ImageDraw.Draw(canvas)
-    font = ImageFont.truetype(FONT, 78)
-    y = 170
-    for ln in wrap(dr, CAP[locale][idx], font, 1120):
-        w = dr.textlength(ln, font=font); dr.text(((CANVAS[0] - w) / 2, y), ln, font=font, fill=INK); y += 96
-    dr.rectangle([(CANVAS[0] - 90) / 2, y + 24, (CANVAS[0] + 90) / 2, y + 32], fill=ACCENT)
+    font = ImageFont.truetype(FONT, 78)  # 78pt » the ≥40pt OCR-indexing threshold
+    # Top-left quadrant, left-aligned — matches the eye's scanning bias and the
+    # region Apple's OCR weights most. Wrap narrow so text stays in the left ~60%.
+    MARGIN = 100; y = 150
+    for ln in wrap(dr, CAP[locale][idx], font, 820):
+        dr.text((MARGIN, y), ln, font=font, fill=INK); y += 100
+    dr.rectangle([MARGIN, y + 20, MARGIN + 120, y + 30], fill=ACCENT)
     scale = 0.80; dw = int(CANVAS[0] * scale); dh = int(dev.size[1] * dw / dev.size[0])
     dev = rounded(dev.resize((dw, dh)), 60)
     dx = (CANVAS[0] - dw) // 2; dy = CANVAS[1] - dh - 70
