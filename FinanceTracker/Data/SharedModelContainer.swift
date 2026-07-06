@@ -102,7 +102,17 @@ enum SharedModelContainer {
     // MARK: - Private
 
     private static func applyProtection(to url: URL) {
-        try? (url as NSURL).setResourceValue(URLFileProtection.complete, forKey: .fileProtectionKey)
+        // NOTE: must be `.completeUntilFirstUserAuthentication`, NOT `.complete`.
+        // AddTransactionIntent (and the CategoryEntity/TransactionEntity queries) run
+        // HEADLESS in a background process — no `openAppWhenRun` — and are auto-surfaced
+        // via BudgetCrabShortcuts to Siri / Action Button / Shortcuts automations, which
+        // can fire while the device is locked. `.complete` seals this store ~10s after
+        // lock; the first `ModelContainer(for:)` open in that background process would then
+        // throw and hit the `fatalError` above — crashing the intent and losing the user's
+        // transaction. `.completeUntilFirstUserAuthentication` keeps the file encrypted at
+        // rest but readable by background code after the first post-boot unlock (the widget
+        // reads the App-Group snapshot, not this store, so it is unaffected either way).
+        try? (url as NSURL).setResourceValue(URLFileProtection.completeUntilFirstUserAuthentication, forKey: .fileProtectionKey)
         try? (url as NSURL).setResourceValue(true, forKey: .isExcludedFromBackupKey)
     }
 }
