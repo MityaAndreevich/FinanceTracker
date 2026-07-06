@@ -357,8 +357,19 @@ struct QuickEntryView: View {
                 .font(.system(size: 24, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.bcTextMuted)
                 .multilineTextAlignment(.center)
+                // Take the ideal height for the full proposed width so the label
+                // never vertically compresses.
+                .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .transition(.opacity)
+                // Item 3 (device QA): when the mic toggles, bottomBar swaps the
+                // input bar for the taller recording panel and the whole sheet
+                // relayouts WITH animation (see .animation(value: voice.isListening)
+                // on `body`). That animated relayout momentarily proposed this
+                // centered label a near-zero width, so it wrapped one character per
+                // line ("Введ / ите / …") before snapping back. Opting the label's
+                // layout out of that specific animation keeps its width stable.
+                .animation(nil, value: voice.isListening)
                 .accessibilityHidden(true)
         }
     }
