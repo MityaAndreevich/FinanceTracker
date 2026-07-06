@@ -251,6 +251,9 @@ struct DataSettingsView: View {
         var lines: [String] = []
         lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
         lines.append(String(format: NSLocalizedString("data.import.result.skipped.format", comment: ""), importResult.skipped))
+        if importResult.duplicatesSkipped > 0 {
+            lines.append(String(format: NSLocalizedString("data.import.result.duplicates_skipped.format", comment: ""), importResult.duplicatesSkipped))
+        }
         lines.append(String(format: NSLocalizedString("data.import.result.created_categories.format", comment: ""), importResult.createdCategories))
         lines.append(String(format: NSLocalizedString("data.import.result.created_sources.format", comment: ""), importResult.createdSources))
 

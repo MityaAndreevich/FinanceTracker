@@ -633,6 +633,7 @@
 "data.import.failed.format" = "Error al importar: %@";
 "data.import.result.imported.format" = "Importadas: %d";
 "data.import.result.skipped.format" = "Omitidas: %d";
+"data.import.result.duplicates_skipped.format" = "Duplicados omitidos: %d";
 "data.import.result.created_categories.format" = "Categorías creadas: %d";
 "data.import.result.created_sources.format" = "Cuentas creadas: %d";
 "data.import.result.first_error.format" = "Primer error: %@";

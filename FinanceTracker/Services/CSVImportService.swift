@@ -8,9 +8,19 @@
 import Foundation
 import SwiftData
 
+/// How the importer treats rows whose identity already exists in the store
+/// (or earlier in the same file). Mirrors OS file-copy semantics.
+enum CSVImportMode {
+    /// Non-destructive default: rows that already exist are counted and skipped.
+    case skipDuplicates
+    /// "Keep both": insert every row even if an identical one already exists.
+    case importAll
+}
+
 struct CSVImportResult {
     var imported: Int = 0
     var skipped: Int = 0
+    var duplicatesSkipped: Int = 0
     var createdCategories: Int = 0
     var createdSources: Int = 0
     var firstError: String? = nil
@@ -25,6 +35,8 @@ struct CSVImportPreamble {
     var categoryCache: [String: Category]
     var sourceCache: [String: Source]
     var totalDataRows: Int
+    /// Dedup identities of transactions already in the store (see `transactionIdentity`).
+    var existingIdentities: Set<String>
 }
 
 struct CSVImportService {
@@ -35,24 +47,20 @@ struct CSVImportService {
 
     // MARK: - Public API
 
-    /// Synchronous variant kept for backwards compatibility / unit tests.
-    static func importCSV(modelContext: ModelContext, data: Data) throws -> CSVImportResult {
-        try importCSV(modelContext: modelContext, data: data, progress: nil)
-    }
-
-    /// Import with optional progress callback.
+    /// Synchronous import used by unit tests and any caller already off the main
+    /// thread. The production UI goes through `CSVImportActor` (see
+    /// DataSettingsView), which reuses the very same `prepare` / `processRow`
+    /// helpers on a background ModelActor executor.
     ///
-    /// This synchronous path is preserved for unit tests and any caller that
-    /// already runs off the main thread. The production UI now goes through
-    /// `CSVImportActor` (see DataSettingsView), which reuses the very same
-    /// `prepare` / `processRow` helpers on a background ModelActor executor.
-    ///
-    /// - parameter progress: invoked with (rowsProcessed, totalRows). Called on the same
+    /// - parameter mode: how to treat rows whose identity already exists
+    ///   (`.skipDuplicates` is the non-destructive default).
+    /// - parameter progress: invoked with (rowsProcessed, totalRows) on the same
     ///   thread the function runs on — callers using it from a Task should hop to MainActor.
     static func importCSV(
         modelContext: ModelContext,
         data: Data,
-        progress: ((Int, Int) -> Void)?
+        mode: CSVImportMode = .skipDuplicates,
+        progress: ((Int, Int) -> Void)? = nil
     ) throws -> CSVImportResult {
         let preamble = try prepare(modelContext: modelContext, data: data)
         var result = CSVImportResult()
@@ -60,6 +68,7 @@ struct CSVImportService {
 
         var categoryCache = preamble.categoryCache
         var sourceCache = preamble.sourceCache
+        var seenIdentities = preamble.existingIdentities
         let dateFormatter = makeISO8601Formatter()
         var processed = 0
 
@@ -69,8 +78,10 @@ struct CSVImportService {
                 lineIndex: i,
                 modelContext: modelContext,
                 dateFormatter: dateFormatter,
+                mode: mode,
                 categoryCache: &categoryCache,
                 sourceCache: &sourceCache,
+                seenIdentities: &seenIdentities,
                 result: &result
             )
             processed += 1
@@ -94,7 +105,7 @@ struct CSVImportService {
 
         let rows = splitCSVRows(content)
         guard !rows.isEmpty else {
-            return CSVImportPreamble(rows: [], startIndex: 0, categoryCache: [:], sourceCache: [:], totalDataRows: 0)
+            return CSVImportPreamble(rows: [], startIndex: 0, categoryCache: [:], sourceCache: [:], totalDataRows: 0, existingIdentities: [])
         }
 
         var startIndex = 0
@@ -105,6 +116,7 @@ struct CSVImportService {
         // Cache by "csv name" (lowercased)
         var categoryCache: [String: Category] = [:]
         var sourceCache: [String: Source] = [:]
+        var existingIdentities: Set<String> = []
 
         // Preload existing categories/sources. Match against BOTH:
         //   • the user-visible (custom or localized) name, and
@@ -131,6 +143,21 @@ struct CSVImportService {
             for s in existingSources {
                 sourceCache[s.name.lowercased()] = s
             }
+
+            // Precompute dedup identities of everything already in the store, so
+            // re-importing a Crab export doesn't silently duplicate rows.
+            let dayFormatter = makeISO8601Formatter()
+            let existingTxs = try modelContext.fetch(FetchDescriptor<Transaction>())
+            for t in existingTxs {
+                existingIdentities.insert(transactionIdentity(
+                    typeRaw: t.typeRaw,
+                    amountCents: t.amountCents,
+                    currency: t.currency,
+                    dayKey: dayFormatter.string(from: t.date),
+                    categoryName: t.category.displayName(),
+                    merchant: t.merchant ?? ""
+                ))
+            }
         } catch {
             // Not critical, we'll proceed without the cache.
         }
@@ -147,8 +174,34 @@ struct CSVImportService {
             startIndex: startIndex,
             categoryCache: categoryCache,
             sourceCache: sourceCache,
-            totalDataRows: totalDataRows
+            totalDataRows: totalDataRows,
+            existingIdentities: existingIdentities
         )
+    }
+
+    /// Stable, order-independent dedup identity for a transaction.
+    ///
+    /// Composed of `type | amountCents | currency | day | category | name(merchant)`.
+    /// Day granularity (not the full timestamp) because CSV export truncates the
+    /// date to the calendar day — so a stored transaction and its exported/
+    /// re-imported copy hash to the same identity. Category and name are matched
+    /// case-insensitively to survive locale/casing round-trips.
+    static func transactionIdentity(
+        typeRaw: String,
+        amountCents: Int,
+        currency: String,
+        dayKey: String,
+        categoryName: String,
+        merchant: String
+    ) -> String {
+        [
+            typeRaw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+            String(amountCents),
+            currency.trimmingCharacters(in: .whitespacesAndNewlines).uppercased(),
+            dayKey,
+            categoryName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+            merchant.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        ].joined(separator: "|")
     }
 
     static func makeISO8601Formatter() -> ISO8601DateFormatter {
@@ -165,8 +218,10 @@ struct CSVImportService {
         lineIndex i: Int,
         modelContext: ModelContext,
         dateFormatter: ISO8601DateFormatter,
+        mode: CSVImportMode,
         categoryCache: inout [String: Category],
         sourceCache: inout [String: Source],
+        seenIdentities: inout Set<String>,
         result: inout CSVImportResult
     ) {
         // Trim ONLY at the row boundary to drop trailing CR / blank lines.
@@ -217,6 +272,22 @@ struct CSVImportService {
                 ? rawCode
                 : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
 
+            // Dedup by stable identity BEFORE creating any category/source, so a
+            // skipped duplicate leaves no side effects. Under `.importAll` we skip
+            // the check entirely and keep both copies.
+            let identity = transactionIdentity(
+                typeRaw: typeRaw,
+                amountCents: amountCents,
+                currency: cleanCurrency,
+                dayKey: dateFormatter.string(from: date),
+                categoryName: categoryName,
+                merchant: merchant
+            )
+            if mode == .skipDuplicates, seenIdentities.contains(identity) {
+                result.duplicatesSkipped += 1
+                return
+            }
+
             let category = try getOrCreateCategory(
                 modelContext: modelContext,
                 cache: &categoryCache,
@@ -245,6 +316,7 @@ struct CSVImportService {
             )
 
             modelContext.insert(tx)
+            seenIdentities.insert(identity)
             result.imported += 1
 
         } catch {

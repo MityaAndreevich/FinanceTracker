@@ -753,6 +753,7 @@
 "data.import.failed.format" = "Import failed: %@";
 "data.import.result.imported.format" = "Imported: %d";
 "data.import.result.skipped.format" = "Skipped: %d";
+"data.import.result.duplicates_skipped.format" = "Duplicates skipped: %d";
 "data.import.result.created_categories.format" = "Categories created: %d";
 "data.import.result.created_sources.format" = "Accounts created: %d";
 "data.import.result.first_error.format" = "First error: %@";

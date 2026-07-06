@@ -27,6 +27,7 @@ actor CSVImportActor {
 
     func importData(
         data: Data,
+        mode: CSVImportMode = .skipDuplicates,
         progress: @Sendable (Int, Int) -> Void
     ) async throws -> CSVImportResult {
         let preamble = try CSVImportService.prepare(modelContext: modelContext, data: data)
@@ -35,6 +36,7 @@ actor CSVImportActor {
 
         var categoryCache = preamble.categoryCache
         var sourceCache = preamble.sourceCache
+        var seenIdentities = preamble.existingIdentities
         let dateFormatter = CSVImportService.makeISO8601Formatter()
         var processed = 0
 
@@ -44,8 +46,10 @@ actor CSVImportActor {
                 lineIndex: i,
                 modelContext: modelContext,
                 dateFormatter: dateFormatter,
+                mode: mode,
                 categoryCache: &categoryCache,
                 sourceCache: &sourceCache,
+                seenIdentities: &seenIdentities,
                 result: &result
             )
             processed += 1

@@ -99,7 +99,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // 2026-07-05 (Quick Entry UX polish, Item 1): +2 for the "Save & add another"
         // secondary action and its success toast (quick_entry.save_add_another,
         // quick_entry.saved). Was 558.
-        XCTAssertEqual(enKeys.count, 560, "English baseline changed; update the expected count.")
+        // 2026-07-06 (CSV integrity brief, Item 2): +1 for the import dedup summary
+        // line (data.import.result.duplicates_skipped.format). Was 560.
+        XCTAssertEqual(enKeys.count, 561, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
