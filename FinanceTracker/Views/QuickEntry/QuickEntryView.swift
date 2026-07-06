@@ -352,24 +352,32 @@ struct QuickEntryView: View {
         // half-clipped/overlapped by the chip row. The input's own placeholder
         // ("e.g. 50 coffee") already guides the user while typing, so dropping the
         // redundant prompt on focus keeps the title from ever rendering half-cut.
-        if parsed == nil && !isInputFocused {
+        // Mounted for the WHOLE empty state (parsed == nil), not just when the
+        // field is unfocused. Item 2 (device QA re-diagnosis): the earlier fix
+        // (dcd34ca) only opted this label out of the voice.isListening animation,
+        // but the real cause is that starting dictation drops keyboard focus, so
+        // `!isInputFocused` flipped true and the label was RE-INSERTED (.transition)
+        // into a layout that was simultaneously animating (isInputFocused at L141 +
+        // voice.isListening at L177). A view inserted mid-animation is proposed a
+        // ~0 width first, so the centered prompt wrapped one char per line
+        // ("Введ / ите / …") before snapping to full width. Nulling one animation
+        // couldn't fix an insertion-time width collapse. Fix: never insert/remove
+        // it across the voice⇄text toggle — keep it mounted at a stable full width
+        // and only cross-fade (opacity) / collapse its height on focus. Its width
+        // is now established once and never re-proposed from zero.
+        if parsed == nil {
             Text("quick_entry.prompt.amount")
                 .font(.system(size: 24, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.bcTextMuted)
                 .multilineTextAlignment(.center)
-                // Take the ideal height for the full proposed width so the label
-                // never vertically compresses.
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, minHeight: 56)
-                .transition(.opacity)
-                // Item 3 (device QA): when the mic toggles, bottomBar swaps the
-                // input bar for the taller recording panel and the whole sheet
-                // relayouts WITH animation (see .animation(value: voice.isListening)
-                // on `body`). That animated relayout momentarily proposed this
-                // centered label a near-zero width, so it wrapped one character per
-                // line ("Введ / ите / …") before snapping back. Opting the label's
-                // layout out of that specific animation keeps its width stable.
-                .animation(nil, value: voice.isListening)
+                .frame(maxWidth: .infinity)
+                // Collapse (not remove) when the keyboard is up so the squeezed
+                // scroll region still reclaims the 56pt — but the label keeps its
+                // stable full width the whole time, so it can never re-wrap.
+                .frame(height: isInputFocused ? 0 : 56)
+                .opacity(isInputFocused ? 0 : 1)
+                .clipped()
                 .accessibilityHidden(true)
         }
     }
@@ -622,12 +630,23 @@ struct QuickEntryView: View {
             // The NL input bar flips to a live recording panel while dictating —
             // voice is a headline feature, so it takes over rather than hiding in a
             // corner. Both reuse the same on-device services.
-            if voice.isListening {
-                recordingBar
-                    .transition(.opacity)
-            } else {
+            //
+            // Item 2 (device QA): previously this was an if/else that INSERTED and
+            // REMOVED the two bars (different heights), so toggling modes changed
+            // the cluster height mid-animation and the whole sheet lurched ("torn/
+            // janky movement"). Now both bars are always mounted in a ZStack, so the
+            // slot height is fixed (the taller of the two) and switching modes only
+            // cross-fades opacity — no reflow. Keeping the text field mounted also
+            // avoids tearing down its keyboard toolbar on every toggle.
+            ZStack {
                 inputBar
-                    .transition(.opacity)
+                    .opacity(voice.isListening ? 0 : 1)
+                    .allowsHitTesting(!voice.isListening)
+                    .accessibilityHidden(voice.isListening)
+                recordingBar
+                    .opacity(voice.isListening ? 1 : 0)
+                    .allowsHitTesting(voice.isListening)
+                    .accessibilityHidden(!voice.isListening)
             }
 
             saveButton
