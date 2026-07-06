@@ -160,7 +160,19 @@ struct AnalyticsHorizonView: View {
 
     // MARK: - Chart
 
+    @ViewBuilder
     private var trendChart: some View {
+        // Horizon is a dense 12-month series by construction, but guard the
+        // continuous domain defensively: a single point would collapse the date
+        // scale to one instant and trap `monotone` interpolation inside Charts.
+        if ChartGuards.canRenderContinuous(pointCount: monthlyTotals.count) {
+            trendChartBody
+        } else {
+            Color.clear.frame(height: 320)
+        }
+    }
+
+    private var trendChartBody: some View {
         Chart {
             chartMarks
             selectionMarks

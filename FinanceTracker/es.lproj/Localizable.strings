@@ -597,6 +597,7 @@
 "analytics.filter.expense" = "Gastos";
 "analytics.filter.income" = "Ingresos";
 "analytics.pulse.title" = "Pulso";
+"analytics.pulse.needs_more_days" = "Vuelve en un día o dos para ver tu tendencia de flujo de caja.";
 "analytics.breakdown.title" = "Desglose";
 "analytics.horizon.title" = "Horizonte";
 "analytics.net_this_month" = "Neto este mes";

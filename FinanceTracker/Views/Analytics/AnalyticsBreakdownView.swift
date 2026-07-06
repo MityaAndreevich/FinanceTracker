@@ -58,6 +58,13 @@ struct AnalyticsBreakdownView: View {
         filteredCategories.sorted { $0.cents > $1.cents }
     }
 
+    /// Categories safe to plot as a donut: non-positive magnitudes dropped, and a
+    /// zero-total set collapsed to empty so the `SectorMark` angular domain is
+    /// never degenerate (0/0 sweep angle → EXC_BREAKPOINT inside Charts).
+    private var renderableCategories: [CategoryTotal] {
+        ChartGuards.renderableSlices(sortedCategories, magnitude: \.cents)
+    }
+
     private var total: Int {
         filteredCategories.reduce(0) { $0 + $1.cents }
     }
@@ -67,7 +74,7 @@ struct AnalyticsBreakdownView: View {
             VStack(spacing: 24) {
                 typePicker
 
-                if sortedCategories.isEmpty {
+                if renderableCategories.isEmpty {
                     emptyHint
                 } else {
                     donutChart
@@ -104,7 +111,7 @@ struct AnalyticsBreakdownView: View {
     }
 
     private var donutChart: some View {
-        Chart(sortedCategories) { cat in
+        Chart(renderableCategories) { cat in
             SectorMark(
                 angle: .value("analytics.axis.amount", cat.cents),
                 innerRadius: .ratio(0.62),

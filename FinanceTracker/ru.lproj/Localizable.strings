@@ -727,6 +727,7 @@
 "analytics.filter.expense" = "Расходы";
 "analytics.filter.income" = "Доходы";
 "analytics.pulse.title" = "Пульс";
+"analytics.pulse.needs_more_days" = "Загляните через день-два, чтобы увидеть динамику по дням.";
 "analytics.breakdown.title" = "Разбивка";
 "analytics.horizon.title" = "Тренды";
 "analytics.net_this_month" = "Чистыми за месяц";

@@ -125,7 +125,36 @@ struct AnalyticsPulseView: View {
         .animation(.easeInOut(duration: 0.15), value: selectedDay?.id)
     }
 
+    @ViewBuilder
     private var cashFlowChart: some View {
+        // A single day of data (e.g. the 1st of the month, when the dense day range
+        // is just [today]) collapses the date domain to one instant and makes
+        // `catmullRom` divide by a 0 inter-point distance → non-finite geometry →
+        // EXC_BREAKPOINT inside Charts. Need ≥2 points before drawing the trend.
+        if ChartGuards.canRenderContinuous(pointCount: dailyTotals.count) {
+            cashFlowChartBody
+        } else {
+            insufficientDataHint
+        }
+    }
+
+    private var insufficientDataHint: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "chart.xyaxis.line")
+                .font(.system(size: 34))
+                .foregroundStyle(Color.bcTextMuted)
+            Text("analytics.pulse.needs_more_days")
+                .font(.subheadline)
+                .foregroundStyle(Color.bcTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 240)
+        .padding(.vertical, 8)
+    }
+
+    private var cashFlowChartBody: some View {
         Chart {
             ForEach(dailyTotals) { item in
                 AreaMark(
