@@ -28,6 +28,10 @@ struct AnalyticsView: View {
     // every body redraw.
     @State private var pulseDaily: [AnalyticsPulseView.DailyTotal] = []
     @State private var pulseNetCents: Int = 0
+    // Gross month totals for the Pulse summary rows. Kept separate from the net-per-day
+    // series so same-day income + expense don't cancel out and hide the income (Item 3).
+    @State private var pulseEarnedCents: Int = 0
+    @State private var pulseSpentCents: Int = 0
     @State private var breakdownCategories: [AnalyticsBreakdownView.CategoryTotal] = []
     @State private var horizonMonths: [AnalyticsHorizonView.MonthlyTotal] = []
 
@@ -91,6 +95,8 @@ struct AnalyticsView: View {
             AnalyticsPulseView(
                 dailyTotals: pulseDaily,
                 netCents: pulseNetCents,
+                earnedCents: pulseEarnedCents,
+                spentCents: pulseSpentCents,
                 currencyCode: defaultCurrencyCode
             )
         case .breakdown:
@@ -183,11 +189,23 @@ struct AnalyticsView: View {
 
     private func recomputePulse(cal: Calendar, monthStart: Date, today: Date) {
         var dayNet: [Date: Int] = [:]
+        // Gross totals accumulated per-transaction (not from the netted day buckets),
+        // so an income logged on the same day as larger expenses still counts toward
+        // Earned instead of being cancelled out (Item 3).
+        var earned = 0
+        var spent = 0
         for tx in transactions {
             let day = cal.startOfDay(for: tx.date)
             guard day >= monthStart && day <= today else { continue }
             dayNet[day, default: 0] += tx.signedAmountCents
+            if tx.isIncome {
+                earned += tx.amountCents
+            } else {
+                spent += tx.amountCents
+            }
         }
+        pulseEarnedCents = earned
+        pulseSpentCents = spent
 
         var out: [AnalyticsPulseView.DailyTotal] = []
         var cursor = monthStart

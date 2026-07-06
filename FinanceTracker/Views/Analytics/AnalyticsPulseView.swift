@@ -14,6 +14,16 @@ import Charts
 struct AnalyticsPulseView: View {
     let dailyTotals: [DailyTotal]   // current month, signed net per day
     let netCents: Int
+    // Gross month totals, computed upstream from individual transactions (NOT from
+    // dailyTotals). Item 3 (device QA): the summary previously derived earned/spent
+    // by bucketing `dailyTotals` on sign, but those are already NET-per-day — so an
+    // income entry made on a day whose expenses outweighed it netted negative and
+    // vanished from "Earned" entirely (the reported "income doesn't appear in Pulse",
+    // while Breakdown → Income still listed it). Gross totals make an added income
+    // always visible in the Earned row regardless of same-day spending. The hero
+    // metric and the chart intentionally stay NET (a cash-flow view).
+    let earnedCents: Int
+    let spentCents: Int
     let currencyCode: String
 
     // `chartXSelection` resets to nil on touch-end; keep a sticky selection so
@@ -226,13 +236,13 @@ struct AnalyticsPulseView: View {
             summaryRow(
                 icon: "arrow.up.right",
                 label: "analytics.earned_total",
-                value: dailyTotals.filter { $0.cents > 0 }.reduce(0) { $0 + $1.cents },
+                value: earnedCents,
                 color: .bcPositive
             )
             summaryRow(
                 icon: "arrow.down.right",
                 label: "analytics.spent_total",
-                value: abs(dailyTotals.filter { $0.cents < 0 }.reduce(0) { $0 + $1.cents }),
+                value: spentCents,
                 color: .bcTextSecondary
             )
         }
