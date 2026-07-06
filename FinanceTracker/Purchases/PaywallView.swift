@@ -48,6 +48,18 @@ struct PaywallView: View {
         // The Pro screen is always dark for a premium look, regardless of the
         // app-wide appearance default (System). See AppearanceMode.
         .preferredColorScheme(.dark)
+        // Reactive unlock backstop. If the user is already entitled when the
+        // paywall opens — or becomes entitled while it's open (purchase, restore,
+        // or the "already subscribed" recovery in PurchaseManager.purchase) —
+        // dismiss immediately so they land back on the action they wanted, never
+        // stuck staring at a paywall they've already paid past.
+        .task { await pm.refreshStatus() }
+        .onChange(of: pm.isPremium) { _, isPremium in
+            if isPremium { dismiss() }
+        }
+        .onAppear {
+            if pm.isPremium { dismiss() }
+        }
     }
 
     // MARK: - Sections

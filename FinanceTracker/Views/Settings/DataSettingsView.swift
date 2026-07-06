@@ -175,11 +175,23 @@ struct DataSettingsView: View {
 
     // MARK: - Premium gate
 
-    private func gatePremiumOr(_ action: () -> Void) {
+    /// Authoritative gate. Never trusts the cached `isPremium` flag alone —
+    /// re-reads `currentEntitlements` (fast, local; no network sync) at tap time
+    /// so an already-entitled user (active trial OR paid OR lifetime) proceeds
+    /// directly and NEVER sees the paywall. Only a genuinely non-entitled user
+    /// falls through to the paywall.
+    private func gatePremiumOr(_ action: @escaping () -> Void) {
         if pm.isPremium {
             action()
-        } else {
-            showPaywall = true
+            return
+        }
+        Task {
+            await pm.refreshStatus()
+            if pm.isPremium {
+                action()
+            } else {
+                showPaywall = true
+            }
         }
     }
 

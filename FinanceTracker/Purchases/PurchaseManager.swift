@@ -31,6 +31,10 @@ final class PurchaseManager: ObservableObject {
         ProductID.allCases.map(\.rawValue)
     }
 
+    /// Все наши Product ID как Set — используется чистой функцией маппинга
+    /// entitlement → premium (см. `evaluatePremium`) и её юнит-тестами.
+    nonisolated static let allProductIDs: Set<String> = Set(ProductID.allCases.map(\.rawValue))
+
     /// Только подписочные продукты (Monthly/Yearly)
     private var subscriptionIDs: Set<String> {
         [
@@ -106,7 +110,6 @@ final class PurchaseManager: ObservableObject {
             case .success(let verification):
                 let transaction = try verified(verification)
                 await transaction.finish()
-                await refreshPremiumStatus()
                 lastErrorMessage = nil
 
             case .userCancelled:
@@ -122,6 +125,14 @@ final class PurchaseManager: ObservableObject {
         } catch {
             lastErrorMessage = "Purchase failed: \(error.localizedDescription)"
         }
+
+        // ALWAYS re-read entitlements after any attempt — success, cancel,
+        // pending, or throw. Critical for the "already subscribed" case: an
+        // entitled user who somehow reached the paywall taps Subscribe, StoreKit
+        // reports they already own it (which may surface as .userCancelled or a
+        // throw), and this refresh flips isPremium=true so the gate unlocks and
+        // the paywall auto-dismisses — instead of dead-ending on the alert.
+        await refreshPremiumStatus()
     }
 
     /// Это настоящая "Restore Purchases" для StoreKit 2
@@ -139,30 +150,50 @@ final class PurchaseManager: ObservableObject {
 
     // MARK: - Premium status
 
+    /// Минимальное описание одного entitlement, достаточное для решения
+    /// premium/не-premium. Существует, чтобы логику маппинга можно было
+    /// покрыть детерминированными юнит-тестами без живой StoreKit-сессии
+    /// (StoreKit.Transaction не сконструировать в тесте).
+    struct EntitlementSnapshot: Equatable {
+        let productID: String
+        let isRevoked: Bool
+    }
+
+    /// ЕДИНСТВЕННЫЙ источник правды о том, что такое "premium".
+    ///
+    /// Premium == есть ХОТЬ ОДНО активное (не отозванное) entitlement на любой
+    /// из наших продуктов. Сюда одинаково попадают: авто-продление в trial,
+    /// оплаченное авто-продление, и lifetime non-consumable. Тип продукта и
+    /// стадия подписки (trial vs paid) НЕ важны — важен только сам факт
+    /// активного entitlement.
+    nonisolated static func evaluatePremium(entitlements: [EntitlementSnapshot],
+                                            knownProductIDs: Set<String> = allProductIDs) -> Bool {
+        entitlements.contains { snapshot in
+            !snapshot.isRevoked && knownProductIDs.contains(snapshot.productID)
+        }
+    }
+
     /// Pull-to-refresh будет дергать именно это.
-    /// Оно безопасно обновляет isPremium на MainActor.
+    /// Оно безопасно обновляет isPremium на MainActor, читая актуальные
+    /// entitlements из StoreKit и прогоняя их через чистую `evaluatePremium`.
     func refreshPremiumStatus() async {
-        var premium = false
+        var snapshots: [EntitlementSnapshot] = []
 
         for await result in SKTransaction.currentEntitlements {
             do {
                 let transaction = try verified(result)
-
-                // 1) Игнорируем отозванные/рефанднутые
-                if transaction.revocationDate != nil { continue }
-
-                // 2) Признаём premium только по нашим Product IDs
-                guard productIDs.contains(transaction.productID) else { continue }
-
-                // Этого достаточно: если есть активное entitlement — premium true
-                premium = true
-                break
+                snapshots.append(
+                    EntitlementSnapshot(
+                        productID: transaction.productID,
+                        isRevoked: transaction.revocationDate != nil
+                    )
+                )
             } catch {
                 // ignore invalid entitlement
             }
         }
 
-        isPremium = premium
+        isPremium = Self.evaluatePremium(entitlements: snapshots)
     }
 
     /// Удобный метод для экранов (и для .task / pull-to-refresh)
