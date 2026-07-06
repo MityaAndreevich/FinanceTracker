@@ -26,6 +26,10 @@ struct AddCategorySheet: View {
     @State private var typeRaw: String
     @State private var icon = ""
 
+    // Drives keyboard dismissal for the name field. The Form previously left the
+    // keyboard up with no return/Done/tap-outside affordance (device QA Item 2).
+    @FocusState private var nameFocused: Bool
+
     @State private var showIconPicker = false
 
     // Surfaced when validation or the SwiftData save fails, instead of crashing
@@ -54,6 +58,11 @@ struct AddCategorySheet: View {
 
                 Section {
                     TextField("cs.category_sheet.name.placeholder", text: $name)
+                        .focused($nameFocused)
+                        // Return commits the name straight into create() (device QA
+                        // Item 2: previously the keyboard had no dismiss affordance).
+                        .submitLabel(.done)
+                        .onSubmit { create() }
 
                     Picker("add.type.picker.title", selection: $typeRaw) {
                         Text("add.type.expense").tag("expense")
@@ -99,6 +108,8 @@ struct AddCategorySheet: View {
                     Text("addcat.section.custom")
                 }
             }
+            // Drag anywhere in the form dismisses the keyboard (tap-outside affordance).
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("cs.category_sheet.title")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -107,6 +118,12 @@ struct AddCategorySheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("common.add") { create() }
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                // Explicit Done above the keyboard — a keyboard-attached field in a
+                // Form has no built-in dismiss otherwise (device QA Item 2).
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("common.done") { nameFocused = false }
                 }
             }
             .sheet(isPresented: $showIconPicker) {

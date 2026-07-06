@@ -343,39 +343,60 @@ private struct AddSourceSheet: View {
     @State private var name = ""
     @State private var note = ""
 
+    // Keyboard dismissal for the two fields (device QA Item 2: the Form left the
+    // keyboard up with no return/Done/tap-outside affordance).
+    private enum Field { case name, note }
+    @FocusState private var focusedField: Field?
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     TextField("cs.source_sheet.name.placeholder", text: $name)
+                        .focused($focusedField, equals: .name)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .note }
                     TextField("cs.source_sheet.note.placeholder", text: $note)
+                        .focused($focusedField, equals: .note)
+                        .submitLabel(.done)
+                        .onSubmit { add() }
                 } header: {
                     Text("cs.source_sheet.section")
                 }
             }
+            // Drag anywhere in the form dismisses the keyboard (tap-outside affordance).
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("cs.source_sheet.title")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("common.cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("common.add") {
-                        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-
-                        let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let source = Source(name: trimmed, note: noteTrimmed.isEmpty ? nil : noteTrimmed)
-
-                        modelContext.insert(source)
-                        try? modelContext.save()
-                        onAdded?()
-                        dismiss()
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("common.add") { add() }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                // Explicit Done above the keyboard — a keyboard-attached field in a
+                // Form has no built-in dismiss otherwise (device QA Item 2).
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("common.done") { focusedField = nil }
                 }
             }
         }
         .presentationDetents([.medium])
+    }
+
+    private func add() {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let source = Source(name: trimmed, note: noteTrimmed.isEmpty ? nil : noteTrimmed)
+
+        modelContext.insert(source)
+        try? modelContext.save()
+        onAdded?()
+        dismiss()
     }
 }
 
