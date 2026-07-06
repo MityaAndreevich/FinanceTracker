@@ -62,7 +62,13 @@ enum CategoryTheme {
     }
 
     static let map: [String: Entry] = [
-        "food_drink":    Entry(color: rgb(0x1D, 0x9E, 0x75), symbol: "fork.knife"),
+        // Warm coral, NOT green. Green (mint) is reserved for income/positive
+        // (see Color.bcPositive, DESIGN_DIRECTION_v2 §Locked decision 2). Food &
+        // Drink is the archetypal first/only expense, so its old mint-green
+        // 0x1D9E75 painted a solo expense donut in the income color — the whole
+        // Dashboard card then read as a *gain* (device QA). Coral keeps it clearly
+        // "money out" and distinct from the income green a slice away.
+        "food_drink":    Entry(color: rgb(0xE0, 0x6E, 0x52), symbol: "fork.knife"),
         "transport":     Entry(color: rgb(0x37, 0x8A, 0xDD), symbol: "car.fill"),
         "housing":       Entry(color: rgb(0x7F, 0x77, 0xDD), symbol: "house.fill"),
         "shopping":      Entry(color: rgb(0xD4, 0x53, 0x7E), symbol: "bag.fill"),
@@ -80,7 +86,9 @@ enum CategoryTheme {
     /// Distinct hues for user-defined categories (subset of the curated palette).
     static let fallbackPalette: [Color] = [
         rgb(0x37, 0x8A, 0xDD), rgb(0x7F, 0x77, 0xDD), rgb(0xD4, 0x53, 0x7E),
-        rgb(0x1D, 0x9E, 0x75), rgb(0xEF, 0x9F, 0x27), rgb(0x0E, 0xA5, 0xC4),
+        // Coral (was mint-green 0x1D9E75) — green stays reserved for income so a
+        // user-defined expense category never hashes into the income color.
+        rgb(0xE0, 0x6E, 0x52), rgb(0xEF, 0x9F, 0x27), rgb(0x0E, 0xA5, 0xC4),
         rgb(0xD6, 0x7B, 0xA5), rgb(0x63, 0x99, 0x22), rgb(0x9B, 0x8C, 0xFF),
         rgb(0xD8, 0x5A, 0x30),
     ]
