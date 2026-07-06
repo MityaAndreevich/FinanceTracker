@@ -235,16 +235,33 @@ struct DashboardView: View {
         }
         .task {
             loadDueRecurring()
-            refreshWidgetSnapshot()
+            scheduleWidgetSnapshot()
             if !reduceMotion { animateArrow = true }
         }
         .onChange(of: transactions.count) { _, _ in
-            refreshWidgetSnapshot()
+            scheduleWidgetSnapshot()
         }
         // Re-localize the Dashboard live on an in-app language change (device QA
         // round 1 #2): section headers, captions and code-resolved category names
         // rebuild in the new language without a relaunch.
         .languageReactive()
+    }
+
+    // Coalesces widget-snapshot rebuilds. Each rebuild does a full-array scan plus
+    // a cross-process `WidgetCenter.reloadAllTimelines()`; firing it on every save
+    // *and* again via `onChange(transactions.count)` meant ~2 per Quick Add save —
+    // a main-thread hitch during rapid entry (the device hang: synchronous work on
+    // com.apple.main-thread while entering ~7 tx). Debounced so a burst of N saves
+    // triggers ONE rebuild + ONE timeline reload instead of ~2N.
+    @State private var widgetRefreshTask: Task<Void, Never>?
+
+    private func scheduleWidgetSnapshot() {
+        widgetRefreshTask?.cancel()
+        widgetRefreshTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            guard !Task.isCancelled else { return }
+            refreshWidgetSnapshot()
+        }
     }
 
     private func refreshWidgetSnapshot() {
@@ -411,7 +428,7 @@ struct DashboardView: View {
                 defaultCurrencyCode: defaultCurrencyCode
             )
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            refreshWidgetSnapshot()
+            scheduleWidgetSnapshot()
             RatingPromptCoordinator.recordTransactionSaved()
             return tx
         } catch {
@@ -437,7 +454,7 @@ struct DashboardView: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             withAnimation { quickAddParsed = nil }
             quickAddText = ""
-            refreshWidgetSnapshot()
+            scheduleWidgetSnapshot()
             RatingPromptCoordinator.recordTransactionSaved()
         } catch {
             // B2: never fail silently. A swallowed error left the preview + input
@@ -476,7 +493,7 @@ struct DashboardView: View {
         try? modelContext.save()
         quickAddSavedTx = nil
         quickAddSavedAt = nil
-        refreshWidgetSnapshot()
+        scheduleWidgetSnapshot()
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         quickAddToastStyle = .success
         quickAddToast = "quickadd.undo.confirmed"
