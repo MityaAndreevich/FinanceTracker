@@ -20,7 +20,13 @@ enum CSVImportMode {
 struct CSVImportResult {
     var imported: Int = 0
     var skipped: Int = 0
+    /// Rows skipped because their stable UUID already exists (idempotent re-import
+    /// of our own export, under `.skipDuplicates`).
     var duplicatesSkipped: Int = 0
+    /// Rows that carried NO UUID (foreign CSV) yet content-match existing data.
+    /// They are still IMPORTED — finance rule: never silently drop a real
+    /// transaction — but surfaced so the user can review possible duplicates.
+    var possibleDuplicates: Int = 0
     var createdCategories: Int = 0
     var createdSources: Int = 0
     var firstError: String? = nil
@@ -35,8 +41,12 @@ struct CSVImportPreamble {
     var categoryCache: [String: Category]
     var sourceCache: [String: Source]
     var totalDataRows: Int
-    /// Dedup identities of transactions already in the store (see `transactionIdentity`).
-    var existingIdentities: Set<String>
+    /// Stable UUIDs already in the store. Primary dedup key: a re-imported row of
+    /// our own export whose UUID is here is an exact re-import → skipped.
+    var existingUUIDs: Set<UUID>
+    /// Day-granular content heuristics already in the store. Used ONLY to FLAG
+    /// foreign rows (no UUID) as possible duplicates — never to drop them.
+    var existingHeuristics: Set<String>
 }
 
 struct CSVImportService {
@@ -68,8 +78,8 @@ struct CSVImportService {
 
         var categoryCache = preamble.categoryCache
         var sourceCache = preamble.sourceCache
-        var seenIdentities = preamble.existingIdentities
-        let dateFormatter = makeISO8601Formatter()
+        var seenUUIDs = preamble.existingUUIDs
+        var seenHeuristics = preamble.existingHeuristics
         var processed = 0
 
         for i in preamble.startIndex..<preamble.rows.count {
@@ -77,11 +87,11 @@ struct CSVImportService {
                 preamble.rows[i],
                 lineIndex: i,
                 modelContext: modelContext,
-                dateFormatter: dateFormatter,
                 mode: mode,
                 categoryCache: &categoryCache,
                 sourceCache: &sourceCache,
-                seenIdentities: &seenIdentities,
+                seenUUIDs: &seenUUIDs,
+                seenHeuristics: &seenHeuristics,
                 result: &result
             )
             processed += 1
@@ -105,7 +115,7 @@ struct CSVImportService {
 
         let rows = splitCSVRows(content)
         guard !rows.isEmpty else {
-            return CSVImportPreamble(rows: [], startIndex: 0, categoryCache: [:], sourceCache: [:], totalDataRows: 0, existingIdentities: [])
+            return CSVImportPreamble(rows: [], startIndex: 0, categoryCache: [:], sourceCache: [:], totalDataRows: 0, existingUUIDs: [], existingHeuristics: [])
         }
 
         var startIndex = 0
@@ -116,7 +126,8 @@ struct CSVImportService {
         // Cache by "csv name" (lowercased)
         var categoryCache: [String: Category] = [:]
         var sourceCache: [String: Source] = [:]
-        var existingIdentities: Set<String> = []
+        var existingUUIDs: Set<UUID> = []
+        var existingHeuristics: Set<String> = []
 
         // Preload existing categories/sources. Match against BOTH:
         //   • the user-visible (custom or localized) name, and
@@ -144,12 +155,14 @@ struct CSVImportService {
                 sourceCache[s.name.lowercased()] = s
             }
 
-            // Precompute dedup identities of everything already in the store, so
-            // re-importing a Crab export doesn't silently duplicate rows.
+            // Precompute both dedup keys for everything already in the store:
+            //   • the stable UUID (primary key for idempotent re-import), and
+            //   • a day-granular content heuristic (used only to flag foreign rows).
             let dayFormatter = makeISO8601Formatter()
             let existingTxs = try modelContext.fetch(FetchDescriptor<Transaction>())
             for t in existingTxs {
-                existingIdentities.insert(transactionIdentity(
+                existingUUIDs.insert(t.uuid)
+                existingHeuristics.insert(transactionIdentity(
                     typeRaw: t.typeRaw,
                     amountCents: t.amountCents,
                     currency: t.currency,
@@ -175,17 +188,21 @@ struct CSVImportService {
             categoryCache: categoryCache,
             sourceCache: sourceCache,
             totalDataRows: totalDataRows,
-            existingIdentities: existingIdentities
+            existingUUIDs: existingUUIDs,
+            existingHeuristics: existingHeuristics
         )
     }
 
-    /// Stable, order-independent dedup identity for a transaction.
+    /// Day-granular content heuristic for a transaction.
     ///
     /// Composed of `type | amountCents | currency | day | category | name(merchant)`.
-    /// Day granularity (not the full timestamp) because CSV export truncates the
-    /// date to the calendar day — so a stored transaction and its exported/
-    /// re-imported copy hash to the same identity. Category and name are matched
-    /// case-insensitively to survive locale/casing round-trips.
+    /// This is NO LONGER the primary dedup key — the stable `uuid` is (see
+    /// `processRow`). The heuristic is used ONLY to FLAG foreign rows (CSVs with no
+    /// `id` column) as possible duplicates; a false match merely surfaces a review
+    /// hint and never drops a row. Day granularity (rather than the exact export
+    /// timestamp) is deliberate: foreign CSVs typically carry day-only dates, so a
+    /// day key is what actually lets the flag catch same-day content matches.
+    /// Category and name are matched case-insensitively to survive locale/casing.
     static func transactionIdentity(
         typeRaw: String,
         amountCents: Int,
@@ -204,10 +221,27 @@ struct CSVImportService {
         ].joined(separator: "|")
     }
 
+    /// Day-only ISO-8601 formatter. Backs the day-granular content heuristic
+    /// (`dayKey`) used to flag possible foreign duplicates.
     static func makeISO8601Formatter() -> ISO8601DateFormatter {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withFullDate]
         return dateFormatter
+    }
+
+    /// Full timestamp ISO-8601 formatter (locale-invariant). This is the format
+    /// our export now writes for the `date` column.
+    static func makeTimestampFormatter() -> ISO8601DateFormatter {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }
+
+    /// Parse a CSV `date` cell that may be either a full ISO-8601 timestamp (our
+    /// current export) or a day-only date (legacy export / foreign CSVs). Tries
+    /// the richer format first, then falls back — so no historical file is rejected.
+    static func parseCSVDate(_ raw: String) -> Date? {
+        makeTimestampFormatter().date(from: raw) ?? makeISO8601Formatter().date(from: raw)
     }
 
     /// Parse and insert a single CSV row, mutating caches + result. The caller is
@@ -217,11 +251,11 @@ struct CSVImportService {
         _ rawLine: String,
         lineIndex i: Int,
         modelContext: ModelContext,
-        dateFormatter: ISO8601DateFormatter,
         mode: CSVImportMode,
         categoryCache: inout [String: Category],
         sourceCache: inout [String: Source],
-        seenIdentities: inout Set<String>,
+        seenUUIDs: inout Set<UUID>,
+        seenHeuristics: inout Set<String>,
         result: inout CSVImportResult
     ) {
         // Trim ONLY at the row boundary to drop trailing CR / blank lines.
@@ -253,8 +287,11 @@ struct CSVImportService {
             let taxStr = cols[6].trimmingCharacters(in: .whitespacesAndNewlines)
             let note = cols[7]
             let merchant = cols[8]
+            // `id` column (our export) is optional: absent in legacy/foreign CSVs.
+            let idStr = cols.count >= 10 ? cols[9].trimmingCharacters(in: .whitespacesAndNewlines) : ""
+            let fileUUID: UUID? = idStr.isEmpty ? nil : UUID(uuidString: idStr)
 
-            guard let date = dateFormatter.date(from: dateStr) else {
+            guard let date = parseCSVDate(dateStr) else {
                 throw makeLineError(i, "Invalid date: \(dateStr)")
             }
 
@@ -272,20 +309,39 @@ struct CSVImportService {
                 ? rawCode
                 : (UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD")
 
-            // Dedup by stable identity BEFORE creating any category/source, so a
-            // skipped duplicate leaves no side effects. Under `.importAll` we skip
-            // the check entirely and keep both copies.
-            let identity = transactionIdentity(
+            // Day-granular content heuristic — used ONLY to flag possible foreign
+            // duplicates, never to drop a row.
+            let heuristic = transactionIdentity(
                 typeRaw: typeRaw,
                 amountCents: amountCents,
                 currency: cleanCurrency,
-                dayKey: dateFormatter.string(from: date),
+                dayKey: makeISO8601Formatter().string(from: date),
                 categoryName: categoryName,
                 merchant: merchant
             )
-            if mode == .skipDuplicates, seenIdentities.contains(identity) {
-                result.duplicatesSkipped += 1
-                return
+
+            // Resolve the identity of the row BEFORE creating any category/source,
+            // so a skipped duplicate leaves no side effects.
+            let resolvedUUID: UUID
+            if let id = fileUUID {
+                // Our own export row → dedup on the STABLE UUID.
+                //   • skipDuplicates: an existing/seen UUID is an exact re-import → skip.
+                //   • importAll: keep both copies, but the inserted row needs a FRESH
+                //     UUID because `uuid` is @Attribute(.unique) — reusing it would
+                //     upsert (replace) the existing row instead of duplicating it.
+                if mode == .skipDuplicates, seenUUIDs.contains(id) {
+                    result.duplicatesSkipped += 1
+                    return
+                }
+                resolvedUUID = (mode == .importAll) ? UUID() : id
+            } else {
+                // Foreign row (no UUID): NEVER drop — we cannot tell a re-import
+                // apart from a genuinely-distinct identical transaction. Import it
+                // under a fresh UUID and, when it content-matches, flag it.
+                resolvedUUID = UUID()
+                if mode == .skipDuplicates, seenHeuristics.contains(heuristic) {
+                    result.possibleDuplicates += 1
+                }
             }
 
             let category = try getOrCreateCategory(
@@ -304,6 +360,7 @@ struct CSVImportService {
             )
 
             let tx = Transaction(
+                uuid: resolvedUUID,
                 typeRaw: typeRaw,
                 amountCents: amountCents,
                 currency: cleanCurrency,
@@ -316,7 +373,8 @@ struct CSVImportService {
             )
 
             modelContext.insert(tx)
-            seenIdentities.insert(identity)
+            seenUUIDs.insert(resolvedUUID)
+            seenHeuristics.insert(heuristic)
             result.imported += 1
 
         } catch {

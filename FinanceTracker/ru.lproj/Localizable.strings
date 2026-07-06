@@ -764,6 +764,7 @@
 "data.import.result.imported.format" = "Импортировано: %d";
 "data.import.result.skipped.format" = "Пропущено: %d";
 "data.import.result.duplicates_skipped.format" = "Дубликаты пропущены: %d";
+"data.import.result.possible_duplicates.format" = "Возможные дубликаты: %d";
 "data.import.result.created_categories.format" = "Создано категорий: %d";
 "data.import.result.created_sources.format" = "Создано счетов: %d";
 "data.import.result.first_error.format" = "Первая ошибка: %@";

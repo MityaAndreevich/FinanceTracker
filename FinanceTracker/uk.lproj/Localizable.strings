@@ -761,6 +761,7 @@
 "data.import.result.imported.format" = "Імпортовано: %d";
 "data.import.result.skipped.format" = "Пропущено: %d";
 "data.import.result.duplicates_skipped.format" = "Дублікати пропущено: %d";
+"data.import.result.possible_duplicates.format" = "Можливі дублікати: %d";
 "data.import.result.created_categories.format" = "Створено категорій: %d";
 "data.import.result.created_sources.format" = "Створено рахунків: %d";
 "data.import.result.first_error.format" = "Перша помилка: %@";

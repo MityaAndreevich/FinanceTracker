@@ -36,8 +36,8 @@ actor CSVImportActor {
 
         var categoryCache = preamble.categoryCache
         var sourceCache = preamble.sourceCache
-        var seenIdentities = preamble.existingIdentities
-        let dateFormatter = CSVImportService.makeISO8601Formatter()
+        var seenUUIDs = preamble.existingUUIDs
+        var seenHeuristics = preamble.existingHeuristics
         var processed = 0
 
         for i in preamble.startIndex..<preamble.rows.count {
@@ -45,11 +45,11 @@ actor CSVImportActor {
                 preamble.rows[i],
                 lineIndex: i,
                 modelContext: modelContext,
-                dateFormatter: dateFormatter,
                 mode: mode,
                 categoryCache: &categoryCache,
                 sourceCache: &sourceCache,
-                seenIdentities: &seenIdentities,
+                seenUUIDs: &seenUUIDs,
+                seenHeuristics: &seenHeuristics,
                 result: &result
             )
             processed += 1

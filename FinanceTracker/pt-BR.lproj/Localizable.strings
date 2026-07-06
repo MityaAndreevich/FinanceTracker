@@ -635,6 +635,7 @@
 "data.import.result.imported.format" = "Importadas: %d";
 "data.import.result.skipped.format" = "Ignoradas: %d";
 "data.import.result.duplicates_skipped.format" = "Duplicadas ignoradas: %d";
+"data.import.result.possible_duplicates.format" = "Possíveis duplicadas: %d";
 "data.import.result.created_categories.format" = "Categorias criadas: %d";
 "data.import.result.created_sources.format" = "Contas criadas: %d";
 "data.import.result.first_error.format" = "Primeiro erro: %@";

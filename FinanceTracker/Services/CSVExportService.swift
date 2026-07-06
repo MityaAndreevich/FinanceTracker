@@ -18,10 +18,16 @@ struct CSVExportService {
         let txs = try fetchTransactions(modelContext: modelContext, scope: scope)
 
         var lines: [String] = []
-        lines.append("date,type,amount,currency,category,source,tax,note,merchant")
+        // `id` is the LAST column so the leading `date,type,amount…` prefix stays
+        // stable for header detection and for interop with foreign 9-column CSVs.
+        lines.append("date,type,amount,currency,category,source,tax,note,merchant,id")
 
+        // Exact ISO-8601 timestamp (with time), locale-invariant. Day-only export
+        // lost intra-day ordering and made same-day transactions indistinguishable;
+        // the stable `id` column now carries identity, and the full timestamp keeps
+        // the visible date precise.
         let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withFullDate]
+        dateFormatter.formatOptions = [.withInternetDateTime]
 
         // Locale-INVARIANT money formatting. A CSV is a comma-delimited file, so
         // the amount cell must never itself contain a comma. Using the user's
@@ -50,7 +56,7 @@ struct CSVExportService {
             let note = escape(tx.note ?? "")
             let merchant = escape(tx.merchant ?? "")
 
-            let row = "\(date),\(type),\(amount),\(currency),\(category),\(source),\(tax),\(note),\(merchant)"
+            let row = "\(date),\(type),\(amount),\(currency),\(category),\(source),\(tax),\(note),\(merchant),\(tx.uuid.uuidString)"
             lines.append(row)
         }
 
