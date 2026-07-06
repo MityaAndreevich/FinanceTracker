@@ -50,12 +50,17 @@ enum QuickAddParser {
         let langCode = UserDefaults.standard.string(forKey: "appLanguageCode") ?? "system"
         // Bug 2: try the app language first, then all supported locales, so mixed
         // language input (e.g. RU UI + spoken English "fifteen") still parses.
-        let input = NumberWordsParser.normalize(stripped, primaryLocale: langCode)
+        let normalizedWords = NumberWordsParser.normalize(stripped, primaryLocale: langCode)
+        // Collapse locale grouping spaces inside numbers ("10 143,15" → "10143,15")
+        // so the amount tokenizer sees one contiguous value instead of two numbers.
+        let input = collapseGroupingSpaces(in: normalizedWords)
         guard !input.isEmpty else { return nil }
 
-        // 1. Detect amount — smart multi-number selection so "bought 3 eggs for 7"
-        //    captures the price (7), not the quantity (3). See detectAmountCents.
-        guard let (cents, _) = detectAmountCents(in: input), cents > 0 else { return nil }
+        // 1. Detect amount — locale-aware tokenizer with smart multi-number selection
+        //    ("bought 3 eggs for 7" captures the price 7, not the quantity 3) and
+        //    major+minor unit combination ("1342 рубля 15 копеек" → 1342.15).
+        let convention = DecimalConvention.current()
+        guard let cents = detectAmountCents(in: input, convention: convention), cents > 0 else { return nil }
 
         // 2. Detect type — explicit "+" prefix or income vocabulary (verb OR noun).
         let lower = input.lowercased()
@@ -71,8 +76,8 @@ enum QuickAddParser {
         //    only content it is kept so the transaction still has a description
         //    ("зп" → "зп" instead of an empty merchant).
         var base = input.replacingOccurrences(of: "+", with: "")
-        base = base.replacingOccurrences(of: amountRegexPattern, with: " ", options: .regularExpression)
-        for sym in "$€£¥₽" {
+        base = base.replacingOccurrences(of: amountTokenPattern, with: " ", options: .regularExpression)
+        for sym in currencySymbols {
             base = base.replacingOccurrences(of: String(sym), with: "")
         }
         var verbStripped = base
@@ -129,35 +134,65 @@ enum QuickAddParser {
 
     // MARK: - Amount detection
 
-    /// Regex for a single amount token: optional currency symbol, then a number
-    /// supporting both "5.50"/"1,234.56" and European "12,99"/"1.234,56".
-    private static let amountRegexPattern = #"[$€£¥₽]?\s*\d{1,3}(?:[,.\s]\d{3})*[,.]?\d{0,2}"#
+    /// Decimal formatting convention of the user's *regional* locale (independent of
+    /// the in-app UI language). Disambiguates the one genuinely ambiguous shape — a
+    /// lone separator followed by exactly three digits ("1.234" / "1,234") — which
+    /// could be thousands-grouping OR a decimal depending on locale. Every other
+    /// shape resolves purely by position (see `parseTokenCents`).
+    enum DecimalConvention {
+        case comma   // decimal ",", grouping space/NBSP/"."  (ru, uk, pt-BR, es-ES, de, fr…)
+        case period  // decimal ".", grouping space/NBSP/","  (en-US, es-MX…)
+
+        static func current() -> DecimalConvention {
+            Locale.current.decimalSeparator == "," ? .comma : .period
+        }
+    }
+
+    /// Currency glyphs stripped when isolating the numeric value of a token.
+    private static let currencySymbols = "$€£¥₽₴¢"
+
+    /// A single amount token: optional currency glyph, optional leading decimal
+    /// separator, then digits with internal grouping/decimal separators. Matches
+    /// "10143,15", "10,143.15", "1.234,56", "$1,342.15", ",15" and bare "50".
+    /// Grouping *spaces* are collapsed beforehand (see `collapseGroupingSpaces`),
+    /// so this pattern never has to span a space and can't merge two numbers.
+    /// Whitespace is consumed only when a currency glyph precedes it ("$ 10,50"),
+    /// so a bare number's start offset is its true position — critical for the
+    /// major/minor pairing, which compares token offsets to the minor number.
+    private static let amountTokenPattern =
+        #"(?:[$€£¥₽₴¢]\s*)?(?:[.,]?\d[\d.,]*\d|[.,]?\d)"#
+
+    /// Numeric tokens (amount + kopecks + stray quantities) with values resolved
+    /// under `convention`. Minor-unit words like "копеек"/"cents" combine two of
+    /// these into a single amount (see `combineMajorMinor`).
+    private struct NumberCandidate {
+        let cents: Int
+        let startOffset: Int
+        let hasCurrencySymbol: Bool
+    }
+
+    /// Minor-unit words (kopecks / cents / centavos) that turn a trailing integer
+    /// into the fractional part of the amount. The negative look-ahead prevents
+    /// "center"/"copil" style false positives; bare "коп"/"cent" are covered by
+    /// dedicated alternatives so "50 коп" and "5 cents" both fire.
+    private static let minorUnitPattern =
+        #"(\d+)\s*(?:копе\p{L}*|копі\p{L}*|коп|cents?|centavos?|c[eé]ntimos?|¢)(?![\p{L}])"#
 
     /// Picks the most likely transaction amount from inputs that may contain several
-    /// numbers (e.g. "bought 3 eggs for 7"). Heuristic priority:
+    /// numbers. Priority:
+    ///   0. Major + minor currency units ("1342 рубля 15 копеек", "12 dollars 5 cents")
     ///   1. Number immediately after a price-marker preposition (for, за, at, по, à, por, für)
-    ///   2. Number adjacent to a currency symbol ($, €, £, ¥, ₽)
+    ///   2. Number adjacent to a currency symbol ($, €, £, ¥, ₽, ₴, ¢)
     ///   3. Last number (often the price in "5 apples 12 dollars")
     ///   4. First number (fallback — original single-number behaviour)
-    private static func detectAmountCents(in input: String) -> (cents: Int, matchedSubstring: String)? {
-        struct Candidate {
-            let substring: String
-            let startOffset: Int
-            let cents: Int
-        }
-
-        let nsRange = NSRange(input.startIndex..<input.endIndex, in: input)
-        guard let regex = try? NSRegularExpression(pattern: amountRegexPattern) else { return nil }
-        let matches = regex.matches(in: input, range: nsRange)
-
-        let candidates: [Candidate] = matches.compactMap { match in
-            guard let range = Range(match.range, in: input) else { return nil }
-            let substring = String(input[range])
-            guard let cents = parseAmountCents(from: substring), cents > 0 else { return nil }
-            let startOffset = input.distance(from: input.startIndex, to: range.lowerBound)
-            return Candidate(substring: substring, startOffset: startOffset, cents: cents)
-        }
+    private static func detectAmountCents(in input: String, convention: DecimalConvention) -> Int? {
+        let candidates = numberCandidates(in: input, convention: convention)
         guard !candidates.isEmpty else { return nil }
+
+        // Heuristic 0: combine major + minor currency units into one amount.
+        if let combined = combineMajorMinor(in: input, candidates: candidates) {
+            return combined
+        }
 
         // Heuristic 1: number after a price-marker preposition.
         // "на" ("продукты на 100") works like "за" for amount selection.
@@ -167,24 +202,91 @@ enum QuickAddParser {
             if let prepRange = lower.range(of: prep) {
                 let prepEnd = lower.distance(from: lower.startIndex, to: prepRange.upperBound)
                 if let afterPrep = candidates.first(where: { $0.startOffset >= prepEnd }) {
-                    return (afterPrep.cents, afterPrep.substring)
+                    return afterPrep.cents
                 }
             }
         }
 
         // Heuristic 2: number adjacent to a currency symbol
-        if let withSymbol = candidates.first(where: { $0.substring.contains { "$€£¥₽".contains($0) } }) {
-            return (withSymbol.cents, withSymbol.substring)
+        if let withSymbol = candidates.first(where: { $0.hasCurrencySymbol }) {
+            return withSymbol.cents
         }
 
         // Heuristic 3: multiple numbers — use the LAST (likely the price after a count)
         if candidates.count >= 2, let last = candidates.last {
-            return (last.cents, last.substring)
+            return last.cents
         }
 
         // Heuristic 4: single number fallback
-        let first = candidates[0]
-        return (first.cents, first.substring)
+        return candidates[0].cents
+    }
+
+    /// Locale-aware amount tokenizer. Given a raw NL fragment and the regional
+    /// decimal convention, returns the transaction amount in cents (or nil).
+    /// Exposed for the parse-table tests; the full `parse` pipeline routes through
+    /// the same code after spelled-out-number normalization.
+    static func amountCents(from raw: String, convention: DecimalConvention) -> Int? {
+        detectAmountCents(in: collapseGroupingSpaces(in: raw), convention: convention)
+    }
+
+    /// Extracts numeric token candidates in reading order.
+    private static func numberCandidates(in input: String, convention: DecimalConvention) -> [NumberCandidate] {
+        guard let regex = try? NSRegularExpression(pattern: amountTokenPattern) else { return [] }
+        let nsRange = NSRange(input.startIndex..<input.endIndex, in: input)
+        return regex.matches(in: input, range: nsRange).compactMap { match in
+            guard let range = Range(match.range, in: input) else { return nil }
+            let substring = String(input[range])
+            guard let cents = parseTokenCents(substring, convention: convention), cents > 0 else { return nil }
+            let startOffset = input.distance(from: input.startIndex, to: range.lowerBound)
+            let hasSymbol = substring.contains { currencySymbols.contains($0) }
+            return NumberCandidate(cents: cents, startOffset: startOffset, hasCurrencySymbol: hasSymbol)
+        }
+    }
+
+    /// If a minor-unit word ("копеек"/"cents"/"centavos") is present, treat the
+    /// integer before it as the fractional part and the preceding number as the
+    /// major amount: "1342 рубля 15 копеек" → 1342 + 15/100 → 134215¢; a lone
+    /// "50 коп" → 50¢. Returns nil when no minor-unit word is found.
+    private static func combineMajorMinor(in input: String, candidates: [NumberCandidate]) -> Int? {
+        guard let regex = try? NSRegularExpression(pattern: minorUnitPattern, options: .caseInsensitive),
+              let match = regex.firstMatch(in: input, range: NSRange(input.startIndex..<input.endIndex, in: input)),
+              let numberRange = Range(match.range(at: 1), in: input) else { return nil }
+
+        // Minor units map 1:1 to cents (15 kopecks = 15¢); cap at two digits.
+        let minorDigits = String(input[numberRange]).prefix(2)
+        let minorCents = Int(minorDigits) ?? 0
+        let minorStart = input.distance(from: input.startIndex, to: numberRange.lowerBound)
+
+        // Major amount = the last numeric token that starts before the minor number.
+        if let major = candidates.last(where: { $0.startOffset < minorStart }) {
+            return major.cents + minorCents
+        }
+        return minorCents
+    }
+
+    /// Collapses locale grouping *spaces* that sit inside a number so the token
+    /// regex sees one contiguous value: "10 143,15" → "10143,15", "1 000 000" →
+    /// "1000000". Only fires on a digit run followed by one-or-more space+3-digit
+    /// groups, so word-separated numbers ("1342 рубля 15 копеек") are untouched.
+    private static func collapseGroupingSpaces(in text: String) -> String {
+        let pattern = #"\d{1,3}(?:[\u00A0\u202F ]\d{3})+(?:[.,]\d{1,2})?"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
+        let ns = text as NSString
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else { return text }
+
+        var result = ""
+        var lastEnd = 0
+        for m in matches {
+            result += ns.substring(with: NSRange(location: lastEnd, length: m.range.location - lastEnd))
+            result += ns.substring(with: m.range)
+                .replacingOccurrences(of: "\u{00A0}", with: "")
+                .replacingOccurrences(of: "\u{202F}", with: "")
+                .replacingOccurrences(of: " ", with: "")
+            lastEnd = m.range.location + m.range.length
+        }
+        result += ns.substring(from: lastEnd)
+        return result
     }
 
     // MARK: - Private
@@ -303,14 +405,20 @@ enum QuickAddParser {
     private static let currencyWordsToStrip = [
         // RU — "р" is the bare ruble abbreviation ("молоко 50р" → "молоко").
         "баксов", "баксы", "бакс", "долларов", "доллары", "доллар",
-        "евро", "евра", "рублей", "рубли", "рубль", "руб", "р",
+        "евро", "евра", "рублей", "рубля", "рублях", "рубли", "рубль", "руб", "р",
         "юаней", "юаня", "юань",
+        // RU/UK minor units (kopecks) — combined into the amount, then stripped here.
+        "копеек", "копейки", "копейка", "копейку", "коп",
+        "копійок", "копійки", "копійка", "копійку",
+        // UK major unit (hryvnia)
+        "гривень", "гривні", "гривня", "грн",
         // EN
         "dollars", "dollar", "bucks", "buck",
         "euros", "euro", "pounds", "pound",
-        "rubles", "ruble",
+        "rubles", "ruble", "cents", "cent",
         // ES
-        "dólares", "dolares", "dólar", "dolar",
+        "dólares", "dolares", "dólar", "dolar", "pesos", "peso",
+        "centavos", "centavo", "céntimos", "céntimo", "centimos", "centimo",
         // PT
         "reais", "real",
     ]
@@ -404,23 +512,62 @@ enum QuickAddParser {
         return s
     }
 
-    /// Handles both standard ("5.50", "1,234.56") and European ("12,99", "1.234,56") formats.
-    private static func parseAmountCents(from raw: String) -> Int? {
-        var s = raw.filter { !"$€£¥₽ ".contains($0) }
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Converts one numeric token to cents, robust to any mix of grouping and
+    /// decimal separators. The decimal separator is identified by *position* — the
+    /// last `,`/`.` — with the one ambiguous shape (a lone separator followed by
+    /// exactly three digits) resolved by `convention`. All other separators are
+    /// grouping and are stripped; the fraction is capped/padded to exactly 2 digits.
+    ///   "10143,15" → 1014315   "10,143.15" → 1014315   "1.234,56" → 123456
+    ///   "$1,342.15" → 134215   ",15" → 15   "1000" → 100000
+    private static func parseTokenCents(_ token: String, convention: DecimalConvention) -> Int? {
+        var s = token
+        for sym in currencySymbols { s = s.replacingOccurrences(of: String(sym), with: "") }
+        s = s.filter { !$0.isWhitespace }
         guard !s.isEmpty else { return nil }
 
-        // European: number ends with ,XX or ,X (e.g. "12,99" or "1.234,56")
-        // The diagnostic is a comma followed by 1–2 digits at the very end.
-        let euroPattern = #"^\d{1,3}(?:\.\d{3})*,\d{1,2}$"#
-        if s.range(of: euroPattern, options: .regularExpression) != nil {
-            s = s.replacingOccurrences(of: ".", with: "")   // remove thousands dots
-            s = s.replacingOccurrences(of: ",", with: ".")  // decimal comma → dot
+        let lastComma = s.lastIndex(of: ",")
+        let lastPeriod = s.lastIndex(of: ".")
+        let decimalIndex: String.Index?
+        if let lc = lastComma, let lp = lastPeriod {
+            // Both symbols present: the later one is the decimal, the other grouping.
+            decimalIndex = lc > lp ? lc : lp
+        } else if let lc = lastComma {
+            decimalIndex = decimalSeparatorIndex(in: s, at: lc, symbol: ",", isConventionDecimal: convention == .comma)
+        } else if let lp = lastPeriod {
+            decimalIndex = decimalSeparatorIndex(in: s, at: lp, symbol: ".", isConventionDecimal: convention == .period)
         } else {
-            s = s.replacingOccurrences(of: ",", with: "")   // remove thousands commas
+            decimalIndex = nil
         }
 
-        return Money.parseCents(from: s)
+        let intDigits: String
+        let fracDigits: String
+        if let d = decimalIndex {
+            intDigits = s[s.startIndex..<d].filter(\.isNumber)
+            fracDigits = s[s.index(after: d)...].filter(\.isNumber)
+        } else {
+            intDigits = s.filter(\.isNumber)
+            fracDigits = ""
+        }
+        guard !(intDigits.isEmpty && fracDigits.isEmpty) else { return nil }
+
+        let intValue = Int(intDigits) ?? 0
+        let fracValue = Int((fracDigits + "00").prefix(2)) ?? 0   // pad/cap to 2 digits
+        return intValue * 100 + fracValue
+    }
+
+    /// Decides whether a single separator (only one symbol type present) is a
+    /// decimal point or a thousands group, based on the digit count after it and,
+    /// only for the genuinely ambiguous 3-digit case, the locale convention.
+    private static func decimalSeparatorIndex(in s: String, at index: String.Index, symbol: Character, isConventionDecimal: Bool) -> String.Index? {
+        // More than one of the same symbol → all grouping (a number has one decimal).
+        if s.filter({ $0 == symbol }).count > 1 { return nil }
+        let digitsAfter = s[s.index(after: index)...].filter(\.isNumber).count
+        switch digitsAfter {
+        case 0: return nil                                   // trailing separator → ignore
+        case 1, 2: return index                              // money decimal (1–2 places)
+        case 3: return isConventionDecimal ? index : nil     // ambiguous → locale decides
+        default: return index                                // 4+ → decimal (fraction capped)
+        }
     }
 }
 
