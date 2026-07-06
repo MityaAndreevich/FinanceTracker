@@ -23,8 +23,17 @@ struct CSVExportService {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withFullDate]
 
+        // Locale-INVARIANT money formatting. A CSV is a comma-delimited file, so
+        // the amount cell must never itself contain a comma. Using the user's
+        // locale (e.g. ru_RU) writes "1,52" and grouping writes "1,234.56" — both
+        // spill the amount into the next column and corrupt every field after it.
+        // Fix: force "." as the decimal separator (en_US_POSIX) and disable
+        // grouping. The reader (Money.parseCents) reads "." back exactly.
         let moneyFormatter = NumberFormatter()
         moneyFormatter.numberStyle = .decimal
+        moneyFormatter.locale = Locale(identifier: "en_US_POSIX")
+        moneyFormatter.usesGroupingSeparator = false
+        moneyFormatter.decimalSeparator = "."
         moneyFormatter.maximumFractionDigits = 2
         moneyFormatter.minimumFractionDigits = 2
 
