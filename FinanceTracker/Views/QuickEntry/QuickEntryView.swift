@@ -136,9 +136,6 @@ struct QuickEntryView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 4)
                 .padding(.bottom, 8)
-                // Fade the prompt out/in on focus (device QA round 1 #4) rather than
-                // hard-cutting while the keyboard animates.
-                .animation(.easeInOut(duration: 0.2), value: isInputFocused)
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
@@ -347,24 +344,21 @@ struct QuickEntryView: View {
     /// scroll and forced the preview / chips to clip under the keyboard.
     @ViewBuilder
     private var amountHero: some View {
-        // B4 (device QA round 1 #4): hide this prompt once the field is focused. With
-        // the keyboard up, the scroll region is squeezed and the 56pt prompt was
-        // half-clipped/overlapped by the chip row. The input's own placeholder
-        // ("e.g. 50 coffee") already guides the user while typing, so dropping the
-        // redundant prompt on focus keeps the title from ever rendering half-cut.
-        // Mounted for the WHOLE empty state (parsed == nil), not just when the
-        // field is unfocused. Item 2 (device QA re-diagnosis): the earlier fix
-        // (dcd34ca) only opted this label out of the voice.isListening animation,
-        // but the real cause is that starting dictation drops keyboard focus, so
-        // `!isInputFocused` flipped true and the label was RE-INSERTED (.transition)
-        // into a layout that was simultaneously animating (isInputFocused at L141 +
-        // voice.isListening at L177). A view inserted mid-animation is proposed a
-        // ~0 width first, so the centered prompt wrapped one char per line
-        // ("Введ / ите / …") before snapping to full width. Nulling one animation
-        // couldn't fix an insertion-time width collapse. Fix: never insert/remove
-        // it across the voice⇄text toggle — keep it mounted at a stable full width
-        // and only cross-fade (opacity) / collapse its height on focus. Its width
-        // is now established once and never re-proposed from zero.
+        // The empty-state prompt ("Введите или скажите сумму"). Mounted for the WHOLE
+        // empty state (parsed == nil) at a STABLE full width so it can never re-wrap
+        // one char per line across the voice⇄text focus toggle.
+        //
+        // Item 1 (device QA, "+"-sheet jank): this label used to COLLAPSE to height 0
+        // + opacity 0 on focus, driven by `.animation(value: isInputFocused)` on the
+        // scroll content. That animation ran at the exact moment the keyboard-show
+        // animation was shrinking the scroll region — two animations racing over the
+        // same vertical space. The race is what produced the transient non-finite
+        // layout pass (`Invalid frame dimension` spam), the two-stage "jerky rise",
+        // AND the hint appearing to be "eaten" by the keyboard. It stays mounted and
+        // visible now: it lives in the scroll region ABOVE the fixed input/Save
+        // cluster, which the keyboard pushes up, so the hint is never occluded, and
+        // the chip row it once overlapped moved into the bottom cluster (B7), so
+        // there's nothing left to clip against. No focus-driven size change → no race.
         if parsed == nil {
             Text("quick_entry.prompt.amount")
                 .font(.system(size: 24, weight: .medium, design: .rounded))
@@ -372,12 +366,7 @@ struct QuickEntryView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity)
-                // Collapse (not remove) when the keyboard is up so the squeezed
-                // scroll region still reclaims the 56pt — but the label keeps its
-                // stable full width the whole time, so it can never re-wrap.
-                .frame(height: isInputFocused ? 0 : 56)
-                .opacity(isInputFocused ? 0 : 1)
-                .clipped()
+                .padding(.vertical, 12)
                 .accessibilityHidden(true)
         }
     }
