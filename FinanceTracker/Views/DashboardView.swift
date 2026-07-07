@@ -265,7 +265,9 @@ struct DashboardView: View {
     }
 
     private func refreshWidgetSnapshot() {
-        NetSnapshotBuilder.updateSnapshot(transactions: transactions, currencyCode: defaultCurrencyCode)
+        NetSnapshotBuilder.updateSnapshot(transactions: transactions,
+                                          currencyCode: defaultCurrencyCode,
+                                          monthlyBudgetCents: monthlyBudgetCents)
     }
 
     // MARK: - Recurring

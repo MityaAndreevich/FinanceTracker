@@ -640,6 +640,11 @@
 /* Widget */
 "widget.spent.format" = "Витрачено %@";
 "widget.earned.format" = "Зароблено %@";
+"widget.safe_to_spend" = "Можна витратити";
+"widget.over_budget" = "Перевищення бюджету";
+"widget.hero.spent" = "Витрати";
+"widget.of_budget.format" = "з %@";
+"widget.of_earned.format" = "з %@ доходу";
 
 /* Quick Add */
 "quickadd.placeholder" = "Швидке додавання: кава 85";

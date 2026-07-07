@@ -106,7 +106,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // (analytics.pace.title/faster/on/under). Measured 568 after the addition;
         // the prior literal (561) had already drifted −2 vs the real 563 baseline
         // (all 5 locales stayed in parity, so only this hardcoded number was stale).
-        XCTAssertEqual(enKeys.count, 568, "English baseline changed; update the expected count.")
+        // 2026-07-07 (Widget redesign v1.0.1): +5 for the redesigned widget's
+        // safe-to-spend hero + no-budget/over-budget copy (widget.safe_to_spend,
+        // widget.over_budget, widget.hero.spent, widget.of_budget.format,
+        // widget.of_earned.format). All 5 locales carry them in parity. Was 568.
+        XCTAssertEqual(enKeys.count, 573, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

@@ -2,13 +2,20 @@
 //  BudgetCrabWidget.swift
 //  BudgetCrabWidget
 //
-//  Read-only Home Screen widget showing the current month's NET. Reads a
-//  pre-computed NetSnapshot from the shared App Group — never opens SwiftData,
-//  never hits the network. Refreshes once per day (.after next midnight).
+//  Read-only Home Screen widget. Reads a pre-computed NetSnapshot from the
+//  shared App Group — never opens SwiftData, never hits the network. Refreshes
+//  once per day (.after next midnight).
+//
+//  v1.0.1 redesign: leads with **Safe to spend** (gain-framed) + a spent-vs-
+//  budget progress ring, calm/rounded to match the app. Green is reserved for
+//  income only; spend reads muted terracotta, never alarm-red. The extension is
+//  a dumb renderer: all copy + fractions arrive baked & guarded in the snapshot;
+//  this file only re-guards ring/bar values and paints them.
 //
 
 import WidgetKit
 import SwiftUI
+import UIKit
 
 // MARK: - Timeline
 
@@ -41,85 +48,233 @@ struct BudgetCrabProvider: TimelineProvider {
 }
 
 // MARK: - Palette
+//
+// The widget extension has no asset catalog, so the app's `bc*` colorsets aren't
+// available here. These mirror them EXACTLY (values pulled from
+// Assets.xcassets/bc*.colorset + Color+Semantic.swift) as dynamic light/dark
+// providers. Source of truth stays the app's tokens — keep in sync if they move.
+// Rule (locked): green = income/positive only; spend = muted terracotta, never
+// alarm-red; ring track = neutral surface.
 
-private let budgetCrabMint = Color(red: 0.239, green: 0.863, blue: 0.592) // #3DDC97
+private enum Palette {
+    private static func dyn(_ light: (Double, Double, Double), _ dark: (Double, Double, Double)) -> Color {
+        Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+            ? UIColor(red: dark.0, green: dark.1, blue: dark.2, alpha: 1)
+            : UIColor(red: light.0, green: light.1, blue: light.2, alpha: 1) })
+    }
+    private static func hex(_ r: Int, _ g: Int, _ b: Int) -> (Double, Double, Double) {
+        (Double(r) / 255, Double(g) / 255, Double(b) / 255)
+    }
 
-private extension NetSnapshot {
-    var heroColor: Color { isPositive ? .green : .red }
-    var directionSymbol: String { isPositive ? "arrow.up.right" : "arrow.down.right" }
+    /// Brand mint — income / positive only (bcPositive / bcAccent).
+    static let income      = dyn(hex(0x17, 0xB4, 0x7D), hex(0x3D, 0xDC, 0x97))
+    /// Muted terracotta for spend (bcExpense) — the ring fill + category bars.
+    static let spend       = dyn((0.75, 0.33, 0.24), (0.91, 0.53, 0.44))
+    /// Reserved for genuine over-budget alerts (bcDanger).
+    static let danger      = dyn(hex(0xC4, 0x3C, 0x3C), hex(0xE2, 0x4B, 0x4A))
+    /// Neutral ring / bar track (bcSurface2).
+    static let track       = dyn(hex(0xF4, 0xF2, 0xEC), hex(0x20, 0x28, 0x38))
+    static let textPrimary = dyn(hex(0x14, 0x18, 0x1F), hex(0xF2, 0xF5, 0xF9))
+    static let textSecondary = dyn(hex(0x5F, 0x6B, 0x7A), hex(0x8C, 0x97, 0xA8))
+    static let textMuted   = dyn(hex(0x9A, 0xA4, 0xB2), hex(0x5A, 0x65, 0x77))
 }
 
-// MARK: - Entry view
+// MARK: - Building blocks
 
-struct BudgetCrabWidgetEntryView: View {
-    @Environment(\.widgetFamily) private var family
-    var entry: BudgetCrabEntry
+/// Progress ring. Fraction is re-guarded on the way in so a corrupt/NaN blob can
+/// never draw a negative or oversized arc (same discipline as ChartGuards).
+private struct RingGauge<Center: View>: View {
+    let fraction: Double
+    let isNeutral: Bool
+    let lineWidth: CGFloat
+    @ViewBuilder var center: () -> Center
+
+    private var safe: Double {
+        guard fraction.isFinite else { return 0 }
+        return min(max(fraction, 0), 1)
+    }
 
     var body: some View {
-        switch family {
-        case .systemSmall:  SmallWidgetView(snapshot: entry.snapshot)
-        case .systemMedium: MediumWidgetView(snapshot: entry.snapshot)
-        default:            LargeWidgetView(snapshot: entry.snapshot)
+        ZStack {
+            Circle()
+                .stroke(Palette.track, lineWidth: lineWidth)
+            if !isNeutral {
+                Circle()
+                    .trim(from: 0, to: max(safe, 0.0001))
+                    .stroke(Palette.spend, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+            center()
         }
     }
 }
 
-private struct HeroView: View {
-    let snapshot: NetSnapshot
+/// One top-category row: symbol chip, name, mini spend bar, compact amount.
+private struct CategoryRow: View {
+    let item: NetSnapshot.Item
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(snapshot.monthLabel)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 6) {
-                Image(systemName: snapshot.directionSymbol)
-                    .font(.headline)
-                    .foregroundStyle(snapshot.heroColor)
-                Text(snapshot.heroAmount)
-                    .font(.system(size: 28, weight: .bold))
+        HStack(spacing: 8) {
+            Image(systemName: item.symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Palette.spend)
+                .frame(width: 16)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(item.name)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Palette.textPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    Text(item.amount)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(Palette.textSecondary)
+                        .lineLimit(1)
+                }
+                MiniBar(fraction: item.safeFraction)
+            }
+        }
+    }
+}
+
+private struct MiniBar: View {
+    let fraction: Double
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Palette.track)
+                Capsule().fill(Palette.spend)
+                    .frame(width: max(geo.size.width * min(max(fraction, 0), 1), 3))
+            }
+        }
+        .frame(height: 4)
+    }
+}
+
+/// Hero readout: label, big compact amount, optional "of $Y" subline.
+private struct HeroBlock: View {
+    let snapshot: NetSnapshot
+    var amountSize: CGFloat
+    var alignment: HorizontalAlignment = .leading
+
+    private var amountColor: Color {
+        snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary
+    }
+
+    var body: some View {
+        VStack(alignment: alignment, spacing: 2) {
+            Text(snapshot.heroLabel)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Palette.textSecondary)
+                .lineLimit(1)
+            Text(snapshot.heroAmount)
+                .font(.system(size: amountSize, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(amountColor)
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+            if !snapshot.heroSubtitle.isEmpty {
+                Text(snapshot.heroSubtitle)
+                    .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()
-                    .foregroundStyle(snapshot.heroColor)
-                    .minimumScaleFactor(0.6)
+                    .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
             }
         }
     }
 }
 
+/// Small brand mark shown in a corner so the widget always reads as Budget Crab.
+private struct BrandMark: View {
+    var body: some View {
+        Image(systemName: "chart.pie.fill")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(Palette.income)
+    }
+}
+
+// MARK: - Sizes
+
 private struct SmallWidgetView: View {
     let snapshot: NetSnapshot
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack { Spacer(); Image(systemName: "chart.line.uptrend.xyaxis").font(.caption).foregroundStyle(budgetCrabMint) }
-            Spacer()
-            HeroView(snapshot: snapshot)
+        VStack(spacing: 8) {
+            HStack {
+                Text(snapshot.monthLabel)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Palette.textMuted)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                BrandMark()
+            }
+            Spacer(minLength: 0)
+            RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 9) {
+                VStack(spacing: 1) {
+                    Text(snapshot.heroAmount)
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .padding(.horizontal, 6)
+                }
+            }
+            .frame(width: 96, height: 96)
+            Spacer(minLength: 0)
+            Text(snapshot.heroLabel)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Palette.textSecondary)
+                .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 private struct MediumWidgetView: View {
     let snapshot: NetSnapshot
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading) {
-                HeroView(snapshot: snapshot)
-                Spacer()
-                Text(snapshot.spentText)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(snapshot.topCategories) { item in
-                    HStack {
-                        Text(item.name).font(.caption).lineLimit(1)
-                        Spacer()
-                        Text(item.amount).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                    }
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(snapshot.monthLabel)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Palette.textMuted)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    BrandMark()
                 }
                 Spacer(minLength: 0)
+                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 10) {
+                    VStack(spacing: 1) {
+                        Text(snapshot.heroAmount)
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary)
+                            .minimumScaleFactor(0.5)
+                            .lineLimit(1)
+                            .padding(.horizontal, 4)
+                    }
+                }
+                .frame(width: 84, height: 84)
+                Text(snapshot.heroLabel)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: 120, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 10) {
+                if snapshot.topCategories.isEmpty {
+                    Spacer()
+                    Text(snapshot.spentText)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Palette.textSecondary)
+                        .lineLimit(1)
+                    Spacer()
+                } else {
+                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
+                    Spacer(minLength: 0)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -129,43 +284,65 @@ private struct MediumWidgetView: View {
 private struct LargeWidgetView: View {
     let snapshot: NetSnapshot
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HeroView(snapshot: snapshot)
-
-            HStack(spacing: 12) {
-                Text(snapshot.spentText)
-                Text(snapshot.earnedText)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(snapshot.monthLabel)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                BrandMark()
             }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
+
+            HStack(spacing: 18) {
+                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 12) {
+                    EmptyView()
+                }
+                .frame(width: 88, height: 88)
+                HeroBlock(snapshot: snapshot, amountSize: 34)
+                Spacer(minLength: 0)
+            }
 
             if !snapshot.topCategories.isEmpty {
-                Divider()
-                ForEach(snapshot.topCategories) { item in
-                    HStack {
-                        Text(item.name).font(.caption).lineLimit(1)
-                        Spacer()
-                        Text(item.amount).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if !snapshot.recent.isEmpty {
-                Divider()
-                ForEach(snapshot.recent) { tx in
-                    HStack {
-                        Text(tx.title).font(.caption).lineLimit(1)
-                        Spacer()
-                        Text(tx.amount)
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(tx.isIncome ? .green : .primary)
-                    }
+                Rectangle().fill(Palette.track).frame(height: 1)
+                VStack(spacing: 12) {
+                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
                 }
             }
 
             Spacer(minLength: 0)
+
+            Rectangle().fill(Palette.track).frame(height: 1)
+            HStack {
+                Text(snapshot.spentText)
+                    .foregroundStyle(Palette.textSecondary)
+                Spacer()
+                Text(snapshot.earnedText)
+                    .foregroundStyle(Palette.income)
+            }
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .lineLimit(1)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+// MARK: - Entry view
+
+struct BudgetCrabWidgetEntryView: View {
+    @Environment(\.widgetFamily) private var family
+    var entry: BudgetCrabEntry
+
+    var body: some View {
+        Group {
+            switch family {
+            case .systemSmall:  SmallWidgetView(snapshot: entry.snapshot)
+            case .systemMedium: MediumWidgetView(snapshot: entry.snapshot)
+            default:            LargeWidgetView(snapshot: entry.snapshot)
+            }
+        }
+        .widgetURL(WidgetSharing.widgetURL)
     }
 }
 
@@ -181,7 +358,7 @@ struct BudgetCrabWidget: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Budget Crab")
-        .description("See your monthly net at a glance.")
+        .description("See what's safe to spend at a glance.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

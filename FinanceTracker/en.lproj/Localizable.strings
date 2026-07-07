@@ -633,6 +633,11 @@
 /* Widget */
 "widget.spent.format" = "Spent %@";
 "widget.earned.format" = "Earned %@";
+"widget.safe_to_spend" = "Safe to spend";
+"widget.over_budget" = "Over budget";
+"widget.hero.spent" = "Spent";
+"widget.of_budget.format" = "of %@";
+"widget.of_earned.format" = "of %@ earned";
 
 /* Quick Add */
 "quickadd.placeholder" = "Quick add: Starbucks 5.50";

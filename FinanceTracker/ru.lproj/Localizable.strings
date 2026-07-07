@@ -643,6 +643,11 @@
 /* Widget */
 "widget.spent.format" = "Расходы: %@";
 "widget.earned.format" = "Доходы: %@";
+"widget.safe_to_spend" = "Можно потратить";
+"widget.over_budget" = "Превышение бюджета";
+"widget.hero.spent" = "Расходы";
+"widget.of_budget.format" = "из %@";
+"widget.of_earned.format" = "из %@ дохода";
 
 /* Quick Add */
 "quickadd.placeholder" = "Быстро: кофе 350";

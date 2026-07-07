@@ -581,6 +581,11 @@
 "recurring.settings.stop" = "Detener";
 "widget.spent.format" = "Gastado %@";
 "widget.earned.format" = "Ganado %@";
+"widget.safe_to_spend" = "Disponible para gastar";
+"widget.over_budget" = "Presupuesto superado";
+"widget.hero.spent" = "Gastado";
+"widget.of_budget.format" = "de %@";
+"widget.of_earned.format" = "de %@ ganado";
 "quickadd.placeholder" = "Rápido: café 60";
 "quickadd.preview.save" = "Guardar";
 "quickadd.preview.edit" = "Editar";

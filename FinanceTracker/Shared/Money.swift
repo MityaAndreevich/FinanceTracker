@@ -24,6 +24,26 @@ enum Money {
         return f.string(from: NSDecimalNumber(decimal: amount)) ?? "\(amount)"
     }
 
+    /// Compact currency for glance surfaces (the Home Screen widget) where a full
+    /// `$12,345.67` truncates. Whole dollars below $10K stay legible with grouping
+    /// separators (`$1,234`); larger values fold to locale-aware short notation
+    /// (`$12.3K`, `1,2 млн ₽`). Never renders cents — a widget is a glance, not a
+    /// ledger. Fully locale-parameterized so it round-trips under any region.
+    static func formatCompact(cents: Int, currencyCode: String, locale: Locale = .autoupdatingCurrent) -> String {
+        let amount = Decimal(cents) / 100
+        let style = Decimal.FormatStyle.Currency(code: currencyCode, locale: locale)
+        if abs(amount) >= 10_000 {
+            // Compact currency notation ("$12.3K", "1,2 млн ₽") is locale-perfect
+            // but iOS 18+. On iOS 17 fall back to grouped whole units — the widget
+            // scales the font to fit, so a large value still never truncates.
+            if #available(iOS 18.0, *) {
+                return amount.formatted(style.notation(.compactName).precision(.fractionLength(0...1)))
+            }
+            return amount.formatted(style.precision(.fractionLength(0)))
+        }
+        return amount.formatted(style.precision(.fractionLength(0)))
+    }
+
     /// Format a signed cents value with explicit `+`/`-` prefix.
     /// Useful for transaction rows so we don't rely on color alone (accessibility).
     static func formatSigned(cents: Int, isPositive: Bool, currencyCode: String) -> String {

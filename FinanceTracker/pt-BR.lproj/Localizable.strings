@@ -582,6 +582,11 @@
 "recurring.settings.stop" = "Parar";
 "widget.spent.format" = "Gasto %@";
 "widget.earned.format" = "Ganho %@";
+"widget.safe_to_spend" = "Disponível para gastar";
+"widget.over_budget" = "Orçamento excedido";
+"widget.hero.spent" = "Gasto";
+"widget.of_budget.format" = "de %@";
+"widget.of_earned.format" = "de %@ ganho";
 "quickadd.placeholder" = "Adição rápida: Starbucks 12";
 "quickadd.preview.save" = "Salvar";
 "quickadd.preview.edit" = "Editar";
