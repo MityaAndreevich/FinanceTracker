@@ -63,6 +63,36 @@ final class PaceMetricTests: XCTestCase {
         XCTAssertTrue(s.isShown)
     }
 
+    // MARK: - Baseline source (budget preferred, history fallback)
+
+    func test_baseline_prefersBudget_whenSet() {
+        // $300 budget / 30 days = $10/day, regardless of prior history.
+        let b = PaceMetric.baselineDailyCents(
+            monthlyBudgetCents: 30_000, daysInMonth: 30,
+            priorExpenseCents: 999_999, priorSpanDays: 1)
+        XCTAssertEqual(b, 1000, accuracy: 0.001)
+    }
+
+    func test_baseline_fallsBackToHistory_whenNoBudget() {
+        // No budget → prior 60,000 over 20 days = 3,000/day.
+        let b = PaceMetric.baselineDailyCents(
+            monthlyBudgetCents: 0, daysInMonth: 30,
+            priorExpenseCents: 60_000, priorSpanDays: 20)
+        XCTAssertEqual(b, 3000, accuracy: 0.001)
+    }
+
+    func test_baseline_zero_whenNeitherAvailable() {
+        // No budget and no history → 0 → cue hidden downstream.
+        let b = PaceMetric.baselineDailyCents(
+            monthlyBudgetCents: 0, daysInMonth: 30,
+            priorExpenseCents: 0, priorSpanDays: 0)
+        XCTAssertEqual(b, 0)
+        XCTAssertEqual(
+            PaceMetric.evaluate(spentThisPeriodCents: 5000, elapsedDays: 10,
+                                baselineDailyCents: b),
+            .unavailable)
+    }
+
     func test_shown_flagMatchesState() {
         XCTAssertTrue(PaceMetric.State.faster.isShown)
         XCTAssertTrue(PaceMetric.State.onPace.isShown)

@@ -18,6 +18,10 @@ struct AnalyticsView: View {
     @Environment(\.locale) private var locale
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+    // Monthly budget (cents) — same key the Dashboard hero reads. When set it
+    // anchors the spending-pace baseline; 0 means "no budget" (pace falls back to
+    // prior spend history). Item 3.
+    @AppStorage("monthlyBudgetCents") private var monthlyBudgetCents: Int = 0
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
@@ -87,6 +91,7 @@ struct AnalyticsView: View {
         }
         .onChange(of: transactions) { _, _ in recompute() }
         .onChange(of: defaultCurrencyCode) { _, _ in recompute() }
+        .onChange(of: monthlyBudgetCents) { _, _ in recompute() }
         .onChange(of: locale) { _, _ in recompute() }
     }
 
@@ -191,10 +196,11 @@ struct AnalyticsView: View {
         recomputePace(cal: cal, monthStart: monthStart, today: today)
     }
 
-    /// Spending-velocity for the current month vs the user's own prior daily
-    /// spend. Baseline = all expense *before* this month ÷ the day-span it covers,
-    /// so it needs no budget and works from any prior history. `recomputePulse`
-    /// runs first, so `pulseSpentCents` (this month's gross spend) is current.
+    /// Spending-velocity for the current month. The baseline is the user's budget
+    /// prorated per day when a budget is set, otherwise their prior daily spend
+    /// (all expense before this month ÷ the day-span it covers) — see
+    /// `PaceMetric.baselineDailyCents`. `recomputePulse` runs first, so
+    /// `pulseSpentCents` (this month's gross spend) is current.
     private func recomputePace(cal: Calendar, monthStart: Date, today: Date) {
         // Days elapsed this month, today inclusive (the day-to-date window).
         let elapsedDays = (cal.dateComponents([.day], from: monthStart, to: today).day ?? 0) + 1
@@ -209,11 +215,17 @@ struct AnalyticsView: View {
             if let e = earliestPriorDay { earliestPriorDay = min(e, day) } else { earliestPriorDay = day }
         }
 
-        var baselineDaily = 0.0
-        if priorExpense > 0, let earliest = earliestPriorDay {
-            let span = (cal.dateComponents([.day], from: earliest, to: monthStart).day ?? 0)
-            if span > 0 { baselineDaily = Double(priorExpense) / Double(span) }
-        }
+        let priorSpanDays = earliestPriorDay
+            .flatMap { cal.dateComponents([.day], from: $0, to: monthStart).day } ?? 0
+        let daysInMonth = cal.range(of: .day, in: .month, for: monthStart)?.count ?? 30
+
+        // Budget-prorated baseline when a budget is set, else the prior daily rate.
+        let baselineDaily = PaceMetric.baselineDailyCents(
+            monthlyBudgetCents: monthlyBudgetCents,
+            daysInMonth: daysInMonth,
+            priorExpenseCents: priorExpense,
+            priorSpanDays: priorSpanDays
+        )
 
         pace = PaceMetric.evaluate(
             spentThisPeriodCents: pulseSpentCents,

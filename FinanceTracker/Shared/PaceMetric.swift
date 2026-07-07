@@ -62,6 +62,28 @@ enum PaceMetric {
         }
     }
 
+    /// The daily spend rate this period's pace is measured against.
+    ///
+    /// Prefers the user's **monthly budget** prorated to a daily figure (so pace
+    /// answers the brief's question — "are they spending faster than the days
+    /// elapsed imply?" — against their own target). When no budget is set, falls
+    /// back to the user's **prior daily spend** so budget-less users with history
+    /// still get a cue. Returns 0 (→ `.unavailable`) when neither is available.
+    static func baselineDailyCents(
+        monthlyBudgetCents: Int,
+        daysInMonth: Int,
+        priorExpenseCents: Int,
+        priorSpanDays: Int
+    ) -> Double {
+        if monthlyBudgetCents > 0, daysInMonth > 0 {
+            return Double(monthlyBudgetCents) / Double(daysInMonth)
+        }
+        if priorExpenseCents > 0, priorSpanDays > 0 {
+            return Double(priorExpenseCents) / Double(priorSpanDays)
+        }
+        return 0
+    }
+
     /// Evaluate spending pace.
     ///
     /// - Parameters:
