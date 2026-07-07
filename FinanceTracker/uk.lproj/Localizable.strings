@@ -729,6 +729,7 @@
 "analytics.horizon.title" = "Горизонт";
 "analytics.net_this_month" = "Баланс цього місяця";
 "analytics.total" = "Усього";
+"analytics.breakdown.other" = "Інше";
 "analytics.earned_total" = "Зароблено";
 "analytics.spent_total" = "Витрачено";
 "analytics.horizon.hint" = "Проведіть по графіку для перегляду";

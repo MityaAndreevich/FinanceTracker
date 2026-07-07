@@ -602,6 +602,7 @@
 "analytics.horizon.title" = "Horizonte";
 "analytics.net_this_month" = "Neto este mes";
 "analytics.total" = "Total";
+"analytics.breakdown.other" = "Otros";
 "analytics.earned_total" = "Ingresos";
 "analytics.spent_total" = "Gastos";
 "analytics.horizon.hint" = "Desliza por el gráfico para explorar";

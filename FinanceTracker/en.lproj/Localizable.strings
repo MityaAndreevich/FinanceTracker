@@ -722,6 +722,7 @@
 "analytics.horizon.title" = "Horizon";
 "analytics.net_this_month" = "Net this month";
 "analytics.total" = "Total";
+"analytics.breakdown.other" = "Other";
 "analytics.earned_total" = "Earned";
 "analytics.spent_total" = "Spent";
 "analytics.horizon.hint" = "Drag across the chart to explore";

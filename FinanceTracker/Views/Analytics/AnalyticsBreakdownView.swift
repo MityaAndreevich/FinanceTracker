@@ -58,11 +58,55 @@ struct AnalyticsBreakdownView: View {
         filteredCategories.sorted { $0.cents > $1.cents }
     }
 
+    /// Stable identity for the synthesized "Other" bucket. A fixed sentinel UUID so
+    /// the aggregate slice equates/hashes consistently and never collides with a
+    /// real category UUID.
+    static let otherBucketID = UUID(uuidString: "00000000-0000-0000-0000-0000000000FF")!
+
+    /// Cap the donut at a handful of named slices + a single aggregated "Other"
+    /// bucket so a long tail of tiny categories can't shatter the ring into
+    /// unreadable slivers (Item 4). Pure + locale-free: the caller supplies the
+    /// localized label + a neutral color. Input is assumed sorted descending.
+    ///
+    /// - `maxNamed` categories keep their own slice; the remainder collapses into
+    ///   "Other". A single leftover category is shown directly rather than hidden
+    ///   behind a vague "Other" (so ≤ `maxNamed`+1 passes through untouched).
+    static func displaySlices(
+        from sorted: [CategoryTotal],
+        maxNamed: Int = 5,
+        otherName: String,
+        otherColor: Color
+    ) -> [CategoryTotal] {
+        guard sorted.count > maxNamed + 1 else { return sorted }
+        let named = Array(sorted.prefix(maxNamed))
+        let otherCents = sorted.dropFirst(maxNamed).reduce(0) { $0 + $1.cents }
+        guard otherCents > 0 else { return named }
+        let other = CategoryTotal(
+            id: otherBucketID,
+            name: otherName,
+            symbol: "ellipsis",
+            cents: otherCents,
+            isIncome: named.first?.isIncome ?? false,
+            color: otherColor
+        )
+        return named + [other]
+    }
+
+    /// The slices actually shown — top categories + an "Other" aggregate. Drives
+    /// both the donut and the legend so the two never disagree.
+    private var displayCategories: [CategoryTotal] {
+        Self.displaySlices(
+            from: sortedCategories,
+            otherName: String(localized: "analytics.breakdown.other"),
+            otherColor: .bcTextMuted
+        )
+    }
+
     /// Categories safe to plot as a donut: non-positive magnitudes dropped, and a
     /// zero-total set collapsed to empty so the `SectorMark` angular domain is
     /// never degenerate (0/0 sweep angle → EXC_BREAKPOINT inside Charts).
     private var renderableCategories: [CategoryTotal] {
-        ChartGuards.renderableSlices(sortedCategories, magnitude: \.cents)
+        ChartGuards.renderableSlices(displayCategories, magnitude: \.cents)
     }
 
     private var total: Int {
@@ -179,22 +223,34 @@ struct AnalyticsBreakdownView: View {
 
     private var legend: some View {
         VStack(spacing: 8) {
-            ForEach(sortedCategories) { cat in
-                NavigationLink {
-                    CategoryDetailView(
-                        categoryUUID: cat.id,
-                        categoryName: cat.name,
-                        currencyCode: currencyCode
-                    )
-                } label: {
+            ForEach(displayCategories) { cat in
+                if cat.id == Self.otherBucketID {
+                    // The "Other" aggregate has no single category to drill into, so
+                    // it's a plain focusable row (tap dims the ring to its slice) —
+                    // no chevron, no navigation.
                     legendRow(cat)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.25)) { selectedCategory = cat }
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        }
+                } else {
+                    NavigationLink {
+                        CategoryDetailView(
+                            categoryUUID: cat.id,
+                            categoryName: cat.name,
+                            currencyCode: currencyCode
+                        )
+                    } label: {
+                        legendRow(cat)
+                    }
+                    .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        // Also focus the matching donut slice on tap.
+                        withAnimation(.easeInOut(duration: 0.25)) { selectedCategory = cat }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    })
                 }
-                .buttonStyle(.plain)
-                .simultaneousGesture(TapGesture().onEnded {
-                    // Also focus the matching donut slice on tap.
-                    withAnimation(.easeInOut(duration: 0.25)) { selectedCategory = cat }
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                })
             }
         }
     }
@@ -234,9 +290,11 @@ struct AnalyticsBreakdownView: View {
                     .foregroundStyle(Color.bcTextPrimary)
                     .privacySensitive(true)
 
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(Color.bcTextMuted)
+                if cat.id != Self.otherBucketID {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color.bcTextMuted)
+                }
             }
 
             GeometryReader { geo in
