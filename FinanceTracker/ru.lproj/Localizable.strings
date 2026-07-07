@@ -733,6 +733,10 @@
 "analytics.net_this_month" = "Чистыми за месяц";
 "analytics.total" = "Всего";
 "analytics.breakdown.other" = "Другое";
+"analytics.pace.title" = "Темп трат";
+"analytics.pace.faster" = "Тратите быстрее обычного";
+"analytics.pace.on" = "В обычном темпе";
+"analytics.pace.under" = "Тратите меньше обычного";
 "analytics.earned_total" = "Доходы";
 "analytics.spent_total" = "Расходы";
 "analytics.horizon.hint" = "Проведите по графику, чтобы посмотреть";

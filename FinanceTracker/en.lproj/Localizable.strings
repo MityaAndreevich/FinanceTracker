@@ -723,6 +723,10 @@
 "analytics.net_this_month" = "Net this month";
 "analytics.total" = "Total";
 "analytics.breakdown.other" = "Other";
+"analytics.pace.title" = "Spending pace";
+"analytics.pace.faster" = "Spending faster than usual";
+"analytics.pace.on" = "On pace";
+"analytics.pace.under" = "Spending less than usual";
 "analytics.earned_total" = "Earned";
 "analytics.spent_total" = "Spent";
 "analytics.horizon.hint" = "Drag across the chart to explore";

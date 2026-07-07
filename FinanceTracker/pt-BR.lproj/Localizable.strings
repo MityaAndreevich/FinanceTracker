@@ -604,6 +604,10 @@
 "analytics.net_this_month" = "Líquido este mês";
 "analytics.total" = "Total";
 "analytics.breakdown.other" = "Outros";
+"analytics.pace.title" = "Ritmo de gastos";
+"analytics.pace.faster" = "Gastando mais rápido que o normal";
+"analytics.pace.on" = "No ritmo";
+"analytics.pace.under" = "Gastando menos que o normal";
 "analytics.earned_total" = "Receitas";
 "analytics.spent_total" = "Despesas";
 "analytics.horizon.hint" = "Arraste pelo gráfico para explorar";

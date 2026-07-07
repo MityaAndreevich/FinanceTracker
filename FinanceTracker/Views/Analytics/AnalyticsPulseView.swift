@@ -25,6 +25,9 @@ struct AnalyticsPulseView: View {
     let earnedCents: Int
     let spentCents: Int
     let currencyCode: String
+    // Spending-velocity verdict for this month vs the user's usual daily pace
+    // (Item 3). `.unavailable` hides the cue. Computed upstream in AnalyticsView.
+    var pace: PaceMetric.State = .unavailable
 
     // `chartXSelection` resets to nil on touch-end; keep a sticky selection so
     // the scrubbed day (and its tappable drill-down) survives finger lift.
@@ -63,6 +66,7 @@ struct AnalyticsPulseView: View {
                 heroMetric
                 cashFlowChart
                 summary
+                if pace.isShown { paceCue }
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -246,6 +250,26 @@ struct AnalyticsPulseView: View {
                 color: .bcTextSecondary
             )
         }
+    }
+
+    /// Calm spending-velocity cue: a gauge glyph + a "faster / on pace / less than
+    /// usual" label. Meaning is carried by the icon + text, not the tint (which is
+    /// deliberately calm — amber, never alarm-red). Hidden when `.unavailable`.
+    private var paceCue: some View {
+        HStack(spacing: 12) {
+            Image(systemName: pace.systemImage)
+                .font(.body.weight(.bold))
+                .foregroundStyle(pace.tint)
+                .frame(width: 24)
+            Text(pace.labelKey)
+                .font(.body)
+                .foregroundStyle(Color.bcTextPrimary)
+            Spacer(minLength: 8)
+        }
+        .bcCard(padding: 14)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("analytics.pace.title"))
+        .accessibilityValue(Text(pace.labelKey))
     }
 
     private func summaryRow(icon: String, label: LocalizedStringKey, value: Int, color: Color) -> some View {

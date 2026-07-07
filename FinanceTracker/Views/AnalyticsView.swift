@@ -34,6 +34,8 @@ struct AnalyticsView: View {
     @State private var pulseSpentCents: Int = 0
     @State private var breakdownCategories: [AnalyticsBreakdownView.CategoryTotal] = []
     @State private var horizonMonths: [AnalyticsHorizonView.MonthlyTotal] = []
+    // Spending-velocity verdict for the Pulse screen (Item 3).
+    @State private var pace: PaceMetric.State = .unavailable
 
     enum Screen: String, CaseIterable, Identifiable {
         case pulse, breakdown, horizon
@@ -97,7 +99,8 @@ struct AnalyticsView: View {
                 netCents: pulseNetCents,
                 earnedCents: pulseEarnedCents,
                 spentCents: pulseSpentCents,
-                currencyCode: defaultCurrencyCode
+                currencyCode: defaultCurrencyCode,
+                pace: pace
             )
         case .breakdown:
             if breakdownCategories.isEmpty {
@@ -185,6 +188,38 @@ struct AnalyticsView: View {
         recomputePulse(cal: cal, monthStart: monthStart, today: today)
         recomputeBreakdown(cal: cal, monthStart: monthStart, today: today)
         recomputeHorizon(cal: cal, monthStart: monthStart)
+        recomputePace(cal: cal, monthStart: monthStart, today: today)
+    }
+
+    /// Spending-velocity for the current month vs the user's own prior daily
+    /// spend. Baseline = all expense *before* this month ÷ the day-span it covers,
+    /// so it needs no budget and works from any prior history. `recomputePulse`
+    /// runs first, so `pulseSpentCents` (this month's gross spend) is current.
+    private func recomputePace(cal: Calendar, monthStart: Date, today: Date) {
+        // Days elapsed this month, today inclusive (the day-to-date window).
+        let elapsedDays = (cal.dateComponents([.day], from: monthStart, to: today).day ?? 0) + 1
+
+        // Prior-history baseline: sum expense before this month + earliest such day.
+        var priorExpense = 0
+        var earliestPriorDay: Date?
+        for tx in transactions where tx.isExpense {
+            let day = cal.startOfDay(for: tx.date)
+            guard day < monthStart else { continue }
+            priorExpense += tx.amountCents
+            if let e = earliestPriorDay { earliestPriorDay = min(e, day) } else { earliestPriorDay = day }
+        }
+
+        var baselineDaily = 0.0
+        if priorExpense > 0, let earliest = earliestPriorDay {
+            let span = (cal.dateComponents([.day], from: earliest, to: monthStart).day ?? 0)
+            if span > 0 { baselineDaily = Double(priorExpense) / Double(span) }
+        }
+
+        pace = PaceMetric.evaluate(
+            spentThisPeriodCents: pulseSpentCents,
+            elapsedDays: elapsedDays,
+            baselineDailyCents: baselineDaily
+        )
     }
 
     private func recomputePulse(cal: Calendar, monthStart: Date, today: Date) {

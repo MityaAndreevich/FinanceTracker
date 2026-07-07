@@ -730,6 +730,10 @@
 "analytics.net_this_month" = "Баланс цього місяця";
 "analytics.total" = "Усього";
 "analytics.breakdown.other" = "Інше";
+"analytics.pace.title" = "Темп витрат";
+"analytics.pace.faster" = "Витрачаєте швидше, ніж зазвичай";
+"analytics.pace.on" = "У звичному темпі";
+"analytics.pace.under" = "Витрачаєте менше, ніж зазвичай";
 "analytics.earned_total" = "Зароблено";
 "analytics.spent_total" = "Витрачено";
 "analytics.horizon.hint" = "Проведіть по графіку для перегляду";
