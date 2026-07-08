@@ -93,6 +93,52 @@ final class CSVMappedImportTests: XCTestCase {
         XCTAssertEqual(txs[1].typeRaw, "expense")  // debit
     }
 
+    // MARK: - European comma-decimal auto-detection (symmetric with date order)
+
+    func testEuropeanCommaDecimalAutoDetected() throws {
+        // genericBank/Custom carry decimal .auto. The importer must detect comma
+        // from the sample (not fall back to period, which would reject every
+        // "1,23" row into failedRows — the dead-end we're fixing).
+        let csv = """
+        Date,Merchant,Amount
+        20.01.2026,Coffee,"-1,23"
+        21.01.2026,Lunch,"-45,67"
+        15.03.2026,Salary,"1.234,56"
+        """
+        let header = ["Date", "Merchant", "Amount"]
+        let mapping = try XCTUnwrap(SourcePreset.genericBank.defaultMapping(header: header))
+        XCTAssertEqual(mapping.decimal, .auto, "generic bank must auto-detect the decimal convention")
+
+        let r = try CSVImportService.importMappedCSV(modelContext: context, data: Data(csv.utf8), mapping: mapping)
+        XCTAssertEqual(r.imported, 3, "comma decimals detected → all rows parse")
+        XCTAssertEqual(r.failedRows, 0)
+
+        let txs = try context.fetch(FetchDescriptor<Transaction>()).sorted { $0.amountCents < $1.amountCents }
+        XCTAssertEqual(txs[0].amountCents, 123)      // 1,23
+        XCTAssertEqual(txs[1].amountCents, 4567)     // 45,67
+        XCTAssertEqual(txs[2].amountCents, 123456)   // 1.234,56
+    }
+
+    func testDeclaredDecimalConventionIsNotOverridden() {
+        // A concrete, user/preset-declared convention passes through untouched even
+        // if the sample would auto-detect the other way.
+        let euRows = ["Date,Amount", "20.01.2026,\"1,23\"", "21.01.2026,\"4,56\""]
+        let base = ColumnMapping(date: 0, dateOrder: .dmy, decimal: .period,
+                                 amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
+        XCTAssertEqual(CSVImportService.resolveDecimalStyle(base, rows: euRows, startIndex: 1).decimal, .period,
+                       "declared period must win over the comma sample")
+    }
+
+    func testAutoResolvesAndFallsBackToPeriodWhenAmbiguous() {
+        let euRows = ["Date,Amount", "20.01.2026,\"1,23\"", "21.01.2026,\"4,56\""]
+        let intRows = ["Date,Amount", "20.01.2026,1234", "21.01.2026,5678"]
+        let autoMapping = ColumnMapping(date: 0, dateOrder: .dmy, decimal: .auto,
+                                        amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
+        XCTAssertEqual(CSVImportService.resolveDecimalStyle(autoMapping, rows: euRows, startIndex: 1).decimal, .comma)
+        XCTAssertEqual(CSVImportService.resolveDecimalStyle(autoMapping, rows: intRows, startIndex: 1).decimal, .period,
+                       "ambiguous → period fallback (the sheet blocks this path for the user)")
+    }
+
     // MARK: - Uncategorized fallback
 
     func testEmptyCategoryLandsInUncategorized() throws {

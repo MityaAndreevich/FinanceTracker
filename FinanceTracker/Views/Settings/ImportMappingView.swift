@@ -33,7 +33,7 @@ private enum AmountShapeKind: String, CaseIterable, Identifiable {
 private struct ImportMappingDraft {
     var dateCol: Int?
     var dateOrder: DateOrder = .auto
-    var decimal: CSVDecimalStyle = .period
+    var decimal: CSVDecimalStyle = .auto
     var amountShape: AmountShapeKind = .signed
     var amountCol: Int?
     var typeCol: Int?
@@ -104,6 +104,7 @@ struct ImportMappingView: View {
     let onCancel: () -> Void
     let onImport: (ColumnMapping) -> Void
 
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @State private var preset: SourcePreset
     @State private var draft: ImportMappingDraft
 
@@ -150,9 +151,9 @@ struct ImportMappingView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("import.map.action.import") {
-                        if let mapping = draft.build(), !dateOrderUnresolved { onImport(mapping) }
+                        if let mapping = draft.build(), !dateOrderUnresolved, !decimalUnresolved { onImport(mapping) }
                     }
-                    .disabled(draft.build() == nil || dateOrderUnresolved)
+                    .disabled(draft.build() == nil || dateOrderUnresolved || decimalUnresolved)
                     .fontWeight(.semibold)
                 }
             }
@@ -321,13 +322,79 @@ struct ImportMappingView: View {
             }
 
             Picker("import.map.decimal", selection: $draft.decimal) {
+                Text("import.map.decimal.auto").tag(CSVDecimalStyle.auto)
                 Text("import.map.decimal.period").tag(CSVDecimalStyle.period)
                 Text("import.map.decimal.comma").tag(CSVDecimalStyle.comma)
             }
+
+            amountInterpretationRow
         } header: {
             Text("import.map.section.amount")
         } footer: {
             Text("import.map.section.amount.footer")
+        }
+        .onAppear { syncDetectedDecimal() }
+        .onChange(of: amountDetectionColumns) { _, _ in syncDetectedDecimal() }
+    }
+
+    // The amount magnitude column(s) feeding decimal detection.
+    private var amountDetectionColumns: [Int] {
+        switch draft.amountShape {
+        case .signed, .amountAndType: return [draft.amountCol].compactMap { $0 }
+        case .debitCredit:            return [draft.debitCol, draft.creditCol].compactMap { $0 }
+        }
+    }
+
+    private var amountSamples: [String] {
+        preview.rows.flatMap { row in amountDetectionColumns.compactMap { c in c < row.count ? row[c] : nil } }
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    private var detectedDecimal: DetectedDecimalStyle {
+        ImportDecimal.classifyColumn(samples: amountSamples)
+    }
+
+    /// The convention is unconfirmed: the sample can't resolve period vs comma and
+    /// the user left it on Auto → block import (mirrors `dateOrderUnresolved`).
+    private var decimalUnresolved: Bool {
+        draft.decimal == .auto && detectedDecimal == .ambiguous
+    }
+
+    /// Auto-apply the detected convention when the sample resolves it, but only
+    /// while the user hasn't declared one (a preset convention wins).
+    private func syncDetectedDecimal() {
+        guard draft.decimal == .auto, case .resolved(let style) = detectedDecimal else { return }
+        draft.decimal = style
+    }
+
+    /// The concrete style used to render the amount preview (resolving Auto).
+    private var effectiveDecimalStyle: CSVDecimalStyle {
+        if draft.decimal != .auto { return draft.decimal }
+        if case .resolved(let s) = detectedDecimal { return s }
+        return .period
+    }
+
+    /// Shows how the chosen convention reads the file's first amount — or a warning
+    /// while it is still ambiguous — so a wrong convention is visible before it can
+    /// misread every value (e.g. "1,23 → 1.23").
+    @ViewBuilder
+    private var amountInterpretationRow: some View {
+        if decimalUnresolved {
+            Label("import.map.decimal.ambiguous", systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        } else if let raw = amountSamples.first {
+            if let parsed = ImportAmount.parse(raw, decimal: effectiveDecimalStyle) {
+                let cents = parsed.isNegative ? -parsed.cents : parsed.cents
+                Text(String(format: NSLocalizedString("import.map.amount.reads.format", comment: ""),
+                            raw, Money.format(cents: cents, currencyCode: defaultCurrencyCode)))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(String(format: NSLocalizedString("import.map.amount.unreadable.format", comment: ""), raw))
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+            }
         }
     }
 

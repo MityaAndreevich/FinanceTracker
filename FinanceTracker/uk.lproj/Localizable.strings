@@ -835,3 +835,11 @@
 "import.map.date.ambiguous" = "Дати неоднозначні — виберіть ММ/ДД або ДД/ММ, щоб день і місяць не помінялися місцями.";
 "import.map.date.reads.format" = "Читається як: %1$@ → %2$@";
 "import.map.date.unreadable.format" = "«%@» не читається в цьому форматі.";
+
+/* Decimal-convention detection (symmetric with date order) */
+"import.map.decimal.auto" = "Автовизначення";
+"import.map.decimal.ambiguous" = "Формат чисел неоднозначний — виберіть крапку або кому, щоб суми не читалися неправильно.";
+"import.map.amount.reads.format" = "%1$@ → %2$@";
+"import.map.amount.unreadable.format" = "«%@» не читається в цьому числовому форматі.";
+"csv.import.error.separator_inconsistent" = "формат числа не збігається з десятковим роздільником";
+"data.import.result.separator_hint" = "Багато рядків не вдалося прочитати як числа. Повторіть імпорт і вкажіть десятковий роздільник під ваш файл.";

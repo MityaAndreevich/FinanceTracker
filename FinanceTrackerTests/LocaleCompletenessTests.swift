@@ -123,7 +123,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // 2026-07-08 (Item 2 ambiguous-date safety): +3 for the date-interpretation
         // row in the mapping sheet (import.map.date.ambiguous / reads.format /
         // unreadable.format). All 5 locales in parity. Was 623.
-        XCTAssertEqual(enKeys.count, 626, "English baseline changed; update the expected count.")
+        // 2026-07-08 (Decimal-convention detection, symmetric with date order): +6
+        // for the amount-interpretation row + decimal picker (import.map.decimal.auto
+        // /ambiguous, import.map.amount.reads/unreadable.format), the separator
+        // failure reason (csv.import.error.separator_inconsistent), and the summary
+        // hint (data.import.result.separator_hint). All 5 locales in parity. Was 626.
+        XCTAssertEqual(enKeys.count, 632, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

@@ -20,9 +20,62 @@ import Foundation
 /// resolve the one genuinely ambiguous shape (a lone separator followed by
 /// exactly three digits, e.g. "1.234"); when both separators are present the
 /// decimal is identified by position and the style is irrelevant.
-enum CSVDecimalStyle {
+enum CSVDecimalStyle: Equatable {
     case period  // decimal ".", grouping ","/space/NBSP  (Mint, YNAB, US banks)
     case comma   // decimal ",", grouping "."/space/NBSP  (EU banks)
+    case auto    // detect from the amount column's sample values
+}
+
+/// Result of classifying a whole amount column's decimal convention, surfaced in
+/// the mapping sheet. `.ambiguous` is the safety case (mirrors `DetectedDateOrder`):
+/// the sample can't resolve period vs comma, so the user MUST confirm before import
+/// rather than have every comma-decimal row silently fail.
+enum DetectedDecimalStyle: Equatable {
+    case resolved(CSVDecimalStyle)  // .period or .comma
+    case ambiguous
+}
+
+/// Detects a file's decimal convention from amount samples — symmetric with
+/// `ImportDate.classifyColumn`. Each value votes: both separators present → the
+/// later is the decimal; a lone separator with an exact 3-digit group → that char
+/// is grouping so the decimal is the OTHER; a lone separator with 1–2 digits →
+/// that char is the decimal. Agreement → resolved; no votes or a conflict →
+/// ambiguous (never a silent default).
+enum ImportDecimal {
+    static func classifyColumn(samples: [String]) -> DetectedDecimalStyle {
+        var votes = Set<CSVDecimalStyle>()
+        for raw in samples {
+            if let vote = vote(for: raw) { votes.insert(vote) }
+        }
+        guard votes.count == 1, let only = votes.first else { return .ambiguous }
+        return .resolved(only)
+    }
+
+    /// One value's vote for the decimal convention, or nil for no signal.
+    private static func vote(for raw: String) -> CSVDecimalStyle? {
+        let s = String(raw.unicodeScalars.filter { CharacterSet(charactersIn: "0123456789,.").contains($0) })
+        let commas = s.filter { $0 == "," }.count
+        let periods = s.filter { $0 == "." }.count
+
+        if commas > 0, periods > 0 {
+            // Both present → the later separator is the decimal.
+            let lc = s.lastIndex(of: ","), lp = s.lastIndex(of: ".")
+            return (lc! > lp!) ? .comma : .period
+        }
+        guard (commas == 0) != (periods == 0) else { return nil }  // integer or empty → no signal
+
+        let sep: Character = commas > 0 ? "," : "."
+        let count = commas > 0 ? commas : periods
+        let otherIsDecimal: CSVDecimalStyle = (sep == ",") ? .period : .comma
+        if count > 1 { return otherIsDecimal }  // repeated → grouping → other char is decimal
+
+        let digitsAfter = s[s.index(after: s.lastIndex(of: sep)!)...].filter(\.isNumber).count
+        switch digitsAfter {
+        case 1, 2: return (sep == ",") ? .comma : .period  // that separator is the decimal
+        case 3: return otherIsDecimal                       // valid group → other char is decimal
+        default: return nil                                 // 0 or 4+ → inconclusive
+        }
+    }
 }
 
 // MARK: - Amount tokenizer
@@ -185,6 +238,7 @@ struct SignedAmount: Equatable {
 /// import summary so the user knows exactly which rows need attention.
 enum ImportAmountFailure: Equatable, Error {
     case unparsableAmount
+    case separatorInconsistent    // a lone separator whose digit count contradicts the convention
     case bothColumnsEmpty         // debit AND credit blank/zero
     case bothColumnsFilled        // debit AND credit both non-zero — ambiguous
     case unrecognizedType(String) // a type column value we can't map to income/expense
@@ -209,10 +263,21 @@ enum ImportSign {
         return nil
     }
 
+    /// Distinguish a separator-consistency problem from a plain unparsable cell so
+    /// the summary can point specifically at the decimal-convention control.
+    private static func amountFailure(_ cell: String, decimal style: CSVDecimalStyle) -> ImportAmountFailure {
+        let dec: Character = style == .comma ? "," : "."
+        let trimmed = cell.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty, !AmountParsing.hasConsistentSeparators(trimmed, decimalSeparator: dec) {
+            return .separatorInconsistent
+        }
+        return .unparsableAmount
+    }
+
     /// Shape 1: a single column whose sign gives direction (negative → expense).
     static func combineSigned(_ amountCell: String, decimal style: CSVDecimalStyle) -> Result<SignedAmount, ImportAmountFailure> {
         guard let parsed = ImportAmount.parse(amountCell, decimal: style) else {
-            return .failure(.unparsableAmount)
+            return .failure(amountFailure(amountCell, decimal: style))
         }
         return .success(SignedAmount(cents: parsed.cents, typeRaw: parsed.isNegative ? "expense" : "income"))
     }
@@ -220,7 +285,7 @@ enum ImportSign {
     /// Shape 2 (Mint): an unsigned amount column + a type column.
     static func combineUnsignedWithType(amount amountCell: String, type typeCell: String, decimal style: CSVDecimalStyle) -> Result<SignedAmount, ImportAmountFailure> {
         guard let parsed = ImportAmount.parse(amountCell, decimal: style) else {
-            return .failure(.unparsableAmount)
+            return .failure(amountFailure(amountCell, decimal: style))
         }
         guard let typeRaw = classifyType(typeCell) else {
             return .failure(.unrecognizedType(typeCell.trimmingCharacters(in: .whitespacesAndNewlines)))
@@ -237,9 +302,8 @@ enum ImportSign {
 
         let dParsed = d.isEmpty ? nil : ImportAmount.parse(d, decimal: style)
         let cParsed = c.isEmpty ? nil : ImportAmount.parse(c, decimal: style)
-        if (!d.isEmpty && dParsed == nil) || (!c.isEmpty && cParsed == nil) {
-            return .failure(.unparsableAmount)
-        }
+        if !d.isEmpty, dParsed == nil { return .failure(amountFailure(d, decimal: style)) }
+        if !c.isEmpty, cParsed == nil { return .failure(amountFailure(c, decimal: style)) }
 
         let dCents = dParsed?.cents ?? 0
         let cCents = cParsed?.cents ?? 0
@@ -261,6 +325,15 @@ enum AmountMapping: Equatable {
     case signed(Int)                                // one signed column
     case unsignedWithType(amount: Int, type: Int)   // Mint: unsigned amount + type column
     case debitCredit(debit: Int, credit: Int)       // two columns
+
+    /// The column indices that carry amount magnitudes (for decimal detection).
+    var amountColumns: [Int] {
+        switch self {
+        case .signed(let a):               return [a]
+        case .unsignedWithType(let a, _):  return [a]
+        case .debitCredit(let d, let c):   return [d, c]
+        }
+    }
 }
 
 /// A resolved mapping from a foreign file's columns to our transaction fields.
@@ -348,7 +421,7 @@ enum SourcePreset: String, CaseIterable, Identifiable {
                 return nil
             }
             return ColumnMapping(
-                date: date, dateOrder: .auto, decimal: .period,
+                date: date, dateOrder: .auto, decimal: .auto,
                 amount: amount,
                 category: fuzzy(header, ["category"]),
                 merchant: fuzzy(header, ["description", "payee", "merchant", "vendor", "name"]),

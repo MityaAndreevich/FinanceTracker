@@ -351,6 +351,13 @@ struct DataSettingsView: View {
             lines.append(String(format: NSLocalizedString("data.import.result.first_error.format", comment: ""), first))
         }
 
+        // Bonus safety: when separator-inconsistent failures dominate, point at the
+        // decimal-separator control instead of leaving a wall of failed rows.
+        if importResult.separatorFailedRows >= 3,
+           importResult.separatorFailedRows >= importResult.imported {
+            lines.append(NSLocalizedString("data.import.result.separator_hint", comment: ""))
+        }
+
         return lines.joined(separator: "\n")
     }
 

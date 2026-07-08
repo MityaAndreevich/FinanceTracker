@@ -828,3 +828,11 @@
 "import.map.date.ambiguous" = "Dates are ambiguous — choose MM/DD or DD/MM so days and months aren't swapped.";
 "import.map.date.reads.format" = "Reads as: %1$@ → %2$@";
 "import.map.date.unreadable.format" = "“%@” can't be read with this format.";
+
+/* Decimal-convention detection (symmetric with date order) */
+"import.map.decimal.auto" = "Auto-detect";
+"import.map.decimal.ambiguous" = "Number format is ambiguous — choose period or comma so amounts aren't misread.";
+"import.map.amount.reads.format" = "%1$@ → %2$@";
+"import.map.amount.unreadable.format" = "“%@” can't be read with this number format.";
+"csv.import.error.separator_inconsistent" = "number format doesn't match the decimal separator";
+"data.import.result.separator_hint" = "Many rows couldn't be read as numbers. Re-import and set the decimal separator to match your file.";

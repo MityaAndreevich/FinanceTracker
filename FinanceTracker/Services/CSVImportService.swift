@@ -37,6 +37,11 @@ struct CSVImportResult {
     /// unparseable date, ambiguous debit/credit…). Reported, never dropped
     /// silently — `firstError` carries the first reason.
     var failedRows: Int = 0
+    /// Subset of `failedRows` that failed specifically because a number's separator
+    /// contradicted the declared decimal convention. When this dominates, the
+    /// summary points the user at the decimal-separator control instead of leaving
+    /// a wall of failures.
+    var separatorFailedRows: Int = 0
     var firstError: String? = nil
 }
 
@@ -129,6 +134,31 @@ struct CSVImportService {
         return CSVPreview(header: header, rows: Array(rows))
     }
 
+    /// Resolve a mapping's `.auto` decimal convention from the file's amount
+    /// samples. Whole-column property (unlike the per-row date order), so it is
+    /// decided once up front. Ambiguous → period fallback; the mapping sheet blocks
+    /// that path, so the fallback only backstops programmatic callers.
+    static func resolveDecimalStyle(_ mapping: ColumnMapping, rows: [String], startIndex: Int) -> ColumnMapping {
+        guard mapping.decimal == .auto else { return mapping }
+        let cols = mapping.amount.amountColumns
+        var samples: [String] = []
+        var i = startIndex
+        while i < rows.count, samples.count < 200 {
+            let cells = parseCSVLine(rows[i])
+            for c in cols where c >= 0 && c < cells.count {
+                let v = cells[c].trimmingCharacters(in: .whitespacesAndNewlines)
+                if !v.isEmpty { samples.append(v) }
+            }
+            i += 1
+        }
+        var resolved = mapping
+        switch ImportDecimal.classifyColumn(samples: samples) {
+        case .resolved(let style): resolved.decimal = style
+        case .ambiguous:           resolved.decimal = .period
+        }
+        return resolved
+    }
+
     /// Whether a file is our OWN export (carries the `date,type,amount…id`
     /// signature). Those keep the legacy UUID round-trip path; everything else
     /// goes through the flexible mapping sheet.
@@ -165,6 +195,9 @@ struct CSVImportService {
         let defaultCurrency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
 
         let start = hasHeader ? 1 : 0
+        // Resolve a `.auto` decimal convention from the file's own amount samples
+        // (whole-column property, so it can't be inferred per row like the date).
+        let activeMapping = resolveDecimalStyle(mapping, rows: preamble.rows, startIndex: start)
         let total = max(0, preamble.rows.count - start)
         var processed = 0
 
@@ -174,7 +207,7 @@ struct CSVImportService {
                 preamble.rows[i],
                 lineIndex: i,
                 modelContext: modelContext,
-                mapping: mapping,
+                mapping: activeMapping,
                 defaultCurrency: defaultCurrency,
                 mode: mode,
                 categoryCache: &categoryCache,
@@ -229,6 +262,7 @@ struct CSVImportService {
             normalized = n
         case .failure(let f):
             result.failedRows += 1
+            if case .amount(.separatorInconsistent) = f { result.separatorFailedRows += 1 }
             if result.firstError == nil {
                 result.firstError = describeRowFailure(f, line: i)
             }
@@ -364,6 +398,8 @@ struct CSVImportService {
             switch a {
             case .unparsableAmount:
                 detail = NSLocalizedString("csv.import.error.invalid_amount", comment: "")
+            case .separatorInconsistent:
+                detail = NSLocalizedString("csv.import.error.separator_inconsistent", comment: "")
             case .bothColumnsEmpty:
                 detail = NSLocalizedString("csv.import.error.debit_credit_empty", comment: "")
             case .bothColumnsFilled:

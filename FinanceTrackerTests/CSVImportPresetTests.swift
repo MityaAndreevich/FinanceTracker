@@ -76,4 +76,13 @@ final class CSVImportPresetTests: XCTestCase {
     func testGenericMappingNilWhenNoDate() {
         XCTAssertNil(SourcePreset.genericBank.defaultMapping(header: ["Payee", "Amount"]))
     }
+
+    // A preset with a KNOWN convention declares it (period) and so wins over
+    // auto-detect; only the generic/custom fallbacks auto-detect.
+    func testPresetDecimalConventions() throws {
+        XCTAssertEqual(try XCTUnwrap(SourcePreset.mint.defaultMapping(header: mint)).decimal, .period)
+        XCTAssertEqual(try XCTUnwrap(SourcePreset.ynab.defaultMapping(header: ynab)).decimal, .period)
+        XCTAssertEqual(try XCTUnwrap(SourcePreset.monarch.defaultMapping(header: monarch)).decimal, .period)
+        XCTAssertEqual(try XCTUnwrap(SourcePreset.genericBank.defaultMapping(header: genericSigned)).decimal, .auto)
+    }
 }

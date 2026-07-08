@@ -708,3 +708,11 @@
 "import.map.date.ambiguous" = "Fechas ambiguas: elige MM/DD o DD/MM para que no se intercambien día y mes.";
 "import.map.date.reads.format" = "Se interpreta como: %1$@ → %2$@";
 "import.map.date.unreadable.format" = "«%@» no se puede leer con este formato.";
+
+/* Decimal-convention detection (symmetric with date order) */
+"import.map.decimal.auto" = "Detección automática";
+"import.map.decimal.ambiguous" = "El formato numérico es ambiguo: elige punto o coma para que los importes no se lean mal.";
+"import.map.amount.reads.format" = "%1$@ → %2$@";
+"import.map.amount.unreadable.format" = "«%@» no se puede leer con este formato numérico.";
+"csv.import.error.separator_inconsistent" = "el formato del número no coincide con el separador decimal";
+"data.import.result.separator_hint" = "Muchas filas no se pudieron leer como números. Vuelve a importar y ajusta el separador decimal a tu archivo.";
