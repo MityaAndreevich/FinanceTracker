@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AAAA010000000000000000B1 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AAAA010000000000000000A1 /* Localizable.strings */; };
 		13248342A2FEDF9044636093 /* NetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */; };
 		15F16F5D8E40F2506602922F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AA500AAA16360FFB17DC89C /* Foundation.framework */; };
 		37677319791FDB5DB4474993 /* BudgetCrabWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 74D9EF80B540EB035830EB26 /* BudgetCrabWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -55,6 +56,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AAAA010000000000000000E1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AAAA010000000000000000E2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AAAA010000000000000000E3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AAAA010000000000000000E4 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		AAAA010000000000000000E5 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2C5B7867BD077522356C2AE1 /* BudgetCrabWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = BudgetCrabWidget.entitlements; sourceTree = "<group>"; };
 		3151424C88BE2C0A29C53BB9 /* NetSnapshot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NetSnapshot.swift; sourceTree = "<group>"; };
 		7097BCB5E4707D59F8D7B702 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -153,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				B26AE8DF7A5FA573CF7A7DDD /* BudgetCrabWidget.swift */,
+				AAAA010000000000000000A1 /* Localizable.strings */,
 				7097BCB5E4707D59F8D7B702 /* Info.plist */,
 				2C5B7867BD077522356C2AE1 /* BudgetCrabWidget.entitlements */,
 			);
@@ -194,6 +201,21 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXVariantGroup section */
+		AAAA010000000000000000A1 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				AAAA010000000000000000E1 /* en */,
+				AAAA010000000000000000E2 /* ru */,
+				AAAA010000000000000000E3 /* es */,
+				AAAA010000000000000000E4 /* pt-BR */,
+				AAAA010000000000000000E5 /* uk */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		3E7EECB16321743B355DFE0D /* BudgetCrabWidget */ = {
@@ -353,6 +375,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AAAA010000000000000000B1 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

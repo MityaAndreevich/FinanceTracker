@@ -1,0 +1,7 @@
+/* Widget edit-mode (AppIntent) configuration chrome. Resolves against the SYSTEM
+   language in iOS's widget edit sheet — same as Apple's own widget config. This is
+   NOT the baked snapshot content (which follows the app's chosen language). */
+"Style" = "Style";
+"Ring" = "Ring";
+"Minimal" = "Minimal";
+"Choose how the widget looks." = "Choose how the widget looks.";

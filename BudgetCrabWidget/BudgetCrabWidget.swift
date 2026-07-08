@@ -22,9 +22,14 @@ import AppIntents
 //
 // Two layout variants, picked the Apple way — in the widget's edit mode via an
 // AppIntent, NOT an in-app setting. Both obey the same baked snapshot: gain-framed
-// hero, calm palette, icon+label over-budget, no truncation. Edit-mode labels are
-// English-only because the widget extension ships no .strings table (locked design,
-// same reason the snapshot is baked); the widget *content* stays fully localized.
+// hero, calm palette, icon+label over-budget, no truncation.
+//
+// The edit-mode chrome below (Style / Ring / Minimal / description) is localized via
+// the extension's own Localizable.strings (Item 4). This is CORRECT and distinct
+// from the baked snapshot: AppIntent configuration labels are static extension
+// chrome shown in iOS's widget edit sheet, which resolves against the SYSTEM
+// language — exactly like Apple's own widget config. The baked *snapshot content*
+// still follows the app's chosen language and stays key-free; do not route it here.
 
 enum WidgetStyle: String, AppEnum {
     case ring
