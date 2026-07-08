@@ -81,4 +81,24 @@ final class AnalyticsBreakdownBucketTests: XCTestCase {
             from: [], otherName: "Other", otherColor: .gray)
         XCTAssertTrue(out.isEmpty)
     }
+
+    // MARK: - Percent label (Item 4: <1% instead of 0% for real shares)
+
+    func test_percent_roundsNormally() {
+        XCTAssertEqual(AnalyticsBreakdownView.percentString(cents: 250_000, total: 1_000_000), "25%")
+    }
+
+    /// The device bug: one 1M outlier makes every other real category round to 0%.
+    /// A non-zero share below 0.5% must read "<1%", never a false "0%".
+    func test_percent_nonZeroSubOnePercent_showsLessThanOne() {
+        XCTAssertEqual(AnalyticsBreakdownView.percentString(cents: 5, total: 1_000_000), "<1%")
+    }
+
+    func test_percent_trueZero_showsZero() {
+        XCTAssertEqual(AnalyticsBreakdownView.percentString(cents: 0, total: 1_000), "0%")
+    }
+
+    func test_percent_zeroTotal_showsZero() {
+        XCTAssertEqual(AnalyticsBreakdownView.percentString(cents: 100, total: 0), "0%")
+    }
 }

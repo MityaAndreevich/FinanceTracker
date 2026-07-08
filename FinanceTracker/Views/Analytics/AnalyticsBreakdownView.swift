@@ -196,7 +196,10 @@ struct AnalyticsBreakdownView: View {
                 Text(selected.name)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color.bcTextSecondary)
-                Text(Money.format(cents: selected.cents, currencyCode: currencyCode))
+                // Compact so a large magnitude never clips inside the donut hole
+                // (device QA Item 4: "1 003 893,9…" truncated). The full amount is
+                // shown untruncated in the legend row for this category.
+                Text(Money.formatCompact(cents: selected.cents, currencyCode: currencyCode))
                     .font(.system(.title3, design: .rounded).bold().monospacedDigit())
                     .foregroundStyle(Color.bcTextPrimary)
                     .minimumScaleFactor(0.5)
@@ -207,7 +210,7 @@ struct AnalyticsBreakdownView: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color.bcTextSecondary)
                     .textCase(.uppercase)
-                Text(Money.format(cents: total, currencyCode: currencyCode))
+                Text(Money.formatCompact(cents: total, currencyCode: currencyCode))
                     .font(.system(.title2, design: .rounded).bold().monospacedDigit())
                     .foregroundStyle(Color.bcTextPrimary)
                     .minimumScaleFactor(0.5)
@@ -319,8 +322,16 @@ struct AnalyticsBreakdownView: View {
     }
 
     private func percentLabel(_ cat: CategoryTotal) -> String {
-        guard total > 0 else { return "0%" }
-        return "\(Int((Double(cat.cents) / Double(total) * 100).rounded()))%"
+        Self.percentString(cents: cat.cents, total: total)
+    }
+
+    /// A category's share of the total as a whole-percent label. A real (non-zero)
+    /// share that rounds below 1% reads "<1%", never a misleading "0%" — the device
+    /// bug where a single 1M outlier flattened every other row to "0%" (Item 4).
+    static func percentString(cents: Int, total: Int) -> String {
+        guard total > 0, cents > 0 else { return "0%" }
+        let pct = (Double(cents) / Double(total) * 100).rounded()
+        return pct < 1 ? "<1%" : "\(Int(pct))%"
     }
 }
 
