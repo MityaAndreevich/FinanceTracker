@@ -308,6 +308,9 @@ struct ColumnMapping: Equatable {
     var merchant: Int?
     var note: Int?
     var account: Int?
+    /// Foreign files almost never carry a currency column; when unmapped the
+    /// importer assumes `defaultCurrencyCode` and flags the assumption.
+    var currency: Int? = nil
 }
 
 // MARK: - Source presets
@@ -383,7 +386,8 @@ enum SourcePreset: String, CaseIterable, Identifiable {
                 category: fuzzy(header, ["category"]),
                 merchant: fuzzy(header, ["description", "payee", "merchant", "vendor", "name"]),
                 note: fuzzy(header, ["memo", "note"]),
-                account: fuzzy(header, ["account"]))
+                account: fuzzy(header, ["account"]),
+                currency: fuzzy(header, ["currency"]))
 
         case .custom:
             return nil  // fully manual — the UI seeds an editable skeleton
@@ -407,5 +411,90 @@ private func fuzzy(_ header: [String], _ candidates: [String]) -> Int? {
     header.firstIndex { col in
         let n = normalize(col)
         return candidates.contains { n.contains($0) }
+    }
+}
+
+// MARK: - Row mapper
+
+/// A fully-normalized transaction ready to insert. `amountCents` is a positive
+/// magnitude (sign lives in `typeRaw`); `categoryName == nil` means "uncategorized
+/// fallback"; `currencyAssumed` records that no currency was present in the file.
+struct NormalizedTransaction: Equatable {
+    var date: Date
+    var amountCents: Int
+    var typeRaw: String
+    var currency: String
+    var currencyAssumed: Bool
+    var categoryName: String?
+    var merchant: String?
+    var note: String?
+    var account: String?
+}
+
+/// Why a row could not be normalized. Every value maps to a user-facing summary
+/// line — a row that fails is REPORTED, never silently dropped.
+enum RowMapFailure: Equatable, Error {
+    case missingDate
+    case invalidDate(String)
+    case amount(ImportAmountFailure)
+}
+
+/// The pure seam the SwiftData importer sits on: raw row + mapping → normalized
+/// transaction or a typed failure. No ModelContext, no side effects.
+enum ImportRowMapper {
+
+    static func map(row: [String], mapping: ColumnMapping, defaultCurrency: String) -> Result<NormalizedTransaction, RowMapFailure> {
+        func cell(_ index: Int?) -> String? {
+            guard let index, index >= 0, index < row.count else { return nil }
+            return row[index]
+        }
+        func text(_ index: Int?) -> String? {
+            guard let raw = cell(index)?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { return nil }
+            return raw
+        }
+
+        // Date (required).
+        guard let dateStr = text(mapping.date) else { return .failure(.missingDate) }
+        guard let date = ImportDate.parse(dateStr, order: mapping.dateOrder) else {
+            return .failure(.invalidDate(dateStr))
+        }
+
+        // Amount + sign (required), per the file's shape.
+        let signedResult: Result<SignedAmount, ImportAmountFailure>
+        switch mapping.amount {
+        case .signed(let i):
+            signedResult = ImportSign.combineSigned(cell(i) ?? "", decimal: mapping.decimal)
+        case .unsignedWithType(let a, let t):
+            signedResult = ImportSign.combineUnsignedWithType(amount: cell(a) ?? "", type: cell(t) ?? "", decimal: mapping.decimal)
+        case .debitCredit(let d, let c):
+            signedResult = ImportSign.combineDebitCredit(debit: cell(d) ?? "", credit: cell(c) ?? "", decimal: mapping.decimal)
+        }
+        let signed: SignedAmount
+        switch signedResult {
+        case .success(let s): signed = s
+        case .failure(let f): return .failure(.amount(f))
+        }
+
+        // Currency: honour a mapped, valid ISO code; otherwise assume the default.
+        let currency: String
+        let currencyAssumed: Bool
+        if let raw = text(mapping.currency)?.uppercased(), CSVImportService.isValidISO4217(raw) {
+            currency = raw
+            currencyAssumed = false
+        } else {
+            currency = defaultCurrency.uppercased()
+            currencyAssumed = true
+        }
+
+        return .success(NormalizedTransaction(
+            date: date,
+            amountCents: signed.cents,
+            typeRaw: signed.typeRaw,
+            currency: currency,
+            currencyAssumed: currencyAssumed,
+            categoryName: text(mapping.category),   // nil → uncategorized fallback
+            merchant: text(mapping.merchant),
+            note: text(mapping.note),
+            account: text(mapping.account)))
     }
 }
