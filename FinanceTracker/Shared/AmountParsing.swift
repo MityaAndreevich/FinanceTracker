@@ -61,7 +61,15 @@ enum AmountParsing {
         guard !(intDigits.isEmpty && fracDigits.isEmpty) else { return nil }
 
         let intValue = Int(intDigits) ?? 0
-        let fracValue = Int((fracDigits + "00").prefix(2)) ?? 0    // pad/cap to 2 digits
+        var fracValue = Int((fracDigits + "00").prefix(2)) ?? 0    // pad/cap to 2 digits
+        // Half-up rounding on the 3rd fractional digit — truncating here biased
+        // every >2-decimal foreign amount down by up to a cent. Working on the
+        // digit string avoids binary-float artifacts (2.675 → 2.68, not 2.67). The
+        // carry (99 → 100) folds naturally into intValue * 100 below.
+        if fracDigits.count > 2 {
+            let thirdDigit = fracDigits[fracDigits.index(fracDigits.startIndex, offsetBy: 2)].wholeNumberValue ?? 0
+            if thirdDigit >= 5 { fracValue += 1 }
+        }
         return intValue * 100 + fracValue
     }
 

@@ -92,4 +92,18 @@ final class AmountParsingTests: XCTestCase {
         XCTAssertEqual(AmountParsing.parseCents(input, decimalSeparator: "."), period, "\(input) with '.'", file: file, line: line)
         XCTAssertEqual(AmountParsing.parseCents(input, decimalSeparator: ","), comma, "\(input) with ','", file: file, line: line)
     }
+
+    // MARK: - Rounding (a >2-decimal value must round half-up, not truncate down)
+    //
+    // Truncation biased every foreign amount with a 3rd decimal ≥5 down by up to a
+    // cent — systematic, silent, in a finance app. Half-up fixes it. The comma-hint
+    // column here reads the period as grouping (3 digits) so it's an integer group,
+    // unaffected by rounding.
+    func testRoundsHalfUpNotTruncate() {
+        assertParse("1.235", period: 124, comma: 123500)   // 1.235 → 1.24, not 1.23
+        assertParse("1.999", period: 200, comma: 199900)   // carries into the integer part
+        assertParse("0.005", period: 1,   comma: 500)      // 0.005 → 0.01, not 0.00
+        assertParse("2.675", period: 268, comma: 267500)   // 2.675 → 2.68 (string-exact, no float)
+        assertParse("1.2345", period: 123, comma: 123)     // 3rd digit 4 → stays 1.23 (4 digits → decimal both hints)
+    }
 }
