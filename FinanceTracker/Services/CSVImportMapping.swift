@@ -160,6 +160,12 @@ enum ImportDate {
 
     /// Parse a foreign date cell into UTC midnight, or nil if it cannot be a real
     /// calendar date. ISO `YYYY-MM-DD` is always accepted regardless of `order`.
+    ///
+    /// NOTE: `order: .auto` is a lenient per-value best-effort (infer from a >12
+    /// component, else US) used ONLY for the mapping-sheet PREVIEW. The import path
+    /// never passes `.auto` — `CSVImportService.resolveAutoConventions` resolves the
+    /// order at the column level up front and REFUSES an all-ambiguous column, so
+    /// no imported row is ever silently transposed.
     static func parse(_ raw: String, order: DateOrder) -> Date? {
         let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return nil }

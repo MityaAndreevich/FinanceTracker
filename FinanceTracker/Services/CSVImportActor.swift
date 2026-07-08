@@ -87,7 +87,7 @@ actor CSVImportActor {
         let defaultCurrency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
 
         let start = hasHeader ? 1 : 0
-        let activeMapping = CSVImportService.resolveDecimalStyle(mapping, rows: preamble.rows, startIndex: start)
+        let activeMapping = try CSVImportService.resolveAutoConventions(mapping, rows: preamble.rows, startIndex: start)
         let total = max(0, preamble.rows.count - start)
         var processed = 0
 

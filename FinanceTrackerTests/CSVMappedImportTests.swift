@@ -119,24 +119,51 @@ final class CSVMappedImportTests: XCTestCase {
         XCTAssertEqual(txs[2].amountCents, 123456)   // 1.234,56
     }
 
-    func testDeclaredDecimalConventionIsNotOverridden() {
-        // A concrete, user/preset-declared convention passes through untouched even
-        // if the sample would auto-detect the other way.
+    // MARK: - Convention resolution is a SERVICE invariant: refuse, never assume.
+
+    func testDeclaredConventionsAreNotOverridden() throws {
+        // Concrete, preset-/user-declared conventions pass through untouched even if
+        // the sample would auto-detect the other way.
         let euRows = ["Date,Amount", "20.01.2026,\"1,23\"", "21.01.2026,\"4,56\""]
         let base = ColumnMapping(date: 0, dateOrder: .dmy, decimal: .period,
                                  amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
-        XCTAssertEqual(CSVImportService.resolveDecimalStyle(base, rows: euRows, startIndex: 1).decimal, .period,
-                       "declared period must win over the comma sample")
+        let resolved = try CSVImportService.resolveAutoConventions(base, rows: euRows, startIndex: 1)
+        XCTAssertEqual(resolved.decimal, .period, "declared period wins over the comma sample")
+        XCTAssertEqual(resolved.dateOrder, .dmy)
     }
 
-    func testAutoResolvesAndFallsBackToPeriodWhenAmbiguous() {
+    func testAutoResolvesToConcreteConventions() throws {
         let euRows = ["Date,Amount", "20.01.2026,\"1,23\"", "21.01.2026,\"4,56\""]
-        let intRows = ["Date,Amount", "20.01.2026,1234", "21.01.2026,5678"]
-        let autoMapping = ColumnMapping(date: 0, dateOrder: .dmy, decimal: .auto,
+        let autoMapping = ColumnMapping(date: 0, dateOrder: .auto, decimal: .auto,
                                         amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
-        XCTAssertEqual(CSVImportService.resolveDecimalStyle(autoMapping, rows: euRows, startIndex: 1).decimal, .comma)
-        XCTAssertEqual(CSVImportService.resolveDecimalStyle(autoMapping, rows: intRows, startIndex: 1).decimal, .period,
-                       "ambiguous → period fallback (the sheet blocks this path for the user)")
+        let resolved = try CSVImportService.resolveAutoConventions(autoMapping, rows: euRows, startIndex: 1)
+        XCTAssertEqual(resolved.decimal, .comma)
+        XCTAssertEqual(resolved.dateOrder, .dmy)  // 20, 21 > 12 → DMY
+    }
+
+    func testAmbiguousDecimalRefusesInsteadOfDefaulting() {
+        // Integer-only amounts → no decimal signal. Must THROW, not assume period.
+        let intRows = ["Date,Amount", "20.01.2026,1234", "21.01.2026,5678"]
+        let m = ColumnMapping(date: 0, dateOrder: .auto, decimal: .auto,
+                              amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
+        XCTAssertThrowsError(try CSVImportService.resolveAutoConventions(m, rows: intRows, startIndex: 1))
+    }
+
+    func testAmbiguousDateOrderRefusesInsteadOfDefaulting() {
+        // All dates ≤12 → no order signal. Must THROW, not assume US MDY.
+        let ambRows = ["Date,Amount", "03/04/2026,1.23", "05/06/2026,4.56"]
+        let m = ColumnMapping(date: 0, dateOrder: .auto, decimal: .period,
+                              amount: .signed(1), category: nil, merchant: nil, note: nil, account: nil)
+        XCTAssertThrowsError(try CSVImportService.resolveAutoConventions(m, rows: ambRows, startIndex: 1))
+    }
+
+    func testImportMappedRefusesAmbiguousConventionAndImportsNothing() throws {
+        let csv = "Date,Amount\n20.01.2026,1234\n21.01.2026,5678"  // dates DMY-resolvable, amounts ambiguous
+        let mapping = try XCTUnwrap(SourcePreset.genericBank.defaultMapping(header: ["Date", "Amount"]))
+        XCTAssertThrowsError(
+            try CSVImportService.importMappedCSV(modelContext: context, data: Data(csv.utf8), mapping: mapping),
+            "an ambiguous convention must refuse the whole import")
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Transaction>()).count, 0, "nothing imported on refusal")
     }
 
     // MARK: - Uncategorized fallback

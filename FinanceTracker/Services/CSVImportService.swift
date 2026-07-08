@@ -134,29 +134,60 @@ struct CSVImportService {
         return CSVPreview(header: header, rows: Array(rows))
     }
 
-    /// Resolve a mapping's `.auto` decimal convention from the file's amount
-    /// samples. Whole-column property (unlike the per-row date order), so it is
-    /// decided once up front. Ambiguous → period fallback; the mapping sheet blocks
-    /// that path, so the fallback only backstops programmatic callers.
-    static func resolveDecimalStyle(_ mapping: ColumnMapping, rows: [String], startIndex: Int) -> ColumnMapping {
-        guard mapping.decimal == .auto else { return mapping }
-        let cols = mapping.amount.amountColumns
-        var samples: [String] = []
+    /// Resolve a mapping's `.auto` conventions (date order AND decimal style) at the
+    /// COLUMN level, from the file's own sample values — decided once up front so a
+    /// mixed column resolves consistently for every row.
+    ///
+    /// This is the data-correctness invariant, enforced in the service (NOT the UI):
+    /// when a convention is genuinely ambiguous it **refuses** with a localized
+    /// error rather than assuming one — never guessing, exactly like we never guess
+    /// a date order. The mapping sheet's disabled Import button is purely UX so the
+    /// user never reaches this error; a programmatic caller that hands us an
+    /// ambiguous `.auto` gets a hard failure instead of silently-transposed data.
+    ///
+    /// A concrete, preset-/user-declared convention passes through untouched (it
+    /// wins over auto). Our own-export re-import does not come here at all — it uses
+    /// the legacy `importCSV`, which is period-decimal by construction.
+    static func resolveAutoConventions(_ mapping: ColumnMapping, rows: [String], startIndex: Int) throws -> ColumnMapping {
+        var resolved = mapping
+
+        if mapping.dateOrder == .auto {
+            switch ImportDate.classifyColumn(samples: samples(rows: rows, startIndex: startIndex, columns: [mapping.date])) {
+            case .iso:              resolved.dateOrder = .iso
+            case .resolved(let o):  resolved.dateOrder = o
+            case .ambiguous:
+                throw ambiguityError(NSLocalizedString("import.map.date.ambiguous", comment: ""))
+            }
+        }
+
+        if mapping.decimal == .auto {
+            switch ImportDecimal.classifyColumn(samples: samples(rows: rows, startIndex: startIndex, columns: mapping.amount.amountColumns)) {
+            case .resolved(let s):  resolved.decimal = s
+            case .ambiguous:
+                throw ambiguityError(NSLocalizedString("import.map.decimal.ambiguous", comment: ""))
+            }
+        }
+
+        return resolved
+    }
+
+    /// Non-empty cell values from the given columns across the data rows (capped).
+    private static func samples(rows: [String], startIndex: Int, columns: [Int]) -> [String] {
+        var out: [String] = []
         var i = startIndex
-        while i < rows.count, samples.count < 200 {
+        while i < rows.count, out.count < 200 {
             let cells = parseCSVLine(rows[i])
-            for c in cols where c >= 0 && c < cells.count {
+            for c in columns where c >= 0 && c < cells.count {
                 let v = cells[c].trimmingCharacters(in: .whitespacesAndNewlines)
-                if !v.isEmpty { samples.append(v) }
+                if !v.isEmpty { out.append(v) }
             }
             i += 1
         }
-        var resolved = mapping
-        switch ImportDecimal.classifyColumn(samples: samples) {
-        case .resolved(let style): resolved.decimal = style
-        case .ambiguous:           resolved.decimal = .period
-        }
-        return resolved
+        return out
+    }
+
+    private static func ambiguityError(_ message: String) -> NSError {
+        NSError(domain: "CSVImport", code: 6, userInfo: [NSLocalizedDescriptionKey: message])
     }
 
     /// Whether a file is our OWN export (carries the `date,type,amount…id`
@@ -195,9 +226,9 @@ struct CSVImportService {
         let defaultCurrency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
 
         let start = hasHeader ? 1 : 0
-        // Resolve a `.auto` decimal convention from the file's own amount samples
-        // (whole-column property, so it can't be inferred per row like the date).
-        let activeMapping = resolveDecimalStyle(mapping, rows: preamble.rows, startIndex: start)
+        // Resolve `.auto` conventions up front — REFUSES (throws) on genuine
+        // ambiguity rather than assuming, so no row can be silently transposed.
+        let activeMapping = try resolveAutoConventions(mapping, rows: preamble.rows, startIndex: start)
         let total = max(0, preamble.rows.count - start)
         var processed = 0
 
