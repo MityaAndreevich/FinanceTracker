@@ -30,6 +30,7 @@ struct EditTransactionView: View {
 
     @State private var selectedCategoryUUID: UUID? = nil
     @State private var selectedSourceUUID: UUID? = nil
+    @State private var showCategoryPicker = false
 
     @State private var showError = false
     @State private var errorMessageKey: String = "edit.error.unknown"
@@ -76,6 +77,15 @@ struct EditTransactionView: View {
             // If type changes, reselect category to match.
             if let current = selectedCategory, current.kindRaw != typeRaw {
                 selectedCategoryUUID = filteredCategories.first?.uuid
+            }
+        }
+        .sheet(isPresented: $showCategoryPicker) {
+            // Same shared, searchable, full-list picker used by Quick Entry and the
+            // Add form — including its "＋ New category" affordance. Routing the edit
+            // surface through it (instead of a per-view Picker) is what lets you
+            // create a category while editing a transaction (device QA, Item 1).
+            CategoryPickerSheet(currentType: typeRaw) { picked in
+                selectedCategoryUUID = picked.uuid
             }
         }
         .alert("common.error", isPresented: $showError) {
@@ -126,22 +136,39 @@ struct EditTransactionView: View {
     }
 
     private var categorySection: some View {
+        // Always route through the shared bottom sheet — even when no category of this
+        // kind exists yet, the sheet's "＋ New category" affordance is the way out, so
+        // the edit screen is never a dead end (device QA, Item 1).
         Section("edit.section.category") {
-            if filteredCategories.isEmpty {
-                Text(typeRaw == TransactionType.income.raw ? "add.category.empty_income" : "add.category.empty_expense")
-                    .foregroundStyle(.secondary)
-            } else {
-                Picker("edit.category.picker", selection: $selectedCategoryUUID) {
-                    Text("common.select")
-                        .tag(Optional<UUID>.none)
-
-                    ForEach(filteredCategories, id: \.uuid) { category in
-                        Text(LocalizedStringKey(category.displayKeyOrName))
-                            .tag(Optional(category.uuid))
-                    }
-                }
-            }
+            categorySelectRow
         }
+    }
+
+    /// Tappable row showing the current selection; opens the full-set bottom sheet.
+    /// Mirrors AddTransactionView.categorySelectRow (value + chevron disclosure).
+    private var categorySelectRow: some View {
+        Button {
+            showCategoryPicker = true
+        } label: {
+            HStack(spacing: 12) {
+                if let cat = selectedCategory {
+                    CategoryIconTile(category: cat, size: 28)
+                    Text(cat.displayName())
+                        .foregroundStyle(.primary)
+                } else {
+                    Text("common.select")
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("edit.category.picker"))
+        .accessibilityValue(Text(selectedCategory?.displayName() ?? ""))
     }
 
     private var accountSection: some View {
