@@ -51,40 +51,43 @@ struct NetSnapshotBuilderTests {
 
     /// Identity "compact" so assertions read in whole cents, no locale noise.
     private let cents: (Int) -> String = { "\($0)" }
+    /// Identity "localize" so precedence assertions read against the raw keys,
+    /// independent of any locale (localization itself is covered by build tests).
+    private let key: (String) -> String = { $0 }
 
     @Test func hero_budgetSet_winsOverIncome_gainFramed() {
-        let h = NetSnapshotBuilder.heroComponents(spentCents: 3_000, budgetCents: 10_000, incomeCents: 8_000, compact: cents)
-        #expect(h.label == String(localized: "widget.safe_to_spend"))
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 3_000, budgetCents: 10_000, incomeCents: 8_000, localize: key, compact: cents)
+        #expect(h.label == "widget.safe_to_spend")
         #expect(h.amount == "7000")          // budget − spent, budget wins over income
         #expect(!h.isAlert)
         #expect(!h.subtitle.isEmpty)
     }
 
     @Test func hero_noBudget_incomeKnown_gainFramed() {
-        let h = NetSnapshotBuilder.heroComponents(spentCents: 194, budgetCents: 0, incomeCents: 2_800, compact: cents)
-        #expect(h.label == String(localized: "widget.safe_to_spend"))
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 194, budgetCents: 0, incomeCents: 2_800, localize: key, compact: cents)
+        #expect(h.label == "widget.safe_to_spend")
         #expect(h.amount == "2606")          // the device-QA case: income − spent
         #expect(!h.isAlert)
     }
 
     @Test func hero_neither_lastResortSpent_noSubtitle() {
-        let h = NetSnapshotBuilder.heroComponents(spentCents: 500, budgetCents: 0, incomeCents: 0, compact: cents)
-        #expect(h.label == String(localized: "widget.hero.spent"))
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 500, budgetCents: 0, incomeCents: 0, localize: key, compact: cents)
+        #expect(h.label == "widget.hero.spent")
         #expect(h.amount == "500")
         #expect(h.subtitle.isEmpty)
         #expect(!h.isAlert)
     }
 
     @Test func hero_overBudget_alert_magnitudeIsOverage() {
-        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 10_000, incomeCents: 0, compact: cents)
-        #expect(h.label == String(localized: "widget.over_budget"))
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 10_000, incomeCents: 0, localize: key, compact: cents)
+        #expect(h.label == "widget.over_budget")
         #expect(h.amount == "2000")          // abs(remaining)
         #expect(h.isAlert)
     }
 
     @Test func hero_overIncome_overspentLabel_alert() {
-        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 0, incomeCents: 8_000, compact: cents)
-        #expect(h.label == String(localized: "widget.overspent"))
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 0, incomeCents: 8_000, localize: key, compact: cents)
+        #expect(h.label == "widget.overspent")
         #expect(h.amount == "4000")
         #expect(h.isAlert)
     }
@@ -155,6 +158,18 @@ struct NetSnapshotBuilderTests {
         let a = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0)
         let b = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 200_000)
         #expect(a != b)
+    }
+
+    @Test func signature_changesWhenLanguageChanges() throws {
+        // Item 5: switching in-app language must rebuild the baked snapshot even
+        // though no transaction changed — so language is part of the fingerprint.
+        let ctx = try makeContext()
+        addExpense(ctx, "Food", 5_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+        let en = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0, languageCode: "en")
+        let ru = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0, languageCode: "ru")
+        #expect(en != ru)
     }
 
     // MARK: - Full build over an in-memory store
@@ -303,6 +318,26 @@ struct NetSnapshotBuilderTests {
         #expect(!snap.heroIsAlert)
         #expect(snap.heroSubtitle.isEmpty)
         #expect(snap.ringIsNeutral)                             // no denominator to fill
+    }
+
+    @Test func build_resolvesChromeInPassedLanguage_notHostLocale() throws {
+        // Item 5: the baked snapshot must be in the app's chosen language. Building
+        // with a ru locale must resolve chrome against ru.lproj regardless of the
+        // test host's system language.
+        let ctx = try makeContext()
+        addExpense(ctx, "Food", 65_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+
+        let snap = NetSnapshotBuilder.build(transactions: all,
+                                            currencyCode: "USD",
+                                            monthlyBudgetCents: 200_000,
+                                            locale: Locale(identifier: "ru"))
+
+        let ruPath = try #require(Bundle.main.path(forResource: "ru", ofType: "lproj"))
+        let ruBundle = try #require(Bundle(path: ruPath))
+        let expected = ruBundle.localizedString(forKey: "widget.safe_to_spend", value: "", table: nil)
+        #expect(snap.heroLabel == expected)                 // "Можно потратить"
     }
 
     @Test func build_emptyPeriod_noBudget_hasNoData() throws {

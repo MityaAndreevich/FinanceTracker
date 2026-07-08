@@ -17,6 +17,9 @@ struct DashboardView: View {
     // net-this-month view. No SwiftData model yet; a full budgeting engine is
     // Phase 2. Settable in a future Settings row.
     @AppStorage("monthlyBudgetCents") private var monthlyBudgetCents: Int = 0
+    // Item 5: the widget snapshot is baked in this language so the widget follows
+    // the in-app language (it can't inherit the app's Bundle/AppleLanguages override).
+    @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
@@ -272,7 +275,8 @@ struct DashboardView: View {
     private var widgetSnapshotSignature: Int {
         NetSnapshotBuilder.contentSignature(transactions: transactions,
                                             currencyCode: defaultCurrencyCode,
-                                            monthlyBudgetCents: monthlyBudgetCents)
+                                            monthlyBudgetCents: monthlyBudgetCents,
+                                            languageCode: appLanguageCode)
     }
 
     private func scheduleWidgetSnapshot() {
@@ -287,7 +291,8 @@ struct DashboardView: View {
     private func refreshWidgetSnapshot() {
         NetSnapshotBuilder.updateSnapshot(transactions: transactions,
                                           currencyCode: defaultCurrencyCode,
-                                          monthlyBudgetCents: monthlyBudgetCents)
+                                          monthlyBudgetCents: monthlyBudgetCents,
+                                          languageCode: appLanguageCode)
     }
 
     // MARK: - Recurring

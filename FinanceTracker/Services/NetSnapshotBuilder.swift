@@ -20,14 +20,26 @@ import WidgetKit
 enum NetSnapshotBuilder {
 
     /// Build, persist to the App Group, and reload widget timelines.
+    ///
+    /// Item 5: `languageCode` is the app's chosen in-app language ("system"/"en"/
+    /// "ru"/…). The widget is a separate process and does NOT inherit the app's
+    /// AppleLanguages/`LocalizedBundle` override, so every string is baked here in
+    /// the CHOSEN language (resolved against that language's `.lproj`, not the
+    /// widget's system locale). The code is also mirrored into the App Group so the
+    /// widget could read it later; today it renders the baked strings as-is.
     static func updateSnapshot(transactions: [Transaction],
                                currencyCode: String,
                                monthlyBudgetCents: Int,
-                               locale: Locale = .current) {
+                               languageCode: String) {
+        // Mirror the chosen language into the shared container (belt-and-suspenders
+        // for a future key-based widget; harmless while strings are baked).
+        UserDefaults(suiteName: WidgetSharing.appGroupID)?
+            .set(languageCode, forKey: "appLanguageCode")
+
         let snapshot = build(transactions: transactions,
                              currencyCode: currencyCode,
                              monthlyBudgetCents: monthlyBudgetCents,
-                             locale: locale)
+                             locale: appLocale(for: languageCode))
         snapshot.save()
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -38,6 +50,12 @@ enum NetSnapshotBuilder {
                       locale: Locale = .current) -> NetSnapshot {
         let scope = PeriodScope.currentMonth
         let month = scope.filter(transactions)
+
+        // Resolve chrome + category names against the locale's `.lproj` explicitly
+        // (displayName(locale:)/String(localized:) would read the swizzled main
+        // bundle, i.e. whatever the app process happens to be, not this locale).
+        let bundle = chromeBundle(for: locale)
+        func L(_ key: String) -> String { bundle.localizedString(forKey: key, value: key, table: nil) }
 
         let incomeCents = month.filter { $0.isIncome }.reduce(0) { $0 + $1.amountCents }
         let expenseCents = month.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
@@ -58,7 +76,7 @@ enum NetSnapshotBuilder {
             .prefix(3)
             .map { category, cents in
                 NetSnapshot.Item(
-                    name: category.displayName(locale: locale),
+                    name: category.displayName(bundle: bundle),
                     symbol: category.symbolName,
                     amount: compact(cents),
                     fraction: categoryFraction(cents: cents, totalSpentCents: expenseCents)
@@ -75,14 +93,15 @@ enum NetSnapshotBuilder {
         let hero = heroComponents(spentCents: expenseCents,
                                   budgetCents: monthlyBudgetCents,
                                   incomeCents: incomeCents,
+                                  localize: L,
                                   compact: compact)
         let heroLabel = hero.label
         let heroAmount = hero.amount
         let heroSubtitle = hero.subtitle
         let heroIsAlert = hero.isAlert
 
-        let spentText = String(format: String(localized: "widget.spent.format"), compact(expenseCents))
-        let earnedText = String(format: String(localized: "widget.earned.format"), compact(incomeCents))
+        let spentText = String(format: L("widget.spent.format"), compact(expenseCents))
+        let earnedText = String(format: L("widget.earned.format"), compact(incomeCents))
 
         return NetSnapshot(
             monthLabel: scope.label(locale: locale),
@@ -111,10 +130,14 @@ enum NetSnapshotBuilder {
     /// field the widget depends on is folded in here so an edit invalidates it.
     static func contentSignature(transactions: [Transaction],
                                  currencyCode: String,
-                                 monthlyBudgetCents: Int) -> Int {
+                                 monthlyBudgetCents: Int,
+                                 languageCode: String = "system") -> Int {
         var hasher = Hasher()
         hasher.combine(currencyCode)
         hasher.combine(monthlyBudgetCents)
+        // Language is part of the fingerprint (Item 5): changing the in-app language
+        // must rebuild the baked snapshot even when no transaction changed.
+        hasher.combine(languageCode)
         for tx in transactions {
             hasher.combine(tx.uuid)
             hasher.combine(tx.amountCents)
@@ -141,17 +164,20 @@ enum NetSnapshotBuilder {
     ///   3. Neither            → "Spent {amount}" (last resort, no subline)
     /// Over-budget / over-income flips the label to the danger state and marks
     /// `isAlert` so the widget can tint it (never hue-alone — icon+label too).
+    /// `localize` resolves a key against the chosen language's `.lproj` (Item 5) so
+    /// the hero copy is baked in the app language, not the widget's system locale.
     static func heroComponents(spentCents: Int,
                                budgetCents: Int,
                                incomeCents: Int,
+                               localize: (String) -> String,
                                compact: (Int) -> String) -> HeroCopy {
         if budgetCents > 0 {
             let remaining = budgetCents - spentCents
             let alert = remaining < 0
             return HeroCopy(
-                label: String(localized: alert ? "widget.over_budget" : "widget.safe_to_spend"),
+                label: localize(alert ? "widget.over_budget" : "widget.safe_to_spend"),
                 amount: compact(abs(remaining)),
-                subtitle: String(format: String(localized: "widget.of_budget.format"), compact(budgetCents)),
+                subtitle: String(format: localize("widget.of_budget.format"), compact(budgetCents)),
                 isAlert: alert
             )
         }
@@ -159,14 +185,14 @@ enum NetSnapshotBuilder {
             let remaining = incomeCents - spentCents
             let alert = remaining < 0
             return HeroCopy(
-                label: String(localized: alert ? "widget.overspent" : "widget.safe_to_spend"),
+                label: localize(alert ? "widget.overspent" : "widget.safe_to_spend"),
                 amount: compact(abs(remaining)),
-                subtitle: String(format: String(localized: "widget.of_earned.format"), compact(incomeCents)),
+                subtitle: String(format: localize("widget.of_earned.format"), compact(incomeCents)),
                 isAlert: alert
             )
         }
         return HeroCopy(
-            label: String(localized: "widget.hero.spent"),
+            label: localize("widget.hero.spent"),
             amount: compact(spentCents),
             subtitle: "",
             isAlert: false
@@ -197,5 +223,32 @@ enum NetSnapshotBuilder {
     private static func clamp01(_ x: Double) -> Double {
         guard x.isFinite else { return 0 }
         return min(max(x, 0), 1)
+    }
+
+    // MARK: - Language resolution (Item 5)
+
+    /// The `Locale` used for dates + number/currency formatting for an app language
+    /// code. Mirrors LocaleAutoDetect.applyAppleLanguagesOverride's region choices
+    /// (es→es-MX, pt→pt-BR); "system" hands back to the current process locale.
+    static func appLocale(for code: String) -> Locale {
+        switch code {
+        case "system", "": return .current
+        case "es":         return Locale(identifier: "es-MX")
+        case "pt":         return Locale(identifier: "pt-BR")
+        default:           return Locale(identifier: code)   // en, ru, uk
+        }
+    }
+
+    /// The `.lproj` bundle that string lookups (chrome + category names) should
+    /// resolve against for `locale`. Falls back to `.main` when the resource
+    /// bundle can't be found (e.g. a system locale we don't ship).
+    private static func chromeBundle(for locale: Locale) -> Bundle {
+        let lang = locale.language.languageCode?.identifier ?? "en"
+        let name = LocalizedBundle.lprojName(for: lang) ?? lang
+        if let path = Bundle.main.path(forResource: name, ofType: "lproj"),
+           let bundle = Bundle(path: path) {
+            return bundle
+        }
+        return .main
     }
 }
