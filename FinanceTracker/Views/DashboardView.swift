@@ -247,7 +247,10 @@ struct DashboardView: View {
             scheduleWidgetSnapshot()
             if !reduceMotion { animateArrow = true }
         }
-        .onChange(of: transactions.count) { _, _ in
+        // Item 3: rebuild on a CONTENT signature, not transactions.count. An edit
+        // (amount/category/type/date) leaves the count invariant, so a count-only
+        // trigger left the widget showing stale pre-edit data.
+        .onChange(of: widgetSnapshotSignature) { _, _ in
             scheduleWidgetSnapshot()
         }
         // Re-localize the Dashboard live on an in-app language change (device QA
@@ -263,6 +266,14 @@ struct DashboardView: View {
     // com.apple.main-thread while entering ~7 tx). Debounced so a burst of N saves
     // triggers ONE rebuild + ONE timeline reload instead of ~2N.
     @State private var widgetRefreshTask: Task<Void, Never>?
+
+    /// Content fingerprint driving the widget rebuild — moves on edits, not just
+    /// on add/delete (Item 3). Cheap: hashes ints/uuids over the current set.
+    private var widgetSnapshotSignature: Int {
+        NetSnapshotBuilder.contentSignature(transactions: transactions,
+                                            currencyCode: defaultCurrencyCode,
+                                            monthlyBudgetCents: monthlyBudgetCents)
+    }
 
     private func scheduleWidgetSnapshot() {
         widgetRefreshTask?.cancel()

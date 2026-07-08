@@ -101,6 +101,62 @@ struct NetSnapshotBuilderTests {
         #expect(f.isFinite)
     }
 
+    // MARK: - Content signature (Item 3: edits must invalidate the widget)
+
+    @Test func signature_stableForIdenticalContent() throws {
+        let ctx = try makeContext()
+        addExpense(ctx, "Toys", 5_000)
+        addIncome(ctx, 20_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+        let a = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0)
+        let b = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0)
+        #expect(a == b)
+    }
+
+    @Test func signature_changesWhenAmountEdited_countUnchanged() throws {
+        // The exact device bug: an edit that leaves transactions.count invariant.
+        let ctx = try makeContext()
+        let tx = addExpense(ctx, "Quad bike", 5_000)
+        try ctx.save()
+        let before = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        tx.amountCents = 100_000_000        // 1,000,000.00 — count does NOT change
+        try ctx.save()
+        let after = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        #expect(before != after)            // a count-only trigger would miss this
+    }
+
+    @Test func signature_changesWhenCategoryReassigned() throws {
+        let ctx = try makeContext()
+        let tx = addExpense(ctx, "Food", 5_000)
+        let other = FinanceTracker.Category(name: "Uncategorized", kindRaw: "expense", order: 9)
+        ctx.insert(other)
+        try ctx.save()
+        let before = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        tx.category = other                 // recategorize — count unchanged
+        try ctx.save()
+        let after = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        #expect(before != after)
+    }
+
+    @Test func signature_changesWhenBudgetChanges() throws {
+        let ctx = try makeContext()
+        addExpense(ctx, "Food", 5_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+        let a = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 0)
+        let b = NetSnapshotBuilder.contentSignature(transactions: all, currencyCode: "USD", monthlyBudgetCents: 200_000)
+        #expect(a != b)
+    }
+
     // MARK: - Full build over an in-memory store
 
     private func makeContext() throws -> ModelContext {

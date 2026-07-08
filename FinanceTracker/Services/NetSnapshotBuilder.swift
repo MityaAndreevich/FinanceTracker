@@ -101,6 +101,30 @@ enum NetSnapshotBuilder {
         )
     }
 
+    // MARK: - Change detection
+
+    /// A cheap fingerprint of everything the snapshot renders from. The Dashboard
+    /// keys its debounced widget rebuild on this instead of `transactions.count`
+    /// (Item 3): a count-only trigger misses *edits* — changing a transaction's
+    /// amount, category, type or date leaves the count invariant, so the widget
+    /// kept showing pre-edit data (the "1 000 000 ₽ not reflected" report). Any
+    /// field the widget depends on is folded in here so an edit invalidates it.
+    static func contentSignature(transactions: [Transaction],
+                                 currencyCode: String,
+                                 monthlyBudgetCents: Int) -> Int {
+        var hasher = Hasher()
+        hasher.combine(currencyCode)
+        hasher.combine(monthlyBudgetCents)
+        for tx in transactions {
+            hasher.combine(tx.uuid)
+            hasher.combine(tx.amountCents)
+            hasher.combine(tx.typeRaw)
+            hasher.combine(tx.date)
+            hasher.combine(tx.category.uuid)
+        }
+        return hasher.finalize()
+    }
+
     // MARK: - Pure guarded math (testable without SwiftData)
 
     /// The frozen hero copy: label, compact amount, subline, danger flag.
