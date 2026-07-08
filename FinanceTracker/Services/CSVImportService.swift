@@ -29,6 +29,14 @@ struct CSVImportResult {
     var possibleDuplicates: Int = 0
     var createdCategories: Int = 0
     var createdSources: Int = 0
+    /// Tier-2 mapped import only: rows whose currency was absent in the source
+    /// file and assumed to be `defaultCurrencyCode`. Surfaced so the user can
+    /// verify the assumption for foreign files.
+    var currencyAssumed: Int = 0
+    /// Tier-2 mapped import only: rows that could not be normalized (bad amount,
+    /// unparseable date, ambiguous debit/credit…). Reported, never dropped
+    /// silently — `firstError` carries the first reason.
+    var failedRows: Int = 0
     var firstError: String? = nil
 }
 
@@ -100,6 +108,245 @@ struct CSVImportService {
 
         try modelContext.save()
         return result
+    }
+
+    // MARK: - Tier 2: flexible mapped import
+
+    /// Synchronous mapped import (tests + any off-main caller). Drives the pure
+    /// `ImportRowMapper` into SwiftData, reusing the SAME foreign-row dedup as the
+    /// generic importer: rows carry no stable UUID, so a content match is FLAGGED
+    /// (`possibleDuplicates`) and never dropped. Production goes through
+    /// `CSVImportActor.importMappedData`, which reuses `processMappedRow`.
+    ///
+    /// - parameter hasHeader: whether the first row is a header to skip (the
+    ///   mapping's column indices are 0-based into the data rows).
+    static func importMappedCSV(
+        modelContext: ModelContext,
+        data: Data,
+        mapping: ColumnMapping,
+        hasHeader: Bool = true,
+        mode: CSVImportMode = .skipDuplicates,
+        progress: ((Int, Int) -> Void)? = nil
+    ) throws -> CSVImportResult {
+        let preamble = try prepare(modelContext: modelContext, data: data)
+        var result = CSVImportResult()
+        guard !preamble.rows.isEmpty else { return result }
+
+        var categoryCache = preamble.categoryCache
+        var sourceCache = preamble.sourceCache
+        var seenUUIDs = preamble.existingUUIDs
+        var seenHeuristics = preamble.existingHeuristics
+        let defaultCurrency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
+
+        let start = hasHeader ? 1 : 0
+        let total = max(0, preamble.rows.count - start)
+        var processed = 0
+
+        var i = start
+        while i < preamble.rows.count {
+            processMappedRow(
+                preamble.rows[i],
+                lineIndex: i,
+                modelContext: modelContext,
+                mapping: mapping,
+                defaultCurrency: defaultCurrency,
+                mode: mode,
+                categoryCache: &categoryCache,
+                sourceCache: &sourceCache,
+                seenUUIDs: &seenUUIDs,
+                seenHeuristics: &seenHeuristics,
+                result: &result
+            )
+            processed += 1
+            progress?(processed, total)
+            i += 1
+        }
+
+        try modelContext.save()
+        return result
+    }
+
+    /// Parse + normalize + insert a single mapped row. Never throws — per-row
+    /// failures are recorded (`failedRows` + `firstError`) so the loop continues.
+    /// Foreign rows have no UUID, so they are imported under a fresh UUID and only
+    /// flagged as possible duplicates on a content match.
+    static func processMappedRow(
+        _ rawLine: String,
+        lineIndex i: Int,
+        modelContext: ModelContext,
+        mapping: ColumnMapping,
+        defaultCurrency: String,
+        mode: CSVImportMode,
+        categoryCache: inout [String: Category],
+        sourceCache: inout [String: Source],
+        seenUUIDs: inout Set<UUID>,
+        seenHeuristics: inout Set<String>,
+        result: inout CSVImportResult
+    ) {
+        if rawLine.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            result.skipped += 1
+            return
+        }
+
+        let cols = parseCSVLine(rawLine)
+        if cols.contains(where: { $0.count > MAX_FIELD_LENGTH }) {
+            result.failedRows += 1
+            if result.firstError == nil {
+                result.firstError = String(format: NSLocalizedString("csv.import.error.field_too_long.format", comment: ""), i + 1)
+            }
+            return
+        }
+
+        let normalized: NormalizedTransaction
+        switch ImportRowMapper.map(row: cols, mapping: mapping, defaultCurrency: defaultCurrency) {
+        case .success(let n):
+            normalized = n
+        case .failure(let f):
+            result.failedRows += 1
+            if result.firstError == nil {
+                result.firstError = describeRowFailure(f, line: i)
+            }
+            return
+        }
+
+        do {
+            let category = try resolveCategory(
+                modelContext: modelContext,
+                cache: &categoryCache,
+                nameFromCSV: normalized.categoryName,
+                kindRaw: normalized.typeRaw,
+                createdCount: &result.createdCategories
+            )
+            let source = try getOrCreateSourceIfNeeded(
+                modelContext: modelContext,
+                cache: &sourceCache,
+                name: normalized.account ?? "",
+                createdCount: &result.createdSources
+            )
+
+            // Foreign-row dedup: flag on content match, never drop.
+            let heuristic = transactionIdentity(
+                typeRaw: normalized.typeRaw,
+                amountCents: normalized.amountCents,
+                currency: normalized.currency,
+                dayKey: makeISO8601Formatter().string(from: normalized.date),
+                categoryName: category.displayName(),
+                merchant: normalized.merchant ?? ""
+            )
+            if mode == .skipDuplicates, seenHeuristics.contains(heuristic) {
+                result.possibleDuplicates += 1
+            }
+
+            let uuid = UUID()
+            let tx = Transaction(
+                uuid: uuid,
+                typeRaw: normalized.typeRaw,
+                amountCents: normalized.amountCents,
+                currency: normalized.currency,
+                date: normalized.date,
+                category: category,
+                source: source,
+                taxCents: nil,
+                note: normalized.note,
+                merchant: normalized.merchant
+            )
+            modelContext.insert(tx)
+            seenUUIDs.insert(uuid)
+            seenHeuristics.insert(heuristic)
+            if normalized.currencyAssumed { result.currencyAssumed += 1 }
+            result.imported += 1
+        } catch {
+            result.failedRows += 1
+            if result.firstError == nil {
+                result.firstError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Resolve the category for a mapped row: an explicit name goes through
+    /// `getOrCreateCategory`; a nil/empty name lands in the seeded uncategorized
+    /// bucket of the matching kind — NEVER a failure (re-categorization is the #1
+    /// post-import complaint; we don't force it).
+    private static func resolveCategory(
+        modelContext: ModelContext,
+        cache: inout [String: Category],
+        nameFromCSV: String?,
+        kindRaw: String,
+        createdCount: inout Int
+    ) throws -> Category {
+        if let name = nameFromCSV, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return try getOrCreateCategory(
+                modelContext: modelContext,
+                cache: &cache,
+                nameFromCSV: name,
+                kindRaw: kindRaw,
+                createdCount: &createdCount
+            )
+        }
+        return try resolveUncategorized(
+            modelContext: modelContext,
+            cache: &cache,
+            kindRaw: kindRaw,
+            createdCount: &createdCount
+        )
+    }
+
+    /// The uncategorized bucket for a kind: reuse the seeded "Other" (expense) /
+    /// "Income" (income) category by its stable `nameKey`, or create a seeded-style
+    /// one if the store was never seeded. Localizes via `nameKey` ("Без категории").
+    private static func resolveUncategorized(
+        modelContext: ModelContext,
+        cache: inout [String: Category],
+        kindRaw: String,
+        createdCount: inout Int
+    ) throws -> Category {
+        let isIncome = kindRaw == "income"
+        let nameKey = isIncome ? "category.income" : "category.other"
+        let cacheKey = "__uncategorized_\(kindRaw)"
+        if let existing = cache[cacheKey] { return existing }
+
+        let all = try modelContext.fetch(FetchDescriptor<Category>())
+        if let seeded = all.first(where: { $0.nameKey == nameKey && $0.kindRaw == kindRaw }) {
+            cache[cacheKey] = seeded
+            return seeded
+        }
+
+        let nextOrder = (all.filter { $0.kindRaw == kindRaw }.map(\.order).max() ?? 0) + 1
+        let new = Category(
+            name: isIncome ? "Income" : "Other",
+            kindRaw: kindRaw,
+            icon: SeedService.uncategorizedIcon,
+            order: nextOrder,
+            nameKey: nameKey,
+            nameCustom: nil
+        )
+        modelContext.insert(new)
+        cache[cacheKey] = new
+        createdCount += 1
+        return new
+    }
+
+    /// Human-readable, localized reason for a mapped-row failure.
+    private static func describeRowFailure(_ failure: RowMapFailure, line i: Int) -> String {
+        let detail: String
+        switch failure {
+        case .missingDate:
+            detail = NSLocalizedString("csv.import.error.missing_date", comment: "")
+        case .invalidDate(let value):
+            detail = String(format: NSLocalizedString("csv.import.error.invalid_date.format", comment: ""), value)
+        case .amount(let a):
+            switch a {
+            case .unparsableAmount:
+                detail = NSLocalizedString("csv.import.error.invalid_amount", comment: "")
+            case .bothColumnsEmpty:
+                detail = NSLocalizedString("csv.import.error.debit_credit_empty", comment: "")
+            case .bothColumnsFilled:
+                detail = NSLocalizedString("csv.import.error.debit_credit_both", comment: "")
+            case .unrecognizedType(let t):
+                detail = String(format: NSLocalizedString("csv.import.error.unknown_type.format", comment: ""), t)
+            }
+        }
+        return String(format: NSLocalizedString("csv.import.error.row.format", comment: ""), i + 1, detail)
     }
 
     // MARK: - Shared parse internals (used by both sync API and CSVImportActor)

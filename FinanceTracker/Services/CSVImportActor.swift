@@ -66,4 +66,56 @@ actor CSVImportActor {
         try modelContext.save()
         return result
     }
+
+    /// Tier-2 flexible import (column mapping + presets). Mirrors `importData` but
+    /// drives `processMappedRow`; same batched-save + cooperative-yield discipline.
+    func importMappedData(
+        data: Data,
+        mapping: ColumnMapping,
+        hasHeader: Bool = true,
+        mode: CSVImportMode = .skipDuplicates,
+        progress: @Sendable (Int, Int) -> Void
+    ) async throws -> CSVImportResult {
+        let preamble = try CSVImportService.prepare(modelContext: modelContext, data: data)
+        var result = CSVImportResult()
+        guard !preamble.rows.isEmpty else { return result }
+
+        var categoryCache = preamble.categoryCache
+        var sourceCache = preamble.sourceCache
+        var seenUUIDs = preamble.existingUUIDs
+        var seenHeuristics = preamble.existingHeuristics
+        let defaultCurrency = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
+
+        let start = hasHeader ? 1 : 0
+        let total = max(0, preamble.rows.count - start)
+        var processed = 0
+
+        var i = start
+        while i < preamble.rows.count {
+            CSVImportService.processMappedRow(
+                preamble.rows[i],
+                lineIndex: i,
+                modelContext: modelContext,
+                mapping: mapping,
+                defaultCurrency: defaultCurrency,
+                mode: mode,
+                categoryCache: &categoryCache,
+                sourceCache: &sourceCache,
+                seenUUIDs: &seenUUIDs,
+                seenHeuristics: &seenHeuristics,
+                result: &result
+            )
+            processed += 1
+            progress(processed, total)
+
+            if processed % Self.batchSize == 0 {
+                try modelContext.save()
+                await Task.yield()
+            }
+            i += 1
+        }
+
+        try modelContext.save()
+        return result
+    }
 }
