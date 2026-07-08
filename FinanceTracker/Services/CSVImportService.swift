@@ -112,6 +112,32 @@ struct CSVImportService {
 
     // MARK: - Tier 2: flexible mapped import
 
+    /// Header + first data rows for the mapping sheet, so the user maps against
+    /// real values rather than blind column names. Reuses the same RFC-4180 field
+    /// parser as import, so quoted commas survive.
+    struct CSVPreview {
+        var header: [String]
+        var rows: [[String]]
+    }
+
+    static func parsePreview(data: Data, maxRows: Int = 10) -> CSVPreview? {
+        guard let content = String(data: data, encoding: .utf8) else { return nil }
+        let raw = splitCSVRows(content).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard let first = raw.first else { return nil }
+        let header = parseCSVLine(first)
+        let rows = raw.dropFirst().prefix(maxRows).map { parseCSVLine($0) }
+        return CSVPreview(header: header, rows: Array(rows))
+    }
+
+    /// Whether a file is our OWN export (carries the `date,type,amount…id`
+    /// signature). Those keep the legacy UUID round-trip path; everything else
+    /// goes through the flexible mapping sheet.
+    static func isOwnExport(data: Data) -> Bool {
+        guard let content = String(data: data, encoding: .utf8),
+              let first = splitCSVRows(content).first else { return false }
+        return first.lowercased().contains("date,type,amount")
+    }
+
     /// Synchronous mapped import (tests + any off-main caller). Drives the pure
     /// `ImportRowMapper` into SwiftData, reusing the SAME foreign-row dedup as the
     /// generic importer: rows carry no stable UUID, so a content match is FLAGGED

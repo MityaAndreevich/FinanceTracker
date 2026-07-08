@@ -104,6 +104,23 @@ final class CSVMappedImportTests: XCTestCase {
 
     // MARK: - Malformed rows are reported, not dropped
 
+    // MARK: - Preview parsing (drives the mapping sheet)
+
+    func testParsePreviewSplitsHeaderAndRows() throws {
+        let csv = "A,B,C\n1,2,3\n\"x,y\",5,6"
+        let p = try XCTUnwrap(CSVImportService.parsePreview(data: Data(csv.utf8)))
+        XCTAssertEqual(p.header, ["A", "B", "C"])
+        XCTAssertEqual(p.rows.count, 2)
+        XCTAssertEqual(p.rows[0], ["1", "2", "3"])
+        XCTAssertEqual(p.rows[1], ["x,y", "5", "6"], "quoted comma preserved")
+    }
+
+    func testParsePreviewCapsRows() throws {
+        let body = (1...50).map { "\($0),x" }.joined(separator: "\n")
+        let p = try XCTUnwrap(CSVImportService.parsePreview(data: Data("H1,H2\n\(body)".utf8), maxRows: 10))
+        XCTAssertEqual(p.rows.count, 10)
+    }
+
     func testMalformedRowReportedOthersImported() throws {
         let csv = """
         Date,Description,Original Description,Amount,Transaction Type,Category,Account Name,Labels,Notes

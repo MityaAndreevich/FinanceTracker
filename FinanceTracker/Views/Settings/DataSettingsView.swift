@@ -30,6 +30,12 @@ struct DataSettingsView: View {
     // Import progress (indeterminate — see note in startAsyncImport)
     @State private var isImporting = false
 
+    // Tier-2 flexible import: mapping sheet for foreign (non-our-export) files.
+    @State private var showMappingSheet = false
+    @State private var pendingImportData: Data?
+    @State private var mappingPreview: CSVImportService.CSVPreview?
+    @State private var detectedPreset: SourcePreset = .custom
+
     var body: some View {
         List {
             exportSection
@@ -49,6 +55,26 @@ struct DataSettingsView: View {
             allowsMultipleSelection: false
         ) { result in
             handleImport(result: result)
+        }
+
+        .sheet(isPresented: $showMappingSheet) {
+            if let preview = mappingPreview {
+                ImportMappingView(
+                    preview: preview,
+                    initialPreset: detectedPreset,
+                    onCancel: {
+                        showMappingSheet = false
+                        pendingImportData = nil
+                    },
+                    onImport: { mapping in
+                        showMappingSheet = false
+                        if let data = pendingImportData {
+                            startMappedImport(data: data, mapping: mapping)
+                        }
+                        pendingImportData = nil
+                    }
+                )
+            }
         }
 
         .alert("data.alert.import_result.title", isPresented: $showImportResult) {
@@ -208,7 +234,21 @@ struct DataSettingsView: View {
 
             let data = try Data(contentsOf: url)
 
-            startAsyncImport(data: data)
+            // Our own export (carries UUIDs) keeps the legacy idempotent round-trip
+            // path. Any other CSV goes through the flexible mapping sheet so the
+            // user confirms columns before a single row is written.
+            if CSVImportService.isOwnExport(data: data) {
+                startAsyncImport(data: data)
+            } else if let preview = CSVImportService.parsePreview(data: data), !preview.header.isEmpty {
+                pendingImportData = data
+                mappingPreview = preview
+                detectedPreset = SourcePreset.detect(header: preview.header)
+                showMappingSheet = true
+            } else {
+                // Unreadable / empty file: fall back to the legacy importer, which
+                // reports a proper parse error in the result alert.
+                startAsyncImport(data: data)
+            }
 
         } catch {
             importResultMessage = String(
@@ -259,6 +299,35 @@ struct DataSettingsView: View {
         }
     }
 
+    /// Tier-2 mapped import. Same background-actor discipline as `startAsyncImport`
+    /// (detached so the @ModelActor is built off the MainActor), but drives the
+    /// column mapping through `importMappedData`.
+    private func startMappedImport(data: Data, mapping: ColumnMapping) {
+        isImporting = true
+        let container = modelContext.container
+        Task.detached(priority: .medium) {
+            do {
+                let importer = CSVImportActor(modelContainer: container)
+                let result = try await importer.importMappedData(data: data, mapping: mapping) { _, _ in }
+                await MainActor.run {
+                    self.isImporting = false
+                    self.importResultMessage = self.formatImportSummary(result)
+                    self.showImportResult = true
+                }
+            } catch {
+                let message = String(
+                    format: NSLocalizedString("data.import.failed.format", comment: ""),
+                    error.localizedDescription
+                )
+                await MainActor.run {
+                    self.isImporting = false
+                    self.importResultMessage = message
+                    self.showImportResult = true
+                }
+            }
+        }
+    }
+
     private func formatImportSummary(_ importResult: CSVImportResult) -> String {
         var lines: [String] = []
         lines.append(String(format: NSLocalizedString("data.import.result.imported.format", comment: ""), importResult.imported))
@@ -268,6 +337,12 @@ struct DataSettingsView: View {
         }
         if importResult.possibleDuplicates > 0 {
             lines.append(String(format: NSLocalizedString("data.import.result.possible_duplicates.format", comment: ""), importResult.possibleDuplicates))
+        }
+        if importResult.failedRows > 0 {
+            lines.append(String(format: NSLocalizedString("data.import.result.failed_rows.format", comment: ""), importResult.failedRows))
+        }
+        if importResult.currencyAssumed > 0 {
+            lines.append(String(format: NSLocalizedString("data.import.result.currency_assumed.format", comment: ""), importResult.currencyAssumed))
         }
         lines.append(String(format: NSLocalizedString("data.import.result.created_categories.format", comment: ""), importResult.createdCategories))
         lines.append(String(format: NSLocalizedString("data.import.result.created_sources.format", comment: ""), importResult.createdSources))
