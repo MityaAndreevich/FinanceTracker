@@ -107,3 +107,99 @@ enum ImportAmount {
         }
     }
 }
+
+// MARK: - Date order
+
+/// The component order of a source file's dates. Declared by the preset because
+/// "03/04/2026" is a different day in a US vs an EU file. `.auto` infers only
+/// when a component >12 removes the ambiguity, else falls back to US (`.mdy`).
+enum DateOrder {
+    case iso   // YYYY-MM-DD (unambiguous)
+    case mdy   // MM/DD/YYYY (US)
+    case dmy   // DD/MM/YYYY, DD.MM.YYYY (EU)
+    case auto  // infer per value, default MDY
+}
+
+// MARK: - Date parser
+
+enum ImportDate {
+
+    private static func utcCalendar() -> Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        return cal
+    }
+
+    private static func isoFormatter() -> DateFormatter {
+        let f = DateFormatter()
+        f.calendar = utcCalendar()
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        f.isLenient = false
+        return f
+    }
+
+    /// Parse a foreign date cell into UTC midnight, or nil if it cannot be a real
+    /// calendar date. ISO `YYYY-MM-DD` is always accepted regardless of `order`.
+    static func parse(_ raw: String, order: DateOrder) -> Date? {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return nil }
+
+        if let iso = isoFormatter().date(from: s) { return iso }
+        guard order != .iso else { return nil }  // declared ISO but not ISO-shaped
+
+        let parts = s.split(whereSeparator: { $0 == "/" || $0 == "." || $0 == "-" }).map(String.init)
+        guard parts.count == 3,
+              parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy(\.isNumber) }),
+              let a = Int(parts[0]), let b = Int(parts[1]), let rawYear = Int(parts[2]) else {
+            return nil
+        }
+        let year = rawYear < 100 ? 2000 + rawYear : rawYear
+
+        let (month, day): (Int, Int)
+        switch order {
+        case .mdy, .iso: (month, day) = (a, b)
+        case .dmy:       (month, day) = (b, a)
+        case .auto:
+            if a > 12, b <= 12 { (month, day) = (b, a) }        // first >12 → it's the day → DMY
+            else if b > 12, a <= 12 { (month, day) = (a, b) }   // second >12 → DMY-day is 2nd → MDY
+            else { (month, day) = (a, b) }                      // ambiguous → US default
+        }
+        return makeDate(year: year, month: month, day: day)
+    }
+
+    /// Strict date construction with a round-trip validation so rolled-over
+    /// values (e.g. Feb 31) are rejected rather than silently shifted.
+    private static func makeDate(year: Int, month: Int, day: Int) -> Date? {
+        guard (1...12).contains(month), (1...31).contains(day) else { return nil }
+        let cal = utcCalendar()
+        guard let date = cal.date(from: DateComponents(year: year, month: month, day: day)) else { return nil }
+        let c = cal.dateComponents([.year, .month, .day], from: date)
+        guard c.year == year, c.month == month, c.day == day else { return nil }
+        return date
+    }
+
+    /// Infer a whole column's order from sample values: ISO if all look ISO;
+    /// otherwise DMY/MDY if any value's first/second component is >12; else US.
+    static func detectOrder(samples: [String]) -> DateOrder {
+        let vals = samples
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !vals.isEmpty else { return .mdy }
+
+        if vals.allSatisfy({ isoFormatter().date(from: $0) != nil }) { return .iso }
+
+        var sawDayFirst = false
+        var sawMonthFirst = false
+        for v in vals {
+            let parts = v.split(whereSeparator: { $0 == "/" || $0 == "." || $0 == "-" }).map(String.init)
+            guard parts.count == 3, let a = Int(parts[0]), let b = Int(parts[1]) else { continue }
+            if a > 12, b <= 12 { sawDayFirst = true }
+            else if b > 12, a <= 12 { sawMonthFirst = true }
+        }
+        if sawDayFirst, !sawMonthFirst { return .dmy }
+        if sawMonthFirst, !sawDayFirst { return .mdy }
+        return .mdy
+    }
+}
