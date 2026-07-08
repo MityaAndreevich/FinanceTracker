@@ -86,4 +86,32 @@ enum AmountParsing {
         default: return index                                     // 4+ → decimal (fraction capped)
         }
     }
+
+    /// CSV-only strictness gate (QuickAdd deliberately stays lenient — the user
+    /// sees the field). Returns false when a LONE separator's digit count can't
+    /// match the declared convention, so the CSV mapper can route the row to
+    /// `failedRows` instead of silently coercing it:
+    ///   • the GROUPING character (the one that isn't `decimalSeparator`) is valid
+    ///     only as an exact 3-digit thousands group;
+    ///   • the DECIMAL character is always fine (1–2 places, or 3+ that round);
+    ///   • both separators present (position-resolved), a repeated separator (an
+    ///     unambiguous group run like "1,234,567"), or a bare integer are all fine.
+    /// It does NOT re-implement parsing — it only judges separator consistency.
+    static func hasConsistentSeparators(_ raw: String, decimalSeparator: Character) -> Bool {
+        let s = String(raw.unicodeScalars.filter { CharacterSet(charactersIn: "0123456789,.").contains($0) })
+        let commas = s.filter { $0 == "," }.count
+        let periods = s.filter { $0 == "." }.count
+
+        // Both kinds present → decimal fixed by position; none → integer.
+        guard (commas == 0) != (periods == 0) else { return true }
+
+        let sep: Character = commas > 0 ? "," : "."
+        let count = commas > 0 ? commas : periods
+        if count > 1 { return true }  // repeated same separator → unambiguous grouping
+
+        if sep == decimalSeparator { return true }  // decimal char: always acceptable
+        // Grouping char: valid only as an exact 3-digit group.
+        guard let idx = s.lastIndex(of: sep) else { return true }
+        return s[s.index(after: idx)...].filter(\.isNumber).count == 3
+    }
 }

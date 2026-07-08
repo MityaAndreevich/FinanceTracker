@@ -125,6 +125,20 @@ final class CSVMappedImportTests: XCTestCase {
         XCTAssertEqual(p.rows.count, 10)
     }
 
+    func testSeparatorInconsistentAmountRoutedToFailedRows() throws {
+        // "1,2345" is malformed for a period-decimal file (comma grouping needs 3
+        // digits). It must be reported, not silently coerced to $1.23.
+        let csv = """
+        Date,Description,Original Description,Amount,Transaction Type,Category,Account Name,Labels,Notes
+        1/20/2026,Bad,,"1,2345",debit,Food,Cash,,
+        1/21/2026,Good,,3.00,debit,Food,Cash,,
+        """
+        let r = try CSVImportService.importMappedCSV(modelContext: context, data: Data(csv.utf8), mapping: mintMapping())
+        XCTAssertEqual(r.imported, 1)
+        XCTAssertEqual(r.failedRows, 1)
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Transaction>()).count, 1)
+    }
+
     func testMalformedRowReportedOthersImported() throws {
         let csv = """
         Date,Description,Original Description,Amount,Transaction Type,Category,Account Name,Labels,Notes

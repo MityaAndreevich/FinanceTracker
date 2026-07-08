@@ -52,7 +52,12 @@ enum ImportAmount {
         let parenthesised = trimmed.hasPrefix("(") && trimmed.hasSuffix(")")
         let isNegative = parenthesised || trimmed.contains("-") || trimmed.contains("\u{2212}")
 
-        guard let cents = AmountParsing.parseCents(trimmed, decimalSeparator: style == .comma ? "," : ".") else {
+        let decimalChar: Character = style == .comma ? "," : "."
+        // CSV never guesses: reject a lone separator whose digit count is
+        // inconsistent with the declared convention (→ nil → the mapper routes the
+        // row to failedRows). QuickAdd keeps the lenient core path.
+        guard AmountParsing.hasConsistentSeparators(trimmed, decimalSeparator: decimalChar),
+              let cents = AmountParsing.parseCents(trimmed, decimalSeparator: decimalChar) else {
             return nil
         }
         return (cents, isNegative)

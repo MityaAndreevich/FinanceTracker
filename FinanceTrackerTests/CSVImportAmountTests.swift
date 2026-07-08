@@ -97,4 +97,18 @@ final class CSVImportAmountTests: XCTestCase {
         XCTAssertNil(ImportAmount.parse("", decimal: .period))
         XCTAssertNil(ImportAmount.parse("   ", decimal: .period))
     }
+
+    // MARK: - CSV strictness: a lone separator inconsistent with the declared
+    // convention is rejected (→ nil → failedRows), never silently coerced.
+
+    func testRejectsInconsistentGroupingCount() {
+        XCTAssertNil(ImportAmount.parse("1,2345", decimal: .period), "comma grouping needs exactly 3 digits")
+        XCTAssertNil(ImportAmount.parse("1,23", decimal: .period), "2-digit comma group is malformed here")
+    }
+
+    func testAcceptsValidGroupAndRoundsDecimal() {
+        XCTAssertEqual(ImportAmount.parse("1,234", decimal: .period)?.cents, 123400)  // valid group
+        XCTAssertEqual(ImportAmount.parse("1.235", decimal: .period)?.cents, 124)     // decimal, rounds half-up
+        XCTAssertEqual(ImportAmount.parse("1,234.56", decimal: .period)?.cents, 123456) // both present
+    }
 }

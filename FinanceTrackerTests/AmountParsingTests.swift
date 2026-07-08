@@ -93,6 +93,32 @@ final class AmountParsingTests: XCTestCase {
         XCTAssertEqual(AmountParsing.parseCents(input, decimalSeparator: ","), comma, "\(input) with ','", file: file, line: line)
     }
 
+    // MARK: - Separator-consistency gate (CSV-only strictness)
+    //
+    // The core parseCents stays lenient (QuickAdd shows the field, a guess is
+    // recoverable). CSV import must NOT guess: this predicate flags a lone
+    // separator whose digit count can't match the declared convention, so the
+    // mapper can route the row to failedRows instead of silently coercing it.
+    func testConsistencyGate() {
+        // Grouping char (the non-decimal one) is only valid as an exact 3-digit group.
+        XCTAssertFalse(AmountParsing.hasConsistentSeparators("1,2345", decimalSeparator: "."))  // 4 digits
+        XCTAssertFalse(AmountParsing.hasConsistentSeparators("1,23", decimalSeparator: "."))    // 2 digits
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1,234", decimalSeparator: "."))    // valid group
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1,234,567", decimalSeparator: ".")) // repeated → grouping
+        // Decimal char is always fine (1–2 normal, 3+ rounds).
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1.235", decimalSeparator: "."))
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1.23", decimalSeparator: "."))
+        // Both present → unambiguous by position; integers → nothing to check.
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1,234.56", decimalSeparator: "."))
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1234", decimalSeparator: "."))
+        // Mirror under comma convention.
+        XCTAssertTrue(AmountParsing.hasConsistentSeparators("1.234", decimalSeparator: ","))    // period grouping, 3 digits
+        XCTAssertFalse(AmountParsing.hasConsistentSeparators("1.2345", decimalSeparator: ","))  // period grouping, 4 digits
+
+        // The gate is advisory only — the CORE stays lenient (QuickAdd path).
+        XCTAssertEqual(AmountParsing.parseCents("1,2345", decimalSeparator: "."), 123)
+    }
+
     // MARK: - Rounding (a >2-decimal value must round half-up, not truncate down)
     //
     // Truncation biased every foreign amount with a 3rd decimal ≥5 down by up to a
