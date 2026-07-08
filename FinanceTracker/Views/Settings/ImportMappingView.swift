@@ -150,9 +150,9 @@ struct ImportMappingView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("import.map.action.import") {
-                        if let mapping = draft.build() { onImport(mapping) }
+                        if let mapping = draft.build(), !dateOrderUnresolved { onImport(mapping) }
                     }
-                    .disabled(draft.build() == nil)
+                    .disabled(draft.build() == nil || dateOrderUnresolved)
                     .fontWeight(.semibold)
                 }
             }
@@ -221,17 +221,83 @@ struct ImportMappingView: View {
 
     // MARK: Date
 
+    /// Values of the currently-mapped date column across the preview rows.
+    private var dateSamples: [String] {
+        guard let col = draft.dateCol else { return [] }
+        return preview.rows.compactMap { col < $0.count ? $0[col] : nil }
+    }
+
+    private var detectedDateOrder: DetectedDateOrder {
+        ImportDate.classifyColumn(samples: dateSamples)
+    }
+
+    /// The order is unconfirmed: the column is genuinely ambiguous and the user has
+    /// left it on Auto. Import is blocked here — we never guess day/month silently.
+    private var dateOrderUnresolved: Bool {
+        draft.dateOrder == .auto && detectedDateOrder == .ambiguous
+    }
+
+    /// Auto-apply a concrete order when the column disambiguates itself, but only
+    /// while the user hasn't declared one (a preset order like Mint's MDY wins).
+    private func syncDetectedDateOrder() {
+        guard draft.dateOrder == .auto else { return }
+        switch detectedDateOrder {
+        case .iso: draft.dateOrder = .iso
+        case .resolved(let o): draft.dateOrder = o
+        case .ambiguous: break  // leave on Auto → blocks import until the user picks
+        }
+    }
+
     private var dateSection: some View {
-        Section("import.map.section.date") {
+        Section {
             columnPicker("import.map.field.date", selection: $draft.dateCol, includeNone: false)
+                .onChange(of: draft.dateCol) { _, _ in syncDetectedDateOrder() }
+
             Picker("import.map.date_format", selection: $draft.dateOrder) {
                 Text("import.map.date_format.auto").tag(DateOrder.auto)
                 Text("import.map.date_format.mdy").tag(DateOrder.mdy)
                 Text("import.map.date_format.dmy").tag(DateOrder.dmy)
                 Text("import.map.date_format.iso").tag(DateOrder.iso)
             }
+
+            dateInterpretationRow
+        } header: {
+            Text("import.map.section.date")
+        }
+        .onAppear { syncDetectedDateOrder() }
+    }
+
+    /// Surfaces how the chosen format actually reads the file's first date — or a
+    /// prominent warning when the order is still ambiguous — so a wrong mapping is
+    /// visible before it can transpose day and month.
+    @ViewBuilder
+    private var dateInterpretationRow: some View {
+        if dateOrderUnresolved {
+            Label("import.map.date.ambiguous", systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        } else if let raw = dateSamples.first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let date = ImportDate.parse(trimmed, order: draft.dateOrder) {
+                Text(String(format: NSLocalizedString("import.map.date.reads.format", comment: ""),
+                            trimmed, Self.previewDateFormatter.string(from: date)))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(String(format: NSLocalizedString("import.map.date.unreadable.format", comment: ""), trimmed))
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+            }
         }
     }
+
+    private static let previewDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        f.timeStyle = .none
+        f.timeZone = TimeZone(identifier: "UTC")
+        return f
+    }()
 
     // MARK: Amount + sign
 

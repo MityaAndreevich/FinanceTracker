@@ -704,3 +704,8 @@
 "import.map.field.note" = "Nota";
 "import.map.field.account" = "Conta";
 "import.map.field.currency" = "Moeda";
+
+/* Item 2: ambiguous-date safety */
+"import.map.date.ambiguous" = "Datas ambíguas: escolha MM/DD ou DD/MM para não trocar dia e mês.";
+"import.map.date.reads.format" = "Interpretado como: %1$@ → %2$@";
+"import.map.date.unreadable.format" = "“%@” não pode ser lido neste formato.";

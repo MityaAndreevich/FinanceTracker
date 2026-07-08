@@ -830,3 +830,8 @@
 "import.map.field.note" = "Нотатка";
 "import.map.field.account" = "Рахунок";
 "import.map.field.currency" = "Валюта";
+
+/* Item 2: ambiguous-date safety */
+"import.map.date.ambiguous" = "Дати неоднозначні — виберіть ММ/ДД або ДД/ММ, щоб день і місяць не помінялися місцями.";
+"import.map.date.reads.format" = "Читається як: %1$@ → %2$@";
+"import.map.date.unreadable.format" = "«%@» не читається в цьому форматі.";

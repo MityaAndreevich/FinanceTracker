@@ -120,7 +120,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // debit_credit_empty/debit_credit_both/unknown_type/row), and two result
         // counters (data.import.result.failed_rows/currency_assumed). All 5
         // locales carry them in parity. Was 575.
-        XCTAssertEqual(enKeys.count, 623, "English baseline changed; update the expected count.")
+        // 2026-07-08 (Item 2 ambiguous-date safety): +3 for the date-interpretation
+        // row in the mapping sheet (import.map.date.ambiguous / reads.format /
+        // unreadable.format). All 5 locales in parity. Was 623.
+        XCTAssertEqual(enKeys.count, 626, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

@@ -68,18 +68,24 @@ final class CSVImportDateTests: XCTestCase {
         XCTAssertNil(ImportDate.parse("", order: .mdy))
     }
 
-    // MARK: - Column-level order detection (surfaced in the preview)
+    // MARK: - Column-level classification (surfaced in the mapping sheet)
 
-    func testDetectOrderFromColumnWithDayOverTwelve() {
+    func testClassifyResolvesFromDayOverTwelve() {
         // A column containing "13/04/2026" can only be DMY.
-        XCTAssertEqual(ImportDate.detectOrder(samples: ["03/04/2026", "13/04/2026", "01/02/2026"]), .dmy)
+        XCTAssertEqual(ImportDate.classifyColumn(samples: ["03/04/2026", "13/04/2026", "01/02/2026"]), .resolved(.dmy))
+        XCTAssertEqual(ImportDate.classifyColumn(samples: ["04/13/2026"]), .resolved(.mdy))
     }
 
-    func testDetectOrderDefaultsToMDYWhenAllAmbiguous() {
-        XCTAssertEqual(ImportDate.detectOrder(samples: ["03/04/2026", "01/02/2026"]), .mdy)
+    func testClassifyReportsAmbiguousInsteadOfGuessing() {
+        // Every value ≤12 → we must NOT silently choose; force the user to pick.
+        XCTAssertEqual(ImportDate.classifyColumn(samples: ["03/04/2026", "01/02/2026"]), .ambiguous)
     }
 
-    func testDetectOrderISO() {
-        XCTAssertEqual(ImportDate.detectOrder(samples: ["2026-03-04", "2026-01-02"]), .iso)
+    func testClassifyISO() {
+        XCTAssertEqual(ImportDate.classifyColumn(samples: ["2026-03-04", "2026-01-02"]), .iso)
+    }
+
+    func testClassifyEmptyIsAmbiguous() {
+        XCTAssertEqual(ImportDate.classifyColumn(samples: []), .ambiguous)
     }
 }

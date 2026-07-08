@@ -64,11 +64,20 @@ enum ImportAmount {
 /// The component order of a source file's dates. Declared by the preset because
 /// "03/04/2026" is a different day in a US vs an EU file. `.auto` infers only
 /// when a component >12 removes the ambiguity, else falls back to US (`.mdy`).
-enum DateOrder {
+enum DateOrder: Equatable {
     case iso   // YYYY-MM-DD (unambiguous)
     case mdy   // MM/DD/YYYY (US)
     case dmy   // DD/MM/YYYY, DD.MM.YYYY (EU)
     case auto  // infer per value, default MDY
+}
+
+/// Result of classifying a whole date column, surfaced in the mapping sheet.
+/// `.ambiguous` is the safety case: the column carries no >12 signal, so the order
+/// cannot be known and the user MUST choose before import.
+enum DetectedDateOrder: Equatable {
+    case iso
+    case resolved(DateOrder)  // a >12 component fixed the order
+    case ambiguous            // no signal — do not guess
 }
 
 // MARK: - Date parser
@@ -131,13 +140,15 @@ enum ImportDate {
         return date
     }
 
-    /// Infer a whole column's order from sample values: ISO if all look ISO;
-    /// otherwise DMY/MDY if any value's first/second component is >12; else US.
-    static func detectOrder(samples: [String]) -> DateOrder {
+    /// Classify a whole column's date order from sample values. Crucially this
+    /// reports `.ambiguous` when NO sample disambiguates day/month (every component
+    /// ≤12, non-ISO) rather than silently defaulting to US order — the mapping sheet
+    /// then forces the user to choose, so a European file is never transposed.
+    static func classifyColumn(samples: [String]) -> DetectedDateOrder {
         let vals = samples
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        guard !vals.isEmpty else { return .mdy }
+        guard !vals.isEmpty else { return .ambiguous }
 
         if vals.allSatisfy({ isoFormatter().date(from: $0) != nil }) { return .iso }
 
@@ -149,9 +160,9 @@ enum ImportDate {
             if a > 12, b <= 12 { sawDayFirst = true }
             else if b > 12, a <= 12 { sawMonthFirst = true }
         }
-        if sawDayFirst, !sawMonthFirst { return .dmy }
-        if sawMonthFirst, !sawDayFirst { return .mdy }
-        return .mdy
+        if sawDayFirst, !sawMonthFirst { return .resolved(.dmy) }
+        if sawMonthFirst, !sawDayFirst { return .resolved(.mdy) }
+        return .ambiguous  // nothing >12 anywhere → genuinely ambiguous, ask the user
     }
 }
 
