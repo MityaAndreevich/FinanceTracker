@@ -203,3 +203,86 @@ enum ImportDate {
         return .mdy
     }
 }
+
+// MARK: - Amount / sign combiner
+
+/// A positive magnitude in cents plus a direction. Transaction stores an
+/// unsigned `amountCents` and derives sign from `typeRaw`, so this is the shape
+/// every foreign amount is normalized into.
+struct SignedAmount: Equatable {
+    var cents: Int
+    var typeRaw: String  // "income" | "expense"
+}
+
+/// Why a row's amount/sign could not be resolved. Never a crash — surfaced in the
+/// import summary so the user knows exactly which rows need attention.
+enum ImportAmountFailure: Equatable, Error {
+    case unparsableAmount
+    case bothColumnsEmpty         // debit AND credit blank/zero
+    case bothColumnsFilled        // debit AND credit both non-zero — ambiguous
+    case unrecognizedType(String) // a type column value we can't map to income/expense
+}
+
+/// Resolves the three foreign ways of expressing direction into a `SignedAmount`.
+enum ImportSign {
+
+    // Direction keywords seen across Mint / bank exports. Mint's Transaction Type
+    // column is exactly "debit"/"credit", so exact matches take priority.
+    private static let incomeWords: Set<String> = ["credit", "cr", "deposit", "income", "refund", "interest", "dividend"]
+    private static let expenseWords: Set<String> = ["debit", "dr", "withdrawal", "payment", "purchase", "sale", "charge", "fee", "expense"]
+
+    /// Map a type-column value ("debit"/"credit"/"Deposit"/…) to a typeRaw, or nil.
+    static func classifyType(_ raw: String) -> String? {
+        let t = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !t.isEmpty else { return nil }
+        if incomeWords.contains(t) { return "income" }
+        if expenseWords.contains(t) { return "expense" }
+        if incomeWords.contains(where: { t.contains($0) }) { return "income" }
+        if expenseWords.contains(where: { t.contains($0) }) { return "expense" }
+        return nil
+    }
+
+    /// Shape 1: a single column whose sign gives direction (negative → expense).
+    static func combineSigned(_ amountCell: String, decimal style: CSVDecimalStyle) -> Result<SignedAmount, ImportAmountFailure> {
+        guard let parsed = ImportAmount.parse(amountCell, decimal: style) else {
+            return .failure(.unparsableAmount)
+        }
+        return .success(SignedAmount(cents: parsed.cents, typeRaw: parsed.isNegative ? "expense" : "income"))
+    }
+
+    /// Shape 2 (Mint): an unsigned amount column + a type column.
+    static func combineUnsignedWithType(amount amountCell: String, type typeCell: String, decimal style: CSVDecimalStyle) -> Result<SignedAmount, ImportAmountFailure> {
+        guard let parsed = ImportAmount.parse(amountCell, decimal: style) else {
+            return .failure(.unparsableAmount)
+        }
+        guard let typeRaw = classifyType(typeCell) else {
+            return .failure(.unrecognizedType(typeCell.trimmingCharacters(in: .whitespacesAndNewlines)))
+        }
+        return .success(SignedAmount(cents: parsed.cents, typeRaw: typeRaw))
+    }
+
+    /// Shape 3: two columns (money-out debit, money-in credit), each unsigned.
+    /// Exactly one must be non-zero; the magnitude is taken so a bank that writes
+    /// its debit column negative still works.
+    static func combineDebitCredit(debit debitCell: String, credit creditCell: String, decimal style: CSVDecimalStyle) -> Result<SignedAmount, ImportAmountFailure> {
+        let d = debitCell.trimmingCharacters(in: .whitespacesAndNewlines)
+        let c = creditCell.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let dParsed = d.isEmpty ? nil : ImportAmount.parse(d, decimal: style)
+        let cParsed = c.isEmpty ? nil : ImportAmount.parse(c, decimal: style)
+        if (!d.isEmpty && dParsed == nil) || (!c.isEmpty && cParsed == nil) {
+            return .failure(.unparsableAmount)
+        }
+
+        let dCents = dParsed?.cents ?? 0
+        let cCents = cParsed?.cents ?? 0
+        let hasDebit = dCents > 0
+        let hasCredit = cCents > 0
+
+        if !hasDebit, !hasCredit { return .failure(.bothColumnsEmpty) }
+        if hasDebit, hasCredit { return .failure(.bothColumnsFilled) }
+        return hasCredit
+            ? .success(SignedAmount(cents: cCents, typeRaw: "income"))
+            : .success(SignedAmount(cents: dCents, typeRaw: "expense"))
+    }
+}
