@@ -133,6 +133,42 @@ struct NetSnapshotBuilderTests {
         #expect(before != after)            // a count-only trigger would miss this
     }
 
+    // Item 3 verification: the trigger must fire on ALL THREE mutation paths.
+    // Edit is covered above (the exact device bug). Add + delete already changed
+    // transactions.count, so the OLD count trigger caught them — these confirm the
+    // new content signature still does, so the fix didn't regress add/delete.
+
+    @Test func signature_changesWhenTransactionAdded() throws {
+        let ctx = try makeContext()
+        addExpense(ctx, "Food", 5_000)
+        try ctx.save()
+        let before = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        addExpense(ctx, "Toys", 3_000)      // plain add
+        try ctx.save()
+        let after = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        #expect(before != after)
+    }
+
+    @Test func signature_changesWhenTransactionDeleted() throws {
+        let ctx = try makeContext()
+        let victim = addExpense(ctx, "Food", 5_000)
+        addExpense(ctx, "Toys", 3_000)
+        try ctx.save()
+        let before = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        ctx.delete(victim)
+        try ctx.save()
+        let after = NetSnapshotBuilder.contentSignature(
+            transactions: try ctx.fetch(FetchDescriptor<Transaction>()), currencyCode: "USD", monthlyBudgetCents: 0)
+
+        #expect(before != after)
+    }
+
     @Test func signature_changesWhenCategoryReassigned() throws {
         let ctx = try makeContext()
         let tx = addExpense(ctx, "Food", 5_000)
