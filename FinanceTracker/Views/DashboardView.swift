@@ -86,6 +86,15 @@ struct DashboardView: View {
 
     private var budgetIsSet: Bool { monthlyBudgetCents > 0 }
 
+    /// Same gain-framed precedence as the Home Screen widget (Item 0) so the app
+    /// and widget never disagree: budget → income-remainder → last-resort spent.
+    private enum HeroMode { case budget, income, spent }
+    private var heroMode: HeroMode {
+        if budgetIsSet { return .budget }
+        if incomeCents > 0 { return .income }
+        return .spent
+    }
+
     /// What's left of the budget this month (can go negative when over budget).
     private var remainingCents: Int { monthlyBudgetCents - expenseCents }
 
@@ -573,7 +582,10 @@ struct DashboardView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("dashboard.budget.edit.a11y"))
             } else {
-                Text("dashboard.net_this_month")
+                // No budget: still lead with the gain frame when income is known
+                // ("Safe to spend {income − spent}"); fall back to a calm "Spent"
+                // only when there's nothing to frame against.
+                Text(heroMode == .income ? "dashboard.safe_to_spend" : "dashboard.hero.spent")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.bcTextSecondary)
             }
@@ -641,25 +653,22 @@ struct DashboardView: View {
     /// The large amount in the hero. Budget mode shows the remaining budget
     /// (locale-formatted, negative when over); fallback shows signed net.
     private var heroBigNumber: String {
-        if budgetIsSet {
-            return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
+        switch heroMode {
+        case .budget: return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
+        case .income: return Money.format(cents: netCents, currencyCode: defaultCurrencyCode)
+        case .spent:  return Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode)
         }
-        return (netCents >= 0 ? "+" : "−") + "\u{00A0}" +
-            Money.format(cents: abs(netCents), currencyCode: defaultCurrencyCode)
     }
 
     private var heroNumberColor: Color {
-        if budgetIsSet {
-            // Safe-to-spend is a BUDGET remainder, not income — so it must not render
-            // in income-green (device QA round 1 #8: the green number read as a gain
-            // on the first screen). Neutral primary text while within budget; calm
-            // coral (bcDanger) only when actually over budget. Green stays reserved
-            // for genuine income amounts. The progress bar carries the mint accent.
-            return remainingCents >= 0 ? .bcTextPrimary : .bcDanger
+        // Green stays reserved for genuine income (device QA round 1 #8: a green
+        // safe-to-spend number read as a gain on the first screen). Neutral primary
+        // while healthy; calm coral (bcDanger) only when actually negative/over.
+        switch heroMode {
+        case .budget: return remainingCents >= 0 ? .bcTextPrimary : .bcDanger
+        case .income: return netCents >= 0 ? .bcTextPrimary : .bcDanger
+        case .spent:  return .bcTextPrimary
         }
-        // Net-this-month IS a directional value: mint when positive, calm coral
-        // (bcDanger) when negative — not the retired terracotta (locked decision 2).
-        return Color.moneyDirectional(isPositive: netCents >= 0)
     }
 
     private var heroSubtitle: String {

@@ -110,7 +110,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // safe-to-spend hero + no-budget/over-budget copy (widget.safe_to_spend,
         // widget.over_budget, widget.hero.spent, widget.of_budget.format,
         // widget.of_earned.format). All 5 locales carry them in parity. Was 568.
-        XCTAssertEqual(enKeys.count, 573, "English baseline changed; update the expected count.")
+        // 2026-07-08 (Widget polish v1.0.1, Item 0): +2 gain-frame hero keys —
+        // widget.overspent (over-income danger label) and dashboard.hero.spent
+        // (app hero last-resort "Spent" label, aligned with the widget precedence).
+        // All 5 locales carry them in parity. Was 573.
+        XCTAssertEqual(enKeys.count, 575, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

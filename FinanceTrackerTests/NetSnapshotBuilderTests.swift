@@ -47,6 +47,48 @@ struct NetSnapshotBuilderTests {
         #expect(r.fraction.isFinite)
     }
 
+    // MARK: - Hero precedence (pure)
+
+    /// Identity "compact" so assertions read in whole cents, no locale noise.
+    private let cents: (Int) -> String = { "\($0)" }
+
+    @Test func hero_budgetSet_winsOverIncome_gainFramed() {
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 3_000, budgetCents: 10_000, incomeCents: 8_000, compact: cents)
+        #expect(h.label == String(localized: "widget.safe_to_spend"))
+        #expect(h.amount == "7000")          // budget − spent, budget wins over income
+        #expect(!h.isAlert)
+        #expect(!h.subtitle.isEmpty)
+    }
+
+    @Test func hero_noBudget_incomeKnown_gainFramed() {
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 194, budgetCents: 0, incomeCents: 2_800, compact: cents)
+        #expect(h.label == String(localized: "widget.safe_to_spend"))
+        #expect(h.amount == "2606")          // the device-QA case: income − spent
+        #expect(!h.isAlert)
+    }
+
+    @Test func hero_neither_lastResortSpent_noSubtitle() {
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 500, budgetCents: 0, incomeCents: 0, compact: cents)
+        #expect(h.label == String(localized: "widget.hero.spent"))
+        #expect(h.amount == "500")
+        #expect(h.subtitle.isEmpty)
+        #expect(!h.isAlert)
+    }
+
+    @Test func hero_overBudget_alert_magnitudeIsOverage() {
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 10_000, incomeCents: 0, compact: cents)
+        #expect(h.label == String(localized: "widget.over_budget"))
+        #expect(h.amount == "2000")          // abs(remaining)
+        #expect(h.isAlert)
+    }
+
+    @Test func hero_overIncome_overspentLabel_alert() {
+        let h = NetSnapshotBuilder.heroComponents(spentCents: 12_000, budgetCents: 0, incomeCents: 8_000, compact: cents)
+        #expect(h.label == String(localized: "widget.overspent"))
+        #expect(h.amount == "4000")
+        #expect(h.isAlert)
+    }
+
     // MARK: - Category fraction guards (pure)
 
     @Test func categoryFraction_normal() {
@@ -149,7 +191,10 @@ struct NetSnapshotBuilderTests {
         #expect(snap.ringFraction == 1.0)
     }
 
-    @Test func build_noBudget_showsSpent_neutralOrIncomeRing() throws {
+    @Test func build_noBudget_incomeKnown_isGainFramedSafeToSpend() throws {
+        // Item 0: no budget but income is known → remaining IS computable
+        // (income − spent), so lead with the GAIN frame, not "Spent". The observed
+        // device bug was "194 ₽ / Расходы" when 2 800 ₽ income made 2 606 ₽ safe.
         let ctx = try makeContext()
         addExpense(ctx, "Food", 4_000)
         addIncome(ctx, 8_000)
@@ -161,10 +206,47 @@ struct NetSnapshotBuilderTests {
                                             monthlyBudgetCents: 0,
                                             locale: Locale(identifier: "en_US"))
 
-        #expect(snap.heroLabel == String(localized: "widget.hero.spent"))
+        #expect(snap.heroLabel == String(localized: "widget.safe_to_spend"))
         #expect(!snap.heroIsAlert)
+        #expect(!snap.heroSubtitle.isEmpty)                     // "of $80 earned"
         #expect(!snap.ringIsNeutral)                            // income present → spent/income
         #expect(abs(snap.ringFraction - 0.5) < 0.0001)
+    }
+
+    @Test func build_noBudget_spentExceedsIncome_isAlert() throws {
+        // Overspent relative to income → danger signal, ring clamps to full.
+        let ctx = try makeContext()
+        addExpense(ctx, "Rent", 12_000)
+        addIncome(ctx, 8_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+
+        let snap = NetSnapshotBuilder.build(transactions: all,
+                                            currencyCode: "USD",
+                                            monthlyBudgetCents: 0,
+                                            locale: Locale(identifier: "en_US"))
+
+        #expect(snap.heroIsAlert)
+        #expect(snap.heroLabel == String(localized: "widget.overspent"))
+        #expect(snap.ringFraction == 1.0)
+    }
+
+    @Test func build_noBudget_noIncome_showsSpentLastResort() throws {
+        // Neither budget nor income → the only honest hero is "Spent {amount}".
+        let ctx = try makeContext()
+        addExpense(ctx, "Food", 4_000)
+        try ctx.save()
+        let all = try ctx.fetch(FetchDescriptor<Transaction>())
+
+        let snap = NetSnapshotBuilder.build(transactions: all,
+                                            currencyCode: "USD",
+                                            monthlyBudgetCents: 0,
+                                            locale: Locale(identifier: "en_US"))
+
+        #expect(snap.heroLabel == String(localized: "widget.hero.spent"))
+        #expect(!snap.heroIsAlert)
+        #expect(snap.heroSubtitle.isEmpty)
+        #expect(snap.ringIsNeutral)                             // no denominator to fill
     }
 
     @Test func build_emptyPeriod_noBudget_hasNoData() throws {

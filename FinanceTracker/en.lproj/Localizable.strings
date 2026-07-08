@@ -255,6 +255,7 @@
 "dashboard.income_caption" = "+ %@ income";
 "dashboard.based_on_tracked" = "Based on tracked transactions";
 "dashboard.net_this_month" = "Net this month";
+"dashboard.hero.spent" = "Spent";
 "dashboard.spent_earned_caption" = "Spent %@ · Earned %@";
 "dashboard.spent_more" = "Spent more than earned";
 "dashboard.earned_more" = "Earned more than spent";
@@ -635,6 +636,7 @@
 "widget.earned.format" = "Earned %@";
 "widget.safe_to_spend" = "Safe to spend";
 "widget.over_budget" = "Over budget";
+"widget.overspent" = "Overspent";
 "widget.hero.spent" = "Spent";
 "widget.of_budget.format" = "of %@";
 "widget.of_earned.format" = "of %@ earned";

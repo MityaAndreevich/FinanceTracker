@@ -70,27 +70,16 @@ enum NetSnapshotBuilder {
                                   budgetCents: monthlyBudgetCents,
                                   incomeCents: incomeCents)
 
-        // Hero — gain-framed safe-to-spend when a budget exists; otherwise the
-        // calm "Spent" total (never a green net that reads as a gain — QA #8).
-        let heroLabel: String
-        let heroAmount: String
-        let heroSubtitle: String
-        let heroIsAlert: Bool
-        if monthlyBudgetCents > 0 {
-            let remaining = monthlyBudgetCents - expenseCents
-            heroIsAlert = remaining < 0
-            heroLabel = String(localized: heroIsAlert ? "widget.over_budget" : "widget.safe_to_spend")
-            heroAmount = compact(abs(remaining))
-            heroSubtitle = String(format: String(localized: "widget.of_budget.format"),
-                                  compact(monthlyBudgetCents))
-        } else {
-            heroIsAlert = false
-            heroLabel = String(localized: "widget.hero.spent")
-            heroAmount = compact(expenseCents)
-            heroSubtitle = incomeCents > 0
-                ? String(format: String(localized: "widget.of_earned.format"), compact(incomeCents))
-                : ""
-        }
+        // Hero — gain-framed safe-to-spend (loss pain ≈ 2× gain, so never lead
+        // with the loss frame). Precedence lives in the pure helper below.
+        let hero = heroComponents(spentCents: expenseCents,
+                                  budgetCents: monthlyBudgetCents,
+                                  incomeCents: incomeCents,
+                                  compact: compact)
+        let heroLabel = hero.label
+        let heroAmount = hero.amount
+        let heroSubtitle = hero.subtitle
+        let heroIsAlert = hero.isAlert
 
         let spentText = String(format: String(localized: "widget.spent.format"), compact(expenseCents))
         let earnedText = String(format: String(localized: "widget.earned.format"), compact(incomeCents))
@@ -113,6 +102,52 @@ enum NetSnapshotBuilder {
     }
 
     // MARK: - Pure guarded math (testable without SwiftData)
+
+    /// The frozen hero copy: label, compact amount, subline, danger flag.
+    struct HeroCopy {
+        let label: String
+        let amount: String
+        let subtitle: String
+        let isAlert: Bool
+    }
+
+    /// Gain-framed hero precedence (Item 0). In priority order:
+    ///   1. Budget set        → "Safe to spend {budget − spent}" of {budget}
+    ///   2. Income known       → "Safe to spend {income − spent}" of {income}
+    ///   3. Neither            → "Spent {amount}" (last resort, no subline)
+    /// Over-budget / over-income flips the label to the danger state and marks
+    /// `isAlert` so the widget can tint it (never hue-alone — icon+label too).
+    static func heroComponents(spentCents: Int,
+                               budgetCents: Int,
+                               incomeCents: Int,
+                               compact: (Int) -> String) -> HeroCopy {
+        if budgetCents > 0 {
+            let remaining = budgetCents - spentCents
+            let alert = remaining < 0
+            return HeroCopy(
+                label: String(localized: alert ? "widget.over_budget" : "widget.safe_to_spend"),
+                amount: compact(abs(remaining)),
+                subtitle: String(format: String(localized: "widget.of_budget.format"), compact(budgetCents)),
+                isAlert: alert
+            )
+        }
+        if incomeCents > 0 {
+            let remaining = incomeCents - spentCents
+            let alert = remaining < 0
+            return HeroCopy(
+                label: String(localized: alert ? "widget.overspent" : "widget.safe_to_spend"),
+                amount: compact(abs(remaining)),
+                subtitle: String(format: String(localized: "widget.of_earned.format"), compact(incomeCents)),
+                isAlert: alert
+            )
+        }
+        return HeroCopy(
+            label: String(localized: "widget.hero.spent"),
+            amount: compact(spentCents),
+            subtitle: "",
+            isAlert: false
+        )
+    }
 
     /// Ring fill + whether it's a neutral (track-only) state.
     /// - budget set → spent / budget (the safe-to-spend progress).

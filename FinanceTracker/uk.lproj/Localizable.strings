@@ -262,6 +262,7 @@
 "dashboard.income_caption" = "+ %@ дохід";
 "dashboard.based_on_tracked" = "На основі врахованих транзакцій";
 "dashboard.net_this_month" = "Баланс цього місяця";
+"dashboard.hero.spent" = "Витрати";
 "dashboard.spent_earned_caption" = "Витрачено %@ · Зароблено %@";
 "dashboard.spent_more" = "Витрачено більше, ніж зароблено";
 "dashboard.earned_more" = "Зароблено більше, ніж витрачено";
@@ -642,6 +643,7 @@
 "widget.earned.format" = "Зароблено %@";
 "widget.safe_to_spend" = "Можна витратити";
 "widget.over_budget" = "Перевищення бюджету";
+"widget.overspent" = "Перевитрата";
 "widget.hero.spent" = "Витрати";
 "widget.of_budget.format" = "з %@";
 "widget.of_earned.format" = "з %@ доходу";

@@ -331,6 +331,7 @@
 "dashboard.income_caption" = "+ %@ de ingresos";
 "dashboard.based_on_tracked" = "Según las transacciones registradas";
 "dashboard.net_this_month" = "Balance de este mes";
+"dashboard.hero.spent" = "Gastado";
 "dashboard.spent_earned_caption" = "Gastado %@ · Ganado %@";
 "dashboard.spent_more" = "Gastaste más de lo que ganaste";
 "dashboard.earned_more" = "Ganaste más de lo que gastaste";
@@ -583,6 +584,7 @@
 "widget.earned.format" = "Ganado %@";
 "widget.safe_to_spend" = "Disponible para gastar";
 "widget.over_budget" = "Presupuesto superado";
+"widget.overspent" = "Gasto excedido";
 "widget.hero.spent" = "Gastado";
 "widget.of_budget.format" = "de %@";
 "widget.of_earned.format" = "de %@ ganado";

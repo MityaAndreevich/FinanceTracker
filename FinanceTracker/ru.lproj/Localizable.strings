@@ -266,6 +266,7 @@
 "dashboard.income_caption" = "+ %@ доходов";
 "dashboard.based_on_tracked" = "На основе отслеживаемых транзакций";
 "dashboard.net_this_month" = "Итог за месяц";
+"dashboard.hero.spent" = "Расходы";
 "dashboard.spent_earned_caption" = "Расходы: %@ · Доходы: %@";
 "dashboard.spent_more" = "Расходы превышают доходы";
 "dashboard.earned_more" = "Доходы превышают расходы";
@@ -645,6 +646,7 @@
 "widget.earned.format" = "Доходы: %@";
 "widget.safe_to_spend" = "Можно потратить";
 "widget.over_budget" = "Превышение бюджета";
+"widget.overspent" = "Перерасход";
 "widget.hero.spent" = "Расходы";
 "widget.of_budget.format" = "из %@";
 "widget.of_earned.format" = "из %@ дохода";
