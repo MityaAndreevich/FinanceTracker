@@ -55,22 +55,19 @@ enum Money {
 
     // MARK: - Parsing
 
-    /// Strict parser: returns nil for any non-numeric input.
-    /// Accepts both "." and "," as decimal separator.
+    /// Strict parser for sanitized money-field input: returns nil for anything that
+    /// isn't purely digits + separators (rejects currency symbols, letters, inner
+    /// spaces — this is the `canSave` validation gate). The numeric conversion is
+    /// the shared `AmountParsing` core, so grouped values parse correctly instead of
+    /// the old ","→"." replace that silently turned "1,234.56" into 1.23.
     static func parseCents(from text: String) -> Int? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
-        let allowed = CharacterSet(charactersIn: "0123456789.")
-        guard normalized.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
+        let allowed = CharacterSet(charactersIn: "0123456789,.")
+        guard trimmed.unicodeScalars.allSatisfy({ allowed.contains($0) }) else { return nil }
 
-        guard let decimal = Decimal(string: normalized) else { return nil }
-
-        let centsDecimal = decimal * 100
-        return NSDecimalNumber(decimal: centsDecimal)
-            .rounding(accordingToBehavior: nil)
-            .intValue
+        return AmountParsing.parseCents(trimmed, decimalSeparator: ".")
     }
 
     /// Sanitize raw text input from a money TextField:

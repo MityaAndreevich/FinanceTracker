@@ -42,69 +42,20 @@ enum ImportAmount {
 
     /// Parse one amount cell into a non-negative magnitude in cents plus whether
     /// the cell was written as a negative ("-12.34" or the accountant "(12.34)").
-    /// Returns nil for cells with no digits.
+    /// Returns nil for cells with no digits. The magnitude goes through the shared
+    /// `AmountParsing` core; only sign detection is CSV-specific.
     static func parse(_ raw: String, decimal style: CSVDecimalStyle) -> (cents: Int, isNegative: Bool)? {
-        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !s.isEmpty else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
 
         // Sign: accountant parentheses OR a minus sign anywhere in the token.
-        var isNegative = false
-        if s.hasPrefix("(") && s.hasSuffix(")") {
-            isNegative = true
-            s.removeFirst()
-            s.removeLast()
-        }
-        if s.contains("-") || s.contains("\u{2212}") {  // ASCII hyphen or Unicode minus
-            isNegative = true
-        }
+        let parenthesised = trimmed.hasPrefix("(") && trimmed.hasSuffix(")")
+        let isNegative = parenthesised || trimmed.contains("-") || trimmed.contains("\u{2212}")
 
-        // Keep only digits and the two possible separators; this drops currency
-        // symbols, sign glyphs, and grouping spaces/NBSP.
-        s = String(s.unicodeScalars.filter { CharacterSet(charactersIn: "0123456789,.").contains($0) })
-        guard s.contains(where: { $0.isNumber }) else { return nil }
-
-        // Decimal separator by position.
-        let lastComma = s.lastIndex(of: ",")
-        let lastPeriod = s.lastIndex(of: ".")
-        let decimalIndex: String.Index?
-        if let lc = lastComma, let lp = lastPeriod {
-            decimalIndex = lc > lp ? lc : lp
-        } else if let lc = lastComma {
-            decimalIndex = decimalSeparatorIndex(in: s, at: lc, symbol: ",", isConventionDecimal: style == .comma)
-        } else if let lp = lastPeriod {
-            decimalIndex = decimalSeparatorIndex(in: s, at: lp, symbol: ".", isConventionDecimal: style == .period)
-        } else {
-            decimalIndex = nil
+        guard let cents = AmountParsing.parseCents(trimmed, decimalSeparator: style == .comma ? "," : ".") else {
+            return nil
         }
-
-        let intDigits: String
-        let fracDigits: String
-        if let d = decimalIndex {
-            intDigits = s[s.startIndex..<d].filter(\.isNumber)
-            fracDigits = s[s.index(after: d)...].filter(\.isNumber)
-        } else {
-            intDigits = s.filter(\.isNumber)
-            fracDigits = ""
-        }
-        guard !(intDigits.isEmpty && fracDigits.isEmpty) else { return nil }
-
-        let intValue = Int(intDigits) ?? 0
-        let fracValue = Int((fracDigits + "00").prefix(2)) ?? 0  // pad/cap to 2 digits
-        return (intValue * 100 + fracValue, isNegative)
-    }
-
-    /// Whether a single-symbol separator is the decimal point or a thousands
-    /// group, decided by the digit count after it; only the 3-digit case is
-    /// genuinely ambiguous and deferred to the file's declared style.
-    private static func decimalSeparatorIndex(in s: String, at index: String.Index, symbol: Character, isConventionDecimal: Bool) -> String.Index? {
-        if s.filter({ $0 == symbol }).count > 1 { return nil }  // repeated → all grouping
-        let digitsAfter = s[s.index(after: index)...].filter(\.isNumber).count
-        switch digitsAfter {
-        case 0: return nil                                // trailing separator → ignore
-        case 1, 2: return index                           // money decimal (1–2 places)
-        case 3: return isConventionDecimal ? index : nil  // ambiguous → style decides
-        default: return index                             // 4+ → decimal (fraction capped)
-        }
+        return (cents, isNegative)
     }
 }
 

@@ -512,62 +512,14 @@ enum QuickAddParser {
         return s
     }
 
-    /// Converts one numeric token to cents, robust to any mix of grouping and
-    /// decimal separators. The decimal separator is identified by *position* — the
-    /// last `,`/`.` — with the one ambiguous shape (a lone separator followed by
-    /// exactly three digits) resolved by `convention`. All other separators are
-    /// grouping and are stripped; the fraction is capped/padded to exactly 2 digits.
+    /// Converts one numeric token to cents via the shared `AmountParsing` core,
+    /// supplying the decimal separator from the user's locale convention. The core
+    /// identifies the decimal by position and treats every other separator as
+    /// grouping, so this stays robust to mixed shapes:
     ///   "10143,15" → 1014315   "10,143.15" → 1014315   "1.234,56" → 123456
     ///   "$1,342.15" → 134215   ",15" → 15   "1000" → 100000
     private static func parseTokenCents(_ token: String, convention: DecimalConvention) -> Int? {
-        var s = token
-        for sym in currencySymbols { s = s.replacingOccurrences(of: String(sym), with: "") }
-        s = s.filter { !$0.isWhitespace }
-        guard !s.isEmpty else { return nil }
-
-        let lastComma = s.lastIndex(of: ",")
-        let lastPeriod = s.lastIndex(of: ".")
-        let decimalIndex: String.Index?
-        if let lc = lastComma, let lp = lastPeriod {
-            // Both symbols present: the later one is the decimal, the other grouping.
-            decimalIndex = lc > lp ? lc : lp
-        } else if let lc = lastComma {
-            decimalIndex = decimalSeparatorIndex(in: s, at: lc, symbol: ",", isConventionDecimal: convention == .comma)
-        } else if let lp = lastPeriod {
-            decimalIndex = decimalSeparatorIndex(in: s, at: lp, symbol: ".", isConventionDecimal: convention == .period)
-        } else {
-            decimalIndex = nil
-        }
-
-        let intDigits: String
-        let fracDigits: String
-        if let d = decimalIndex {
-            intDigits = s[s.startIndex..<d].filter(\.isNumber)
-            fracDigits = s[s.index(after: d)...].filter(\.isNumber)
-        } else {
-            intDigits = s.filter(\.isNumber)
-            fracDigits = ""
-        }
-        guard !(intDigits.isEmpty && fracDigits.isEmpty) else { return nil }
-
-        let intValue = Int(intDigits) ?? 0
-        let fracValue = Int((fracDigits + "00").prefix(2)) ?? 0   // pad/cap to 2 digits
-        return intValue * 100 + fracValue
-    }
-
-    /// Decides whether a single separator (only one symbol type present) is a
-    /// decimal point or a thousands group, based on the digit count after it and,
-    /// only for the genuinely ambiguous 3-digit case, the locale convention.
-    private static func decimalSeparatorIndex(in s: String, at index: String.Index, symbol: Character, isConventionDecimal: Bool) -> String.Index? {
-        // More than one of the same symbol → all grouping (a number has one decimal).
-        if s.filter({ $0 == symbol }).count > 1 { return nil }
-        let digitsAfter = s[s.index(after: index)...].filter(\.isNumber).count
-        switch digitsAfter {
-        case 0: return nil                                   // trailing separator → ignore
-        case 1, 2: return index                              // money decimal (1–2 places)
-        case 3: return isConventionDecimal ? index : nil     // ambiguous → locale decides
-        default: return index                                // 4+ → decimal (fraction capped)
-        }
+        AmountParsing.parseCents(token, decimalSeparator: convention == .comma ? "," : ".")
     }
 }
 

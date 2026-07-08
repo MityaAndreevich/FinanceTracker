@@ -19,6 +19,10 @@ final class CSVMappedImportTests: XCTestCase {
     private var context: ModelContext!
 
     override func setUpWithError() throws {
+        // Pin the assumed currency so tests are deterministic regardless of the
+        // simulator's ambient `defaultCurrencyCode` (the mapper reads it live).
+        UserDefaults.standard.set("USD", forKey: "defaultCurrencyCode")
+
         let schema = Schema([Transaction.self, Category.self, Source.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         container = try ModelContainer(for: schema, configurations: [config])
