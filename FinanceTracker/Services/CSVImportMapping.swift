@@ -286,3 +286,126 @@ enum ImportSign {
             : .success(SignedAmount(cents: dCents, typeRaw: "expense"))
     }
 }
+
+// MARK: - Column mapping model
+
+/// How the amount/direction is laid out in the source file (see `ImportSign`).
+enum AmountMapping: Equatable {
+    case signed(Int)                                // one signed column
+    case unsignedWithType(amount: Int, type: Int)   // Mint: unsigned amount + type column
+    case debitCredit(debit: Int, credit: Int)       // two columns
+}
+
+/// A resolved mapping from a foreign file's columns to our transaction fields.
+/// `date` + `amount` (+ a sign source, encoded in `amount`) are the only required
+/// pieces; the rest are optional and left unmapped when absent.
+struct ColumnMapping: Equatable {
+    var date: Int
+    var dateOrder: DateOrder
+    var decimal: CSVDecimalStyle
+    var amount: AmountMapping
+    var category: Int?
+    var merchant: Int?
+    var note: Int?
+    var account: Int?
+}
+
+// MARK: - Source presets
+
+enum SourcePreset: String, CaseIterable, Identifiable {
+    case mint, ynab, monarch, genericBank, custom
+    var id: String { rawValue }
+
+    /// Auto-detect the best preset for a header row. The user can override.
+    static func detect(header: [String]) -> SourcePreset {
+        let cols = header.map(normalize)
+        func has(_ s: String) -> Bool { cols.contains(s) }
+
+        if has("transaction type"), has("original description") { return .mint }
+        if has("original statement"), has("merchant") { return .monarch }
+        if has("outflow"), has("inflow") { return .ynab }
+        if SourcePreset.genericBank.defaultMapping(header: header) != nil { return .genericBank }
+        return .custom
+    }
+
+    /// Build this preset's default column mapping against an actual header, or nil
+    /// if the header lacks the columns this preset requires.
+    func defaultMapping(header: [String]) -> ColumnMapping? {
+        switch self {
+        case .mint:
+            guard let date = exact(header, "date"),
+                  let amount = exact(header, "amount"),
+                  let type = exact(header, "transaction type") else { return nil }
+            return ColumnMapping(
+                date: date, dateOrder: .mdy, decimal: .period,
+                amount: .unsignedWithType(amount: amount, type: type),
+                category: exact(header, "category"),
+                merchant: exact(header, "description"),
+                note: exact(header, "notes"),
+                account: exact(header, "account name"))
+
+        case .ynab:
+            guard let date = exact(header, "date"),
+                  let out = exact(header, "outflow"),
+                  let inf = exact(header, "inflow") else { return nil }
+            return ColumnMapping(
+                date: date, dateOrder: .mdy, decimal: .period,
+                amount: .debitCredit(debit: out, credit: inf),
+                category: exact(header, "category"),
+                merchant: exact(header, "payee"),
+                note: exact(header, "memo"),
+                account: exact(header, "account"))
+
+        case .monarch:
+            guard let date = exact(header, "date"),
+                  let amount = exact(header, "amount") else { return nil }
+            return ColumnMapping(
+                date: date, dateOrder: .iso, decimal: .period,
+                amount: .signed(amount),
+                category: exact(header, "category"),
+                merchant: exact(header, "merchant"),
+                note: exact(header, "notes"),
+                account: exact(header, "account"))
+
+        case .genericBank:
+            guard let date = fuzzy(header, ["date"]) else { return nil }
+            let amount: AmountMapping
+            if let debit = fuzzy(header, ["debit"]), let credit = fuzzy(header, ["credit"]) {
+                amount = .debitCredit(debit: debit, credit: credit)
+            } else if let single = fuzzy(header, ["amount"]) {
+                amount = .signed(single)
+            } else {
+                return nil
+            }
+            return ColumnMapping(
+                date: date, dateOrder: .auto, decimal: .period,
+                amount: amount,
+                category: fuzzy(header, ["category"]),
+                merchant: fuzzy(header, ["description", "payee", "merchant", "vendor", "name"]),
+                note: fuzzy(header, ["memo", "note"]),
+                account: fuzzy(header, ["account"]))
+
+        case .custom:
+            return nil  // fully manual — the UI seeds an editable skeleton
+        }
+    }
+}
+
+// MARK: - Header column resolution
+
+private func normalize(_ s: String) -> String {
+    s.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+}
+
+/// Index of the first column whose normalized name equals `name`.
+private func exact(_ header: [String], _ name: String) -> Int? {
+    header.firstIndex { normalize($0) == name }
+}
+
+/// Index of the first column whose normalized name contains any candidate.
+private func fuzzy(_ header: [String], _ candidates: [String]) -> Int? {
+    header.firstIndex { col in
+        let n = normalize(col)
+        return candidates.contains { n.contains($0) }
+    }
+}
