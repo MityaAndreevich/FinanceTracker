@@ -16,25 +16,55 @@
 import WidgetKit
 import SwiftUI
 import UIKit
+import AppIntents
+
+// MARK: - Configuration (Item 6)
+//
+// Two layout variants, picked the Apple way — in the widget's edit mode via an
+// AppIntent, NOT an in-app setting. Both obey the same baked snapshot: gain-framed
+// hero, calm palette, icon+label over-budget, no truncation. Edit-mode labels are
+// English-only because the widget extension ships no .strings table (locked design,
+// same reason the snapshot is baked); the widget *content* stays fully localized.
+
+enum WidgetStyle: String, AppEnum {
+    case ring
+    case minimal
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation { "Style" }
+    static var caseDisplayRepresentations: [WidgetStyle: DisplayRepresentation] {
+        [.ring: "Ring", .minimal: "Minimal"]
+    }
+}
+
+struct BudgetCrabConfigurationIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource { "Budget Crab" }
+    static var description: IntentDescription { "Choose how the widget looks." }
+
+    @Parameter(title: "Style", default: .ring)
+    var style: WidgetStyle
+}
 
 // MARK: - Timeline
 
 struct BudgetCrabEntry: TimelineEntry {
     let date: Date
     let snapshot: NetSnapshot
+    var style: WidgetStyle = .ring
 }
 
-struct BudgetCrabProvider: TimelineProvider {
+struct BudgetCrabProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BudgetCrabEntry {
         BudgetCrabEntry(date: Date(), snapshot: .placeholder())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (BudgetCrabEntry) -> Void) {
-        completion(BudgetCrabEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder()))
+    func snapshot(for configuration: BudgetCrabConfigurationIntent, in context: Context) async -> BudgetCrabEntry {
+        BudgetCrabEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder(), style: configuration.style)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<BudgetCrabEntry>) -> Void) {
-        let entry = BudgetCrabEntry(date: Date(), snapshot: NetSnapshot.load() ?? .placeholder())
+    func timeline(for configuration: BudgetCrabConfigurationIntent, in context: Context) async -> Timeline<BudgetCrabEntry> {
+        let entry = BudgetCrabEntry(date: Date(),
+                                    snapshot: NetSnapshot.load() ?? .placeholder(),
+                                    style: configuration.style)
 
         // Cheap refresh: recompute month rollover at the next local midnight.
         let nextMidnight = Calendar.current.nextDate(
@@ -43,7 +73,7 @@ struct BudgetCrabProvider: TimelineProvider {
             matchingPolicy: .nextTime
         ) ?? Date().addingTimeInterval(24 * 60 * 60)
 
-        completion(Timeline(entries: [entry], policy: .after(nextMidnight)))
+        return Timeline(entries: [entry], policy: .after(nextMidnight))
     }
 }
 
@@ -349,6 +379,154 @@ private struct LargeWidgetView: View {
     }
 }
 
+// MARK: - Minimal variant (Item 6)
+//
+// Number-forward: the safe-to-spend figure dominates, with a slim spent-vs-budget
+// bar instead of the ring. Same baked snapshot, same calm palette + icon/label
+// over-budget signal + no-truncation scaling as the Ring variant.
+
+/// Full-width spent-progress bar (the Minimal variant's ring stand-in). Re-guards
+/// the fraction and shows only the track when there's nothing to fill against.
+private struct ProgressBarWide: View {
+    let fraction: Double
+    let isNeutral: Bool
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Palette.ringTrack)
+                if !isNeutral {
+                    Capsule().fill(Palette.spend)
+                        .frame(width: max(geo.size.width * min(max(fraction, 0), 1), 6))
+                }
+            }
+        }
+        .frame(height: 6)
+    }
+}
+
+/// Label, dominant amount, optional subline, slim progress bar.
+private struct MinimalHero: View {
+    let snapshot: NetSnapshot
+    var amountSize: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HeroLabel(snapshot: snapshot)
+            Text(snapshot.heroAmount)
+                .font(.system(size: amountSize, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Palette.textPrimary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+            if !snapshot.heroSubtitle.isEmpty {
+                Text(snapshot.heroSubtitle)
+                    .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.textMuted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            ProgressBarWide(fraction: snapshot.safeRingFraction, isNeutral: snapshot.ringIsNeutral)
+                .padding(.top, 2)
+        }
+    }
+}
+
+private struct MinimalSmallView: View {
+    let snapshot: NetSnapshot
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(snapshot.monthLabel)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                BrandMark()
+            }
+            Spacer(minLength: 0)
+            MinimalHero(snapshot: snapshot, amountSize: 30)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct MinimalMediumView: View {
+    let snapshot: NetSnapshot
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(snapshot.monthLabel)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Palette.textSecondary)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    BrandMark()
+                }
+                Spacer(minLength: 0)
+                MinimalHero(snapshot: snapshot, amountSize: 30)
+            }
+            .frame(maxWidth: 150, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 10) {
+                if snapshot.topCategories.isEmpty {
+                    Spacer()
+                    Text(snapshot.spentText)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Palette.textSecondary)
+                        .lineLimit(1)
+                    Spacer()
+                } else {
+                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
+                    Spacer(minLength: 0)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+private struct MinimalLargeView: View {
+    let snapshot: NetSnapshot
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(snapshot.monthLabel)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.textSecondary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                BrandMark()
+            }
+
+            MinimalHero(snapshot: snapshot, amountSize: 40)
+
+            if !snapshot.topCategories.isEmpty {
+                Rectangle().fill(Palette.track).frame(height: 1)
+                VStack(spacing: 12) {
+                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Rectangle().fill(Palette.track).frame(height: 1)
+            HStack {
+                Text(snapshot.spentText)
+                    .foregroundStyle(Palette.textSecondary)
+                Spacer()
+                Text(snapshot.earnedText)
+                    .foregroundStyle(Palette.income)
+            }
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
 // MARK: - Entry view
 
 struct BudgetCrabWidgetEntryView: View {
@@ -357,10 +535,13 @@ struct BudgetCrabWidgetEntryView: View {
 
     var body: some View {
         Group {
-            switch family {
-            case .systemSmall:  SmallWidgetView(snapshot: entry.snapshot)
-            case .systemMedium: MediumWidgetView(snapshot: entry.snapshot)
-            default:            LargeWidgetView(snapshot: entry.snapshot)
+            switch (entry.style, family) {
+            case (.minimal, .systemSmall):  MinimalSmallView(snapshot: entry.snapshot)
+            case (.minimal, .systemMedium): MinimalMediumView(snapshot: entry.snapshot)
+            case (.minimal, _):             MinimalLargeView(snapshot: entry.snapshot)
+            case (.ring, .systemSmall):     SmallWidgetView(snapshot: entry.snapshot)
+            case (.ring, .systemMedium):    MediumWidgetView(snapshot: entry.snapshot)
+            case (.ring, _):                LargeWidgetView(snapshot: entry.snapshot)
             }
         }
         .widgetURL(WidgetSharing.widgetURL)
@@ -374,7 +555,9 @@ struct BudgetCrabWidget: Widget {
     private let kind = "BudgetCrabWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: BudgetCrabProvider()) { entry in
+        AppIntentConfiguration(kind: kind,
+                               intent: BudgetCrabConfigurationIntent.self,
+                               provider: BudgetCrabProvider()) { entry in
             BudgetCrabWidgetEntryView(entry: entry)
                 // Warm branded surface that adapts to Light/Dark; the system applies
                 // home-screen tinting on top of it (Item 2.2 — no more flat white).
