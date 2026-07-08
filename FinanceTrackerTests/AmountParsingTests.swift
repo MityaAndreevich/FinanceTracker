@@ -63,4 +63,33 @@ final class AmountParsingTests: XCTestCase {
         XCTAssertNil(AmountParsing.parseCents("", decimalSeparator: "."))
         XCTAssertNil(AmountParsing.parseCents("   ", decimalSeparator: "."))
     }
+
+    // MARK: - Single-separator + N-digit table (locked characterization)
+    //
+    // A lone separator can be grouping OR a decimal. The resolution rule: within a
+    // consistent file, grouping uses the OTHER character than the declared decimal,
+    // so a lone separator that MATCHES the declared decimal is a decimal, and one
+    // that does NOT is grouping. This is why the two hints mirror each other and
+    // why grouped thousands parse correctly under the RIGHT hint:
+    //   "1,234" is 1234 in a period-decimal file (comma = grouping) and 1.234 in a
+    //   comma-decimal file (comma = decimal). Both are correct for their file.
+    // This is NOT the old Money bug: that force-replaced ','→'.' and destroyed the
+    // convention, corrupting EVERY grouped number regardless of format. Here the
+    // convention is honoured. No preset selects comma-decimal, so the comma-hint
+    // column is only ever reached when the user explicitly declares it.
+    func testSingleSeparatorTable() {
+        //                    input                   hint "."      hint ","
+        assertParse("1,234",           period: 123400,     comma: 123)         // comma+3: grouping / decimal(1.23)
+        assertParse("1.234",           period: 123,        comma: 123400)      // period+3: decimal(1.23) / grouping
+        assertParse("1,23",            period: 123,        comma: 123)         // 2-digit fraction: decimal either way
+        assertParse("1.2345",          period: 123,        comma: 123)         // 4+ digits: decimal, fraction capped
+        assertParse("1,2345",          period: 123,        comma: 123)
+        assertParse("12,345,678.90",   period: 1234567890, comma: 1234567890)  // both present → position wins
+        assertParse("12.345.678,90",   period: 1234567890, comma: 1234567890)
+    }
+
+    private func assertParse(_ input: String, period: Int?, comma: Int?, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(AmountParsing.parseCents(input, decimalSeparator: "."), period, "\(input) with '.'", file: file, line: line)
+        XCTAssertEqual(AmountParsing.parseCents(input, decimalSeparator: ","), comma, "\(input) with ','", file: file, line: line)
+    }
 }
