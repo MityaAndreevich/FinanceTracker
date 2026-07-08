@@ -645,7 +645,7 @@
 "widget.spent.format" = "Расходы: %@";
 "widget.earned.format" = "Доходы: %@";
 "widget.safe_to_spend" = "Можно потратить";
-"widget.over_budget" = "Превышение бюджета";
+"widget.over_budget" = "Бюджет превышен";
 "widget.overspent" = "Перерасход";
 "widget.hero.spent" = "Расходы";
 "widget.of_budget.format" = "из %@";

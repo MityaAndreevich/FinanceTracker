@@ -69,14 +69,22 @@ private enum Palette {
     /// Brand mint — income / positive only (bcPositive / bcAccent).
     static let income      = dyn(hex(0x17, 0xB4, 0x7D), hex(0x3D, 0xDC, 0x97))
     /// Muted terracotta for spend (bcExpense) — the ring fill + category bars.
+    /// Also the over-budget signal: a SOFTENED danger, never alarm-red (Item 2.4).
     static let spend       = dyn((0.75, 0.33, 0.24), (0.91, 0.53, 0.44))
-    /// Reserved for genuine over-budget alerts (bcDanger).
-    static let danger      = dyn(hex(0xC4, 0x3C, 0x3C), hex(0xE2, 0x4B, 0x4A))
-    /// Neutral ring / bar track (bcSurface2).
-    static let track       = dyn(hex(0xF4, 0xF2, 0xEC), hex(0x20, 0x28, 0x38))
+    /// Kept for the small warning glyph only — the number/ring never go full red.
+    static let danger      = dyn(hex(0xB0, 0x43, 0x33), hex(0xE0, 0x6A, 0x59))
+    /// Warm branded widget surface — replaces the flat white card (Item 2.2).
+    /// Adapts to Light/Dark; the system handles home-screen tinting on top.
+    static let widgetBackground = dyn(hex(0xFA, 0xF7, 0xF2), hex(0x12, 0x16, 0x1D))
+    /// Neutral bar / divider channel (visible on the warm surface, unlike the old
+    /// near-white F4F2EC that read at 1.12:1 — the "worm" track, Item 2.1).
+    static let track       = dyn(hex(0xE4, 0xDF, 0xD5), hex(0x28, 0x30, 0x40))
+    /// Ring channel: a dim tint of the fill (Activity-ring style) so a low-progress
+    /// arc always reads against a visible track rather than as a floating smudge.
+    static var ringTrack: Color { spend.opacity(0.20) }
     static let textPrimary = dyn(hex(0x14, 0x18, 0x1F), hex(0xF2, 0xF5, 0xF9))
-    static let textSecondary = dyn(hex(0x5F, 0x6B, 0x7A), hex(0x8C, 0x97, 0xA8))
-    static let textMuted   = dyn(hex(0x9A, 0xA4, 0xB2), hex(0x5A, 0x65, 0x77))
+    static let textSecondary = dyn(hex(0x5F, 0x6B, 0x7A), hex(0x9A, 0xA6, 0xB8))
+    static let textMuted   = dyn(hex(0x64, 0x6D, 0x7C), hex(0x7A, 0x86, 0x98))
 }
 
 // MARK: - Building blocks
@@ -96,11 +104,15 @@ private struct RingGauge<Center: View>: View {
 
     var body: some View {
         ZStack {
+            // Visible ring channel (Activity-style) so an empty/low ring never
+            // reads as a smudge on a near-white card (Item 2.1).
             Circle()
-                .stroke(Palette.track, lineWidth: lineWidth)
+                .stroke(Palette.ringTrack, lineWidth: lineWidth)
             if !isNeutral {
+                // A real (non-neutral) value always draws at least a short arc, so
+                // low progress reads as an arc with a rounded cap — not a dot/worm.
                 Circle()
-                    .trim(from: 0, to: max(safe, 0.0001))
+                    .trim(from: 0, to: max(safe, 0.03))
                     .stroke(Palette.spend, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
@@ -125,6 +137,7 @@ private struct CategoryRow: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Palette.textPrimary)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)   // absorb long category names, no ellipsis
                     Spacer(minLength: 4)
                     Text(item.amount)
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -152,26 +165,43 @@ private struct MiniBar: View {
     }
 }
 
-/// Hero readout: label, big compact amount, optional "of $Y" subline.
+/// The period/state label. Over-budget adds a warning glyph + softened-danger
+/// text so the danger reads without relying on hue alone (Item 2.4; ~8% of users
+/// are red-green colorblind). `minimumScaleFactor` + `lineLimit(1)` absorb the
+/// longest localized labels (ru/pt-BR) without an ellipsis (Item 2.3).
+private struct HeroLabel: View {
+    let snapshot: NetSnapshot
+    var body: some View {
+        HStack(spacing: 4) {
+            if snapshot.heroIsAlert {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Palette.danger)
+            }
+            Text(snapshot.heroLabel)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+}
+
+/// Hero readout: label, big compact amount, optional "of $Y" subline. The number
+/// stays neutral even when over budget — the alert is carried by HeroLabel's
+/// icon+word, not a large red figure (Item 2.4).
 private struct HeroBlock: View {
     let snapshot: NetSnapshot
     var amountSize: CGFloat
     var alignment: HorizontalAlignment = .leading
 
-    private var amountColor: Color {
-        snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary
-    }
-
     var body: some View {
         VStack(alignment: alignment, spacing: 2) {
-            Text(snapshot.heroLabel)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Palette.textSecondary)
-                .lineLimit(1)
+            HeroLabel(snapshot: snapshot)
             Text(snapshot.heroAmount)
                 .font(.system(size: amountSize, weight: .bold, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(amountColor)
+                .foregroundStyle(Palette.textPrimary)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
             if !snapshot.heroSubtitle.isEmpty {
@@ -180,6 +210,7 @@ private struct HeroBlock: View {
                     .monospacedDigit()
                     .foregroundStyle(Palette.textMuted)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
     }
@@ -203,29 +234,24 @@ private struct SmallWidgetView: View {
             HStack {
                 Text(snapshot.monthLabel)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Palette.textMuted)
+                    .foregroundStyle(Palette.textSecondary)
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 BrandMark()
             }
             Spacer(minLength: 0)
-            RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 9) {
-                VStack(spacing: 1) {
-                    Text(snapshot.heroAmount)
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary)
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                        .padding(.horizontal, 6)
-                }
+            RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 8) {
+                Text(snapshot.heroAmount)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.textPrimary)
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .padding(.horizontal, 6)
             }
             .frame(width: 96, height: 96)
             Spacer(minLength: 0)
-            Text(snapshot.heroLabel)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Palette.textSecondary)
-                .lineLimit(1)
+            HeroLabel(snapshot: snapshot)
         }
     }
 }
@@ -238,28 +264,23 @@ private struct MediumWidgetView: View {
                 HStack {
                     Text(snapshot.monthLabel)
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Palette.textMuted)
+                        .foregroundStyle(Palette.textSecondary)
                         .lineLimit(1)
                     Spacer(minLength: 4)
                     BrandMark()
                 }
                 Spacer(minLength: 0)
-                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 10) {
-                    VStack(spacing: 1) {
-                        Text(snapshot.heroAmount)
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textPrimary)
-                            .minimumScaleFactor(0.5)
-                            .lineLimit(1)
-                            .padding(.horizontal, 4)
-                    }
+                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 9) {
+                    Text(snapshot.heroAmount)
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(Palette.textPrimary)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                        .padding(.horizontal, 4)
                 }
                 .frame(width: 84, height: 84)
-                Text(snapshot.heroLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Palette.textSecondary)
-                    .lineLimit(1)
+                HeroLabel(snapshot: snapshot)
             }
             .frame(maxWidth: 120, alignment: .leading)
 
@@ -355,7 +376,9 @@ struct BudgetCrabWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: BudgetCrabProvider()) { entry in
             BudgetCrabWidgetEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                // Warm branded surface that adapts to Light/Dark; the system applies
+                // home-screen tinting on top of it (Item 2.2 — no more flat white).
+                .containerBackground(for: .widget) { Palette.widgetBackground }
         }
         .configurationDisplayName("Budget Crab")
         .description("See what's safe to spend at a glance.")
