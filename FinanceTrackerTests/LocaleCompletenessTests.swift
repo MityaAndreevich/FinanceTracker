@@ -114,7 +114,13 @@ final class LocaleCompletenessTests: XCTestCase {
         // widget.overspent (over-income danger label) and dashboard.hero.spent
         // (app hero last-resort "Spent" label, aligned with the widget precedence).
         // All 5 locales carry them in parity. Was 573.
-        XCTAssertEqual(enKeys.count, 575, "English baseline changed; update the expected count.")
+        // 2026-07-08 (Flexible CSV import v1.0.1, Tier 2): +48 for the column-
+        // mapping sheet (import.map.*), the mapped-row failure reasons
+        // (csv.import.error.missing_date/invalid_date/invalid_amount/
+        // debit_credit_empty/debit_credit_both/unknown_type/row), and two result
+        // counters (data.import.result.failed_rows/currency_assumed). All 5
+        // locales carry them in parity. Was 575.
+        XCTAssertEqual(enKeys.count, 623, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
