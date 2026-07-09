@@ -32,12 +32,12 @@ import AppIntents
 // still follows the app's chosen language and stays key-free; do not route it here.
 
 enum WidgetStyle: String, AppEnum {
-    case ring
+    case ambient
     case minimal
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation { "Style" }
     static var caseDisplayRepresentations: [WidgetStyle: DisplayRepresentation] {
-        [.ring: "Ring", .minimal: "Minimal"]
+        [.ambient: "Ambient", .minimal: "Minimal"]
     }
 }
 
@@ -45,7 +45,7 @@ struct BudgetCrabConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource { "Budget Crab" }
     static var description: IntentDescription { "Choose how the widget looks." }
 
-    @Parameter(title: "Style", default: .ring)
+    @Parameter(title: "Style", default: .ambient)
     var style: WidgetStyle
 }
 
@@ -54,7 +54,7 @@ struct BudgetCrabConfigurationIntent: WidgetConfigurationIntent {
 struct BudgetCrabEntry: TimelineEntry {
     let date: Date
     let snapshot: NetSnapshot
-    var style: WidgetStyle = .ring
+    var style: WidgetStyle = .ambient
 }
 
 struct BudgetCrabProvider: AppIntentTimelineProvider {
@@ -120,38 +120,152 @@ private enum Palette {
     static let textPrimary = dyn(hex(0x14, 0x18, 0x1F), hex(0xF2, 0xF5, 0xF9))
     static let textSecondary = dyn(hex(0x5F, 0x6B, 0x7A), hex(0x9A, 0xA6, 0xB8))
     static let textMuted   = dyn(hex(0x64, 0x6D, 0x7C), hex(0x7A, 0x86, 0x98))
+    /// A whisper of brand warmth laid over the system material on iOS 26 so the
+    /// glass still reads as Budget Crab, not a generic frosted panel. Deliberately
+    /// faint — the system owns the glass/refraction; this only tints it.
+    static var glassWarmth: Color { widgetBackground.opacity(0.14) }
+    /// Calm ambient-chart tint — green only when positive, muted terracotta when
+    /// over budget (state comes from heroIsAlert, never hue alone). Low-opacity so
+    /// the hero number stays the legible foreground (Direction B ambient layer).
+    static func ambient(alert: Bool) -> Color { (alert ? spend : income) }
+}
+
+// MARK: - Liquid Glass surface (Item: material)
+//
+// The material path is SYSTEM-rendered, not hand-rolled. On iOS 26 the widget
+// auto-adopts Liquid Glass on recompile; we hand the container a genuine system
+// `.regularMaterial` (which the system renders as glass, preserving legibility
+// over any wallpaper) with only a faint brand tint on top. `.liquidMaterial` is
+// NOT a real SDK symbol — do not reintroduce it. Below iOS 26 there is no Liquid
+// Glass, so we fall back to the calm, adaptive OPAQUE card (never flat white).
+// No blur/gradient/shadow is hand-built in either path (that fights the material).
+
+private extension View {
+    @ViewBuilder
+    func liquidGlassSurface() -> some View {
+        if #available(iOS 26, *) {
+            containerBackground(for: .widget) {
+                Rectangle().fill(.regularMaterial)
+                    .overlay(Palette.glassWarmth)
+            }
+        } else {
+            containerBackground(for: .widget) { Palette.widgetBackground }
+        }
+    }
 }
 
 // MARK: - Building blocks
 
-/// Progress ring. Fraction is re-guarded on the way in so a corrupt/NaN blob can
-/// never draw a negative or oversized arc (same discipline as ChartGuards).
-private struct RingGauge<Center: View>: View {
-    let fraction: Double
-    let isNeutral: Bool
-    let lineWidth: CGFloat
-    @ViewBuilder var center: () -> Center
-
-    private var safe: Double {
-        guard fraction.isFinite else { return 0 }
-        return min(max(fraction, 0), 1)
-    }
+/// Ambient cumulative-spend sparkline (Direction B). An area+line drawn by hand
+/// with `Path` — NOT Swift Charts — so an out-of-process widget can never trap on
+/// a degenerate Charts domain. The caller only renders this when
+/// `snapshot.canRenderSpendChart` (≥2 finite, clamped points); values arrive
+/// pre-guarded via `safeSpendSeries`. Low opacity so the hero number stays the
+/// legible foreground; the tint is calm green normally, muted terracotta when over
+/// budget (state from `alert`, never hue alone — the hero also carries icon+word).
+private struct AmbientSpendChart: View {
+    let series: [Double]        // guarded 0…1, ≥2 points
+    let alert: Bool
 
     var body: some View {
-        ZStack {
-            // Visible ring channel (Activity-style) so an empty/low ring never
-            // reads as a smudge on a near-white card (Item 2.1).
-            Circle()
-                .stroke(Palette.ringTrack, lineWidth: lineWidth)
-            if !isNeutral {
-                // A real (non-neutral) value always draws at least a short arc, so
-                // low progress reads as an arc with a rounded cap — not a dot/worm.
-                Circle()
-                    .trim(from: 0, to: max(safe, 0.03))
-                    .stroke(Palette.spend, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+        // Canvas (not a ViewBuilder closure) lets the point math live inline and
+        // renders to a static drawing — safe in a widget snapshot. Nothing draws
+        // unless there are ≥2 points and a positive size, so no divide-by-zero.
+        Canvas { context, size in
+            let n = series.count
+            let w = size.width, h = size.height
+            guard n >= 2, w > 0, h > 0 else { return }
+            let tint = Palette.ambient(alert: alert)
+            let step = w / CGFloat(n - 1)
+            func point(_ i: Int) -> CGPoint {
+                CGPoint(x: step * CGFloat(i), y: h * (1 - CGFloat(series[i])))
             }
-            center()
+            var area = Path()
+            area.move(to: CGPoint(x: 0, y: h))
+            area.addLine(to: point(0))
+            for i in 1..<n { area.addLine(to: point(i)) }
+            area.addLine(to: CGPoint(x: w, y: h))
+            area.closeSubpath()
+            context.fill(area, with: .linearGradient(
+                Gradient(colors: [tint.opacity(0.30), tint.opacity(0.02)]),
+                startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: h)))
+
+            var line = Path()
+            line.move(to: point(0))
+            for i in 1..<n { line.addLine(to: point(i)) }
+            context.stroke(line, with: .color(tint.opacity(0.55)),
+                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// Small translucent chip holding the brand pie glyph (Direction B, top-right).
+/// On iOS 26 it's genuine system glass (`glassEffect`); below that, a calm material
+/// capsule. The mint glyph is a BRAND mark, not a data signal — the "green = income
+/// only" rule governs financial state, which this never encodes.
+private struct IconChip: View {
+    var body: some View {
+        Image(systemName: "chart.pie.fill")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(Palette.income)
+            .frame(width: 26, height: 26)
+            .modifier(ChipGlass())
+    }
+}
+
+private struct ChipGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular, in: .circle)
+        } else {
+            content.background(.ultraThinMaterial, in: Circle())
+        }
+    }
+}
+
+/// Direction B hero: bottom-left weighted, gain-framed number dominant. Over budget
+/// the number itself reads restrained terracotta (never alarm-red / full-card fill);
+/// otherwise it stays neutral. A green up-tick precedes a genuine safe-to-spend; the
+/// neutral "Spent" last-resort state (empty subtitle) shows no tick — no false gain.
+private struct DirectionBHero: View {
+    let snapshot: NetSnapshot
+    var amountSize: CGFloat
+
+    private var showsUpTick: Bool { !snapshot.heroIsAlert && !snapshot.heroSubtitle.isEmpty }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 4) {
+                if snapshot.heroIsAlert {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Palette.danger)
+                } else if showsUpTick {
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Palette.income)      // up-tick, green = positive
+                }
+                Text(snapshot.heroLabel)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)                   // longest ru/pt-BR labels, no clip
+            }
+            Text(snapshot.heroAmount)
+                .font(.system(size: amountSize, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(snapshot.heroIsAlert ? Palette.spend : Palette.textPrimary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+            if !snapshot.heroSubtitle.isEmpty {
+                Text(snapshot.heroSubtitle)
+                    .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.textMuted)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
     }
 }
@@ -222,102 +336,67 @@ private struct HeroLabel: View {
     }
 }
 
-/// Hero readout: label, big compact amount, optional "of $Y" subline. The number
-/// stays neutral even when over budget — the alert is carried by HeroLabel's
-/// icon+word, not a large red figure (Item 2.4).
-private struct HeroBlock: View {
-    let snapshot: NetSnapshot
-    var amountSize: CGFloat
-    var alignment: HorizontalAlignment = .leading
+// MARK: - Sizes (Ambient variant — Direction B)
 
+/// Month label + brand chip, the top row shared by all Ambient sizes.
+private struct WidgetHeader: View {
+    let monthLabel: String
+    var size: CGFloat = 11
+    var weight: Font.Weight = .medium
     var body: some View {
-        VStack(alignment: alignment, spacing: 2) {
-            HeroLabel(snapshot: snapshot)
-            Text(snapshot.heroAmount)
-                .font(.system(size: amountSize, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(Palette.textPrimary)
-                .minimumScaleFactor(0.6)
+        HStack {
+            Text(monthLabel)
+                .font(.system(size: size, weight: weight))
+                .foregroundStyle(Palette.textSecondary)
                 .lineLimit(1)
-            if !snapshot.heroSubtitle.isEmpty {
-                Text(snapshot.heroSubtitle)
-                    .font(.system(size: 11, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(Palette.textMuted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
+            Spacer(minLength: 4)
+            IconChip()
         }
     }
 }
 
-/// Small brand mark shown in a corner so the widget always reads as Budget Crab.
-private struct BrandMark: View {
+/// The Direction B hero laid over the ambient spend curve (chart pinned to the
+/// bottom, hero weighted bottom-left). The chart draws only when the period yields
+/// a renderable ≥2-point curve; otherwise the hero simply sits on the calm surface.
+private struct AmbientHeroStack: View {
+    let snapshot: NetSnapshot
+    var chartHeight: CGFloat
+    var amountSize: CGFloat
     var body: some View {
-        Image(systemName: "chart.pie.fill")
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(Palette.income)
+        ZStack(alignment: .bottomLeading) {
+            if snapshot.canRenderSpendChart {
+                AmbientSpendChart(series: snapshot.safeSpendSeries, alert: snapshot.heroIsAlert)
+                    .frame(height: chartHeight)
+                    .frame(maxWidth: .infinity, alignment: .bottom)
+            }
+            DirectionBHero(snapshot: snapshot, amountSize: amountSize)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-// MARK: - Sizes
-
-private struct SmallWidgetView: View {
+private struct AmbientSmallView: View {
     let snapshot: NetSnapshot
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text(snapshot.monthLabel)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Palette.textSecondary)
-                    .lineLimit(1)
-                Spacer(minLength: 4)
-                BrandMark()
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            WidgetHeader(monthLabel: snapshot.monthLabel)
             Spacer(minLength: 0)
-            RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 8) {
-                Text(snapshot.heroAmount)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(Palette.textPrimary)
-                    .minimumScaleFactor(0.5)
-                    .lineLimit(1)
-                    .padding(.horizontal, 6)
-            }
-            .frame(width: 96, height: 96)
-            Spacer(minLength: 0)
-            HeroLabel(snapshot: snapshot)
+            AmbientHeroStack(snapshot: snapshot, chartHeight: 44, amountSize: 30)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
-private struct MediumWidgetView: View {
+private struct AmbientMediumView: View {
     let snapshot: NetSnapshot
     var body: some View {
         HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(snapshot.monthLabel)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Palette.textSecondary)
-                        .lineLimit(1)
-                    Spacer(minLength: 4)
-                    BrandMark()
-                }
+            VStack(alignment: .leading, spacing: 0) {
+                WidgetHeader(monthLabel: snapshot.monthLabel)
                 Spacer(minLength: 0)
-                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 9) {
-                    Text(snapshot.heroAmount)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Palette.textPrimary)
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                        .padding(.horizontal, 4)
-                }
-                .frame(width: 84, height: 84)
-                HeroLabel(snapshot: snapshot)
+                AmbientHeroStack(snapshot: snapshot, chartHeight: 42, amountSize: 28)
             }
-            .frame(maxWidth: 120, alignment: .leading)
+            .frame(maxWidth: 150, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 10) {
                 if snapshot.topCategories.isEmpty {
@@ -328,7 +407,7 @@ private struct MediumWidgetView: View {
                         .lineLimit(1)
                     Spacer()
                 } else {
-                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
+                    ForEach(snapshot.topCategories.prefix(2)) { CategoryRow(item: $0) }   // medium ~2
                     Spacer(minLength: 0)
                 }
             }
@@ -337,32 +416,18 @@ private struct MediumWidgetView: View {
     }
 }
 
-private struct LargeWidgetView: View {
+private struct AmbientLargeView: View {
     let snapshot: NetSnapshot
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text(snapshot.monthLabel)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.textSecondary)
-                    .lineLimit(1)
-                Spacer(minLength: 4)
-                BrandMark()
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            WidgetHeader(monthLabel: snapshot.monthLabel, size: 13, weight: .semibold)
 
-            HStack(spacing: 18) {
-                RingGauge(fraction: snapshot.ringFraction, isNeutral: snapshot.ringIsNeutral, lineWidth: 12) {
-                    EmptyView()
-                }
-                .frame(width: 88, height: 88)
-                HeroBlock(snapshot: snapshot, amountSize: 34)
-                Spacer(minLength: 0)
-            }
+            AmbientHeroStack(snapshot: snapshot, chartHeight: 62, amountSize: 40)
 
             if !snapshot.topCategories.isEmpty {
                 Rectangle().fill(Palette.track).frame(height: 1)
                 VStack(spacing: 12) {
-                    ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
+                    ForEach(snapshot.topCategories.prefix(3)) { CategoryRow(item: $0) }   // large ~3
                 }
             }
 
@@ -447,7 +512,7 @@ private struct MinimalSmallView: View {
                     .foregroundStyle(Palette.textSecondary)
                     .lineLimit(1)
                 Spacer(minLength: 4)
-                BrandMark()
+                IconChip()
             }
             Spacer(minLength: 0)
             MinimalHero(snapshot: snapshot, amountSize: 30)
@@ -467,7 +532,7 @@ private struct MinimalMediumView: View {
                         .foregroundStyle(Palette.textSecondary)
                         .lineLimit(1)
                     Spacer(minLength: 4)
-                    BrandMark()
+                    IconChip()
                 }
                 Spacer(minLength: 0)
                 MinimalHero(snapshot: snapshot, amountSize: 30)
@@ -502,7 +567,7 @@ private struct MinimalLargeView: View {
                     .foregroundStyle(Palette.textSecondary)
                     .lineLimit(1)
                 Spacer(minLength: 4)
-                BrandMark()
+                IconChip()
             }
 
             MinimalHero(snapshot: snapshot, amountSize: 40)
@@ -544,9 +609,9 @@ struct BudgetCrabWidgetEntryView: View {
             case (.minimal, .systemSmall):  MinimalSmallView(snapshot: entry.snapshot)
             case (.minimal, .systemMedium): MinimalMediumView(snapshot: entry.snapshot)
             case (.minimal, _):             MinimalLargeView(snapshot: entry.snapshot)
-            case (.ring, .systemSmall):     SmallWidgetView(snapshot: entry.snapshot)
-            case (.ring, .systemMedium):    MediumWidgetView(snapshot: entry.snapshot)
-            case (.ring, _):                LargeWidgetView(snapshot: entry.snapshot)
+            case (.ambient, .systemSmall):  AmbientSmallView(snapshot: entry.snapshot)
+            case (.ambient, .systemMedium): AmbientMediumView(snapshot: entry.snapshot)
+            case (.ambient, _):             AmbientLargeView(snapshot: entry.snapshot)
             }
         }
         .widgetURL(WidgetSharing.widgetURL)
@@ -564,9 +629,9 @@ struct BudgetCrabWidget: Widget {
                                intent: BudgetCrabConfigurationIntent.self,
                                provider: BudgetCrabProvider()) { entry in
             BudgetCrabWidgetEntryView(entry: entry)
-                // Warm branded surface that adapts to Light/Dark; the system applies
-                // home-screen tinting on top of it (Item 2.2 — no more flat white).
-                .containerBackground(for: .widget) { Palette.widgetBackground }
+                // System Liquid Glass on iOS 26 (auto-adopted on recompile) with a
+                // calm opaque-card fallback below it — see liquidGlassSurface().
+                .liquidGlassSurface()
         }
         .configurationDisplayName("Budget Crab")
         .description("See what's safe to spend at a glance.")
