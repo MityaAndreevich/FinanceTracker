@@ -465,7 +465,9 @@ struct NetSnapshotBuilderTests {
     @Test func safeSpendSeries_coercesCorruptValuesFiniteAndClamped() {
         var s = NetSnapshot.placeholder()
         s.spendSeries = [.nan, -0.5, 2.0, 0.5, .infinity]
-        #expect(s.safeSpendSeries == [0, 0, 1, 0.5, 1])
+        // Non-finite (NaN / ±inf) collapses to 0 (ChartGuards discipline), negatives
+        // clamp to 0, >1 clamps to 1 — so a corrupt blob can never feed a bad mark.
+        #expect(s.safeSpendSeries == [0, 0, 1, 0.5, 0])
         #expect(s.canRenderSpendChart)                     // 5 points
     }
 
