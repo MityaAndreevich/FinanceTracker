@@ -55,6 +55,17 @@ struct NetSnapshot: Codable {
     // MARK: Top categories by spend (≤3, sorted desc)
     var topCategories: [Item]
 
+    // MARK: Ambient spend curve (Direction B)
+    /// Cumulative daily spend for the current month, normalized 0…1 by the period's
+    /// total spend — one value per elapsed day. Drives the ambient area+line
+    /// sparkline. Its *shape* conveys spend pace; the spent-vs-budget magnitude is
+    /// the ring/hero's job, so the scale is intentionally self-relative.
+    ///
+    /// **Additive & optional**: absent (`nil`) on an old v2 blob or when the period
+    /// can't form an honest continuous curve (no spend, or <2 elapsed days). The
+    /// widget then draws NO chart — never a fabricated or degenerate one.
+    var spendSeries: [Double]? = nil
+
     /// False on a fresh install / empty period with no budget — the widget then
     /// shows a calm seeded state instead of a broken zero.
     var hasData: Bool
@@ -75,6 +86,20 @@ struct NetSnapshot: Codable {
         guard ringFraction.isFinite else { return 0 }
         return min(max(ringFraction, 0), 1)
     }
+
+    /// Ambient-curve points the widget can trust no matter what was encoded: every
+    /// value coerced finite and clamped 0…1 (a corrupt/NaN blob can never feed a
+    /// non-finite mark into Charts). Empty when there's no series.
+    var safeSpendSeries: [Double] {
+        guard let s = spendSeries else { return [] }
+        return s.map { $0.isFinite ? min(max($0, 0), 1) : 0 }
+    }
+
+    /// Whether the ambient spend chart is renderable. A continuous line/area needs
+    /// ≥2 points; one point is a zero-width domain that traps Charts (same rule as
+    /// ChartGuards.canRenderContinuous, restated here since the app-target guard
+    /// isn't visible to the extension). The widget MUST draw no chart when false.
+    var canRenderSpendChart: Bool { safeSpendSeries.count >= 2 }
 }
 
 extension NetSnapshot.Item {

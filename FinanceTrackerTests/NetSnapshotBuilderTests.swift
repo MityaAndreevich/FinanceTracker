@@ -386,5 +386,95 @@ struct NetSnapshotBuilderTests {
         #expect(!snap.hasData)
         #expect(snap.topCategories.isEmpty)
         #expect(snap.ringIsNeutral)
+        #expect(snap.spendSeries == nil)                        // no spend → no ambient chart
+    }
+
+    // MARK: - Ambient spend curve (Direction B, pure + date-injected)
+
+    private func utc() -> Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }
+    private func day(_ cal: Calendar, _ y: Int, _ m: Int, _ d: Int) -> Date {
+        cal.date(from: DateComponents(year: y, month: m, day: d, hour: 12))!
+    }
+    private func expenseTx(_ cents: Int, on date: Date) -> Transaction {
+        Transaction(typeRaw: "expense", amountCents: cents, currency: "USD", date: date,
+                    category: FinanceTracker.Category(name: "X", kindRaw: "expense", order: 0))
+    }
+    private func incomeTx(_ cents: Int, on date: Date) -> Transaction {
+        Transaction(typeRaw: "income", amountCents: cents, currency: "USD", date: date,
+                    category: FinanceTracker.Category(name: "S", kindRaw: "income", order: 0))
+    }
+
+    @Test func spendCurve_isMonotonic_normalized_endsAtOne() {
+        let cal = utc(); let now = day(cal, 2026, 6, 15)   // day 15
+        let txns = [expenseTx(1_000, on: day(cal, 2026, 6, 2)),
+                    expenseTx(2_000, on: day(cal, 2026, 6, 5)),
+                    expenseTx(3_000, on: day(cal, 2026, 6, 10))]
+        let series = try! #require(NetSnapshotBuilder.cumulativeDailySpend(txns, now: now, calendar: cal))
+        #expect(series.count == 15)                        // one point per elapsed day
+        #expect(series.first == 0)                         // nothing spent on day 1
+        #expect(abs(series.last! - 1.0) < 1e-9)            // ends at total
+        #expect(zip(series, series.dropFirst()).allSatisfy { $0 <= $1 })   // non-decreasing
+        #expect(series.allSatisfy { $0.isFinite && $0 >= 0 && $0 <= 1 })
+    }
+
+    @Test func spendCurve_noExpenses_isNil() {
+        let cal = utc()
+        #expect(NetSnapshotBuilder.cumulativeDailySpend([], now: day(cal, 2026, 6, 15), calendar: cal) == nil)
+    }
+
+    @Test func spendCurve_onlyIncome_isNil() {
+        let cal = utc(); let now = day(cal, 2026, 6, 15)
+        let txns = [incomeTx(50_000, on: day(cal, 2026, 6, 3))]
+        #expect(NetSnapshotBuilder.cumulativeDailySpend(txns, now: now, calendar: cal) == nil)  // total 0
+    }
+
+    @Test func spendCurve_firstDayOfMonth_isNil_tooFewPoints() {
+        let cal = utc(); let now = day(cal, 2026, 6, 1)    // only 1 elapsed day
+        let txns = [expenseTx(5_000, on: now)]
+        #expect(NetSnapshotBuilder.cumulativeDailySpend(txns, now: now, calendar: cal) == nil)
+    }
+
+    @Test func spendCurve_shapeReflectsPace_frontVsBackLoaded() {
+        let cal = utc(); let now = day(cal, 2026, 6, 15)
+        let front = [expenseTx(5_000, on: day(cal, 2026, 6, 2)),
+                     expenseTx(1_000, on: day(cal, 2026, 6, 14))]
+        let back  = [expenseTx(1_000, on: day(cal, 2026, 6, 2)),
+                     expenseTx(5_000, on: day(cal, 2026, 6, 14))]
+        let fs = try! #require(NetSnapshotBuilder.cumulativeDailySpend(front, now: now, calendar: cal))
+        let bs = try! #require(NetSnapshotBuilder.cumulativeDailySpend(back,  now: now, calendar: cal))
+        #expect(fs[4] > bs[4])                             // mid-month, front-loaded is higher
+    }
+
+    @Test func spendCurve_ignoresFutureDatedAndOtherMonths() {
+        let cal = utc(); let now = day(cal, 2026, 6, 15)
+        let txns = [expenseTx(1_000, on: day(cal, 2026, 6, 2)),    // counts
+                    expenseTx(9_999, on: day(cal, 2026, 6, 20)),   // future → ignored
+                    expenseTx(8_888, on: day(cal, 2026, 5, 10))]   // other month → ignored
+        let series = try! #require(NetSnapshotBuilder.cumulativeDailySpend(txns, now: now, calendar: cal))
+        #expect(series[0] == 0)
+        #expect(abs(series[1] - 1.0) < 1e-9)               // only the day-2 expense exists → 1.0 from day 2 on
+        #expect(abs(series.last! - 1.0) < 1e-9)
+    }
+
+    // MARK: - Ambient curve read guards (on NetSnapshot, shared with the widget)
+
+    @Test func safeSpendSeries_coercesCorruptValuesFiniteAndClamped() {
+        var s = NetSnapshot.placeholder()
+        s.spendSeries = [.nan, -0.5, 2.0, 0.5, .infinity]
+        #expect(s.safeSpendSeries == [0, 0, 1, 0.5, 1])
+        #expect(s.canRenderSpendChart)                     // 5 points
+    }
+
+    @Test func canRenderSpendChart_falseForNilOrSinglePoint() {
+        var s = NetSnapshot.placeholder()
+        #expect(s.spendSeries == nil)
+        #expect(!s.canRenderSpendChart)
+        #expect(s.safeSpendSeries.isEmpty)
+        s.spendSeries = [0.7]                               // single point → zero-width domain
+        #expect(!s.canRenderSpendChart)
     }
 }

@@ -115,9 +115,55 @@ enum NetSnapshotBuilder {
             spentText: spentText,
             earnedText: earnedText,
             topCategories: topCategories,
+            spendSeries: cumulativeDailySpend(month),
             hasData: !month.isEmpty || monthlyBudgetCents > 0,
             generatedAt: Date()
         )
+    }
+
+    // MARK: - Ambient spend curve (Direction B)
+
+    /// Cumulative daily spend for the current month, normalized 0…1 by the period's
+    /// total spend — one value per elapsed day (day 1 … today). The ambient
+    /// sparkline plots these by index; its *shape* shows spend pace through the
+    /// month. Self-relative on purpose: the spent-vs-budget magnitude is carried by
+    /// the ring + hero, so the curve stays visible whatever the budget size.
+    ///
+    /// Returns `nil` — the widget's signal to draw NO chart — for every case that
+    /// can't form an honest continuous curve, applying the ChartGuards discipline
+    /// at the source:
+    ///   • no spend at all (total 0 → the normalizing divide-by-zero), or
+    ///   • fewer than 2 elapsed days (a 1-point line collapses to a zero-width
+    ///     domain that traps Charts — same rule as canRenderContinuous).
+    /// Every emitted value is finite and clamped 0…1 by construction.
+    static func cumulativeDailySpend(_ transactions: [Transaction],
+                                     now: Date = Date(),
+                                     calendar: Calendar = .current) -> [Double]? {
+        guard let month = calendar.dateInterval(of: .month, for: now) else { return nil }
+        let today = calendar.component(.day, from: now)   // 1…31
+        guard today >= 2 else { return nil }              // need ≥2 points for a line
+
+        // Bucket this month's expenses (income never spends) by day-of-month, up to
+        // and including today; a post-dated future expense is ignored.
+        var perDay = [Int: Int]()
+        for tx in transactions where !tx.isIncome {
+            guard month.contains(tx.date), tx.date <= now else { continue }
+            perDay[calendar.component(.day, from: tx.date), default: 0] += tx.amountCents
+        }
+
+        var running = 0
+        let cumulative: [Int] = (1...today).map { day in
+            running += perDay[day, default: 0]
+            return running
+        }
+        let total = running
+        guard total > 0 else { return nil }               // nothing to normalize against
+
+        let series = cumulative.map { value -> Double in
+            let f = Double(value) / Double(total)
+            return f.isFinite ? min(max(f, 0), 1) : 0
+        }
+        return series.count >= 2 ? series : nil
     }
 
     // MARK: - Change detection
