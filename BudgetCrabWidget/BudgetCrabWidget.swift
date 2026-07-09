@@ -171,8 +171,18 @@ private extension View {
 /// legible foreground; the tint is calm green normally, muted terracotta when over
 /// budget (state from `alert`, never hue alone — the hero also carries icon+word).
 private struct AmbientSpendChart: View {
+    @Environment(\.colorScheme) private var scheme
     let series: [Double]        // guarded 0…1, ≥2 points
     let alert: Bool
+
+    // Item 3: the dark surface swallowed the ambient green — raise stroke + fill so
+    // it reads as an intentional element, not a smudge; light already read fine.
+    // Still calm (not neon): a firmer line, not a saturated flood.
+    private var isDark: Bool { scheme == .dark }
+    private var strokeOpacity: Double { isDark ? 0.85 : 0.55 }
+    private var lineWidth: CGFloat   { isDark ? 1.8  : 1.5 }
+    private var fillTop: Double      { isDark ? 0.42 : 0.30 }
+    private var fillBottom: Double   { isDark ? 0.06 : 0.02 }
 
     var body: some View {
         // Canvas (not a ViewBuilder closure) lets the point math live inline and
@@ -194,14 +204,14 @@ private struct AmbientSpendChart: View {
             area.addLine(to: CGPoint(x: w, y: h))
             area.closeSubpath()
             context.fill(area, with: .linearGradient(
-                Gradient(colors: [tint.opacity(0.30), tint.opacity(0.02)]),
+                Gradient(colors: [tint.opacity(fillTop), tint.opacity(fillBottom)]),
                 startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: h)))
 
             var line = Path()
             line.move(to: point(0))
             for i in 1..<n { line.addLine(to: point(i)) }
-            context.stroke(line, with: .color(tint.opacity(0.55)),
-                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            context.stroke(line, with: .color(tint.opacity(strokeOpacity)),
+                           style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
         }
         .allowsHitTesting(false)
     }
@@ -375,6 +385,10 @@ private struct AmbientHeroStack: View {
                 AmbientSpendChart(series: snapshot.safeSpendSeries, alert: snapshot.heroIsAlert)
                     .frame(height: chartHeight)
                     .frame(maxWidth: .infinity, alignment: .bottom)
+                    // Item 2: lift the ambient layer above the subtitle band so the
+                    // green line/area never crosses "of/из …" text — the subtitle sits
+                    // on the clean surface below, always legible, no overlap.
+                    .padding(.bottom, snapshot.heroSubtitle.isEmpty ? 0 : 16)
             }
             DirectionBHero(snapshot: snapshot, amountSize: amountSize)
         }
@@ -704,4 +718,60 @@ private extension NetSnapshot {
 
 #Preview("Minimal M — safe", as: .systemMedium) { BudgetCrabWidget() }
     timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .minimal) }
+
+// MARK: Glass-over-wallpaper demo (Item 1 verification)
+//
+// The widget #Previews above render on a neutral canvas, so glass refraction isn't
+// visible there. These place the content over a vivid backdrop with the SAME
+// glassEffect the container uses, so in the Xcode 26 canvas you can see the
+// wallpaper refract through the glass and confirm the hero/chart stay legible on
+// top. NOTE: this is in-app glass (live-composited); whether a Home Screen widget
+// SNAPSHOT refracts the real wallpaper must still be confirmed on-device.
+
+/// Vivid stand-in "wallpaper" — enough color contrast to reveal glass refraction.
+private struct GlassDemoBackdrop: View {
+    var body: some View {
+        LinearGradient(colors: [.green, .teal, .blue, .indigo, .orange],
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+            .overlay(RadialGradient(colors: [.white.opacity(0.55), .clear],
+                                    center: .topTrailing, startRadius: 4, endRadius: 240))
+            .ignoresSafeArea()
+    }
+}
+
+private struct GlassDemoTile<Content: View>: View {
+    var width: CGFloat = 170
+    @ViewBuilder var content: Content
+    var body: some View {
+        if #available(iOS 26, *) {
+            content.padding(14).frame(width: width, height: 170)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        } else {
+            content.padding(14).frame(width: width, height: 170)
+                .background(Palette.widgetBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+}
+
+#Preview("Glass over wallpaper — light") {
+    ZStack {
+        GlassDemoBackdrop()
+        HStack(spacing: 20) {
+            GlassDemoTile { AmbientSmallView(snapshot: .demo()) }
+            GlassDemoTile { AmbientSmallView(snapshot: .demo(alert: true)) }
+        }
+    }
+    .environment(\.colorScheme, .light)
+}
+
+#Preview("Glass over wallpaper — dark") {
+    ZStack {
+        GlassDemoBackdrop()
+        HStack(spacing: 20) {
+            GlassDemoTile { AmbientSmallView(snapshot: .demo()) }
+            GlassDemoTile(width: 320) { AmbientMediumView(snapshot: .demo()) }
+        }
+    }
+    .environment(\.colorScheme, .dark)
+}
 #endif
