@@ -144,9 +144,16 @@ private extension View {
     @ViewBuilder
     func liquidGlassSurface() -> some View {
         if #available(iOS 26, *) {
+            // REAL glass on the CONTAINER via glassEffect (SwiftUICore, iOS-available;
+            // verified signature: glassEffect(_ glass: Glass = .regular, in: some Shape)).
+            // .regularMaterial rendered an OPAQUE plate — this is the translucent,
+            // wallpaper-refracting material the system dock uses. ContainerRelativeShape
+            // matches the widget's system corner radius so the glass fills the whole
+            // container. Content stays opaque on top (HIG: glass = material layer).
+            // (WidgetTexture.glass exists but is visionOS-only — no iOS widget-glass
+            // API — so in-app glassEffect is the iOS route.)
             containerBackground(for: .widget) {
-                Rectangle().fill(.regularMaterial)
-                    .overlay(Palette.glassWarmth)
+                Color.clear.glassEffect(.regular, in: ContainerRelativeShape())
             }
         } else {
             containerBackground(for: .widget) { Palette.widgetBackground }
