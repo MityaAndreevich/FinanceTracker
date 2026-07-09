@@ -638,3 +638,63 @@ struct BudgetCrabWidget: Widget {
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
+
+// MARK: - Previews
+//
+// Every shipped state, so the design can be eyeballed / screenshotted directly in
+// the Xcode canvas (on an iOS 26 canvas the real .regularMaterial glass renders).
+// NOTE: the canvas does NOT reproduce the Home Screen's system tinted/clear
+// rendering modes — those are wallpaper-driven and must be captured on-device.
+// Stripped from release builds (previews compile only under DEBUG).
+
+#if DEBUG
+private extension NetSnapshot {
+    /// A representative month with a rising cumulative-spend curve. `ru` exercises
+    /// the longest labels ("Превышение бюджета" / "Можно потратить") for the
+    /// no-truncation check; `hasChart: false` exercises the empty-curve fallback.
+    static func demo(alert: Bool = false, hasChart: Bool = true, ru: Bool = false) -> NetSnapshot {
+        NetSnapshot(
+            monthLabel: ru ? "Июнь 2026" : "June 2026",
+            currencyCode: "USD",
+            heroLabel: alert ? (ru ? "Превышение бюджета" : "Over budget")
+                             : (ru ? "Можно потратить" : "Free"),
+            heroAmount: alert ? "$320" : "$1,240",
+            heroSubtitle: ru ? "из $2 000" : "of $2,000",
+            heroIsAlert: alert,
+            ringFraction: alert ? 1.0 : 0.62,
+            ringIsNeutral: false,
+            spentText: ru ? "Расходы $1 760" : "Spent $1,760",
+            earnedText: ru ? "Доход $3 000" : "Earned $3,000",
+            topCategories: [
+                .init(name: ru ? "Продукты" : "Groceries", symbol: "cart.fill",  amount: "$620", fraction: 0.35),
+                .init(name: ru ? "Транспорт" : "Transport", symbol: "car.fill",   amount: "$410", fraction: 0.23),
+                .init(name: ru ? "Кафе" : "Dining",         symbol: "fork.knife", amount: "$300", fraction: 0.17),
+            ],
+            spendSeries: hasChart ? [0, 0.05, 0.05, 0.18, 0.30, 0.30, 0.44, 0.52, 0.66, 0.66, 0.78, 0.90, 1.0] : nil,
+            hasData: true,
+            generatedAt: .now
+        )
+    }
+}
+
+#Preview("Ambient S — safe", as: .systemSmall) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .ambient) }
+
+#Preview("Ambient S — over budget", as: .systemSmall) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(alert: true), style: .ambient) }
+
+#Preview("Ambient M — safe", as: .systemMedium) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .ambient) }
+
+#Preview("Ambient M — over budget (ru, longest)", as: .systemMedium) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(alert: true, ru: true), style: .ambient) }
+
+#Preview("Ambient L — safe", as: .systemLarge) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .ambient) }
+
+#Preview("Ambient L — no curve (empty period)", as: .systemLarge) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(hasChart: false), style: .ambient) }
+
+#Preview("Minimal M — safe", as: .systemMedium) { BudgetCrabWidget() }
+    timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .minimal) }
+#endif
