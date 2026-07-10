@@ -85,78 +85,92 @@ struct BudgetCrabProvider: AppIntentTimelineProvider {
 // MARK: - Palette
 //
 // The widget extension has no asset catalog, so the app's `bc*` colorsets aren't
-// available here. These mirror them EXACTLY (values pulled from
-// Assets.xcassets/bc*.colorset + Color+Semantic.swift) as dynamic light/dark
-// providers. Source of truth stays the app's tokens — keep in sync if they move.
+// available here. These are dynamic light/dark providers (semantic tokens) that
+// carry the app's `bc*` intent. v1.0.1 premium-surface pass: the flat-white card
+// read cheap, so the surface is now an ADAPTIVE brand gradient (mint in light,
+// deep charcoal-teal in dark) and hero/label/month adopt on-brand green tones.
 // Rule (locked): green = income/positive only; spend = muted terracotta, never
-// alarm-red; ring track = neutral surface.
+// alarm-red; bar track = neutral. Secondary hexes are tuned DOWN from the raw
+// mockup values where needed to clear 4.5:1 on the pale mint (brief: "match intent,
+// tune to our palette").
 
 private enum Palette {
-    private static func dyn(_ light: (Double, Double, Double), _ dark: (Double, Double, Double)) -> Color {
+    private static func dyn(_ light: (Double, Double, Double), _ dark: (Double, Double, Double),
+                            lightAlpha: Double = 1, darkAlpha: Double = 1) -> Color {
         Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
-            ? UIColor(red: dark.0, green: dark.1, blue: dark.2, alpha: 1)
-            : UIColor(red: light.0, green: light.1, blue: light.2, alpha: 1) })
+            ? UIColor(red: dark.0, green: dark.1, blue: dark.2, alpha: darkAlpha)
+            : UIColor(red: light.0, green: light.1, blue: light.2, alpha: lightAlpha) })
     }
     private static func hex(_ r: Int, _ g: Int, _ b: Int) -> (Double, Double, Double) {
         (Double(r) / 255, Double(g) / 255, Double(b) / 255)
     }
+    private static let white = (1.0, 1.0, 1.0)
 
-    /// Brand mint — income / positive only (bcPositive / bcAccent).
-    static let income      = dyn(hex(0x17, 0xB4, 0x7D), hex(0x3D, 0xDC, 0x97))
-    /// Muted terracotta for spend (bcExpense) — the ring fill + category bars.
-    /// Also the over-budget signal: a SOFTENED danger, never alarm-red (Item 2.4).
-    static let spend       = dyn((0.75, 0.33, 0.24), (0.91, 0.53, 0.44))
-    /// Kept for the small warning glyph only — the number/ring never go full red.
-    static let danger      = dyn(hex(0xB0, 0x43, 0x33), hex(0xE0, 0x6A, 0x59))
-    /// Warm branded widget surface — replaces the flat white card (Item 2.2).
-    /// Adapts to Light/Dark; the system handles home-screen tinting on top.
-    static let widgetBackground = dyn(hex(0xFA, 0xF7, 0xF2), hex(0x12, 0x16, 0x1D))
-    /// Neutral bar / divider channel (visible on the warm surface, unlike the old
-    /// near-white F4F2EC that read at 1.12:1 — the "worm" track, Item 2.1).
-    static let track       = dyn(hex(0xE4, 0xDF, 0xD5), hex(0x28, 0x30, 0x40))
-    /// Ring channel: a dim tint of the fill (Activity-ring style) so a low-progress
-    /// arc always reads against a visible track rather than as a floating smudge.
-    static var ringTrack: Color { spend.opacity(0.20) }
-    static let textPrimary = dyn(hex(0x14, 0x18, 0x1F), hex(0xF2, 0xF5, 0xF9))
+    // — Adaptive premium surface (Item 2). A calm, low-contrast gradient between two
+    //   ADJACENT tones — Quiet-Premium, not a loud fill. Light = brand mint, dark =
+    //   deep charcoal-teal. Painted top-leading→bottom-trailing via containerBackground.
+    static let surfaceTop    = dyn(hex(0xEF, 0xFA, 0xF5), hex(0x2A, 0x32, 0x38))
+    static let surfaceBottom = dyn(hex(0xD7, 0xEF, 0xE6), hex(0x15, 0x1A, 0x1E))
+
+    // — Text on the surface.
+    /// Hero number — deep forest green in light, white in dark.
+    static let textPrimary   = dyn(hex(0x12, 0x3F, 0x33), white)
+    /// Hero label + up-tick — brand green (positive only). Never on the over-budget path.
+    static let heroAccent    = dyn(hex(0x0F, 0x6E, 0x56), hex(0x6F, 0xE3, 0xBF))
+    /// Period/month label — soft brand tint (85% green in light for AA, white 55% dark).
+    static let monthLabel    = dyn(hex(0x0F, 0x6E, 0x56), white, lightAlpha: 0.85, darkAlpha: 0.55)
+    /// Subtitle ("of/из …") — quiet green-gray (darkened from #4A7D6D for AA) / white 55%.
+    static let subtitle      = dyn(hex(0x3E, 0x6E, 0x5E), white, darkAlpha: 0.55)
+    /// Neutral secondary — category amounts + footer "Spent". Stays neutral so spend
+    /// never reads as the income green (locked rule).
     static let textSecondary = dyn(hex(0x5F, 0x6B, 0x7A), hex(0x9A, 0xA6, 0xB8))
-    static let textMuted   = dyn(hex(0x64, 0x6D, 0x7C), hex(0x7A, 0x86, 0x98))
-    /// A whisper of brand warmth laid over the system material on iOS 26 so the
-    /// glass still reads as Budget Crab, not a generic frosted panel. Deliberately
-    /// faint — the system owns the glass/refraction; this only tints it.
-    static var glassWarmth: Color { widgetBackground.opacity(0.14) }
-    /// Calm ambient-chart tint — green only when positive, muted terracotta when
-    /// over budget (state comes from heroIsAlert, never hue alone). Low-opacity so
-    /// the hero number stays the legible foreground (Direction B ambient layer).
-    static func ambient(alert: Bool) -> Color { (alert ? spend : income) }
+
+    // — Financial accents.
+    /// Brand mint — income / positive only (footer "Earned", brand chip glyph).
+    static let income  = dyn(hex(0x17, 0xB4, 0x7D), hex(0x3D, 0xDC, 0x97))
+    /// Muted terracotta for spend (category icons/bars) + the over-budget hero number.
+    /// Lightened in dark (#F0997B) so it reads on the charcoal surface — never alarm-red.
+    static let spend   = dyn((0.75, 0.33, 0.24), hex(0xF0, 0x99, 0x7B))
+    /// Small over-budget warning glyph only — the number/bar never go full red.
+    static let danger  = dyn(hex(0xB0, 0x43, 0x33), hex(0xE0, 0x6A, 0x59))
+
+    // — Structure.
+    /// Bar / progress track — neutral, kept contrasty enough to read under the
+    ///  terracotta fill on the pale mint / dark surfaces (Item 4).
+    static let track    = dyn(hex(0xC7, 0xDB, 0xD1), hex(0x33, 0x3D, 0x42))
+    /// Faint brand hairline for footer / section dividers (rgba(15,110,86,0.10) / white 10%).
+    static let hairline = dyn(hex(0x0F, 0x6E, 0x56), white, lightAlpha: 0.10, darkAlpha: 0.10)
+    /// Ring channel behind a low-progress fill (Minimal wide bar).
+    static var ringTrack: Color { spend.opacity(0.20) }
+
+    // — Ambient spend chart (Item 3). Its OWN tokens (distinct from `income`) so the
+    //   line/fill read on BOTH surfaces: brand green normally, muted terracotta when
+    //   over budget (state from `alert`, never hue alone — the hero also carries word).
+    /// Chart area-fill base color.
+    static func ambientFill(alert: Bool)   -> Color { alert ? spend : dyn(hex(0x1D, 0x9E, 0x75), hex(0x3F, 0xD3, 0x9E)) }
+    /// Chart stroke base color (the brighter dark stroke is the "glow" that reads premium).
+    static func ambientStroke(alert: Bool) -> Color { alert ? spend : dyn(hex(0x0F, 0x6E, 0x56), hex(0x4F, 0xE0, 0xAC)) }
 }
 
-// MARK: - Liquid Glass surface (Item: material)
+// MARK: - Premium gradient surface (Item 1 revert + Item 2)
 //
-// The material path is SYSTEM-rendered, not hand-rolled. On iOS 26 the widget
-// auto-adopts Liquid Glass on recompile; we hand the container a genuine system
-// `.regularMaterial` (which the system renders as glass, preserving legibility
-// over any wallpaper) with only a faint brand tint on top. `.liquidMaterial` is
-// NOT a real SDK symbol — do not reintroduce it. Below iOS 26 there is no Liquid
-// Glass, so we fall back to the calm, adaptive OPAQUE card (never flat white).
-// No blur/gradient/shadow is hand-built in either path (that fights the material).
+// Liquid Glass on a Home Screen widget is not achievable: a widget renders as an
+// opaque SNAPSHOT — the system does not composite live-wallpaper refraction behind
+// it, and `glassEffect` on the container is a no-op (proven on device; the earlier
+// glass attempt, commit 7bbe0ce, is reverted here). `WidgetTexture.glass` is
+// visionOS-only. So the surface is an ADAPTIVE brand gradient handed to
+// `containerBackground(for: .widget)`: calm mint in light, deep charcoal-teal in
+// dark — Quiet-Premium (adjacent tones, low contrast). Depth comes from the
+// gradient + the system widget shadow only; no hand-built blur/glow/inner shadow.
 
 private extension View {
-    @ViewBuilder
-    func liquidGlassSurface() -> some View {
-        if #available(iOS 26, *) {
-            // REAL glass on the CONTAINER via glassEffect (SwiftUICore, iOS-available;
-            // verified signature: glassEffect(_ glass: Glass = .regular, in: some Shape)).
-            // .regularMaterial rendered an OPAQUE plate — this is the translucent,
-            // wallpaper-refracting material the system dock uses. ContainerRelativeShape
-            // matches the widget's system corner radius so the glass fills the whole
-            // container. Content stays opaque on top (HIG: glass = material layer).
-            // (WidgetTexture.glass exists but is visionOS-only — no iOS widget-glass
-            // API — so in-app glassEffect is the iOS route.)
-            containerBackground(for: .widget) {
-                Color.clear.glassEffect(.regular, in: ContainerRelativeShape())
-            }
-        } else {
-            containerBackground(for: .widget) { Palette.widgetBackground }
+    func premiumSurface() -> some View {
+        containerBackground(for: .widget) {
+            LinearGradient(
+                gradient: Gradient(colors: [Palette.surfaceTop, Palette.surfaceBottom]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
 }
@@ -175,14 +189,15 @@ private struct AmbientSpendChart: View {
     let series: [Double]        // guarded 0…1, ≥2 points
     let alert: Bool
 
-    // Item 3: the dark surface swallowed the ambient green — raise stroke + fill so
-    // it reads as an intentional element, not a smudge; light already read fine.
-    // Still calm (not neon): a firmer line, not a saturated flood.
+    // Item 3 (premium-surface tuning): the line/fill must read on BOTH the mint and
+    // the charcoal-teal surfaces. Dark gets the brighter stroke — the "glow" that
+    // makes dark look premium — and a hair more fill; light stays calm. Fill anchors
+    // at the brief's ~20/22% at the top and fades to a whisper for depth.
     private var isDark: Bool { scheme == .dark }
-    private var strokeOpacity: Double { isDark ? 0.85 : 0.55 }
+    private var strokeOpacity: Double { isDark ? 0.85 : 0.60 }
     private var lineWidth: CGFloat   { isDark ? 1.8  : 1.5 }
-    private var fillTop: Double      { isDark ? 0.42 : 0.30 }
-    private var fillBottom: Double   { isDark ? 0.06 : 0.02 }
+    private var fillTop: Double      { isDark ? 0.22 : 0.20 }
+    private var fillBottom: Double   { fillTop * 0.15 }   // subtle vertical fade
 
     var body: some View {
         // Canvas (not a ViewBuilder closure) lets the point math live inline and
@@ -192,7 +207,8 @@ private struct AmbientSpendChart: View {
             let n = series.count
             let w = size.width, h = size.height
             guard n >= 2, w > 0, h > 0 else { return }
-            let tint = Palette.ambient(alert: alert)
+            let fillTint = Palette.ambientFill(alert: alert)
+            let strokeTint = Palette.ambientStroke(alert: alert)
             let step = w / CGFloat(n - 1)
             func point(_ i: Int) -> CGPoint {
                 CGPoint(x: step * CGFloat(i), y: h * (1 - CGFloat(series[i])))
@@ -204,13 +220,13 @@ private struct AmbientSpendChart: View {
             area.addLine(to: CGPoint(x: w, y: h))
             area.closeSubpath()
             context.fill(area, with: .linearGradient(
-                Gradient(colors: [tint.opacity(fillTop), tint.opacity(fillBottom)]),
+                Gradient(colors: [fillTint.opacity(fillTop), fillTint.opacity(fillBottom)]),
                 startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: h)))
 
             var line = Path()
             line.move(to: point(0))
             for i in 1..<n { line.addLine(to: point(i)) }
-            context.stroke(line, with: .color(tint.opacity(strokeOpacity)),
+            context.stroke(line, with: .color(strokeTint.opacity(strokeOpacity)),
                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round))
         }
         .allowsHitTesting(false)
@@ -261,11 +277,11 @@ private struct DirectionBHero: View {
                 } else if showsUpTick {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Palette.income)      // up-tick, green = positive
+                        .foregroundStyle(Palette.heroAccent)   // up-tick, brand green = positive
                 }
                 Text(snapshot.heroLabel)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textSecondary)
+                    .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.heroAccent)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)                   // longest ru/pt-BR labels, no clip
             }
@@ -279,7 +295,7 @@ private struct DirectionBHero: View {
                 Text(snapshot.heroSubtitle)
                     .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()
-                    .foregroundStyle(Palette.textMuted)
+                    .foregroundStyle(Palette.subtitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -346,7 +362,7 @@ private struct HeroLabel: View {
             }
             Text(snapshot.heroLabel)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.textSecondary)
+                .foregroundStyle(snapshot.heroIsAlert ? Palette.danger : Palette.heroAccent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
@@ -364,7 +380,7 @@ private struct WidgetHeader: View {
         HStack {
             Text(monthLabel)
                 .font(.system(size: size, weight: weight))
-                .foregroundStyle(Palette.textSecondary)
+                .foregroundStyle(Palette.monthLabel)
                 .lineLimit(1)
             Spacer(minLength: 4)
             IconChip()
@@ -446,7 +462,7 @@ private struct AmbientLargeView: View {
             AmbientHeroStack(snapshot: snapshot, chartHeight: 62, amountSize: 40)
 
             if !snapshot.topCategories.isEmpty {
-                Rectangle().fill(Palette.track).frame(height: 1)
+                Rectangle().fill(Palette.hairline).frame(height: 1)
                 VStack(spacing: 12) {
                     ForEach(snapshot.topCategories.prefix(3)) { CategoryRow(item: $0) }   // large ~3
                 }
@@ -454,7 +470,7 @@ private struct AmbientLargeView: View {
 
             Spacer(minLength: 0)
 
-            Rectangle().fill(Palette.track).frame(height: 1)
+            Rectangle().fill(Palette.hairline).frame(height: 1)
             HStack {
                 Text(snapshot.spentText)
                     .foregroundStyle(Palette.textSecondary)
@@ -513,7 +529,7 @@ private struct MinimalHero: View {
                 Text(snapshot.heroSubtitle)
                     .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()
-                    .foregroundStyle(Palette.textMuted)
+                    .foregroundStyle(Palette.subtitle)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -530,7 +546,7 @@ private struct MinimalSmallView: View {
             HStack {
                 Text(snapshot.monthLabel)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Palette.textSecondary)
+                    .foregroundStyle(Palette.monthLabel)
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 IconChip()
@@ -585,7 +601,7 @@ private struct MinimalLargeView: View {
             HStack {
                 Text(snapshot.monthLabel)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.textSecondary)
+                    .foregroundStyle(Palette.monthLabel)
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 IconChip()
@@ -594,7 +610,7 @@ private struct MinimalLargeView: View {
             MinimalHero(snapshot: snapshot, amountSize: 40)
 
             if !snapshot.topCategories.isEmpty {
-                Rectangle().fill(Palette.track).frame(height: 1)
+                Rectangle().fill(Palette.hairline).frame(height: 1)
                 VStack(spacing: 12) {
                     ForEach(snapshot.topCategories) { CategoryRow(item: $0) }
                 }
@@ -602,7 +618,7 @@ private struct MinimalLargeView: View {
 
             Spacer(minLength: 0)
 
-            Rectangle().fill(Palette.track).frame(height: 1)
+            Rectangle().fill(Palette.hairline).frame(height: 1)
             HStack {
                 Text(snapshot.spentText)
                     .foregroundStyle(Palette.textSecondary)
@@ -650,9 +666,10 @@ struct BudgetCrabWidget: Widget {
                                intent: BudgetCrabConfigurationIntent.self,
                                provider: BudgetCrabProvider()) { entry in
             BudgetCrabWidgetEntryView(entry: entry)
-                // System Liquid Glass on iOS 26 (auto-adopted on recompile) with a
-                // calm opaque-card fallback below it — see liquidGlassSurface().
-                .liquidGlassSurface()
+                // Adaptive premium gradient surface (mint in light, charcoal-teal in
+                // dark) — see premiumSurface(). Glass on a widget container is a no-op
+                // (reverted); depth is the gradient + the system widget shadow.
+                .premiumSurface()
         }
         .configurationDisplayName("Budget Crab")
         .description("See what's safe to spend at a glance.")
@@ -663,7 +680,7 @@ struct BudgetCrabWidget: Widget {
 // MARK: - Previews
 //
 // Every shipped state, so the design can be eyeballed / screenshotted directly in
-// the Xcode canvas (on an iOS 26 canvas the real .regularMaterial glass renders).
+// the Xcode canvas — the adaptive gradient surface renders here in light + dark.
 // NOTE: the canvas does NOT reproduce the Home Screen's system tinted/clear
 // rendering modes — those are wallpaper-driven and must be captured on-device.
 // Stripped from release builds (previews compile only under DEBUG).
@@ -719,17 +736,17 @@ private extension NetSnapshot {
 #Preview("Minimal M — safe", as: .systemMedium) { BudgetCrabWidget() }
     timeline: { BudgetCrabEntry(date: .now, snapshot: .demo(), style: .minimal) }
 
-// MARK: Glass-over-wallpaper demo (Item 1 verification)
+// MARK: Premium surface over a photo wallpaper (Item 2 verification)
 //
-// The widget #Previews above render on a neutral canvas, so glass refraction isn't
-// visible there. These place the content over a vivid backdrop with the SAME
-// glassEffect the container uses, so in the Xcode 26 canvas you can see the
-// wallpaper refract through the glass and confirm the hero/chart stay legible on
-// top. NOTE: this is in-app glass (live-composited); whether a Home Screen widget
-// SNAPSHOT refracts the real wallpaper must still be confirmed on-device.
+// The widget #Previews above render on a neutral canvas. These place the tiles over
+// a vivid photo-like backdrop so the whole point of this pass is visible in the
+// Xcode canvas: the surface now reads as a premium adaptive gradient (mint / dark
+// charcoal-teal) against a real wallpaper, not a cheap white plate — with the hero,
+// chart and over-budget state all legible. NOTE: the Home Screen's system tinted/
+// clear rendering modes are wallpaper-driven and must still be captured on-device.
 
-/// Vivid stand-in "wallpaper" — enough color contrast to reveal glass refraction.
-private struct GlassDemoBackdrop: View {
+/// Vivid stand-in "wallpaper" — stands in for a photo home-screen background.
+private struct WallpaperBackdrop: View {
     var body: some View {
         LinearGradient(colors: [.green, .teal, .blue, .indigo, .orange],
                        startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -739,37 +756,37 @@ private struct GlassDemoBackdrop: View {
     }
 }
 
-private struct GlassDemoTile<Content: View>: View {
+/// A widget-shaped tile painted with the SAME adaptive gradient as the real
+/// container surface, so the canvas shows exactly how the surface reads over a photo.
+private struct SurfaceDemoTile<Content: View>: View {
     var width: CGFloat = 170
     @ViewBuilder var content: Content
     var body: some View {
-        if #available(iOS 26, *) {
-            content.padding(14).frame(width: width, height: 170)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        } else {
-            content.padding(14).frame(width: width, height: 170)
-                .background(Palette.widgetBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        }
+        content.padding(14).frame(width: width, height: 170)
+            .background(
+                LinearGradient(gradient: Gradient(colors: [Palette.surfaceTop, Palette.surfaceBottom]),
+                               startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
 
-#Preview("Glass over wallpaper — light") {
+#Preview("Premium surface over wallpaper — light") {
     ZStack {
-        GlassDemoBackdrop()
+        WallpaperBackdrop()
         HStack(spacing: 20) {
-            GlassDemoTile { AmbientSmallView(snapshot: .demo()) }
-            GlassDemoTile { AmbientSmallView(snapshot: .demo(alert: true)) }
+            SurfaceDemoTile { AmbientSmallView(snapshot: .demo()) }
+            SurfaceDemoTile { AmbientSmallView(snapshot: .demo(alert: true)) }
         }
     }
     .environment(\.colorScheme, .light)
 }
 
-#Preview("Glass over wallpaper — dark") {
+#Preview("Premium surface over wallpaper — dark") {
     ZStack {
-        GlassDemoBackdrop()
+        WallpaperBackdrop()
         HStack(spacing: 20) {
-            GlassDemoTile { AmbientSmallView(snapshot: .demo()) }
-            GlassDemoTile(width: 320) { AmbientMediumView(snapshot: .demo()) }
+            SurfaceDemoTile { AmbientSmallView(snapshot: .demo(alert: true)) }
+            SurfaceDemoTile(width: 320) { AmbientMediumView(snapshot: .demo()) }
         }
     }
     .environment(\.colorScheme, .dark)
