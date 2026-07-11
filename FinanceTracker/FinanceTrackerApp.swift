@@ -93,6 +93,10 @@ struct FinanceTrackerApp: App {
                 // remaining String(localized:) calls on next launch.
                 .task {
                     PurchaseManager.shared.start()
+                    // Must run after PurchaseManager.start(): AccessManager
+                    // subscribes to its entitlement stream and stamps the reverse
+                    // trial start on the very first launch (idempotent thereafter).
+                    AccessManager.shared.start()
                     if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {
                         firstLaunchInterval = Date().timeIntervalSinceReferenceDate
                     }

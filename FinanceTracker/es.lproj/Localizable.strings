@@ -438,6 +438,7 @@
 "validation.date.out_of_range" = "La fecha debe estar entre 1990 y un año a partir de hoy.";
 "premium.section.status" = "Estado";
 "premium.status.active" = "Activo";
+"premium.status.trial.format" = "Prueba · quedan %d días";
 "premium.status.free" = "Gratis";
 "premium.upgrade" = "Mejorar a Premium";
 "premium.manage_subscription" = "Administrar suscripción";

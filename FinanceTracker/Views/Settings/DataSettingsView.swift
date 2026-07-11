@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 struct DataSettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var pm = PurchaseManager.shared
+    @StateObject private var access = AccessManager.shared
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
@@ -46,7 +46,7 @@ struct DataSettingsView: View {
         .sheet(isPresented: $showPaywall) { PaywallView() }
 
         .task {
-            await pm.refreshStatus()
+            await access.refreshFromStoreKit()
         }
 
         .fileImporter(
@@ -110,6 +110,9 @@ struct DataSettingsView: View {
     private var exportSection: some View {
         Section("data.section.export") {
 
+            // CSV is the raw-data escape hatch and is FREE at every scope,
+            // including all-time. We never hold a user's own records hostage to
+            // make them subscribe — that is the whole point of the brand.
             Button {
                 exportCSV(scope: .month)
             } label: {
@@ -117,10 +120,9 @@ struct DataSettingsView: View {
             }
 
             Button {
-                gatePremiumOr { exportCSV(scope: .all) }
+                exportCSV(scope: .all)
             } label: {
-                Label("data.export.csv.all",
-                      systemImage: pm.isPremium ? "square.and.arrow.up" : "lock")
+                Label("data.export.csv.all", systemImage: "square.and.arrow.up")
             }
 
             Button {
@@ -129,11 +131,13 @@ struct DataSettingsView: View {
                 Label("data.export.pdf.month", systemImage: "doc.richtext")
             }
 
+            // All-time PDF / Excel are presentation conveniences layered on top
+            // of data the user can already take with them as CSV for free.
             Button {
-                gatePremiumOr { exportPDF(scope: .all) }
+                gate(.exportPDFAll) { exportPDF(scope: .all) }
             } label: {
                 Label("data.export.pdf.all",
-                      systemImage: pm.isPremium ? "doc.richtext" : "lock")
+                      systemImage: access.isAllowed(.exportPDFAll) ? "doc.richtext" : "lock")
             }
 
             Button {
@@ -143,10 +147,10 @@ struct DataSettingsView: View {
             }
 
             Button {
-                gatePremiumOr { exportTSV(scope: .all) }
+                gate(.exportExcelAll) { exportTSV(scope: .all) }
             } label: {
                 Label("data.export.excel.all",
-                      systemImage: pm.isPremium ? "tablecells" : "lock")
+                      systemImage: access.isAllowed(.exportExcelAll) ? "tablecells" : "lock")
             }
 
             if let url = exportURL {
@@ -165,14 +169,14 @@ struct DataSettingsView: View {
         Section("data.section.import") {
 
             Button {
-                gatePremiumOr { showImporter = true }
+                gate(.csvImport) { showImporter = true }
             } label: {
                 Label("data.import.csv",
-                      systemImage: pm.isPremium ? "tray.and.arrow.down" : "lock")
+                      systemImage: access.isAllowed(.csvImport) ? "tray.and.arrow.down" : "lock")
             }
             .disabled(isImporting)
 
-            if !pm.isPremium {
+            if !access.isAllowed(.csvImport) {
                 Text("data.premium_hint")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -201,19 +205,19 @@ struct DataSettingsView: View {
 
     // MARK: - Premium gate
 
-    /// Authoritative gate. Never trusts the cached `isPremium` flag alone —
-    /// re-reads `currentEntitlements` (fast, local; no network sync) at tap time
-    /// so an already-entitled user (active trial OR paid OR lifetime) proceeds
-    /// directly and NEVER sees the paywall. Only a genuinely non-entitled user
-    /// falls through to the paywall.
-    private func gatePremiumOr(_ action: @escaping () -> Void) {
-        if pm.isPremium {
+    /// Authoritative gate. Never trusts the cached flag alone — re-reads
+    /// `currentEntitlements` (fast, local; no network sync) at tap time so an
+    /// already-entitled user (paid, Apple intro trial, lifetime — or our reverse
+    /// trial) proceeds directly and NEVER sees the paywall. Only a genuinely
+    /// free user falls through to it.
+    private func gate(_ capability: AppCapability, _ action: @escaping () -> Void) {
+        if access.isAllowed(capability) {
             action()
             return
         }
         Task {
-            await pm.refreshStatus()
-            if pm.isPremium {
+            await access.refreshFromStoreKit()
+            if access.isAllowed(capability) {
                 action()
             } else {
                 showPaywall = true

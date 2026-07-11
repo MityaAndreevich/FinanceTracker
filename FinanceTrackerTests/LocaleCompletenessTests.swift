@@ -134,7 +134,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // keep_all/delete_all + its confirmation, empty state). No count is ever
         // interpolated into a sentence — ru/uk have three plural forms and the
         // project ships no .stringsdict. All 5 locales in parity. Was 632.
-        XCTAssertEqual(enKeys.count, 645, "English baseline changed; update the expected count.")
+        // 2026-07-11 (v1.0.2 monetization, Item 1): +1 for the reverse-trial status
+        // line shown in Settings (premium.status.trial.format). All 5 locales in
+        // parity. Was 645.
+        XCTAssertEqual(enKeys.count, 646, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

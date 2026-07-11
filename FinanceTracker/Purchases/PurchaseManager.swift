@@ -54,8 +54,13 @@ final class PurchaseManager: ObservableObject {
     /// Продукты для показа в Paywall (в нужном порядке)
     @Published private(set) var products: [Product] = []
 
-    /// Главный флаг для gating (Import/Export All и т.д.)
-    @Published private(set) var isPremium: Bool = false
+    /// True only for a REAL StoreKit entitlement: paid, auto-renewing, inside
+    /// Apple's introductory free trial, or the lifetime non-consumable.
+    ///
+    /// This is NOT the gating flag. Feature gates read `AccessManager.isPremium`,
+    /// which is this OR an active reverse trial. Keeping the two distinct is what
+    /// lets a reverse-trial user still open the paywall and subscribe.
+    @Published private(set) var hasPaidEntitlement: Bool = false
 
     /// Можно показывать в UI, если нужно
     @Published var lastErrorMessage: String?
@@ -130,8 +135,9 @@ final class PurchaseManager: ObservableObject {
         // pending, or throw. Critical for the "already subscribed" case: an
         // entitled user who somehow reached the paywall taps Subscribe, StoreKit
         // reports they already own it (which may surface as .userCancelled or a
-        // throw), and this refresh flips isPremium=true so the gate unlocks and
-        // the paywall auto-dismisses — instead of dead-ending on the alert.
+        // throw), and this refresh flips hasPaidEntitlement=true so the gate
+        // unlocks and the paywall auto-dismisses — instead of dead-ending on the
+        // alert.
         await refreshPremiumStatus()
     }
 
@@ -140,7 +146,7 @@ final class PurchaseManager: ObservableObject {
         do {
             try await AppStore.sync()
             await refreshPremiumStatus()
-            lastErrorMessage = isPremium
+            lastErrorMessage = hasPaidEntitlement
                 ? String(localized: "purchase.restored")
                 : String(localized: "purchase.no_previous_purchases")
         } catch {
@@ -193,7 +199,7 @@ final class PurchaseManager: ObservableObject {
             }
         }
 
-        isPremium = Self.evaluatePremium(entitlements: snapshots)
+        hasPaidEntitlement = Self.evaluatePremium(entitlements: snapshots)
     }
 
     /// Удобный метод для экранов (и для .task / pull-to-refresh)

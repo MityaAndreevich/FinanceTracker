@@ -11,13 +11,12 @@ import UIKit
 
 struct PremiumSettingsView: View {
     @StateObject private var pm = PurchaseManager.shared
+    @StateObject private var access = AccessManager.shared
     @State private var showPaywall = false
     @State private var showRedeem = false
 
     var body: some View {
-        let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
-
-        return List {
+        List {
             Section("premium.section.status") {
                 HStack {
                     Label {
@@ -28,11 +27,12 @@ struct PremiumSettingsView: View {
 
                     Spacer()
 
-                    Text(statusKey)
-                        .foregroundStyle(pm.isPremium ? .green : .secondary)
+                    statusLabel
                 }
 
-                if !pm.isPremium {
+                // Offered to trial users too — they have full access but own
+                // nothing, and this is the honest place to convert them early.
+                if !access.hasPaidEntitlement {
                     Button { showPaywall = true } label: {
                         Label("premium.upgrade", systemImage: "star.circle.fill")
                     }
@@ -100,7 +100,26 @@ struct PremiumSettingsView: View {
         }
         .task {
             // При заходе на экран — перечитать entitlement
-            await pm.refreshStatus()
+            await access.refreshFromStoreKit()
+        }
+    }
+
+    // MARK: - Status
+
+    /// Three honest states: bought, on the house (reverse trial, with the clock
+    /// visible), or free. We never dress the trial up as a purchase.
+    @ViewBuilder
+    private var statusLabel: some View {
+        if access.hasPaidEntitlement {
+            Text("premium.status.active")
+                .foregroundStyle(.green)
+        } else if access.isReverseTrialActive {
+            Text(String(format: NSLocalizedString("premium.status.trial.format", comment: ""),
+                        access.trialDaysRemaining))
+                .foregroundStyle(.green)
+        } else {
+            Text("premium.status.free")
+                .foregroundStyle(.secondary)
         }
     }
 

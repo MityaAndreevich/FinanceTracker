@@ -415,6 +415,7 @@
    ====================================================== */
 "premium.section.status" = "Статус";
 "premium.status.active" = "Активний";
+"premium.status.trial.format" = "Пробний · залишилось %d дн.";
 "premium.status.free" = "Безкоштовний";
 
 "premium.upgrade" = "Перейти на Premium";

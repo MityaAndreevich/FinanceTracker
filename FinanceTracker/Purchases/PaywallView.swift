@@ -53,12 +53,16 @@ struct PaywallView: View {
         // or the "already subscribed" recovery in PurchaseManager.purchase) —
         // dismiss immediately so they land back on the action they wanted, never
         // stuck staring at a paywall they've already paid past.
+        //
+        // Deliberately keyed on the PAID entitlement, not on AccessManager's
+        // isPremium: a reverse-trial user is premium but has bought nothing, and
+        // must still be able to open this screen and subscribe.
         .task { await pm.refreshStatus() }
-        .onChange(of: pm.isPremium) { _, isPremium in
-            if isPremium { dismiss() }
+        .onChange(of: pm.hasPaidEntitlement) { _, isPaid in
+            if isPaid { dismiss() }
         }
         .onAppear {
-            if pm.isPremium { dismiss() }
+            if pm.hasPaidEntitlement { dismiss() }
         }
     }
 

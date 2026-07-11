@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var pm = PurchaseManager.shared
+    @StateObject private var access = AccessManager.shared
 
     var body: some View {
         List {
@@ -76,7 +77,7 @@ struct SettingsView: View {
     }
 
     private var premiumRow: some View {
-        let statusKey: LocalizedStringKey = pm.isPremium ? "premium.status.active" : "premium.status.free"
+        let status = premiumStatusText
 
         return HStack(spacing: 12) {
             Image(systemName: "crown.fill")
@@ -86,13 +87,25 @@ struct SettingsView: View {
 
             Spacer()
 
-            Text(statusKey)
+            Text(status)
                 .font(.subheadline)
-                .foregroundStyle(pm.isPremium ? .green : .secondary)
+                .foregroundStyle(access.isPremium ? .green : .secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("settings.premium"))
-        .accessibilityValue(Text(statusKey))
+        .accessibilityValue(Text(status))
+    }
+
+    /// Paid, on the reverse trial (with days left), or free.
+    private var premiumStatusText: String {
+        if access.hasPaidEntitlement {
+            return NSLocalizedString("premium.status.active", comment: "")
+        }
+        if access.isReverseTrialActive {
+            return String(format: NSLocalizedString("premium.status.trial.format", comment: ""),
+                          access.trialDaysRemaining)
+        }
+        return NSLocalizedString("premium.status.free", comment: "")
     }
 }
 

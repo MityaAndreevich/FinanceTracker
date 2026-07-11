@@ -442,6 +442,7 @@
 "validation.date.out_of_range" = "A data deve estar entre 1990 e um ano a partir de hoje.";
 "premium.section.status" = "Status";
 "premium.status.active" = "Ativo";
+"premium.status.trial.format" = "Teste · faltam %d dias";
 "premium.status.free" = "Grátis";
 "premium.upgrade" = "Assinar o Premium";
 "premium.manage_subscription" = "Gerenciar assinatura";

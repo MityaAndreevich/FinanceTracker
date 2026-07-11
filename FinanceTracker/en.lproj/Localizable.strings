@@ -408,6 +408,7 @@
    ====================================================== */
 "premium.section.status" = "Status";
 "premium.status.active" = "Active";
+"premium.status.trial.format" = "Trial · %d days left";
 "premium.status.free" = "Free";
 
 "premium.upgrade" = "Upgrade to Premium";
