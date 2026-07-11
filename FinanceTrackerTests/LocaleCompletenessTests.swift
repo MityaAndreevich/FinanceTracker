@@ -137,7 +137,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // 2026-07-11 (v1.0.2 monetization, Item 1): +1 for the reverse-trial status
         // line shown in Settings (premium.status.trial.format). All 5 locales in
         // parity. Was 645.
-        XCTAssertEqual(enKeys.count, 646, "English baseline changed; update the expected count.")
+        // 2026-07-11 (v1.0.2 monetization, Item 3): +2 for the free-tier cap hints
+        // shown under a locked Add button (cs.sources.cap_hint,
+        // cs.categories.cap_hint). Both promise, in every locale, that existing
+        // accounts/categories stay. All 5 locales in parity. Was 646.
+        XCTAssertEqual(enKeys.count, 648, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

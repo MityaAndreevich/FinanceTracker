@@ -229,6 +229,52 @@ struct FreeTierCapTests {
     }
 }
 
+// MARK: - What counts against the category cap
+
+@Suite("Only user-created categories count against the cap")
+struct CustomCategoryCountingTests {
+
+    /// Mirrors SeedService: a default carries a nameKey and no custom text.
+    private func seeded(_ key: String) -> FinanceTracker.Category {
+        FinanceTracker.Category(name: key, kindRaw: "expense", nameKey: key, nameCustom: nil)
+    }
+
+    /// Mirrors NewCategoryViewModel.makeCategory: user text, no key.
+    private func custom(_ text: String) -> FinanceTracker.Category {
+        FinanceTracker.Category(name: text, kindRaw: "expense", nameKey: nil, nameCustom: text)
+    }
+
+    @Test("The 13 seeded defaults are free and never count")
+    func seededDefaultsDoNotCount() {
+        let seeds = ["category.food_drink", "category.transport", "category.housing"].map(seeded)
+        #expect(seeds.customCategoryCount == 0)
+    }
+
+    @Test("User-created categories count")
+    func userCreatedCategoriesCount() {
+        let all = [seeded("category.food_drink"), custom("Cat food"), custom("Guitar strings")]
+        #expect(all.customCategoryCount == 2)
+    }
+
+    @Test("A free user with defaults plus two customs may still add one more")
+    func freeUserUnderCapMayAdd() {
+        let all = [seeded("category.food_drink"), custom("Cat food"), custom("Guitar strings")]
+        #expect(AccessLogic.canAdd(.addCustomCategoryBeyondFreeCap,
+                                   isPremium: false,
+                                   currentCount: all.customCategoryCount))
+    }
+
+    @Test("A free user at three customs is blocked, no matter how many defaults exist")
+    func freeUserAtCapIsBlocked() {
+        let all = [seeded("category.food_drink"), seeded("category.transport"),
+                   custom("Cat food"), custom("Guitar strings"), custom("Climbing gym")]
+        #expect(all.customCategoryCount == 3)
+        #expect(AccessLogic.canAdd(.addCustomCategoryBeyondFreeCap,
+                                   isPremium: false,
+                                   currentCount: all.customCategoryCount) == false)
+    }
+}
+
 // MARK: - The free/paid line
 
 @Suite("The free/paid line")

@@ -854,3 +854,7 @@
 "duplicates.review.delete_all.confirm.message" = "This can't be undone. The transactions they matched will stay.";
 "duplicates.review.empty.title" = "Nothing to review";
 "duplicates.review.empty.subtitle" = "Imported transactions that match ones you already have will show up here.";
+
+/* v1.0.2 monetization — free-tier caps */
+"cs.sources.cap_hint" = "Free plan includes %d accounts. Upgrade to add more — your existing accounts always stay.";
+"cs.categories.cap_hint" = "Free plan includes %d custom categories, plus all the built-in ones. Upgrade to add more — your existing categories always stay.";

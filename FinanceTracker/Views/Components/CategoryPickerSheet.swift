@@ -20,6 +20,9 @@ struct CategoryPickerSheet: View {
     @State private var showAddCategory = false
     @Query(sort: \Category.order) private var allCategories: [Category]
 
+    @StateObject private var access = AccessManager.shared
+    @State private var showPaywall = false
+
     private var filtered: [Category] {
         Self.visibleCategories(allCategories, kind: currentType, search: search)
     }
@@ -55,10 +58,19 @@ struct CategoryPickerSheet: View {
 
                 Section {
                     Button {
-                        showAddCategory = true
+                        attemptAddCategory()
                     } label: {
-                        Label("category.picker.add_new", systemImage: "plus.circle.fill")
+                        Label("category.picker.add_new",
+                              systemImage: canAddCategory ? "plus.circle.fill" : "lock.fill")
                             .foregroundStyle(Color.accentColor)
+                    }
+
+                    if !canAddCategory {
+                        Text(String(format: NSLocalizedString("cs.categories.cap_hint", comment: ""),
+                                    FreeTierLimits.maxCustomCategories))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -76,7 +88,25 @@ struct CategoryPickerSheet: View {
                     dismiss()
                 }
             }
+            .sheet(isPresented: $showPaywall) { PaywallView() }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    // MARK: - Free-tier cap
+    //
+    // Blocks creating a NEW custom category past the cap. Every category already
+    // in this list — seeded or user-made — stays pickable on every tier.
+
+    private var canAddCategory: Bool {
+        access.canAdd(.addCustomCategoryBeyondFreeCap,
+                      currentCount: allCategories.customCategoryCount)
+    }
+
+    private func attemptAddCategory() {
+        CapGate.attempt(.addCustomCategoryBeyondFreeCap,
+                        currentCount: allCategories.customCategoryCount,
+                        access: access,
+                        showPaywall: $showPaywall) { showAddCategory = true }
     }
 }

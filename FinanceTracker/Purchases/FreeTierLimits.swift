@@ -32,6 +32,19 @@ enum FreeTierLimits {
     static let maxCustomCategories = 3
 }
 
+extension Collection where Element == Category {
+
+    /// What actually counts against `FreeTierLimits.maxCustomCategories`.
+    ///
+    /// Only categories the user typed themselves. The 13 seeded defaults carry a
+    /// `nameKey` instead of `nameCustom`, are available on every tier, and never
+    /// consume the cap — otherwise a free user would open the app already
+    /// over-limit, which is exactly the crippled-free-tier trap we're avoiding.
+    var customCategoryCount: Int {
+        lazy.filter(\.isUserDefined).count
+    }
+}
+
 /// Every capability whose availability depends on entitlement, plus the ones we
 /// deliberately promise to keep free. Listing the free ones here — instead of
 /// leaving them as an absence — is what lets the tests assert that history,

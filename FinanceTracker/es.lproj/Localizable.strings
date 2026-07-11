@@ -732,3 +732,7 @@
 "duplicates.review.delete_all.confirm.message" = "Esta acción no se puede deshacer. Las transacciones con las que coincidieron se conservarán.";
 "duplicates.review.empty.title" = "Nada que revisar";
 "duplicates.review.empty.subtitle" = "Aquí aparecerán las transacciones importadas que coincidan con otras que ya tienes.";
+
+/* v1.0.2 monetization — free-tier caps */
+"cs.sources.cap_hint" = "El plan gratuito incluye %d cuentas. Hazte Premium para añadir más: las cuentas que ya creaste se quedan contigo.";
+"cs.categories.cap_hint" = "El plan gratuito incluye %d categorías propias, además de todas las integradas. Hazte Premium para añadir más: las que ya creaste se quedan contigo.";

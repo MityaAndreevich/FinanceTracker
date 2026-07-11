@@ -27,6 +27,9 @@ struct CategoriesSourcesView: View {
     }
     @State private var activeSheet: ActiveSheet?
 
+    @StateObject private var access = AccessManager.shared
+    @State private var showPaywall = false
+
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
@@ -86,7 +89,38 @@ struct CategoriesSourcesView: View {
             Button("common.cancel", role: .cancel) { pendingDelete = nil }
             Button("common.delete", role: .destructive) { performPendingDelete() }
         }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
         .confirmationToast($toastMessage)
+    }
+
+    // MARK: - Free-tier caps
+    //
+    // The caps gate the ADD button only. Every account and category already in
+    // the list stays listed, editable and usable no matter what tier the user is
+    // on — including the ones they created during the reverse trial and can no
+    // longer re-create. We do not hold data hostage to sell a subscription.
+
+    private var canAddSource: Bool {
+        access.canAdd(.addAccountBeyondFreeCap, currentCount: sources.count)
+    }
+
+    private var canAddCategory: Bool {
+        access.canAdd(.addCustomCategoryBeyondFreeCap,
+                      currentCount: categories.customCategoryCount)
+    }
+
+    private func attemptAddSource() {
+        CapGate.attempt(.addAccountBeyondFreeCap,
+                        currentCount: sources.count,
+                        access: access,
+                        showPaywall: $showPaywall) { activeSheet = .source }
+    }
+
+    private func attemptAddCategory() {
+        CapGate.attempt(.addCustomCategoryBeyondFreeCap,
+                        currentCount: categories.customCategoryCount,
+                        access: access,
+                        showPaywall: $showPaywall) { activeSheet = .category }
     }
 
     // MARK: - Sections
@@ -104,8 +138,17 @@ struct CategoriesSourcesView: View {
                 .onDelete { offsets in pendingDelete = .sources(offsets) }
             }
 
-            Button { activeSheet = .source } label: {
-                Label("cs.sources.add", systemImage: "plus")
+            Button { attemptAddSource() } label: {
+                Label("cs.sources.add",
+                      systemImage: canAddSource ? "plus" : "lock")
+            }
+
+            if !canAddSource {
+                Text(String(format: NSLocalizedString("cs.sources.cap_hint", comment: ""),
+                            FreeTierLimits.maxAccounts))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
             Text("cs.section.sources")
@@ -127,8 +170,17 @@ struct CategoriesSourcesView: View {
                 }
             }
 
-            Button { activeSheet = .category } label: {
-                Label("cs.categories.add", systemImage: "plus")
+            Button { attemptAddCategory() } label: {
+                Label("cs.categories.add",
+                      systemImage: canAddCategory ? "plus" : "lock")
+            }
+
+            if !canAddCategory {
+                Text(String(format: NSLocalizedString("cs.categories.cap_hint", comment: ""),
+                            FreeTierLimits.maxCustomCategories))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
             Text("cs.section.expense_categories")
@@ -150,8 +202,17 @@ struct CategoriesSourcesView: View {
                 }
             }
 
-            Button { activeSheet = .category } label: {
-                Label("cs.categories.add", systemImage: "plus")
+            Button { attemptAddCategory() } label: {
+                Label("cs.categories.add",
+                      systemImage: canAddCategory ? "plus" : "lock")
+            }
+
+            if !canAddCategory {
+                Text(String(format: NSLocalizedString("cs.categories.cap_hint", comment: ""),
+                            FreeTierLimits.maxCustomCategories))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         } header: {
             Text("cs.section.income_categories")

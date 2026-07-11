@@ -72,6 +72,9 @@ struct AddTransactionView: View {
     @State private var showAddCategorySheet = false
     @State private var showAddSourceSheet = false
 
+    @StateObject private var access = AccessManager.shared
+    @State private var showPaywall = false
+
     // MARK: - Derived
 
     private var filteredCategories: [Category] {
@@ -168,7 +171,37 @@ struct AddTransactionView: View {
                     applyCategoryPick(picked)
                 }
             }
+            .sheet(isPresented: $showPaywall) { PaywallView() }
         }
+    }
+
+    // MARK: - Free-tier caps
+    //
+    // Only the ADD is gated. Every existing account and category stays pickable
+    // here on every tier — a free user who built six accounts during the trial
+    // can still file transactions against all six.
+
+    private var canAddSource: Bool {
+        access.canAdd(.addAccountBeyondFreeCap, currentCount: sources.count)
+    }
+
+    private var canAddCategory: Bool {
+        access.canAdd(.addCustomCategoryBeyondFreeCap,
+                      currentCount: categories.customCategoryCount)
+    }
+
+    private func attemptAddSource() {
+        CapGate.attempt(.addAccountBeyondFreeCap,
+                        currentCount: sources.count,
+                        access: access,
+                        showPaywall: $showPaywall) { showAddSourceSheet = true }
+    }
+
+    private func attemptAddCategory() {
+        CapGate.attempt(.addCustomCategoryBeyondFreeCap,
+                        currentCount: categories.customCategoryCount,
+                        access: access,
+                        showPaywall: $showPaywall) { showAddCategorySheet = true }
     }
 
     // MARK: - Sections
@@ -217,14 +250,16 @@ struct AddTransactionView: View {
             if filteredCategories.isEmpty {
                 Text(typeRaw == TransactionType.income.raw ? "add.category.empty_income" : "add.category.empty_expense")
                     .foregroundStyle(.secondary)
-                Button { showAddCategorySheet = true } label: {
-                    Label("add.category.add", systemImage: "plus.circle")
+                Button { attemptAddCategory() } label: {
+                    Label("add.category.add",
+                          systemImage: canAddCategory ? "plus.circle" : "lock")
                 }
             } else if let detectedName = prefillDetectedCategoryName, !showCategoryPickerOverride {
                 // Quick Add pre-fill path — show chip instead of full picker
                 autoDetectedPill(detectedName)
-                Button { showAddCategorySheet = true } label: {
-                    Label("add.category.add", systemImage: "plus.circle")
+                Button { attemptAddCategory() } label: {
+                    Label("add.category.add",
+                          systemImage: canAddCategory ? "plus.circle" : "lock")
                 }
             } else {
                 // Inline suggestion (from manual merchant typing)
@@ -245,8 +280,9 @@ struct AddTransactionView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Button { showAddCategorySheet = true } label: {
-                    Label("add.category.add", systemImage: "plus.circle")
+                Button { attemptAddCategory() } label: {
+                    Label("add.category.add",
+                          systemImage: canAddCategory ? "plus.circle" : "lock")
                 }
             }
         } header: {
@@ -358,8 +394,9 @@ struct AddTransactionView: View {
             }
             .labelsHidden()
 
-            Button { showAddSourceSheet = true } label: {
-                Label("add.source.add", systemImage: "plus.circle")
+            Button { attemptAddSource() } label: {
+                Label("add.source.add",
+                      systemImage: canAddSource ? "plus.circle" : "lock")
             }
 
             Text("add.source.tip")

@@ -733,3 +733,7 @@
 "duplicates.review.delete_all.confirm.message" = "Não é possível desfazer. As transações que elas coincidiram permanecerão.";
 "duplicates.review.empty.title" = "Nada para revisar";
 "duplicates.review.empty.subtitle" = "Transações importadas que coincidirem com outras que você já tem aparecerão aqui.";
+
+/* v1.0.2 monetization — free-tier caps */
+"cs.sources.cap_hint" = "O plano gratuito inclui %d contas. Assine o Premium para adicionar mais — as contas que você já criou continuam aí.";
+"cs.categories.cap_hint" = "O plano gratuito inclui %d categorias personalizadas, além de todas as prontas. Assine o Premium para adicionar mais — as que você já criou continuam aí.";
