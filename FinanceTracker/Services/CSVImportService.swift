@@ -315,7 +315,9 @@ struct CSVImportService {
                 createdCount: &result.createdSources
             )
 
-            // Foreign-row dedup: flag on content match, never drop.
+            // Foreign-row dedup: flag on content match, never drop. The flag is
+            // PERSISTED on the row (not just counted) — otherwise it dies with the
+            // import summary and the user can never find the rows it refers to.
             let heuristic = transactionIdentity(
                 typeRaw: normalized.typeRaw,
                 amountCents: normalized.amountCents,
@@ -324,7 +326,8 @@ struct CSVImportService {
                 categoryName: category.displayName(),
                 merchant: normalized.merchant ?? ""
             )
-            if mode == .skipDuplicates, seenHeuristics.contains(heuristic) {
+            let isPossibleDuplicate = (mode == .skipDuplicates) && seenHeuristics.contains(heuristic)
+            if isPossibleDuplicate {
                 result.possibleDuplicates += 1
             }
 
@@ -339,7 +342,8 @@ struct CSVImportService {
                 source: source,
                 taxCents: nil,
                 note: normalized.note,
-                merchant: normalized.merchant
+                merchant: normalized.merchant,
+                isPossibleDuplicate: isPossibleDuplicate
             )
             modelContext.insert(tx)
             seenUUIDs.insert(uuid)
@@ -663,6 +667,7 @@ struct CSVImportService {
             // Resolve the identity of the row BEFORE creating any category/source,
             // so a skipped duplicate leaves no side effects.
             let resolvedUUID: UUID
+            var isPossibleDuplicate = false
             if let id = fileUUID {
                 // Our own export row → dedup on the STABLE UUID.
                 //   • skipDuplicates: an existing/seen UUID is an exact re-import → skip.
@@ -677,9 +682,12 @@ struct CSVImportService {
             } else {
                 // Foreign row (no UUID): NEVER drop — we cannot tell a re-import
                 // apart from a genuinely-distinct identical transaction. Import it
-                // under a fresh UUID and, when it content-matches, flag it.
+                // under a fresh UUID and, when it content-matches, flag it. The flag
+                // is PERSISTED on the row so the list can badge it and the review
+                // flow can find it — a counter in the summary dies with the alert.
                 resolvedUUID = UUID()
                 if mode == .skipDuplicates, seenHeuristics.contains(heuristic) {
+                    isPossibleDuplicate = true
                     result.possibleDuplicates += 1
                 }
             }
@@ -709,7 +717,8 @@ struct CSVImportService {
                 source: source,
                 taxCents: taxCents,
                 note: note.isEmpty ? nil : note,
-                merchant: merchant.isEmpty ? nil : merchant
+                merchant: merchant.isEmpty ? nil : merchant,
+                isPossibleDuplicate: isPossibleDuplicate
             )
 
             modelContext.insert(tx)

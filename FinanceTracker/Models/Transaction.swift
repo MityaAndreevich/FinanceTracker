@@ -33,6 +33,20 @@ final class Transaction {
     /// Allows atomic removal without touching user data.
     var isDemo: Bool = false
 
+    /// Set by the importer on a FOREIGN row (a CSV with no stable `id` column)
+    /// whose content matches a transaction already in the store. Such a row is
+    /// imported anyway — we cannot tell a re-import apart from two genuinely
+    /// identical real spends, and silently dropping a real transaction is the
+    /// worse failure. The flag is what lets the user find and resolve it later:
+    /// it drives the row badge and the review flow (DuplicateReviewService).
+    ///
+    /// Rows carrying our own export's UUID are never flagged — an exact UUID
+    /// match is skipped outright, which is why an own-export re-import stays
+    /// idempotent.
+    ///
+    /// Defaulted → additive, SwiftData lightweight migration handles it.
+    var isPossibleDuplicate: Bool = false
+
     // Relationships
     // .nullify (SwiftData default): deleting a Transaction simply detaches it from its
     // Category. It must NOT be `.deny`: a delete rule governs deletion of the object
@@ -64,6 +78,7 @@ final class Transaction {
         merchant: String? = nil,
         recurrenceRaw: String? = nil,
         isDemo: Bool = false,
+        isPossibleDuplicate: Bool = false,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -79,6 +94,7 @@ final class Transaction {
         self.merchant = merchant
         self.recurrenceRaw = recurrenceRaw
         self.isDemo = isDemo
+        self.isPossibleDuplicate = isPossibleDuplicate
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
