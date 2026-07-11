@@ -35,10 +35,27 @@ enum AccessLogic {
     }
 }
 
+/// The slice of StoreKit that AccessManager needs. A protocol rather than a
+/// concrete PurchaseManager so the access rules can be tested against a paid /
+/// unpaid user without a live StoreKit session (real entitlements cannot be
+/// constructed in a test).
+@MainActor
+protocol PaidEntitlementProviding: AnyObject {
+    var hasPaidEntitlement: Bool { get }
+    var hasPaidEntitlementPublisher: AnyPublisher<Bool, Never> { get }
+    func refreshStatus() async
+}
+
+extension PurchaseManager: PaidEntitlementProviding {
+    var hasPaidEntitlementPublisher: AnyPublisher<Bool, Never> {
+        $hasPaidEntitlement.eraseToAnyPublisher()
+    }
+}
+
 @MainActor
 final class AccessManager: ObservableObject {
 
-    static let shared = AccessManager(purchases: .shared)
+    static let shared = AccessManager(purchases: PurchaseManager.shared)
 
     // MARK: - Published state
 
@@ -56,10 +73,10 @@ final class AccessManager: ObservableObject {
     // MARK: - Dependencies
 
     private let store: ReverseTrialStore
-    private let purchases: PurchaseManager?
+    private let purchases: PaidEntitlementProviding?
     private var cancellables = Set<AnyCancellable>()
 
-    init(purchases: PurchaseManager?,
+    init(purchases: PaidEntitlementProviding?,
          store: ReverseTrialStore = AppGroupReverseTrialStore.shared) {
         self.purchases = purchases
         self.store = store
@@ -72,7 +89,7 @@ final class AccessManager: ObservableObject {
     func start(now: Date = .now) {
         startReverseTrialIfNeeded(now: now)
 
-        purchases?.$hasPaidEntitlement
+        purchases?.hasPaidEntitlementPublisher
             .sink { [weak self] _ in
                 // Re-read on the next tick so we observe the settled value, not
                 // the one in flight.
@@ -105,6 +122,31 @@ final class AccessManager: ObservableObject {
     func refreshFromStoreKit() async {
         await purchases?.refreshStatus()
         refresh()
+    }
+
+    // MARK: - Trial end
+
+    /// Should the root view raise the paywall right now because the reverse trial
+    /// has just lapsed unpaid? Consumes the trigger: true at most once, ever.
+    ///
+    /// Nothing is taken away when this fires. The user's records are all still
+    /// there; what they lose is the ability to import and to add past the free
+    /// caps. The paywall says exactly that — loss aversion works best when the
+    /// loss is real and honestly named.
+    func shouldShowTrialEndPaywall(now: Date = .now) -> Bool {
+        guard let start = store.reverseTrialStartDate else { return false }
+        guard !(purchases?.hasPaidEntitlement ?? false) else { return false }
+        guard !ReverseTrial.isActive(start: start, now: now) else { return false }
+        guard !store.hasShownTrialEndPaywall else { return false }
+
+        store.hasShownTrialEndPaywall = true
+        return true
+    }
+
+    /// True when the trial has run out and nothing was bought — drives the
+    /// paywall's contextual "your trial ended" header.
+    var didReverseTrialLapseUnpaid: Bool {
+        store.reverseTrialStartDate != nil && !isReverseTrialActive && !hasPaidEntitlement
     }
 
     // MARK: - Gates

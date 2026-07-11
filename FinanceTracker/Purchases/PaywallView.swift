@@ -11,6 +11,7 @@ import StoreKit
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var pm = PurchaseManager.shared
+    @StateObject private var access = AccessManager.shared
 
     private static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
     private static let privacyURL = URL(string: "https://budgetcrab.app/PRIVACY_POLICY.html")!
@@ -82,7 +83,33 @@ struct PaywallView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+
+            if access.didReverseTrialLapseUnpaid {
+                trialEndedNotice
+                    .padding(.top, 8)
+            }
         }
+    }
+
+    /// Shown after the 14-day reverse trial lapses. It names the loss plainly —
+    /// and, just as plainly, promises that nothing was taken away. That promise is
+    /// enforced by the caps themselves (they block adding, never delete), so this
+    /// copy is a description of the code, not a reassurance we hope holds.
+    private var trialEndedNotice: some View {
+        VStack(spacing: 4) {
+            Text("paywall.trial_ended.title")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+
+            Text("paywall.trial_ended.body")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     /// Plan cards or the loading indicator. Under the paywall screenshot capture
@@ -133,6 +160,14 @@ struct PaywallView: View {
         }
     }
 
+    /// What Premium actually buys — and nothing else.
+    ///
+    /// This list used to promise "Unlimited transactions" and "All-time exports",
+    /// which are FREE, plus "Custom fields" and "Advanced filters", which do not
+    /// exist in the app at all. Selling a user a feature we don't ship is the
+    /// exact dark pattern this product is positioned against, so the list now
+    /// names only the four real premium capabilities, and states outright what
+    /// stays free forever. If a row here stops being true, delete the row.
     private var featureSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("paywall.features.header")
@@ -141,12 +176,16 @@ struct PaywallView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            FeatureRow(textKey: "paywall.feature.unlimited_transactions")
-            FeatureRow(textKey: "paywall.feature.alltime_exports")
-            FeatureRow(textKey: "paywall.feature.privacy_ondevice")
-            FeatureRow(textKey: "paywall.feature.unlimited_csv")
-            FeatureRow(textKey: "paywall.feature.custom_fields")
-            FeatureRow(textKey: "paywall.feature.advanced_filters")
+            FeatureRow(textKey: "paywall.feature.flexible_import")
+            FeatureRow(textKey: "paywall.feature.unlimited_accounts")
+            FeatureRow(textKey: "paywall.feature.unlimited_categories")
+            FeatureRow(textKey: "paywall.feature.reports_alltime")
+
+            Text("paywall.free_forever")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 6)
         }
         .padding(.top, 4)
     }

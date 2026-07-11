@@ -10,15 +10,37 @@
 //  3. History, CSV export (any scope) and the widget are free in EVERY state.
 //
 
+import Combine
 import Foundation
 import Testing
 @testable import FinanceTracker
 
 // MARK: - Fakes
 
+/// Stands in for StoreKit. Real entitlements can't be constructed in a test —
+/// `PurchaseEntitlementTests` covers the entitlement→paid mapping separately, so
+/// here we only need to say "they paid" or "they didn't".
+@MainActor
+private final class FakePurchases: PaidEntitlementProviding {
+    private let subject: CurrentValueSubject<Bool, Never>
+
+    init(paid: Bool) { subject = CurrentValueSubject(paid) }
+
+    var hasPaidEntitlement: Bool { subject.value }
+    var hasPaidEntitlementPublisher: AnyPublisher<Bool, Never> { subject.eraseToAnyPublisher() }
+    func refreshStatus() async {}
+
+    /// Simulates a purchase landing while the app is running.
+    func purchase() { subject.send(true) }
+}
+
 private final class InMemoryTrialStore: ReverseTrialStore {
     var reverseTrialStartDate: Date?
-    init(start: Date? = nil) { reverseTrialStartDate = start }
+    var hasShownTrialEndPaywall: Bool
+    init(start: Date? = nil, shownTrialEndPaywall: Bool = false) {
+        reverseTrialStartDate = start
+        hasShownTrialEndPaywall = shownTrialEndPaywall
+    }
 }
 
 private let day: TimeInterval = 24 * 60 * 60
@@ -163,6 +185,26 @@ struct ReverseTrialPersistenceTests {
         #expect(access.isReverseTrialActive == false)
         #expect(access.trialDaysRemaining == 0)
     }
+
+    @Test("Buying after the trial lapsed unlocks everything again")
+    func purchaseAfterExpiryRestoresAccess() {
+        let store = InMemoryTrialStore(start: t0)
+        let purchases = FakePurchases(paid: false)
+        let access = AccessManager(purchases: purchases, store: store)
+        let now = t0.addingTimeInterval(30 * day)
+
+        access.refresh(now: now)
+        #expect(access.isPremium == false)
+        #expect(access.isAllowed(.csvImport) == false)
+
+        purchases.purchase()
+        access.refresh(now: now)
+
+        #expect(access.hasPaidEntitlement)
+        #expect(access.isPremium)
+        #expect(access.isAllowed(.csvImport))
+        #expect(access.canAdd(.addAccountBeyondFreeCap, currentCount: 6))
+    }
 }
 
 // MARK: - Free-tier caps
@@ -226,6 +268,60 @@ struct FreeTierCapTests {
     func subscribingRestoresAddForOverCapUser() {
         #expect(AccessLogic.canAdd(.addAccountBeyondFreeCap, isPremium: true, currentCount: 6))
         #expect(AccessLogic.canAdd(.addCustomCategoryBeyondFreeCap, isPremium: true, currentCount: 9))
+    }
+}
+
+// MARK: - Trial-end paywall trigger
+
+@MainActor
+@Suite("The trial-end paywall fires once, and only when the trial actually lapsed")
+struct TrialEndPaywallTests {
+
+    @Test("Nothing fires while the trial is still running")
+    func silentDuringTrial() {
+        let store = InMemoryTrialStore(start: t0)
+        let access = AccessManager(purchases: nil, store: store)
+
+        #expect(access.shouldShowTrialEndPaywall(now: t0.addingTimeInterval(5 * day)) == false)
+        #expect(store.hasShownTrialEndPaywall == false)
+    }
+
+    @Test("It fires the first time we notice the trial lapsed unpaid")
+    func firesOnceAfterExpiry() {
+        let store = InMemoryTrialStore(start: t0)
+        let access = AccessManager(purchases: nil, store: store)
+
+        #expect(access.shouldShowTrialEndPaywall(now: t0.addingTimeInterval(15 * day)))
+        #expect(store.hasShownTrialEndPaywall)
+    }
+
+    @Test("It never nags a second time")
+    func doesNotFireTwice() {
+        let store = InMemoryTrialStore(start: t0)
+        let access = AccessManager(purchases: nil, store: store)
+        let now = t0.addingTimeInterval(15 * day)
+
+        #expect(access.shouldShowTrialEndPaywall(now: now))
+        #expect(access.shouldShowTrialEndPaywall(now: now) == false)
+        #expect(access.shouldShowTrialEndPaywall(now: now.addingTimeInterval(60 * day)) == false)
+    }
+
+    @Test("A user who already subscribed is never shown the trial-end paywall")
+    func neverFiresForAPayingUser() {
+        // Trial long lapsed, but they bought — nothing to sell, nothing to say.
+        let store = InMemoryTrialStore(start: t0)
+        let access = AccessManager(purchases: FakePurchases(paid: true), store: store)
+
+        #expect(access.shouldShowTrialEndPaywall(now: t0.addingTimeInterval(30 * day)) == false)
+        #expect(store.hasShownTrialEndPaywall == false)
+    }
+
+    @Test("A user with no trial recorded is never nagged")
+    func neverFiresWithoutATrial() {
+        let store = InMemoryTrialStore(start: nil)
+        let access = AccessManager(purchases: nil, store: store)
+
+        #expect(access.shouldShowTrialEndPaywall(now: t0) == false)
     }
 }
 

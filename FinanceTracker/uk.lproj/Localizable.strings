@@ -430,12 +430,6 @@
 "paywall.loading" = "Завантаження планів…";
 /* Paywall features */
 "paywall.features.header" = "Кожен план включає";
-"paywall.feature.unlimited_transactions" = "Необмежені транзакції";
-"paywall.feature.alltime_exports" = "Експорти за весь час (CSV / PDF / Excel)";
-"paywall.feature.privacy_ondevice" = "Усе на пристрої — без хмари";
-"paywall.feature.unlimited_csv" = "Необмежений імпорт CSV";
-"paywall.feature.custom_fields" = "Власні поля";
-"paywall.feature.advanced_filters" = "Розширені фільтри";
 
 /* Plans */
 "paywall.yearly.best_value" = "Найвигідніше";
@@ -863,3 +857,12 @@
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "Безкоштовний план містить рахунків: %d. Оформте Premium, щоб додати ще — уже створені рахунки залишаються з вами.";
 "cs.categories.cap_hint" = "Безкоштовний план містить власних категорій: %d, а також усі вбудовані. Оформте Premium, щоб додати ще — уже створені категорії залишаються з вами.";
+
+/* v1.0.2 monetization — the real premium set + the free-forever promise */
+"paywall.feature.flexible_import" = "Імпорт CSV з будь-якого банку, Mint, YNAB або Monarch";
+"paywall.feature.unlimited_accounts" = "Необмежена кількість рахунків";
+"paywall.feature.unlimited_categories" = "Необмежена кількість власних категорій";
+"paywall.feature.reports_alltime" = "Звіти PDF та Excel за весь час";
+"paywall.free_forever" = "Безкоштовно назавжди: необмежені операції, вся історія та експорт у CSV. Ваші дані ніколи не замикають.";
+"paywall.trial_ended.title" = "14-денний пробний період завершився";
+"paywall.trial_ended.body" = "Усе, що ви додали, на місці — нічого не видалено й не приховано. Premium повертає імпорт CSV і дозволяє додавати більше рахунків та категорій.";

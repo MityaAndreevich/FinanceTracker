@@ -15,6 +15,9 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showPrivacyOverlay = false
 
+    @StateObject private var access = AccessManager.shared
+    @State private var showTrialEndPaywall = false
+
     private var appearanceMode: AppearanceMode {
         AppearanceMode(rawValue: appearanceModeRaw) ?? .system
     }
@@ -78,9 +81,23 @@ struct RootView: View {
                 showPrivacyOverlay = true
             case .active:
                 showPrivacyOverlay = false
+                raiseTrialEndPaywallIfNeeded()
             @unknown default:
                 break
             }
+        }
+        .task { raiseTrialEndPaywallIfNeeded() }
+        .sheet(isPresented: $showTrialEndPaywall) { PaywallView() }
+    }
+
+    /// The reverse trial's payoff moment: it lapsed, they didn't buy, so we make
+    /// the case once — on the next foreground, not mid-task. `shouldShowTrialEnd
+    /// Paywall` consumes the trigger, so this can never become a nag on every
+    /// launch. From here on the contextual gates do the asking.
+    private func raiseTrialEndPaywallIfNeeded() {
+        access.refresh()
+        if access.shouldShowTrialEndPaywall() {
+            showTrialEndPaywall = true
         }
     }
 }

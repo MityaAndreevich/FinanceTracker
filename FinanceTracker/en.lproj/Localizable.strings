@@ -423,12 +423,6 @@
 "paywall.loading" = "Loading plans…";
 /* Paywall features */
 "paywall.features.header" = "Every plan includes";
-"paywall.feature.unlimited_transactions" = "Unlimited transactions";
-"paywall.feature.alltime_exports" = "All-time exports (CSV / PDF / Excel)";
-"paywall.feature.privacy_ondevice" = "Everything on-device — no cloud";
-"paywall.feature.unlimited_csv" = "Unlimited CSV import";
-"paywall.feature.custom_fields" = "Custom fields";
-"paywall.feature.advanced_filters" = "Advanced filters";
 
 /* Plans */
 "paywall.yearly.best_value" = "Best value";
@@ -858,3 +852,12 @@
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "Free plan includes %d accounts. Upgrade to add more — your existing accounts always stay.";
 "cs.categories.cap_hint" = "Free plan includes %d custom categories, plus all the built-in ones. Upgrade to add more — your existing categories always stay.";
+
+/* v1.0.2 monetization — the real premium set + the free-forever promise */
+"paywall.feature.flexible_import" = "Import from any bank, Mint, YNAB or Monarch CSV";
+"paywall.feature.unlimited_accounts" = "Unlimited accounts";
+"paywall.feature.unlimited_categories" = "Unlimited custom categories";
+"paywall.feature.reports_alltime" = "All-time PDF & Excel reports";
+"paywall.free_forever" = "Free forever: unlimited transactions, your full history, and CSV export. Your data is never locked in.";
+"paywall.trial_ended.title" = "Your 14-day trial has ended";
+"paywall.trial_ended.body" = "Everything you added is still here — nothing was deleted or hidden. Premium brings back CSV import and lets you add more accounts and categories.";

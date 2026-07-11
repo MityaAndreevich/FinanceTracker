@@ -454,12 +454,6 @@
 "paywall.subtitle" = "Tudo fica no seu iPhone — sem servidores, sem contas, sem rastreamento.";
 "paywall.loading" = "Carregando planos…";
 "paywall.features.header" = "Todos os planos incluem";
-"paywall.feature.unlimited_transactions" = "Transações ilimitadas";
-"paywall.feature.alltime_exports" = "Exportações de todo o tempo (CSV / PDF / Excel)";
-"paywall.feature.privacy_ondevice" = "Tudo no dispositivo — sem nuvem";
-"paywall.feature.unlimited_csv" = "Importação CSV ilimitada";
-"paywall.feature.custom_fields" = "Campos personalizados";
-"paywall.feature.advanced_filters" = "Filtros avançados";
 "paywall.yearly.best_value" = "Melhor valor";
 "paywall.yearly.save_amount" = "Economize 42%";
 "paywall.yearly.per_month" = "US$ 2,92/mês, cobrança anual";
@@ -737,3 +731,12 @@
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "O plano gratuito inclui %d contas. Assine o Premium para adicionar mais — as contas que você já criou continuam aí.";
 "cs.categories.cap_hint" = "O plano gratuito inclui %d categorias personalizadas, além de todas as prontas. Assine o Premium para adicionar mais — as que você já criou continuam aí.";
+
+/* v1.0.2 monetization — the real premium set + the free-forever promise */
+"paywall.feature.flexible_import" = "Importe CSV de qualquer banco, Mint, YNAB ou Monarch";
+"paywall.feature.unlimited_accounts" = "Contas ilimitadas";
+"paywall.feature.unlimited_categories" = "Categorias personalizadas ilimitadas";
+"paywall.feature.reports_alltime" = "Relatórios PDF e Excel de todo o período";
+"paywall.free_forever" = "Grátis para sempre: transações ilimitadas, todo o seu histórico e exportação CSV. Seus dados nunca ficam presos.";
+"paywall.trial_ended.title" = "Seu teste de 14 dias terminou";
+"paywall.trial_ended.body" = "Tudo o que você adicionou continua aqui — nada foi apagado nem escondido. O Premium traz de volta a importação CSV e permite adicionar mais contas e categorias.";

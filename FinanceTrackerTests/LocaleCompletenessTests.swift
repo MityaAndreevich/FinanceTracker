@@ -141,7 +141,15 @@ final class LocaleCompletenessTests: XCTestCase {
         // shown under a locked Add button (cs.sources.cap_hint,
         // cs.categories.cap_hint). Both promise, in every locale, that existing
         // accounts/categories stay. All 5 locales in parity. Was 646.
-        XCTAssertEqual(enKeys.count, 648, "English baseline changed; update the expected count.")
+        // 2026-07-11 (v1.0.2 monetization, Item 2): net +1. REMOVED 6 paywall feature
+        // keys that were no longer true — unlimited_transactions / alltime_exports /
+        // privacy_ondevice / unlimited_csv name things that are FREE, and
+        // custom_fields / advanced_filters name features the app does not have at
+        // all. ADDED 7: the four real premium capabilities (flexible_import,
+        // unlimited_accounts, unlimited_categories, reports_alltime), the
+        // free-forever promise (paywall.free_forever), and the trial-end notice
+        // (paywall.trial_ended.title/body). All 5 locales in parity. Was 648.
+        XCTAssertEqual(enKeys.count, 649, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

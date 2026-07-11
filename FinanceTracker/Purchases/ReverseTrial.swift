@@ -15,10 +15,15 @@
 
 import Foundation
 
-/// Persistence seam for the trial start date. Injected so the state machine can
-/// be tested without touching real user defaults.
+/// Persistence seam for the trial. Injected so the state machine can be tested
+/// without touching real user defaults.
 protocol ReverseTrialStore: AnyObject {
     var reverseTrialStartDate: Date? { get set }
+
+    /// Set once, when we've shown the "your trial ended" paywall. We ask exactly
+    /// one time. Re-raising it on every launch would be nagware, and the gates
+    /// already make the case whenever the user actually reaches for something.
+    var hasShownTrialEndPaywall: Bool { get set }
 }
 
 /// Pure, date-injectable trial math. No storage, no StoreKit, no UI.
@@ -65,7 +70,8 @@ final class AppGroupReverseTrialStore: ReverseTrialStore {
 
     static let shared = AppGroupReverseTrialStore()
 
-    private let key = "reverseTrialStartDate"
+    private let startKey = "reverseTrialStartDate"
+    private let shownKey = "reverseTrialEndPaywallShown"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .appGroup) {
@@ -73,13 +79,18 @@ final class AppGroupReverseTrialStore: ReverseTrialStore {
     }
 
     var reverseTrialStartDate: Date? {
-        get { defaults.object(forKey: key) as? Date }
+        get { defaults.object(forKey: startKey) as? Date }
         set {
             if let newValue {
-                defaults.set(newValue, forKey: key)
+                defaults.set(newValue, forKey: startKey)
             } else {
-                defaults.removeObject(forKey: key)
+                defaults.removeObject(forKey: startKey)
             }
         }
+    }
+
+    var hasShownTrialEndPaywall: Bool {
+        get { defaults.bool(forKey: shownKey) }
+        set { defaults.set(newValue, forKey: shownKey) }
     }
 }
