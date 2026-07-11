@@ -197,6 +197,12 @@ struct ContentView: View {
             if CommandLine.arguments.contains("--seed-onboarding-demo") {
                 _ = try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
             }
+            // QA seam: import a foreign CSV twice through the REAL importer, so the
+            // possible-duplicate badge + review flow can be driven end-to-end without
+            // the premium gate and the system file picker standing in the way.
+            if DuplicateReviewDebugSeed.isRequested {
+                DuplicateReviewDebugSeed.seed(modelContext: modelContext)
+            }
             #endif
         }
         .onChange(of: scenePhase) { _, new in

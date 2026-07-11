@@ -99,6 +99,44 @@ final class ImportDuplicateFlagTests: XCTestCase {
         XCTAssertEqual(try flagged(ctx).count, 1, "Mapped path must persist the flag too")
     }
 
+    /// THE DEVICE REPORT, reproduced on the real file: outputs/test_import_mint.csv
+    /// imported twice through the auto-detected Mint preset. This is the exact
+    /// scenario that produced un-findable duplicates on device — the synthetic
+    /// fixtures above can't prove the real header/preset/date/amount combination
+    /// still lands on the same dedup identity.
+    func testRealMintFile_ImportedTwice_FlagsEveryRowOfTheSecondPass() throws {
+        let ctx = try makeContext()
+        let url = URL(fileURLWithPath: #filePath)      // …/FinanceTrackerTests/ImportDuplicateFlagTests.swift
+            .deletingLastPathComponent()               // …/FinanceTrackerTests
+            .deletingLastPathComponent()               // repo root
+            .appendingPathComponent("outputs/test_import_mint.csv")
+        let data = try Data(contentsOf: url)
+
+        let preview = try XCTUnwrap(CSVImportService.parsePreview(data: data))
+        XCTAssertEqual(SourcePreset.detect(header: preview.header), .mint, "Header must still auto-detect as Mint")
+        let mapping = try XCTUnwrap(SourcePreset.mint.defaultMapping(header: preview.header))
+
+        let first = try CSVImportService.importMappedCSV(modelContext: ctx, data: data, mapping: mapping)
+        XCTAssertEqual(first.imported, 6, "All six rows import")
+        XCTAssertEqual(first.possibleDuplicates, 0, "Nothing to match on a first import")
+        XCTAssertEqual(try flagged(ctx).count, 0)
+
+        let second = try CSVImportService.importMappedCSV(modelContext: ctx, data: data, mapping: mapping)
+        XCTAssertEqual(second.imported, 6, "Foreign rows are kept, not dropped")
+        XCTAssertEqual(second.possibleDuplicates, 6, "Every row of the re-import content-matches")
+
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<Transaction>()).count, 12)
+        XCTAssertEqual(
+            try flagged(ctx).count, second.possibleDuplicates,
+            "Every row the summary counted must carry the badge — that equality IS the fix"
+        )
+
+        // And the review flow puts the store back exactly where it started.
+        try DuplicateReviewService.deleteAll(in: ctx)
+        XCTAssertEqual(try ctx.fetch(FetchDescriptor<Transaction>()).count, 6, "Back to the original six")
+        XCTAssertEqual(try flagged(ctx).count, 0)
+    }
+
     // MARK: - Item 3: own-export re-import stays idempotent AND unflagged
 
     /// Our own export carries the stable UUID, so a re-import is an exact match:
