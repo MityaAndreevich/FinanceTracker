@@ -846,3 +846,18 @@
 "import.map.amount.unreadable.format" = "«%@» не читается в этом числовом формате.";
 "csv.import.error.separator_inconsistent" = "формат числа не совпадает с десятичным разделителем";
 "data.import.result.separator_hint" = "Многие строки не удалось прочитать как числа. Повторите импорт и укажите десятичный разделитель под ваш файл.";
+
+/* Возможные дубликаты: бейдж, баннер, разбор (v1.0.2) */
+"transactions.duplicate.badge" = "Возможный дубликат";
+"duplicates.banner.title" = "Возможные дубликаты";
+"duplicates.banner.subtitle" = "Импортированные записи совпали с уже имеющимися — проверьте их";
+"duplicates.review.title" = "Возможные дубликаты";
+"duplicates.review.explainer" = "Эти импортированные операции совпадают с теми, что уже были. Мы оставили обе — только вы отличите повторный импорт от двух одинаковых настоящих трат.";
+"duplicates.review.keep" = "Оставить";
+"duplicates.review.delete" = "Удалить";
+"duplicates.review.keep_all" = "Оставить все";
+"duplicates.review.delete_all" = "Удалить все";
+"duplicates.review.delete_all.confirm.title" = "Удалить все возможные дубликаты?";
+"duplicates.review.delete_all.confirm.message" = "Это действие нельзя отменить. Операции, с которыми они совпали, останутся.";
+"duplicates.review.empty.title" = "Нечего проверять";
+"duplicates.review.empty.subtitle" = "Здесь появятся импортированные операции, совпавшие с уже имеющимися.";

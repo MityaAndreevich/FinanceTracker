@@ -44,6 +44,15 @@ struct CategoryTileRow: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.bcTextSecondary)
                     .lineLimit(1)
+
+                // Only flagged rows grow a third line. Before v1.0.2 the
+                // possible-duplicate decision lived only in the import summary, so a
+                // re-imported foreign CSV left duplicate rows the user could see but
+                // never identify. The badge is where that decision becomes findable.
+                if tx.isPossibleDuplicate {
+                    DuplicateBadge()
+                        .padding(.top, 2)
+                }
             }
 
             Spacer(minLength: 8)
@@ -61,13 +70,21 @@ struct CategoryTileRow: View {
         .contentShape(Rectangle())
         .padding(.vertical, 8)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            Text(primaryTitle)
+        .accessibilityLabel(accessibilityDescription)
+    }
+
+    /// The row combines its children, so the badge's own label would be swallowed —
+    /// the duplicate state has to be spoken here or VoiceOver users lose it
+    /// entirely (icon+label+voice, never hue alone).
+    private var accessibilityDescription: Text {
+        let base = Text(primaryTitle)
             + Text(", ")
             + Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")
             + Text(", ")
             + Text(Money.format(cents: tx.amountCents, currencyCode: tx.currency))
-        )
+
+        guard tx.isPossibleDuplicate else { return base }
+        return base + Text(", ") + Text("transactions.duplicate.badge")
     }
 
     private var primaryTitle: String {

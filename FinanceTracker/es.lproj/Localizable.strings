@@ -716,3 +716,18 @@
 "import.map.amount.unreadable.format" = "«%@» no se puede leer con este formato numérico.";
 "csv.import.error.separator_inconsistent" = "el formato del número no coincide con el separador decimal";
 "data.import.result.separator_hint" = "Muchas filas no se pudieron leer como números. Vuelve a importar y ajusta el separador decimal a tu archivo.";
+
+/* Posibles duplicados: distintivo, banner, revisión (v1.0.2) */
+"transactions.duplicate.badge" = "Posible duplicado";
+"duplicates.banner.title" = "Posibles duplicados";
+"duplicates.banner.subtitle" = "Filas importadas que coinciden con otras que ya tenías: revísalas";
+"duplicates.review.title" = "Posibles duplicados";
+"duplicates.review.explainer" = "Estas transacciones importadas coinciden con otras que ya tenías. Conservamos ambas: solo tú puedes distinguir una reimportación de dos gastos reales idénticos.";
+"duplicates.review.keep" = "Conservar";
+"duplicates.review.delete" = "Eliminar";
+"duplicates.review.keep_all" = "Conservar todo";
+"duplicates.review.delete_all" = "Eliminar todo";
+"duplicates.review.delete_all.confirm.title" = "¿Eliminar todos los posibles duplicados?";
+"duplicates.review.delete_all.confirm.message" = "Esta acción no se puede deshacer. Las transacciones con las que coincidieron se conservarán.";
+"duplicates.review.empty.title" = "Nada que revisar";
+"duplicates.review.empty.subtitle" = "Aquí aparecerán las transacciones importadas que coincidan con otras que ya tienes.";

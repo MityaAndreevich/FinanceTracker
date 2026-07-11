@@ -836,3 +836,20 @@
 "import.map.amount.unreadable.format" = "“%@” can't be read with this number format.";
 "csv.import.error.separator_inconsistent" = "number format doesn't match the decimal separator";
 "data.import.result.separator_hint" = "Many rows couldn't be read as numbers. Re-import and set the decimal separator to match your file.";
+
+/* Possible-duplicate flag: badge, review banner, resolve flow (v1.0.2).
+   The count is never interpolated into a sentence — ru/uk have three plural
+   forms and there is no .stringsdict, so the number stands on its own. */
+"transactions.duplicate.badge" = "Possible duplicate";
+"duplicates.banner.title" = "Possible duplicates";
+"duplicates.banner.subtitle" = "Imported rows that match ones you already had — review them";
+"duplicates.review.title" = "Possible duplicates";
+"duplicates.review.explainer" = "These imported transactions match ones you already had. We kept both — only you can tell a re-import from two identical real spends.";
+"duplicates.review.keep" = "Keep";
+"duplicates.review.delete" = "Delete";
+"duplicates.review.keep_all" = "Keep all";
+"duplicates.review.delete_all" = "Delete all";
+"duplicates.review.delete_all.confirm.title" = "Delete all possible duplicates?";
+"duplicates.review.delete_all.confirm.message" = "This can't be undone. The transactions they matched will stay.";
+"duplicates.review.empty.title" = "Nothing to review";
+"duplicates.review.empty.subtitle" = "Imported transactions that match ones you already have will show up here.";

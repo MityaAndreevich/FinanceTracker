@@ -128,7 +128,13 @@ final class LocaleCompletenessTests: XCTestCase {
         // /ambiguous, import.map.amount.reads/unreadable.format), the separator
         // failure reason (csv.import.error.separator_inconsistent), and the summary
         // hint (data.import.result.separator_hint). All 5 locales in parity. Was 626.
-        XCTAssertEqual(enKeys.count, 632, "English baseline changed; update the expected count.")
+        // 2026-07-11 (v1.0.2 possible-duplicate review): +13 for the row badge
+        // (transactions.duplicate.badge), the review banner (duplicates.banner.*)
+        // and the resolve flow (duplicates.review.*: explainer, keep/delete,
+        // keep_all/delete_all + its confirmation, empty state). No count is ever
+        // interpolated into a sentence — ru/uk have three plural forms and the
+        // project ships no .stringsdict. All 5 locales in parity. Was 632.
+        XCTAssertEqual(enKeys.count, 645, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
@@ -154,6 +160,35 @@ final class LocaleCompletenessTests: XCTestCase {
             XCTAssertNotNil(value, "common.done missing in \(locale)")
             XCTAssertFalse((value ?? "").isEmpty, "common.done empty in \(locale)")
             XCTAssertNotEqual(value, "common.done", "common.done is a raw key in \(locale)")
+        }
+    }
+
+    /// The possible-duplicate badge carries meaning that color alone must never
+    /// carry, so its TEXT has to be real in every locale — a raw key or an empty
+    /// string would silently demote the badge to a hue-only signal for anyone who
+    /// can't distinguish the amber.
+    func test_duplicate_review_strings_are_real_in_all_locales() {
+        let keys = [
+            "transactions.duplicate.badge",
+            "duplicates.banner.title",
+            "duplicates.banner.subtitle",
+            "duplicates.review.title",
+            "duplicates.review.keep",
+            "duplicates.review.delete",
+            "duplicates.review.keep_all",
+            "duplicates.review.delete_all",
+        ]
+        for locale in locales {
+            guard let dict = strings(for: locale) else {
+                XCTFail("Missing locale: \(locale)")
+                continue
+            }
+            for key in keys {
+                let value = dict[key]
+                XCTAssertNotNil(value, "\(key) missing in \(locale)")
+                XCTAssertFalse((value ?? "").isEmpty, "\(key) empty in \(locale)")
+                XCTAssertNotEqual(value, key, "\(key) is a raw key in \(locale)")
+            }
         }
     }
 

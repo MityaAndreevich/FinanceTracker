@@ -17,6 +17,13 @@ struct TransactionsView: View {
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
+    /// Rows the importer flagged as possible duplicates. Queried separately from
+    /// `transactions` on purpose: a flagged row may sit in ANY period, so scoping
+    /// the banner to the selected month would hide the very rows it exists to
+    /// surface.
+    @Query(filter: #Predicate<Transaction> { $0.isPossibleDuplicate })
+    private var possibleDuplicates: [Transaction]
+
     @State private var scope: PeriodScope = .currentMonth
     // One-shot hint teaching the ‹ › month pager, first Transactions visit (Brief 28 Part B).
     @AppStorage("hasSeenPeriodHint") private var hasSeenPeriodHint = false
@@ -25,6 +32,7 @@ struct TransactionsView: View {
 
     @State private var editTx: Transaction?
     @State private var presentQuickEntry = false
+    @State private var presentDuplicateReview = false
 
     // Pending destructive deletion — set by the swipe / context-menu trash button,
     // performed only after the user confirms in the alert below (data-loss safety).
@@ -75,6 +83,13 @@ struct TransactionsView: View {
 
     var body: some View {
         List {
+            // Sits above the period-scoped content because the flagged rows it
+            // points at may live in any month — including one the user isn't
+            // looking at.
+            if !possibleDuplicates.isEmpty {
+                duplicateBanner
+            }
+
             if filtered.isEmpty {
                 if transactions.isEmpty {
                     firstRunEmptyRow
@@ -134,6 +149,9 @@ struct TransactionsView: View {
         .sheet(isPresented: $presentQuickEntry) {
             QuickEntryView()
         }
+        .sheet(isPresented: $presentDuplicateReview) {
+            DuplicateReviewView()
+        }
         .alert(
             "common.delete",
             isPresented: Binding(
@@ -158,6 +176,63 @@ struct TransactionsView: View {
         .onDisappear {
             if editTx == nil { searchText = "" }
         }
+    }
+
+    /// "N possible duplicates — review". The count is rendered as a standalone
+    /// numeral chip rather than interpolated into the sentence: ru and uk have
+    /// three plural forms, the project ships no .stringsdict, and "2 возможных
+    /// дубликата" vs "5 возможных дубликатов" is not something %d can fake. A
+    /// numeral beside a non-inflected noun phrase is correct in all five locales.
+    private var duplicateBanner: some View {
+        Button {
+            presentDuplicateReview = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "doc.on.doc")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.bcWarningInk)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("duplicates.banner.title")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.bcTextPrimary)
+
+                        Text("\(possibleDuplicates.count)")
+                            .font(.system(size: 12, weight: .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(Color.bcWarningInk)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Capsule().fill(Color.bcWarning.opacity(0.16)))
+                    }
+
+                    Text("duplicates.banner.subtitle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.bcTextSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.bcTextMuted)
+            }
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(Color.bcSurface1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            Text("duplicates.banner.title")
+            + Text(", \(possibleDuplicates.count), ")
+            + Text("duplicates.banner.subtitle")
+        )
+        .accessibilityAddTraits(.isButton)
     }
 
     private var filterChips: some View {
