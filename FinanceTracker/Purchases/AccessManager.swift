@@ -87,6 +87,9 @@ final class AccessManager: ObservableObject {
 
     /// Call once, at app launch, after `PurchaseManager.start()`.
     func start(now: Date = .now) {
+        #if DEBUG
+        applyDebugTrialOverrides(now: now)
+        #endif
         startReverseTrialIfNeeded(now: now)
 
         purchases?.hasPaidEntitlementPublisher
@@ -158,4 +161,27 @@ final class AccessManager: ObservableObject {
     func canAdd(_ capability: AppCapability, currentCount: Int) -> Bool {
         AccessLogic.canAdd(capability, isPremium: isPremium, currentCount: currentCount)
     }
+
+    // MARK: - DEBUG seams
+
+    #if DEBUG
+    /// Drives the real state machine from a launch argument — the only honest way
+    /// to verify the lapse without waiting 14 days or faking the gates.
+    ///
+    ///   --expire-reverse-trial   backdate the start so the trial is over
+    ///   --reset-reverse-trial    forget the trial entirely (simulates a fresh install)
+    private func applyDebugTrialOverrides(now: Date) {
+        let args = ProcessInfo.processInfo.arguments
+
+        if args.contains("--reset-reverse-trial") {
+            store.reverseTrialStartDate = nil
+            store.hasShownTrialEndPaywall = false
+        }
+
+        if args.contains("--expire-reverse-trial") {
+            store.reverseTrialStartDate = now.addingTimeInterval(-(ReverseTrial.duration + 24 * 60 * 60))
+            store.hasShownTrialEndPaywall = false
+        }
+    }
+    #endif
 }
