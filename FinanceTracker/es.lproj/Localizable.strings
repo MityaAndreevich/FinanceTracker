@@ -745,6 +745,8 @@
 "learn.tip_of_day" = "Consejo del día";
 "learn.seen_tips" = "Consejos que ya viste";
 "learn.more_each_day" = "Cada día aparece aquí un consejo nuevo.";
+"learn.unlocked_count" = "%1$d de %2$d desbloqueados · uno nuevo cada día";
+"learn.collection_complete" = "Ya desbloqueaste todos los consejos.";
 "learn.search" = "Buscar consejos";
 "learn.dismiss" = "Descartar consejo";
 "learn.learn_more" = "Saber más";

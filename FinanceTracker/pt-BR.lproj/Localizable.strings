@@ -746,6 +746,8 @@
 "learn.tip_of_day" = "Dica do dia";
 "learn.seen_tips" = "Dicas que você já viu";
 "learn.more_each_day" = "Uma nova dica aparece aqui todo dia.";
+"learn.unlocked_count" = "%1$d de %2$d desbloqueadas · uma nova a cada dia";
+"learn.collection_complete" = "Você desbloqueou todas as dicas.";
 "learn.search" = "Buscar dicas";
 "learn.dismiss" = "Dispensar dica";
 "learn.learn_more" = "Saiba mais";
