@@ -130,6 +130,16 @@ struct AddTransactionIntent: AppIntent {
 
             return TransactionEntity(from: tx)
         }
+
+        // This write just changed the spend, so any pending proactive alert now carries a
+        // stale number. Cancel it rather than reschedule: an intent runs out-of-process,
+        // without the app's LocalizedBundle swizzle, so scheduling here could also emit
+        // the notification in the wrong language — the same Bundle.main trap the widget
+        // hit. The app re-creates it correctly on next foreground.
+        //
+        // A missed low-stakes nudge beats a wrong one on a money app.
+        ProactiveAlertScheduler.cancel()
+
         return .result(value: entity)
     }
 

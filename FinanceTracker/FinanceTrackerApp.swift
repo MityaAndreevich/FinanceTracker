@@ -22,6 +22,7 @@ let appLaunchClock = CFAbsoluteTimeGetCurrent()
 
 @main
 struct FinanceTrackerApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0
     // Mirror default currency to App Group defaults so AppIntents can read it.
@@ -106,6 +107,22 @@ struct FinanceTrackerApp: App {
                 }
                 .onChange(of: defaultCurrencyCode) { _, new in
                     UserDefaults.appGroup.set(new, forKey: "defaultCurrencyCode")
+                }
+                // The pending alert's amount is frozen when it is scheduled, so it has to
+                // be recomputed whenever the number could have moved. Safe-to-spend only
+                // moves on a write, so these two hooks are sufficient: every in-app write
+                // lands on didSave, and anything that happened while we were away (an
+                // out-of-process Siri write, a month rollover) is caught on foreground.
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active else { return }
+                    ProactiveAlertRefresher.refresh(
+                        modelContext: SharedModelContainer.shared.mainContext
+                    )
+                }
+                .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
+                    ProactiveAlertRefresher.refresh(
+                        modelContext: SharedModelContainer.shared.mainContext
+                    )
                 }
                 // Redirect Bundle.main string lookups the instant the in-app
                 // language changes. GeneralSettingView already defers this state
