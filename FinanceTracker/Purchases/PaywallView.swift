@@ -87,8 +87,27 @@ struct PaywallView: View {
             if access.didReverseTrialLapseUnpaid {
                 trialEndedNotice
                     .padding(.top, 8)
+            } else if access.isReverseTrialActive {
+                previewActiveNotice
+                    .padding(.top, 8)
             }
         }
+    }
+
+    /// Shown while the 14-day reverse trial is still running. It names the free
+    /// access the user already has — and names it as *our* preview, not as a
+    /// subscription trial, because no card was taken and there is nothing to
+    /// cancel. Being straight about that is the whole pitch of this app.
+    private var previewActiveNotice: some View {
+        Text(String(format: NSLocalizedString("paywall.preview_active.format", comment: ""),
+                    access.trialDaysRemaining))
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(12)
+            .frame(maxWidth: .infinity)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     /// Shown after the 14-day reverse trial lapses. It names the loss plainly —
@@ -145,7 +164,8 @@ struct PaywallView: View {
     /// render identically to the live paywall. Purchase actions are no-ops.
     private var mockPlanCardsSection: some View {
         VStack(spacing: 12) {
-            YearlyPlanCard(displayPrice: "$34.99") {}
+            // No intro offer: the screenshot must show exactly what the store shows.
+            YearlyPlanCard(displayPrice: "$34.99", freeTrialPeriod: nil) {}
             LifetimePlanCard(displayPrice: "$99.99") {}
             MonthlyPlanCard(displayPrice: "$4.99") {}
         }
@@ -240,7 +260,10 @@ struct PaywallView: View {
     private func planCard(product: Product, kind: ProductKind) -> some View {
         switch kind {
         case .yearly:
-            YearlyPlanCard(displayPrice: product.displayPrice) {
+            YearlyPlanCard(
+                displayPrice: product.displayPrice,
+                freeTrialPeriod: PaywallTrialCopy.freeTrialPeriodText(for: product.freeTrialOffer)
+            ) {
                 Task { await pm.purchase(product) }
             }
         case .lifetime:
@@ -270,12 +293,47 @@ struct PaywallView: View {
 
 private struct YearlyPlanCard: View {
     let displayPrice: String
+
+    /// Localized length of the StoreKit free trial ("30 days"), or nil when the
+    /// product carries no free introductory offer — which is the production
+    /// case. When nil, this card says nothing whatsoever about a trial: no
+    /// subtitle claim, no "Start free trial" CTA, no §3.1.2(a) modal, no
+    /// disclosure. The 14-day reverse trial is the only trial we offer, and it
+    /// is described as a preview elsewhere on this screen.
+    let freeTrialPeriod: String?
+
     let action: () -> Void
 
     // Apple §3.1.2(a): the user must explicitly acknowledge the trial terms
     // BEFORE the StoreKit purchase sheet appears (Bug 7). The inline disclosure
-    // below stays as always-visible information; this modal is the gate.
+    // below stays as always-visible information; this modal is the gate. Both
+    // exist only on the trial path — with no trial there are no trial terms to
+    // acknowledge, and the auto-renew disclosure in the footer covers the rest.
     @State private var showTrialConfirm = false
+
+    private var hasFreeTrial: Bool { freeTrialPeriod != nil }
+
+    private var subtitle: String {
+        guard let freeTrialPeriod else {
+            return NSLocalizedString("paywall.plan.yearly.subtitle", comment: "")
+        }
+        return String(format: NSLocalizedString("paywall.plan.yearly.subtitle.trial.format", comment: ""),
+                      freeTrialPeriod, displayPrice)
+    }
+
+    private var ctaKey: LocalizedStringKey {
+        hasFreeTrial ? "paywall.cta.yearly.trial" : "paywall.cta.yearly"
+    }
+
+    private var trialDisclosure: String {
+        String(format: NSLocalizedString("paywall.trial.disclosure.format", comment: ""),
+               freeTrialPeriod ?? "", displayPrice)
+    }
+
+    private var trialModalBody: String {
+        String(format: NSLocalizedString("paywall.trial.modal.body.format", comment: ""),
+               freeTrialPeriod ?? "", displayPrice)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -288,7 +346,7 @@ private struct YearlyPlanCard: View {
                             .foregroundStyle(Color.brand)
                             .font(.system(size: 16, weight: .medium))
                     }
-                    Text("paywall.plan.yearly.subtitle")
+                    Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -310,9 +368,15 @@ private struct YearlyPlanCard: View {
             }
 
             Button {
-                showTrialConfirm = true
+                // With no trial there is nothing to acknowledge, so go straight
+                // to Apple's sheet rather than inventing a confirmation step.
+                if hasFreeTrial {
+                    showTrialConfirm = true
+                } else {
+                    action()
+                }
             } label: {
-                Text("paywall.cta.yearly")
+                Text(ctaKey)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
@@ -324,19 +388,23 @@ private struct YearlyPlanCard: View {
             .buttonStyle(.plain)
             .alert("paywall.trial.modal.title", isPresented: $showTrialConfirm) {
                 Button("common.cancel", role: .cancel) {}
-                Button("paywall.cta.yearly") { action() }
+                Button("paywall.cta.yearly.trial") { action() }
             } message: {
-                Text("paywall.trial.modal.body")
+                Text(trialModalBody)
             }
 
-            // Apple §3.1.2(a): the free-trial CTA must disclose trial length,
-            // the auto-renewing amount, and the cancellation path before purchase.
-            Text("paywall.trial.disclosure")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 8)
+            if hasFreeTrial {
+                // Apple §3.1.2(a): the free-trial CTA must disclose trial length,
+                // the auto-renewing amount, and the cancellation path before
+                // purchase. Length and price both come from StoreKit, so this
+                // text cannot drift from what the App Store will actually charge.
+                Text(trialDisclosure)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+            }
         }
         .padding(16)
         .background(.thinMaterial)

@@ -149,7 +149,14 @@ final class LocaleCompletenessTests: XCTestCase {
         // unlimited_accounts, unlimited_categories, reports_alltime), the
         // free-forever promise (paywall.free_forever), and the trial-end notice
         // (paywall.trial_ended.title/body). All 5 locales in parity. Was 648.
-        XCTAssertEqual(enKeys.count, 649, "English baseline changed; update the expected count.")
+        // 2026-07-14 (v1.0.2 paywall copy): net +3. REMOVED 2 keys that hardcoded a
+        // StoreKit free trial we no longer offer — paywall.trial.disclosure and
+        // paywall.trial.modal.body baked "30 days" and "$34.99" straight into the
+        // copy. ADDED 5: the trial disclosure/modal-body/subtitle/CTA as *format*
+        // keys fed by StoreKit's actual offer (so they can never go stale, and are
+        // never rendered when there is no offer), plus paywall.preview_active.format
+        // for the running 14-day reverse trial. All 5 locales in parity. Was 649.
+        XCTAssertEqual(enKeys.count, 652, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

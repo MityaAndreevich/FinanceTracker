@@ -413,7 +413,7 @@
    ====================================================== */
 "premium.section.status" = "Статус";
 "premium.status.active" = "Активен";
-"premium.status.trial.format" = "Пробный · осталось %d дн.";
+"premium.status.trial.format" = "Бесплатный доступ · осталось %d дн.";
 "premium.status.free" = "Бесплатно";
 
 "premium.upgrade" = "Перейти на Премиум";
@@ -435,7 +435,7 @@
 "paywall.yearly.save_amount" = "Экономия 42%";
 "paywall.yearly.per_month" = "$2.92/мес, оплата за год";
 "paywall.plan.yearly" = "Годовой";
-"paywall.plan.yearly.subtitle" = "30 дней бесплатно, затем 34,99 $/год";
+"paywall.plan.yearly.subtitle" = "Продление раз в год · отмена в любой момент";
 "paywall.plan.monthly" = "Месячный";
 "paywall.plan.monthly.subtitle" = "Отмена в любое время";
 "paywall.plan.lifetime" = "Навсегда";
@@ -447,11 +447,9 @@
 "paywall.badge.founders_edition" = "Издание основателя";
 
 /* CTAs */
-"paywall.cta.yearly" = "Начать бесплатный период";
-"paywall.trial.disclosure" = "После 30 дней бесплатно — $34.99/год спишется автоматически. Отмена в любой момент: Настройки › Apple ID › Подписки.";
+"paywall.cta.yearly" = "Оформить на год";
 /* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
 "paywall.trial.modal.title" = "Условия пробного периода";
-"paywall.trial.modal.body" = "30-дневный бесплатный период начинается сегодня. После его окончания подписка $34.99/год продлевается автоматически, пока вы её не отмените. Отменить можно в любой момент: Настройки › Apple ID › Подписки. Если отменить до конца пробного периода, оплата не спишется.";
 "paywall.cta.lifetime" = "Купить навсегда";
 "paywall.cta.monthly" = "Подписаться помесячно";
 
@@ -867,5 +865,13 @@
 "paywall.feature.unlimited_categories" = "Неограниченное число своих категорий";
 "paywall.feature.reports_alltime" = "Отчёты PDF и Excel за всё время";
 "paywall.free_forever" = "Бесплатно навсегда: неограниченные операции, вся история и экспорт в CSV. Ваши данные никогда не запираются.";
-"paywall.trial_ended.title" = "14-дневный пробный период закончился";
+"paywall.trial_ended.title" = "14-дневный бесплатный доступ закончился";
 "paywall.trial_ended.body" = "Всё, что вы добавили, на месте — ничего не удалено и не скрыто. Premium возвращает импорт CSV и позволяет добавлять больше счетов и категорий.";
+
+/* v1.0.2 — без пробного периода StoreKit. 14-дневный доступ и есть пробный;
+   ключи ниже показываются, только если StoreKit сообщает о реальном оффере. */
+"paywall.preview_active.format" = "У вас бесплатный доступ на 14 дней — осталось %d дн. Карта не нужна, отменять нечего.";
+"paywall.cta.yearly.trial" = "Начать бесплатный период";
+"paywall.plan.yearly.subtitle.trial.format" = "%1$@ бесплатно, затем %2$@/год";
+"paywall.trial.disclosure.format" = "После %1$@ бесплатно — %2$@/год спишется автоматически. Отмена в любой момент: Настройки › Apple ID › Подписки.";
+"paywall.trial.modal.body.format" = "Бесплатный период (%1$@) начинается сегодня. После его окончания подписка %2$@/год продлевается автоматически, пока вы её не отмените. Отменить можно в любой момент: Настройки › Apple ID › Подписки. Если отменить до конца периода, оплата не спишется.";

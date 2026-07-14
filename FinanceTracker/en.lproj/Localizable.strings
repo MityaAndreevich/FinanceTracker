@@ -408,7 +408,7 @@
    ====================================================== */
 "premium.section.status" = "Status";
 "premium.status.active" = "Active";
-"premium.status.trial.format" = "Trial · %d days left";
+"premium.status.trial.format" = "Free preview · %d days left";
 "premium.status.free" = "Free";
 
 "premium.upgrade" = "Upgrade to Premium";
@@ -429,7 +429,7 @@
 "paywall.yearly.save_amount" = "Save 42%";
 "paywall.yearly.per_month" = "$2.92/month, billed annually";
 "paywall.plan.yearly" = "Yearly";
-"paywall.plan.yearly.subtitle" = "30-day free trial, then $34.99/year";
+"paywall.plan.yearly.subtitle" = "Renews yearly · cancel anytime";
 "paywall.plan.monthly" = "Monthly";
 "paywall.plan.monthly.subtitle" = "Cancel anytime";
 "paywall.plan.lifetime" = "Lifetime";
@@ -441,11 +441,9 @@
 "paywall.badge.founders_edition" = "Founder's Edition";
 
 /* CTAs */
-"paywall.cta.yearly" = "Start free trial";
-"paywall.trial.disclosure" = "After 30 days free, $34.99/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
+"paywall.cta.yearly" = "Subscribe yearly";
 /* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
 "paywall.trial.modal.title" = "Free trial details";
-"paywall.trial.modal.body" = "Your 30-day free trial starts today. After it ends, $34.99/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
 "paywall.cta.lifetime" = "Get Lifetime";
 "paywall.cta.monthly" = "Subscribe monthly";
 
@@ -859,5 +857,13 @@
 "paywall.feature.unlimited_categories" = "Unlimited custom categories";
 "paywall.feature.reports_alltime" = "All-time PDF & Excel reports";
 "paywall.free_forever" = "Free forever: unlimited transactions, your full history, and CSV export. Your data is never locked in.";
-"paywall.trial_ended.title" = "Your 14-day trial has ended";
+"paywall.trial_ended.title" = "Your 14-day preview has ended";
 "paywall.trial_ended.body" = "Everything you added is still here — nothing was deleted or hidden. Premium brings back CSV import and lets you add more accounts and categories.";
+
+/* v1.0.2 — no StoreKit trial. The 14-day reverse trial is the trial; the
+   keys below render ONLY if StoreKit reports a real free intro offer. */
+"paywall.preview_active.format" = "You're on your free 14-day preview — %d days left. No card, nothing to cancel.";
+"paywall.cta.yearly.trial" = "Start free trial";
+"paywall.plan.yearly.subtitle.trial.format" = "%1$@ free, then %2$@/year";
+"paywall.trial.disclosure.format" = "After %1$@ free, %2$@/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
+"paywall.trial.modal.body.format" = "Your %1$@ free trial starts today. After it ends, %2$@/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";

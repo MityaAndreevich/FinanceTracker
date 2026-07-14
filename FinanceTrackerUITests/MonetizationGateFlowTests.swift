@@ -36,7 +36,9 @@ final class MonetizationGateFlowTests: XCTestCase {
     /// The trial-end paywall auto-raises. Dismiss it to reach the app underneath.
     @discardableResult
     private func dismissTrialEndPaywall(_ app: XCUIApplication) -> Bool {
-        let notice = app.staticTexts["Your 14-day trial has ended"]
+        // "preview", not "trial": the word trial is reserved for a StoreKit offer,
+        // and we no longer ship one. See IntroductoryOffer.swift.
+        let notice = app.staticTexts["Your 14-day preview has ended"]
         let appeared = notice.waitForExistence(timeout: 25)
         if appeared {
             app.buttons["Close"].firstMatch.tap()

@@ -7,10 +7,15 @@
 //  to the free tier (keeping every byte they created) and the paywall makes its
 //  case against a concrete sense of loss.
 //
-//  This is NOT Apple's StoreKit introductory offer. The 30-day StoreKit free
-//  trial is an offer attached to the subscription and is granted by Apple at
-//  purchase time; it surfaces as a real entitlement. The reverse trial is ours,
-//  is local, and grants no entitlement. Never conflate them, never double-grant.
+//  This is NOT Apple's StoreKit introductory offer, and as of 1.0.2 there is no
+//  longer one to confuse it with: the 30-day StoreKit trial was removed in App
+//  Store Connect, because stacking it on top of these 14 days handed out 44 free
+//  days and blunted the very loss this trial exists to create. The reverse trial
+//  is ours, is local, needs no card, and grants no entitlement.
+//
+//  In user-facing copy this is a "preview", never a "trial" — the word trial is
+//  reserved for a StoreKit offer, and we only say it when StoreKit reports one
+//  (see IntroductoryOffer.swift). Never conflate them, never double-grant.
 //
 
 import Foundation

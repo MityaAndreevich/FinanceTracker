@@ -438,7 +438,7 @@
 "validation.date.out_of_range" = "La fecha debe estar entre 1990 y un año a partir de hoy.";
 "premium.section.status" = "Estado";
 "premium.status.active" = "Activo";
-"premium.status.trial.format" = "Prueba · quedan %d días";
+"premium.status.trial.format" = "Acceso gratis · quedan %d días";
 "premium.status.free" = "Gratis";
 "premium.upgrade" = "Mejorar a Premium";
 "premium.manage_subscription" = "Administrar suscripción";
@@ -454,7 +454,7 @@
 "paywall.yearly.save_amount" = "Ahorra 42%";
 "paywall.yearly.per_month" = "$2.92/mes, cobro anual";
 "paywall.plan.yearly" = "Anual";
-"paywall.plan.yearly.subtitle" = "30 días gratis, luego 34,99 USD/año";
+"paywall.plan.yearly.subtitle" = "Se renueva cada año · cancela cuando quieras";
 "paywall.plan.monthly" = "Mensual";
 "paywall.plan.monthly.subtitle" = "Cancela cuando quieras";
 "paywall.plan.lifetime" = "De por vida";
@@ -464,11 +464,9 @@
 /* Lifetime badges */
 "paywall.badge.family_sharing" = "Compartible con Familia";
 "paywall.badge.founders_edition" = "Edición Fundador";
-"paywall.cta.yearly" = "Iniciar prueba gratis";
-"paywall.trial.disclosure" = "Tras 30 días gratis, se cobrarán $34.99/año automáticamente. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones.";
+"paywall.cta.yearly" = "Suscribirse por un año";
 /* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
 "paywall.trial.modal.title" = "Detalles de la prueba gratuita";
-"paywall.trial.modal.body" = "Tu prueba gratuita de 30 días comienza hoy. Al terminar, se renovará automáticamente por $34.99/año hasta que la canceles. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones; no se cobrará nada si cancelas antes de que termine la prueba.";
 "paywall.cta.lifetime" = "Obtener De por vida";
 "paywall.cta.monthly" = "Suscribirse mensual";
 "paywall.legal.auto_renew" = "Las suscripciones se renuevan automáticamente al final de cada periodo hasta que las canceles. Puedes administrarlas o cancelarlas cuando quieras en Ajustes → ID de Apple → Suscripciones. El cargo se aplica a tu cuenta de ID de Apple al confirmar la compra.";
@@ -737,5 +735,13 @@
 "paywall.feature.unlimited_categories" = "Categorías propias ilimitadas";
 "paywall.feature.reports_alltime" = "Informes PDF y Excel de todo el histórico";
 "paywall.free_forever" = "Gratis para siempre: transacciones ilimitadas, todo tu histórico y exportación a CSV. Tus datos nunca quedan atrapados.";
-"paywall.trial_ended.title" = "Tu prueba de 14 días ha terminado";
+"paywall.trial_ended.title" = "Tu acceso gratuito de 14 días ha terminado";
 "paywall.trial_ended.body" = "Todo lo que añadiste sigue aquí: no se ha borrado ni ocultado nada. Premium recupera la importación CSV y te deja añadir más cuentas y categorías.";
+
+/* v1.0.2 — sin prueba de StoreKit. La vista previa de 14 días es la prueba;
+   las claves siguientes solo se muestran si StoreKit reporta una oferta real. */
+"paywall.preview_active.format" = "Tienes acceso gratuito durante 14 días: quedan %d días. Sin tarjeta y sin nada que cancelar.";
+"paywall.cta.yearly.trial" = "Iniciar prueba gratis";
+"paywall.plan.yearly.subtitle.trial.format" = "%1$@ gratis, luego %2$@/año";
+"paywall.trial.disclosure.format" = "Tras %1$@ gratis, se cobrarán %2$@/año automáticamente. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones.";
+"paywall.trial.modal.body.format" = "Tu prueba gratuita de %1$@ comienza hoy. Al terminar, se renovará automáticamente por %2$@/año hasta que la canceles. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones; no se cobrará nada si cancelas antes de que termine la prueba.";

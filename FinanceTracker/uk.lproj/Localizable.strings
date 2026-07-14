@@ -415,7 +415,7 @@
    ====================================================== */
 "premium.section.status" = "Статус";
 "premium.status.active" = "Активний";
-"premium.status.trial.format" = "Пробний · залишилось %d дн.";
+"premium.status.trial.format" = "Безкоштовний доступ · залишилось %d дн.";
 "premium.status.free" = "Безкоштовний";
 
 "premium.upgrade" = "Перейти на Premium";
@@ -436,7 +436,7 @@
 "paywall.yearly.save_amount" = "Заощадьте 42%";
 "paywall.yearly.per_month" = "$2.92/місяць, оплата раз на рік";
 "paywall.plan.yearly" = "Річний";
-"paywall.plan.yearly.subtitle" = "30 днів безкоштовно, потім $34.99/рік";
+"paywall.plan.yearly.subtitle" = "Поновлення щороку · скасуйте будь-коли";
 "paywall.plan.monthly" = "Місячний";
 "paywall.plan.monthly.subtitle" = "Скасування будь-коли";
 "paywall.plan.lifetime" = "Назавжди";
@@ -448,11 +448,9 @@
 "paywall.badge.founders_edition" = "Видання засновника";
 
 /* CTAs */
-"paywall.cta.yearly" = "Почати безкоштовний період";
-"paywall.trial.disclosure" = "Після 30 днів безкоштовно — $34.99/рік списується автоматично. Скасуйте будь-коли: Налаштування › Apple ID › Підписки.";
+"paywall.cta.yearly" = "Оформити на рік";
 /* Apple §3.1.2(a): explicit acknowledgment shown BEFORE the StoreKit sheet */
 "paywall.trial.modal.title" = "Деталі безкоштовного періоду";
-"paywall.trial.modal.body" = "30-денний безкоштовний період починається сьогодні. Після його завершення підписка $34.99/рік поновлюється автоматично, доки ви її не скасуєте. Скасувати можна будь-коли: Налаштування › Apple ID › Підписки. Якщо скасувати до кінця пробного періоду, кошти не спишуться.";
 "paywall.cta.lifetime" = "Придбати назавжди";
 "paywall.cta.monthly" = "Оформити щомісячно";
 
@@ -864,5 +862,13 @@
 "paywall.feature.unlimited_categories" = "Необмежена кількість власних категорій";
 "paywall.feature.reports_alltime" = "Звіти PDF та Excel за весь час";
 "paywall.free_forever" = "Безкоштовно назавжди: необмежені операції, вся історія та експорт у CSV. Ваші дані ніколи не замикають.";
-"paywall.trial_ended.title" = "14-денний пробний період завершився";
+"paywall.trial_ended.title" = "14-денний безкоштовний доступ завершився";
 "paywall.trial_ended.body" = "Усе, що ви додали, на місці — нічого не видалено й не приховано. Premium повертає імпорт CSV і дозволяє додавати більше рахунків та категорій.";
+
+/* v1.0.2 — без пробного періоду StoreKit. 14-денний доступ і є пробним;
+   ключі нижче показуються, лише якщо StoreKit повідомляє про реальний офер. */
+"paywall.preview_active.format" = "У вас безкоштовний доступ на 14 днів — залишилось %d дн. Картка не потрібна, скасовувати нічого.";
+"paywall.cta.yearly.trial" = "Почати безкоштовний період";
+"paywall.plan.yearly.subtitle.trial.format" = "%1$@ безкоштовно, потім %2$@/рік";
+"paywall.trial.disclosure.format" = "Після %1$@ безкоштовно — %2$@/рік списується автоматично. Скасуйте будь-коли: Налаштування › Apple ID › Підписки.";
+"paywall.trial.modal.body.format" = "Безкоштовний період (%1$@) починається сьогодні. Після його завершення підписка %2$@/рік поновлюється автоматично, доки ви її не скасуєте. Скасувати можна будь-коли: Налаштування › Apple ID › Підписки. Якщо скасувати до кінця періоду, кошти не спишуться.";
