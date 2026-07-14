@@ -233,6 +233,19 @@ accepted, because the alternative violates the gain-framing rule.
 **Pace news can be up to 6 days late,** since the pace nudge rides the weekly slot
 rather than firing on its own. Accepted: it buys structural non-naggability.
 
+### Future enhancement — do NOT build in this version
+
+**A pace-aware rate figure is the stronger premium hook**, and the inputs already exist
+in `SafeToSpend.Snapshot` (`remainingCents`, plus days-left derivable from
+`elapsedDays` / `daysInMonth`). Something like *"~{amount}/day for the rest of the
+month"* — or a genuine week-scoped *"through {day}"* number — tells the user what to
+actually do, where a month total only tells them where they stand.
+
+This is a **fast-follow after 1.0.2 ships**, not part of it. This version stays honestly
+month-scoped: it is better to ship a number that is exactly true than a more useful
+number that is approximately true, on a money app, in the version that introduces
+notifications at all.
+
 ## Testing
 
 - **Policy (pure, no simulator):** each of the five nil-guards; body selection on
