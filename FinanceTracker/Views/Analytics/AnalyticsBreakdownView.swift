@@ -118,7 +118,9 @@ struct AnalyticsBreakdownView: View {
             VStack(spacing: 24) {
                 typePicker
 
-                if renderableCategories.isEmpty {
+                // ChartBisection is a no-op in RELEASE; in DEBUG it switches this
+                // chart off on device to attribute the Charts EXC_BREAKPOINT.
+                if renderableCategories.isEmpty || !ChartBisection.isEnabled(.breakdownDonut) {
                     emptyHint
                 } else {
                     donutChart

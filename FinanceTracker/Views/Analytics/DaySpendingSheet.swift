@@ -79,7 +79,9 @@ struct DaySpendingSheet: View {
                         .listRowBackground(Color.clear)
                 }
 
-                if categorySlices.count > 1 {
+                // ChartBisection is a no-op in RELEASE; in DEBUG it switches this
+                // chart off on device to attribute the Charts EXC_BREAKPOINT.
+                if categorySlices.count > 1, ChartBisection.isEnabled(.daySpending) {
                     Section("analytics.day.by_category") {
                         breakdownChart
                             .listRowBackground(Color.clear)

@@ -160,16 +160,58 @@ struct AnalyticsHorizonView: View {
 
     // MARK: - Chart
 
+    /// The values actually plotted on the Y axis for the current mode — which is
+    /// what the auto-computed Y domain is derived from, so it is what has to be
+    /// checked. `.combined` draws two series against ONE shared scale, so its
+    /// domain spans the union of both.
+    private var plottedSeries: [Int] {
+        switch mode {
+        case .net:      return monthlyTotals.map(\.netCents)
+        case .expenses: return monthlyTotals.map(\.expenseCents)
+        case .income:   return monthlyTotals.map(\.incomeCents)
+        case .combined: return monthlyTotals.map(\.incomeCents) + monthlyTotals.map(\.expenseCents)
+        }
+    }
+
     @ViewBuilder
     private var trendChart: some View {
-        // Horizon is a dense 12-month series by construction, but guard the
-        // continuous domain defensively: a single point would collapse the date
-        // scale to one instant and trap `monotone` interpolation inside Charts.
-        if ChartGuards.canRenderContinuous(pointCount: monthlyTotals.count) {
+        // Horizon is dense (12 months, zero-filled) so it always has enough POINTS
+        // — but point count was never the real question. The Y domain is derived
+        // from whichever series `mode` plots, and that series is flat-zero in
+        // states that are completely ordinary rather than exotic:
+        //
+        //   * .income mode + a user who only ever logs expenses → incomeCents == 0
+        //     for all 12 months. For a spending tracker that is the common case,
+        //     and `mode` is PERSISTED in @AppStorage, so it survives relaunch.
+        //   * .expenses mode + a user who only logs income → the mirror image.
+        //   * .net mode where every month happens to net zero.
+        //
+        // A flat series gives Charts a [v, v] domain — zero height — which it then
+        // subdivides looking for ticks. Guard the plotted series, not the count.
+        if ChartBisection.isEnabled(.horizon),
+           ChartBisection.canRenderSeries(cents: plottedSeries) {
             trendChartBody
         } else {
-            Color.clear.frame(height: 320)
+            emptyTrendHint
         }
+    }
+
+    /// A flat series is a statement about the user's data ("no income logged in the
+    /// last 12 months"), not a transient layout condition — so say so, rather than
+    /// leaving a silent 320pt hole where a chart should be.
+    private var emptyTrendHint: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "chart.xyaxis.line")
+                .font(.system(size: 34))
+                .foregroundStyle(Color.bcTextMuted)
+            Text("analytics.horizon.no_data")
+                .font(.subheadline)
+                .foregroundStyle(Color.bcTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 320)
     }
 
     private var trendChartBody: some View {

@@ -141,11 +141,26 @@ struct AnalyticsPulseView: View {
 
     @ViewBuilder
     private var cashFlowChart: some View {
-        // A single day of data (e.g. the 1st of the month, when the dense day range
-        // is just [today]) collapses the date domain to one instant and makes
-        // `catmullRom` divide by a 0 inter-point distance → non-finite geometry →
-        // EXC_BREAKPOINT inside Charts. Need ≥2 points before drawing the trend.
-        if ChartGuards.canRenderContinuous(pointCount: dailyTotals.count) {
+        // Two independent ways to hand Charts an unmappable scale, both of which
+        // trap (EXC_BREAKPOINT) inside its own layout math with no app frame on
+        // the stack:
+        //
+        //  * too FEW points — a single day (the 1st of the month, when the dense
+        //    day range is just [today]) collapses the date domain to one instant
+        //    and makes `catmullRom` divide by a 0 inter-point distance.
+        //
+        //  * no SPREAD — `dailyTotals` is dense and zero-filled (every day from
+        //    month-start to today, 0 on quiet days), so when every day nets the
+        //    same value the auto-computed Y domain is [v, v], zero height. Nothing
+        //    sets an explicit `.chartYScale(domain:)`, so Charts derives it from
+        //    the data and then subdivides a zero extent hunting for ticks. This is
+        //    an ordinary state, not an exotic one: log an expense, then log an
+        //    equal income on the same day, and the whole month nets flat zero.
+        //
+        // `pointCount >= 2` catches only the first. N identical points sail
+        // straight through it, which is why the earlier guard did not hold.
+        if ChartBisection.isEnabled(.pulse),
+           ChartBisection.canRenderSeries(cents: dailyTotals.map(\.cents)) {
             cashFlowChartBody
         } else {
             insufficientDataHint

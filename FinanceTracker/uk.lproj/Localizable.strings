@@ -724,6 +724,7 @@
 "analytics.filter.income" = "Дохід";
 "analytics.pulse.title" = "Пульс";
 "analytics.pulse.needs_more_days" = "Зазирніть за день-два, щоб побачити динаміку грошового потоку.";
+"analytics.horizon.no_data" = "Поки немає даних для графіка. Додайте кілька операцій, щоб побачити динаміку за 12 місяців.";
 "analytics.breakdown.title" = "Розподіл";
 "analytics.horizon.title" = "Горизонт";
 "analytics.net_this_month" = "Баланс цього місяця";

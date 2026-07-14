@@ -57,6 +57,10 @@ struct GeneralSettingsView: View {
     @State private var infoMessageKey: String = "general.info.default"
     @State private var infoExtra: String? = nil // для опциональной детали (например, ошибка)
 
+    #if DEBUG
+    @ObservedObject private var chartDebug = ChartDebug.shared
+    #endif
+
     var body: some View {
         List {
             preferencesSection
@@ -64,6 +68,9 @@ struct GeneralSettingsView: View {
             quickAddSensitivitySection
             tutorialDemoSection
             maintenanceSection
+            #if DEBUG
+            chartBisectionSection
+            #endif
         }
         .navigationTitle("general.title")
         .listStyle(.insetGrouped)
@@ -476,6 +483,44 @@ struct GeneralSettingsView: View {
             #endif
         }
     }
+
+    // MARK: - Chart crash bisection (DEBUG only)
+
+    #if DEBUG
+    /// On-device bisection for the Charts EXC_BREAKPOINT. Not localized and not
+    /// styled — it is an instrument, not product UI, and it does not exist in the
+    /// store build. See ChartDebug.swift for the protocol these switches drive.
+    @ViewBuilder
+    private var chartBisectionSection: some View {
+        Section {
+            Toggle("Degenerate-domain guard", isOn: Binding(
+                get: { chartDebug.domainGuardEnabled },
+                set: { chartDebug.domainGuardEnabled = $0 }
+            ))
+
+            ForEach(BisectableChart.allCases) { chart in
+                Toggle(chart.title, isOn: Binding(
+                    get: { chartDebug.isEnabled(chart) },
+                    set: { chartDebug.setEnabled(chart, $0) }
+                ))
+            }
+
+            Button("Hide all charts") { chartDebug.hideAllCharts() }
+            Button("Show all charts") { chartDebug.showAllCharts() }
+        } header: {
+            Text("Debug · chart crash bisection")
+        } footer: {
+            Text("""
+            1. Domain guard OFF + all charts ON → hammer QuickAdd. It must CRASH. \
+            If it doesn't, this build can't tell us anything.
+            2. Domain guard ON → hammer again. No crash ⇒ the degenerate domain was \
+            the cause. Done.
+            3. Still crashing ⇒ Hide all charts. No crash ⇒ it IS a chart: turn them \
+            back on one at a time. Still crashing ⇒ it is NOT a chart.
+            """)
+        }
+    }
+    #endif
 
     // MARK: - Helpers
 

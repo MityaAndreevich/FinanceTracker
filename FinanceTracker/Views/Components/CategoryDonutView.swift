@@ -40,7 +40,9 @@ struct CategoryDonutView: View {
 
     var body: some View {
         ZStack {
-            if renderableSlices.isEmpty || safeSize <= 0 {
+            // `ChartBisection` is a no-op in RELEASE; in DEBUG it lets the chart be
+            // switched off on device to attribute the Charts EXC_BREAKPOINT.
+            if renderableSlices.isEmpty || safeSize <= 0 || !ChartBisection.isEnabled(.dashboardDonut) {
                 // No positive data (or no box to draw in) → a neutral placeholder
                 // ring instead of a degenerate Chart. Stroke matches the 0.64
                 // inner-radius ring.

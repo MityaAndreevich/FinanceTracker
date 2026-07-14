@@ -598,6 +598,7 @@
 "analytics.filter.income" = "Receitas";
 "analytics.pulse.title" = "Pulso";
 "analytics.pulse.needs_more_days" = "Volte em um ou dois dias para ver sua tendência de fluxo de caixa.";
+"analytics.horizon.no_data" = "Ainda não há dados para este gráfico. Registre algumas transações para ver a tendência de 12 meses.";
 "analytics.breakdown.title" = "Detalhamento";
 "analytics.horizon.title" = "Horizonte";
 "analytics.net_this_month" = "Líquido este mês";

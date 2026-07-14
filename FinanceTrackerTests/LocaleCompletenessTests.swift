@@ -169,7 +169,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // gain-framed notification bodies. Both bodies are month-scoped because the
         // amount is the whole month's remainder — calling it a week figure would
         // overstate what is safe to spend. All 5 locales in parity. Was 661.
-        XCTAssertEqual(enKeys.count, 676, "English baseline changed; update the expected count.")
+        // 2026-07-14 (chart domain guard): +1. `analytics.horizon.no_data` — Horizon
+        // now refuses to plot a flat series (a zero-height Y domain traps inside
+        // Charts), and a flat series is a statement about the user's data, not a
+        // transient layout condition, so it gets a sentence rather than a blank
+        // 320pt hole. All 5 locales in parity. Was 676.
+        XCTAssertEqual(enKeys.count, 677, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
