@@ -102,7 +102,16 @@ struct DashboardView: View {
     }
 
     /// What's left of the budget this month (can go negative when over budget).
-    private var remainingCents: Int { monthlyBudgetCents - expenseCents }
+    ///
+    /// Delegates to `SafeToSpend` — the proactive alerts read the same computation, and
+    /// a notification that disagreed with this screen would be worse than no
+    /// notification at all.
+    private var remainingCents: Int {
+        SafeToSpend.remainingCents(
+            monthlyBudgetCents: monthlyBudgetCents,
+            spentCents: expenseCents
+        )
+    }
 
     /// Days remaining in the current month, today inclusive.
     private var daysLeftInMonth: Int {
