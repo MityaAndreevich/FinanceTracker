@@ -743,7 +743,8 @@
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Aprende y consejos";
 "learn.tip_of_day" = "Consejo del día";
-"learn.all_tips" = "Todos los consejos";
+"learn.seen_tips" = "Consejos que ya viste";
+"learn.more_each_day" = "Cada día aparece aquí un consejo nuevo.";
 "learn.search" = "Buscar consejos";
 "learn.dismiss" = "Descartar consejo";
 "learn.learn_more" = "Saber más";

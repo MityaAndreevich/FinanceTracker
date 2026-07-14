@@ -865,7 +865,8 @@
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Learn & Tips";
 "learn.tip_of_day" = "Tip of the day";
-"learn.all_tips" = "All tips";
+"learn.seen_tips" = "Tips you’ve seen";
+"learn.more_each_day" = "A new tip appears here each day.";
 "learn.search" = "Search tips";
 "learn.dismiss" = "Dismiss tip";
 "learn.learn_more" = "Learn more";

@@ -181,7 +181,13 @@ final class LocaleCompletenessTests: XCTestCase {
         // and the row a11y format, plus the two data-safety keys. The table's CELLS
         // are not localized at all — they derive from AppCapability, so a gate change
         // can never leave the copy behind. All 5 locales in parity. Was 677.
-        XCTAssertEqual(enKeys.count, 690, "English baseline changed; update the expected count.")
+        // 2026-07-15 (v1.0.2 Learn hub seen-only): net +1. The hub now lists only
+        // tips already revealed as a past tip of the day, so REMOVED learn.all_tips
+        // ("All tips" — no longer true, the future library isn't browsable) and
+        // ADDED learn.seen_tips (the section header) + learn.more_each_day (the
+        // day-1 line when nothing but today has been seen). All 5 locales in parity.
+        // Was 690.
+        XCTAssertEqual(enKeys.count, 691, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

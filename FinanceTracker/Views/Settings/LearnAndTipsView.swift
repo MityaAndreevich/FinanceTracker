@@ -24,21 +24,38 @@ struct LearnAndTipsView: View {
 
     private var library: TipLibrary { TipLibraryCache.current }
 
+    /// Today's rotation day. Computed once so the hero, the history list, and the
+    /// search scope all agree on what "today" is within a single render.
+    private var todayDayIndex: Int {
+        TipRotation.dayIndex(for: .now, in: .current)
+    }
+
     private var todaysTip: DailyTip? {
         guard let index = TipRotation.tipIndex(
-            dayIndex: TipRotation.dayIndex(for: .now, in: .current),
+            dayIndex: todayDayIndex,
             canonicalCount: library.canonicalCount
         ) else { return nil }
         return library.tip(at: index)
+    }
+
+    /// The revealed history: seen tips minus today's, most-recent first. Today's tip
+    /// is the hero above this list, so repeating it here would be noise. Empty on
+    /// day 1 (nothing seen yet but today) — the view shows a "more each day" line.
+    private var seenHistory: [DailyTip] {
+        Array(library.seenTips(todayDayIndex: todayDayIndex).dropFirst())
     }
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// Filtering lives on `TipLibrary` so it is unit-tested rather than trapped in a
-    /// view. An empty query returns everything.
-    private var filteredTips: [DailyTip] { library.search(searchText) }
+    /// Search is scoped to the tips the user has already seen — including today's.
+    /// Scoping to the full library would surface tomorrow's tip through the search
+    /// field and spoil the daily reveal the hub exists to preserve. Filtering lives
+    /// on `TipLibrary` so it is unit-tested rather than trapped in a view.
+    private var searchResults: [DailyTip] {
+        library.matching(searchText, in: library.seenTips(todayDayIndex: todayDayIndex))
+    }
 
     var body: some View {
         List {
@@ -53,29 +70,39 @@ struct LearnAndTipsView: View {
                     )
                     .listRowBackground(Color.clear)
                 }
-            } else {
-                if !isSearching, let tip = todaysTip {
-                    Section("learn.tip_of_day") {
-                        NavigationLink {
-                            TipDetailView(tip: tip)
-                        } label: {
-                            tipRow(tip)
-                        }
-                    }
-                }
-
-                Section("learn.all_tips") {
-                    if filteredTips.isEmpty {
+            } else if isSearching {
+                // Scoped to seen tips only, so the search field can never reveal a
+                // tip the user hasn't reached yet.
+                Section("learn.seen_tips") {
+                    if searchResults.isEmpty {
                         Text("learn.no_results")
                             .font(.bcCaption)
                             .foregroundStyle(Color.bcTextSecondary)
                     } else {
-                        ForEach(filteredTips) { tip in
-                            NavigationLink {
-                                TipDetailView(tip: tip)
-                            } label: {
-                                tipRow(tip)
-                            }
+                        ForEach(searchResults) { tip in
+                            tipNavigationRow(tip)
+                        }
+                    }
+                }
+            } else {
+                if let tip = todaysTip {
+                    Section("learn.tip_of_day") {
+                        tipNavigationRow(tip)
+                    }
+                }
+
+                // Only tips already revealed as a past tip of the day. The future
+                // library is never browsable — that is the whole point of the hub.
+                Section("learn.seen_tips") {
+                    if seenHistory.isEmpty {
+                        // Day 1: nothing seen but today. Promise more rather than
+                        // showing a bare empty section.
+                        Text("learn.more_each_day")
+                            .font(.bcCaption)
+                            .foregroundStyle(Color.bcTextSecondary)
+                    } else {
+                        ForEach(seenHistory) { tip in
+                            tipNavigationRow(tip)
                         }
                     }
                 }
@@ -93,6 +120,14 @@ struct LearnAndTipsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .alert("help.email_copied", isPresented: $showCopiedToast) {
             Button("common.ok", role: .cancel) {}
+        }
+    }
+
+    private func tipNavigationRow(_ tip: DailyTip) -> some View {
+        NavigationLink {
+            TipDetailView(tip: tip)
+        } label: {
+            tipRow(tip)
         }
     }
 

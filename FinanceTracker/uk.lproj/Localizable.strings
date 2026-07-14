@@ -870,7 +870,8 @@
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Навчання та поради";
 "learn.tip_of_day" = "Порада дня";
-"learn.all_tips" = "Усі поради";
+"learn.seen_tips" = "Переглянуті поради";
+"learn.more_each_day" = "Щодня тут з’являється нова порада.";
 "learn.search" = "Пошук порад";
 "learn.dismiss" = "Сховати пораду";
 "learn.learn_more" = "Докладніше";

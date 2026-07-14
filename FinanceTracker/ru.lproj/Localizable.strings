@@ -873,7 +873,8 @@
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Обучение и советы";
 "learn.tip_of_day" = "Совет дня";
-"learn.all_tips" = "Все советы";
+"learn.seen_tips" = "Увиденные советы";
+"learn.more_each_day" = "Каждый день здесь появляется новый совет.";
 "learn.search" = "Поиск советов";
 "learn.dismiss" = "Скрыть совет";
 "learn.learn_more" = "Подробнее";

@@ -33,19 +33,51 @@ struct TipLibrary: Sendable {
     /// Every tip, localized. Backs the hub's browsable list.
     var allTips: [DailyTip] { base.indices.compactMap { tip(at: $0) } }
 
-    /// Tips matching `query` across term, explanation, and strategy. An empty or
-    /// whitespace-only query matches everything.
+    /// Tips the user has already been shown, **most-recent first** (today first).
     ///
-    /// Searches the *localized* text, not the base text: a Spanish user typing a
+    /// "Seen" is derived, not stored: every day from the epoch through today has
+    /// surfaced one tip of the day, so a tip is seen iff its day-index is ≤ today's.
+    /// Because the rotation cycles every `canonicalCount` days, the *distinct* seen
+    /// tips are just the last `canonicalCount` days — fewer before a full cycle has
+    /// elapsed, which is what makes day 1 show exactly one tip. Deriving this keeps
+    /// the hub honest with zero persistence: it can never claim a tip was seen that
+    /// the rotation never actually surfaced.
+    ///
+    /// A `todayDayIndex` before the epoch (device clock in the past) yields no seen
+    /// tips, so the hub falls back to its day-1 state rather than indexing nonsense.
+    func seenTips(todayDayIndex: Int) -> [DailyTip] {
+        guard canonicalCount > 0, todayDayIndex >= 0 else { return [] }
+        let distinctCount = min(canonicalCount, todayDayIndex + 1)
+        return (0..<distinctCount).compactMap { offset in
+            TipRotation.tipIndex(dayIndex: todayDayIndex - offset,
+                                 canonicalCount: canonicalCount)
+                .flatMap(tip(at:))
+        }
+    }
+
+    /// Tips in `candidates` matching `query` across term, explanation, and strategy.
+    /// An empty or whitespace-only query returns `candidates` unchanged.
+    ///
+    /// Takes the candidate list explicitly so the hub can scope search to the *seen*
+    /// tips — searching the whole library would leak unseen future tips through the
+    /// search field and defeat the daily-surprise the seen-only rule exists to keep.
+    ///
+    /// Matches the *localized* text, not the base text: a Spanish user typing a
     /// Spanish word must find the tip even though the canonical content is English.
-    func search(_ query: String) -> [DailyTip] {
+    func matching(_ query: String, in candidates: [DailyTip]) -> [DailyTip] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return allTips }
-        return allTips.filter { tip in
+        guard !trimmed.isEmpty else { return candidates }
+        return candidates.filter { tip in
             tip.term.localizedCaseInsensitiveContains(trimmed)
                 || tip.explanation.localizedCaseInsensitiveContains(trimmed)
                 || tip.strategy.localizedCaseInsensitiveContains(trimmed)
         }
+    }
+
+    /// Search across the entire library. Retained for callers/tests that want the
+    /// unscoped behaviour; the hub uses `matching(_:in:)` over `seenTips`.
+    func search(_ query: String) -> [DailyTip] {
+        matching(query, in: allTips)
     }
 
     /// The tip at `index`, with per-field fallback to the base locale.
