@@ -883,3 +883,20 @@
 "learn.empty.title" = "Порад ще немає";
 "learn.empty.message" = "Щоденні поради скоро з'являться тут.";
 "learn.no_results" = "Нічого не знайдено.";
+
+/* MARK: - Proactive alerts */
+"settings.alerts" = "Сповіщення";
+"alerts.section.title" = "Щотижневе сповіщення";
+"alerts.toggle" = "Скільки можна витратити";
+"alerts.day" = "День";
+"alerts.time" = "Час";
+"alerts.footer" = "Одне спокійне сповіщення на тиждень, у зручний вам час. Дані не залишають телефон.";
+"alerts.needs_budget.title" = "Спершу задайте бюджет";
+"alerts.needs_budget.message" = "Сповіщення показують, скільки можна витратити, тож їм потрібен місячний бюджет.";
+"alerts.needs_budget.cta" = "Задати бюджет";
+"alerts.denied.title" = "Сповіщення вимкнено";
+"alerts.denied.message" = "Увімкніть сповіщення для Budget Crab у «Налаштуваннях», щоб отримувати щотижневе повідомлення.";
+"alerts.denied.cta" = "Відкрити налаштування";
+"alerts.notif.title" = "Budget Crab";
+"alerts.notif.body.safe.format" = "Цього місяця можна витратити ще %@.";
+"alerts.notif.body.pace.format" = "Ви витрачаєте трохи швидше, ніж зазвичай — до кінця місяця можна витратити %@.";

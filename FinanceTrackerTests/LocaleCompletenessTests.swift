@@ -164,7 +164,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // Tip *content* deliberately does not appear here: it lives in tips.json per
         // locale, so a 365-item library can land without touching this baseline.
         // All 5 locales in parity. Was 652.
-        XCTAssertEqual(enKeys.count, 661, "English baseline changed; update the expected count.")
+        // 2026-07-14 (proactive alerts): +15. The alerts settings chrome, the three
+        // blocked states (no budget / notifications denied / paywall), and the two
+        // gain-framed notification bodies. Both bodies are month-scoped because the
+        // amount is the whole month's remainder — calling it a week figure would
+        // overstate what is safe to spend. All 5 locales in parity. Was 661.
+        XCTAssertEqual(enKeys.count, 676, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

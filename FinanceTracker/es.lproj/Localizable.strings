@@ -756,3 +756,20 @@
 "learn.empty.title" = "Aún no hay consejos";
 "learn.empty.message" = "Los consejos diarios aparecerán aquí pronto.";
 "learn.no_results" = "Ningún consejo coincide con tu búsqueda.";
+
+/* MARK: - Proactive alerts */
+"settings.alerts" = "Avisos";
+"alerts.section.title" = "Aviso semanal";
+"alerts.toggle" = "Aviso semanal de gasto disponible";
+"alerts.day" = "Día";
+"alerts.time" = "Hora";
+"alerts.footer" = "Un aviso tranquilo a la semana, cuando tú elijas. Nada sale de tu teléfono.";
+"alerts.needs_budget.title" = "Primero define un presupuesto";
+"alerts.needs_budget.message" = "Los avisos te dicen cuánto puedes gastar, así que necesitan un presupuesto mensual.";
+"alerts.needs_budget.cta" = "Definir presupuesto";
+"alerts.denied.title" = "Las notificaciones están desactivadas";
+"alerts.denied.message" = "Activa las notificaciones de Budget Crab en Ajustes para recibir tu aviso semanal.";
+"alerts.denied.cta" = "Abrir Ajustes";
+"alerts.notif.title" = "Budget Crab";
+"alerts.notif.body.safe.format" = "Puedes gastar %@ este mes.";
+"alerts.notif.body.pace.format" = "Estás gastando un poco más rápido de lo habitual: %@ disponibles para el resto del mes.";

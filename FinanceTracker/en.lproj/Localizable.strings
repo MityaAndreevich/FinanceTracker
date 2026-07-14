@@ -878,3 +878,20 @@
 "learn.empty.title" = "No tips yet";
 "learn.empty.message" = "Daily tips will appear here soon.";
 "learn.no_results" = "No tips match your search.";
+
+/* MARK: - Proactive alerts */
+"settings.alerts" = "Alerts";
+"alerts.section.title" = "Weekly alert";
+"alerts.toggle" = "Weekly safe-to-spend alert";
+"alerts.day" = "Day";
+"alerts.time" = "Time";
+"alerts.footer" = "One calm notification a week, on your schedule. Nothing leaves your phone.";
+"alerts.needs_budget.title" = "Set a budget first";
+"alerts.needs_budget.message" = "Alerts tell you what's safe to spend, so they need a monthly budget to work from.";
+"alerts.needs_budget.cta" = "Set a budget";
+"alerts.denied.title" = "Notifications are off";
+"alerts.denied.message" = "Turn on notifications for Budget Crab in the Settings app to get your weekly alert.";
+"alerts.denied.cta" = "Open Settings";
+"alerts.notif.title" = "Budget Crab";
+"alerts.notif.body.safe.format" = "You have %@ safe to spend this month.";
+"alerts.notif.body.pace.format" = "You're spending a bit faster than usual — %@ safe for the rest of the month.";
