@@ -53,6 +53,12 @@ struct SettingsView: View {
 
             Section {
                 NavigationLink {
+                    AlertsSettingsView()
+                } label: {
+                    Label("settings.alerts", systemImage: "bell.badge")
+                }
+
+                NavigationLink {
                     LearnAndTipsView()
                 } label: {
                     Label("settings.learn_tips", systemImage: "lightbulb")
