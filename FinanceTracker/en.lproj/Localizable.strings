@@ -867,8 +867,6 @@
 "paywall.trial.disclosure.format" = "After %1$@ free, %2$@/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
 "paywall.trial.modal.body.format" = "Your %1$@ free trial starts today. After it ends, %2$@/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
 
-"settings.help" = "Help & Tips";
-
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Learn & Tips";
 "learn.tip_of_day" = "Tip of the day";

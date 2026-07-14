@@ -53,9 +53,9 @@ struct SettingsView: View {
 
             Section {
                 NavigationLink {
-                    HelpView()
+                    LearnAndTipsView()
                 } label: {
-                    Label("settings.help", systemImage: "questionmark.circle")
+                    Label("settings.learn_tips", systemImage: "lightbulb")
                 }
 
                 NavigationLink {

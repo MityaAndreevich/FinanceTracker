@@ -745,8 +745,6 @@
 "paywall.trial.disclosure.format" = "Tras %1$@ gratis, se cobrarán %2$@/año automáticamente. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones.";
 "paywall.trial.modal.body.format" = "Tu prueba gratuita de %1$@ comienza hoy. Al terminar, se renovará automáticamente por %2$@/año hasta que la canceles. Cancela cuando quieras en Ajustes › ID de Apple › Suscripciones; no se cobrará nada si cancelas antes de que termine la prueba.";
 
-"settings.help" = "Ayuda y consejos";
-
 /* MARK: - Learn & Tips */
 "settings.learn_tips" = "Aprende y consejos";
 "learn.tip_of_day" = "Consejo del día";

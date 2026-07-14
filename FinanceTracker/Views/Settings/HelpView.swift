@@ -2,84 +2,17 @@
 //  HelpView.swift
 //  FinanceTracker
 //
-//  In-app Help & Tips — eight short articles plus contact links. Brief 28I
-//  Section N1. All copy is localized (EN/RU/ES/pt-BR); articles are read-only.
+//  The eight annotated help articles. Brief 28I Section N1; all copy is localized
+//  and the articles are read-only.
+//
+//  The `HelpView` list container that used to live here is gone — the articles are
+//  now presented by `LearnAndTipsView`, so there is one "Learn & Tips" destination
+//  rather than a Help row and a Tips row that both look like where you go to learn
+//  things. `HelpArticle` and `HelpArticleView` are unchanged, which is what keeps
+//  every existing `help.*` translation valid.
 //
 
 import SwiftUI
-import UIKit
-
-struct HelpView: View {
-    private let supportEmailAddress = "support@budgetcrab.app"
-    private let supportEmail = URL(string: "mailto:support@budgetcrab.app?subject=Budget%20Crab%20Support")!
-    private let onlineFAQ = URL(string: "https://budgetcrab.app/support.html")!
-
-    @State private var showCopiedToast = false
-
-    var body: some View {
-        List {
-            Section("help.getting_started.title") {
-                articleLink(.quickAdd, icon: "sparkles")
-                articleLink(.voiceEntry, icon: "mic")
-                articleLink(.categories, icon: "tag")
-            }
-
-            Section("help.advanced.title") {
-                articleLink(.analytics, icon: "chart.pie")
-                articleLink(.widget, icon: "rectangle.on.rectangle")
-                articleLink(.siri, icon: "waveform")
-            }
-
-            Section("help.privacy.title") {
-                articleLink(.privacy, icon: "lock.iphone")
-                articleLink(.languageChange, icon: "globe")
-            }
-
-            Section("help.contact.title") {
-                // Copy-to-clipboard works on any iPhone, even one with no Mail
-                // account configured (Round 9 R3: mailto failed with "не удалось
-                // отправить" on such devices). The mailto link is offered too for
-                // users who do have Mail set up.
-                Button {
-                    UIPasteboard.general.string = supportEmailAddress
-                    showCopiedToast = true
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
-                } label: {
-                    HStack {
-                        Label("help.copy_email", systemImage: "doc.on.doc")
-                        Spacer()
-                        Text(verbatim: supportEmailAddress)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-
-                Link(destination: supportEmail) {
-                    Label("help.open_in_mail", systemImage: "envelope.open")
-                }
-
-                Link(destination: onlineFAQ) {
-                    Label("help.online_faq", systemImage: "safari")
-                }
-            }
-        }
-        .listStyle(.insetGrouped)
-        .navigationTitle("settings.help")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert("help.email_copied", isPresented: $showCopiedToast) {
-            Button("common.ok", role: .cancel) {}
-        }
-    }
-
-    private func articleLink(_ article: HelpArticle, icon: String) -> some View {
-        NavigationLink {
-            HelpArticleView(article: article)
-        } label: {
-            Label(article.rowLabelKey, systemImage: icon)
-        }
-    }
-}
 
 // MARK: - Articles
 
@@ -155,5 +88,5 @@ struct HelpArticleView: View {
 }
 
 #Preview {
-    NavigationStack { HelpView() }
+    NavigationStack { HelpArticleView(article: .quickAdd) }
 }
