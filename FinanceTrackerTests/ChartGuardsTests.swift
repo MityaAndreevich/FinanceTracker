@@ -70,4 +70,34 @@ final class ChartGuardsTests: XCTestCase {
         XCTAssertEqual(ChartGuards.dimension(-10), 0, "negative width/height → 0")
         XCTAssertEqual(ChartGuards.dimension(150), 150)
     }
+
+    // MARK: - Renderable box (geometry)
+    //
+    // The second, independent input to a chart. Data can be immaculate and Charts
+    // will still trap in its own scale math if the box it is handed is degenerate
+    // — which is what the device logs showed ("Invalid frame dimension (negative
+    // or non-finite)" spamming right before every crash).
+
+    func test_canRenderInBox_acceptsOnlyFinitePositiveBoxes() {
+        XCTAssertTrue(ChartGuards.canRenderInBox(CGSize(width: 350, height: 240)))
+        XCTAssertTrue(ChartGuards.canRenderInBox(CGSize(width: 1, height: 1)))
+    }
+
+    func test_canRenderInBox_rejectsZeroAndNegative() {
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 0, height: 240)),
+                       "a collapsed parent proposes width 0 — the device case")
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 350, height: 0)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 0, height: 0)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: -120, height: 240)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 350, height: -240)))
+    }
+
+    func test_canRenderInBox_rejectsNonFinite() {
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: CGFloat.nan, height: 240)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 350, height: CGFloat.nan)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: CGFloat.nan, height: CGFloat.nan)))
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: CGFloat.infinity, height: 240)),
+                       "an unbounded proposal is not a box a scale can map onto either")
+        XCTAssertFalse(ChartGuards.canRenderInBox(CGSize(width: 350, height: CGFloat.infinity)))
+    }
 }

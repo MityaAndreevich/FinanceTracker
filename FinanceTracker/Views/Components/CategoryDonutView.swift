@@ -30,14 +30,23 @@ struct CategoryDonutView: View {
         ChartGuards.renderableSlices(slices, magnitude: \.cents)
     }
 
+    /// The donut is sized by a caller-supplied scalar that goes straight into a
+    /// `.frame`, so it is clamped here rather than trusted. A non-finite or
+    /// negative side would both trip SwiftUI's "Invalid frame dimension" and hand
+    /// Charts a degenerate box to build an angular scale in.
+    private var safeSize: CGFloat {
+        ChartGuards.dimension(size)
+    }
+
     var body: some View {
         ZStack {
-            if renderableSlices.isEmpty {
-                // No positive data → draw a neutral placeholder ring instead of a
-                // degenerate Chart. Stroke width matches the 0.64 inner-radius ring.
+            if renderableSlices.isEmpty || safeSize <= 0 {
+                // No positive data (or no box to draw in) → a neutral placeholder
+                // ring instead of a degenerate Chart. Stroke matches the 0.64
+                // inner-radius ring.
                 Circle()
-                    .stroke(Color.bcSurface2, lineWidth: size * 0.18)
-                    .frame(width: size, height: size)
+                    .stroke(Color.bcSurface2, lineWidth: safeSize * 0.18)
+                    .frame(width: safeSize, height: safeSize)
             } else {
                 Chart(renderableSlices) { slice in
                     SectorMark(
@@ -49,7 +58,8 @@ struct CategoryDonutView: View {
                     .foregroundStyle(slice.color)
                 }
                 .chartLegend(.hidden)
-                .frame(width: size, height: size)
+                .guardedChartFrame()
+                .frame(width: safeSize, height: safeSize)
             }
 
             VStack(spacing: 2) {
@@ -65,9 +75,9 @@ struct CategoryDonutView: View {
                     .lineLimit(1)
                     .privacySensitive(true)
             }
-            .frame(width: size * 0.58)
+            .frame(width: safeSize * 0.58)
         }
-        .frame(width: size, height: size)
+        .frame(width: safeSize, height: safeSize)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(centerTitle) + Text(", ") + Text(centerValue))
     }

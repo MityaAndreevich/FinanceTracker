@@ -216,6 +216,12 @@ struct AnalyticsPulseView: View {
                     .font(.caption2)
             }
         }
+        // Charts must never be asked to lay out in a degenerate box: the width
+        // here is proposed by the parent, and a transient collapse (keyboard /
+        // toolbar layout) traps inside Charts' own scale math. Blank rather than
+        // the "needs more days" hint — a collapsed box is a layout condition that
+        // resolves on the next pass, not a statement about the user's data.
+        .guardedChartFrame()
         .frame(height: 240)
         .padding(.vertical, 8)
         // Bug 3: rebuild the chart when in-app language changes so axis labels

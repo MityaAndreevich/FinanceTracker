@@ -728,7 +728,9 @@ struct DashboardView: View {
                 Capsule().fill(Color.bcSurface2)
                 Capsule()
                     .fill(remainingCents < 0 ? Color.bcWarning : Color.bcAccent)
-                    .frame(width: geo.size.width * fraction)
+                    // `fraction` is already clamped, but the proposed width is
+                    // not ours — a collapsed parent can offer NaN/negative.
+                    .frame(width: ChartGuards.dimension(geo.size.width * fraction))
             }
         }
         .frame(height: 8)

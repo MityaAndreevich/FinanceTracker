@@ -25,6 +25,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 enum ChartGuards {
 
@@ -62,5 +63,64 @@ enum ChartGuards {
         let kept = items.filter { magnitude($0) > 0 }
         let total = kept.reduce(0) { $0 + magnitude($1) }
         return total > 0 ? kept : []
+    }
+
+    /// A box Swift Charts can actually map a scale onto: both dimensions finite
+    /// and strictly positive.
+    ///
+    /// The data guards above are not sufficient, because a chart's *geometry* is
+    /// a second, independent input. Every chart in this app pins only its height
+    /// and inherits its width from the parent, so a parent that transiently
+    /// collapses (a keyboard/toolbar layout pass — device logs show a
+    /// `_UIButtonBarButton` width == 0 constraint break alongside SwiftUI's
+    /// "Invalid frame dimension (negative or non-finite)") proposes a degenerate
+    /// box to a chart holding perfectly valid data. Charts then divides by a zero
+    /// plot extent inside its own scale/layout math, which is why the resulting
+    /// trap has no app frame on the stack and is not deterministic by row count.
+    ///
+    /// `.infinity` is excluded deliberately: an unbounded proposal is not a box a
+    /// scale can be mapped onto either.
+    static func canRenderInBox(_ size: CGSize) -> Bool {
+        size.width.isFinite && size.height.isFinite && size.width > 0 && size.height > 0
+    }
+}
+
+// MARK: - Frame guard
+
+/// Renders a chart only when the box it is offered is finite and positive,
+/// substituting a placeholder when it is not.
+///
+/// This is the geometry half of the choke-point. Charts must never be *asked* to
+/// lay out in a degenerate box, so the check happens where the proposed size
+/// arrives, not after the fact — by the time an invalid frame reaches Charts, the
+/// trap is already inside a framework we cannot guard from the outside.
+private struct ChartFrameGuard<Placeholder: View>: ViewModifier {
+    let placeholder: Placeholder
+
+    func body(content: Content) -> some View {
+        GeometryReader { geo in
+            if ChartGuards.canRenderInBox(geo.size) {
+                content.frame(width: geo.size.width, height: geo.size.height)
+            } else {
+                placeholder.frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+}
+
+extension View {
+    /// Gate this chart on a renderable box. Apply it directly around the `Chart`,
+    /// *inside* whatever fixed height the view already pins:
+    ///
+    ///     Chart { … }
+    ///         .guardedChartFrame()
+    ///         .frame(height: 240)
+    ///
+    /// so the GeometryReader is handed a definite height and only the width — the
+    /// dimension the parent can collapse — is actually in question.
+    func guardedChartFrame<P: View>(
+        @ViewBuilder placeholder: () -> P = { Color.clear }
+    ) -> some View {
+        modifier(ChartFrameGuard(placeholder: placeholder()))
     }
 }

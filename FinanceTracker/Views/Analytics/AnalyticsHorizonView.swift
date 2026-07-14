@@ -200,6 +200,9 @@ struct AnalyticsHorizonView: View {
                 .font(.caption2)
             }
         }
+        // A parent that transiently collapses would hand Charts a degenerate box
+        // and trap inside its scale math — see ChartGuards.canRenderInBox.
+        .guardedChartFrame()
         .frame(height: 320)
         // Bug 3: rebuild on language switch so month axis re-formats.
         .id(localizedBundle.languageCode ?? "system")

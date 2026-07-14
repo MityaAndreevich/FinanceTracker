@@ -167,7 +167,6 @@ struct AnalyticsBreakdownView: View {
             .foregroundStyle(cat.color)
             .opacity(selectedCategory == nil || selectedCategory == cat ? 1.0 : 0.35)
         }
-        .frame(height: 280)
         .chartBackground { proxy in
             GeometryReader { geo in
                 if let anchor = proxy.plotFrame {
@@ -175,14 +174,20 @@ struct AnalyticsBreakdownView: View {
                     // Bound the label to the donut's inner hole so the amount
                     // scales down to fit instead of bleeding under the ring at
                     // large Dynamic Type sizes (innerRadius ratio is 0.62).
-                    let holeDiameter = min(frame.width, frame.height) * 0.62
+                    // Clamped: the plot frame is derived from a proposed size, so
+                    // a collapsed parent would otherwise put a NaN/negative width
+                    // straight into a frame.
+                    let holeDiameter = ChartGuards.dimension(min(frame.width, frame.height) * 0.62)
                     centerLabel
-                        .frame(maxWidth: holeDiameter * 0.9)
+                        .frame(maxWidth: ChartGuards.dimension(holeDiameter * 0.9))
                         .position(x: frame.midX, y: frame.midY)
                 }
             }
         }
         .accessibilityChartDescriptor(self)
+        // Never hand Charts a degenerate box — see ChartGuards.canRenderInBox.
+        .guardedChartFrame()
+        .frame(height: 280)
         .id(localizedBundle.languageCode ?? "system")
     }
 
@@ -305,7 +310,9 @@ struct AnalyticsBreakdownView: View {
                     Capsule().fill(Color.bcSurface2)
                     Capsule()
                         .fill(cat.color)
-                        .frame(width: geo.size.width * fraction)
+                        // See DashboardView.budgetProgressBar: the proposed width
+                        // is the untrusted input here, not `fraction`.
+                        .frame(width: ChartGuards.dimension(geo.size.width * fraction))
                 }
             }
             .frame(height: 6)

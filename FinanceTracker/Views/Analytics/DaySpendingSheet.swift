@@ -148,7 +148,8 @@ struct DaySpendingSheet: View {
                     .font(.caption2)
             }
         }
-        .frame(height: CGFloat(max(1, categorySlices.count)) * 38 + 16)
+        .guardedChartFrame()
+        .frame(height: ChartGuards.dimension(CGFloat(max(1, categorySlices.count)) * 38 + 16))
         .padding(.vertical, Spacing.xs)
         .id(localizedBundle.languageCode ?? "system")
     }
