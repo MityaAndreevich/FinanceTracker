@@ -48,7 +48,6 @@ struct InlineCategoryCreateScaleTests {
     }
 
     @Test func testInlineCategoryCreate_afterManyQuickAddSaves_succeeds() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
         let ctx = try makeContext()
         let other = FinanceTracker.Category(name: "Other", kindRaw: "expense", order: 0)
         ctx.insert(other)

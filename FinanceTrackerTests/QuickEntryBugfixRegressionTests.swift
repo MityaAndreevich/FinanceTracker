@@ -57,7 +57,6 @@ struct QuickEntryBugfixRegressionTests {
     // MARK: - B1: one Save == one row, using the previewed category
 
     @Test func save_withOverrideCategory_writesExactlyOneRow() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
         let ctx = try makeContext()
         let food = seed(name: "Food & Drink", nameKey: "category.food_drink", kind: "expense", in: ctx)
         seed(name: "Other", nameKey: "category.other", kind: "expense", in: ctx)
@@ -78,8 +77,12 @@ struct QuickEntryBugfixRegressionTests {
         #expect(tx.category.uuid == food.uuid)   // saved category == the previewed one
     }
 
-    @Test func save_sameEntryTwiceWithin30s_staysOneRow() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
+    /// REVERSED. This test used to assert `all.count == 1` — it encoded the 30s
+    /// content-dedup that was silently eating real entries (two identical coffees on
+    /// the same day became one row while the UI said "saved"). Two saves of the same
+    /// thing are two coffees; the save path is content-blind and always inserts.
+    /// Accidental double-taps are collapsed by SaveActionGate instead.
+    @Test func save_sameEntryTwice_persistsTwoRows() throws {
         let ctx = try makeContext()
         let food = seed(name: "Food & Drink", nameKey: "category.food_drink", kind: "expense", in: ctx)
         try ctx.save()
@@ -95,7 +98,7 @@ struct QuickEntryBugfixRegressionTests {
                                          defaultCurrencyCode: "RUB", overrideCategory: food, now: now)
 
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
-        #expect(all.count == 1)   // idempotent — no accidental double
+        #expect(all.count == 2, "two identical manual saves are two transactions — never silently merged")
     }
 
     // MARK: - B5: localized category display name (no English leak in RU)

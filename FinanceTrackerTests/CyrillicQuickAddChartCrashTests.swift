@@ -42,7 +42,6 @@ final class CyrillicQuickAddChartCrashTests: XCTestCase {
 
         // The real default taxonomy — category resolution depends on it.
         SeedService.seedIfNeeded(modelContext: context)
-        QuickAddSaveService._resetDedupCacheForTesting()
     }
 
     override func tearDownWithError() throws {

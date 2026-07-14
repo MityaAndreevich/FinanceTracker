@@ -44,6 +44,11 @@ struct DashboardView: View {
     // Quick Add
     @State private var quickAddText: String = ""
     @State private var quickAddParsed: QuickAddParsedInput? = nil
+    // Debounces an accidental double-fire of the quick-add commit (auto-save on a
+    // confident parse, or the preview's Save button — they are two branches of one
+    // action, so they share one gate). Content-blind by design: it replaces a content
+    // dedup that silently dropped legitimately identical entries.
+    @State private var saveGate = SaveActionGate()
     @State private var showQuickAddEdit = false
     @State private var quickAddEditPrefill: AddTransactionPrefill? = nil
     // Q1 (option C): high-confidence parses save immediately and surface a
@@ -460,54 +465,65 @@ struct DashboardView: View {
     /// (for the edit toast) or nil if the save fails, in which case the caller
     /// falls back to the confirmation preview.
     private func autoSaveQuickAdd(_ parsed: QuickAddParsedInput) -> Transaction? {
-        do {
-            let tx = try QuickAddSaveService.save(
-                parsed: parsed,
-                modelContext: modelContext,
-                defaultCurrencyCode: defaultCurrencyCode
-            )
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            scheduleWidgetSnapshot()
-            RatingPromptCoordinator.recordTransactionSaved()
-            return tx
-        } catch {
-            logSaveFailure("DashboardView.autoSaveQuickAdd", error)
-            #if DEBUG
-            print("QuickAdd auto-save failed: \(error.localizedDescription)")
-            #endif
-            return nil
+        var saved: Transaction?
+        // This commit has no Save button and no in-flight guard — it fires straight off
+        // a confident parse — so the gate is the only thing standing between a
+        // double-delivered parse callback and a double row. Content-blind: it debounces
+        // the ACTION, and never inspects what is being saved.
+        saveGate.submit {
+            do {
+                let tx = try QuickAddSaveService.save(
+                    parsed: parsed,
+                    modelContext: modelContext,
+                    defaultCurrencyCode: defaultCurrencyCode
+                )
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                scheduleWidgetSnapshot()
+                RatingPromptCoordinator.recordTransactionSaved()
+                saved = tx
+            } catch {
+                logSaveFailure("DashboardView.autoSaveQuickAdd", error)
+                saveGate.reset()   // a retry must not be debounced away
+                #if DEBUG
+                print("QuickAdd auto-save failed: \(error.localizedDescription)")
+                #endif
+            }
         }
+        return saved
     }
 
     private func saveQuickAdd(_ parsed: QuickAddParsedInput, category: Category?) {
-        do {
-            _ = try QuickAddSaveService.save(
-                parsed: parsed,
-                modelContext: modelContext,
-                defaultCurrencyCode: defaultCurrencyCode,
-                // B5/B2: commit the *exact* category shown in the preview chip so
-                // the saved row matches what the user confirmed (and so save never
-                // silently re-resolves to a different / nil category).
-                overrideCategory: category
-            )
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            withAnimation { quickAddParsed = nil }
-            quickAddText = ""
-            scheduleWidgetSnapshot()
-            RatingPromptCoordinator.recordTransactionSaved()
-        } catch {
-            // B2: never fail silently. A swallowed error left the preview + input
-            // on screen, which read as "Save did nothing" and invited a second tap
-            // (the apparent double-count). Surface it and keep the preview so the
-            // user can retry deliberately.
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
-            quickAddSavedTx = nil   // don't let the error toast's tap open a stale edit
-            quickAddToastStyle = .error
-            quickAddToast = "add.error.save_failed"
-            logSaveFailure("DashboardView.saveQuickAdd", error)
-            #if DEBUG
-            print("QuickAdd save failed: \(error.localizedDescription)")
-            #endif
+        saveGate.submit {
+            do {
+                _ = try QuickAddSaveService.save(
+                    parsed: parsed,
+                    modelContext: modelContext,
+                    defaultCurrencyCode: defaultCurrencyCode,
+                    // B5/B2: commit the *exact* category shown in the preview chip so
+                    // the saved row matches what the user confirmed (and so save never
+                    // silently re-resolves to a different / nil category).
+                    overrideCategory: category
+                )
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                withAnimation { quickAddParsed = nil }
+                quickAddText = ""
+                scheduleWidgetSnapshot()
+                RatingPromptCoordinator.recordTransactionSaved()
+            } catch {
+                // B2: never fail silently. A swallowed error left the preview + input
+                // on screen, which read as "Save did nothing" and invited a second tap
+                // (the apparent double-count). Surface it and keep the preview so the
+                // user can retry deliberately.
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                quickAddSavedTx = nil   // don't let the error toast's tap open a stale edit
+                quickAddToastStyle = .error
+                quickAddToast = "add.error.save_failed"
+                logSaveFailure("DashboardView.saveQuickAdd", error)
+                saveGate.reset()   // the deliberate retry this invites must land
+                #if DEBUG
+                print("QuickAdd save failed: \(error.localizedDescription)")
+                #endif
+            }
         }
     }
 

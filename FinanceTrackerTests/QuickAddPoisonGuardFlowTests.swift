@@ -42,19 +42,21 @@ final class QuickAddPoisonGuardFlowTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        QuickAddSaveService._resetDedupCacheForTesting()
         QuickAddSaveService._forceSaveFailureForTesting = false
     }
 
     override func tearDown() {
         QuickAddSaveService._forceSaveFailureForTesting = false
-        QuickAddSaveService._resetDedupCacheForTesting()
         super.tearDown()
     }
 
-    // (a) THE REAL FLOW: reset → set budget → quick-add save ONCE → exactly one row.
-    // A second identical save within the dedup window must not add a row.
-    func testResetThenBudgetThenSingleSave_yieldsExactlyOneRow() throws {
+    // (a) THE REAL FLOW: reset → set budget → quick-add save → each save adds EXACTLY
+    // ONE row. The bug this pins is fan-out (one Save producing ~10 pending ghosts),
+    // so the invariant is "one save, one row" — not "identical saves collapse". The
+    // trailing assertion used to claim the latter, which was the content-dedup that
+    // silently ate real entries; the save path now always inserts, and accidental
+    // double-taps are debounced at the action (SaveActionGate).
+    func testResetThenBudgetThenEachSave_addsExactlyOneRow() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         try seedOther(ctx)
@@ -73,11 +75,12 @@ final class QuickAddPoisonGuardFlowTests: XCTestCase {
         XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<Transaction>()), 1,
             "One quick-add Save must persist exactly one transaction.")
 
-        // Same entry again within the window → dedup, still one row (no fan-out).
+        // A second Save of the same entry is a second coffee: it adds one row, and
+        // exactly one — no fan-out, no ghosts.
         _ = try QuickAddSaveService.save(parsed: coffeeParse(), modelContext: ctx,
                                          defaultCurrencyCode: "USD")
-        XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<Transaction>()), 1,
-            "A repeat Save within the dedup window must not duplicate.")
+        XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<Transaction>()), 2,
+            "Each Save must persist exactly one more transaction — never zero, never ten.")
     }
 
     // (b) ANTI-POISON GUARD: a thrown save() must leave NO uncommitted ghost row.
@@ -120,7 +123,6 @@ final class QuickAddPoisonGuardFlowTests: XCTestCase {
 
         // Recovery: next save works and produces exactly one row.
         QuickAddSaveService._forceSaveFailureForTesting = false
-        QuickAddSaveService._resetDedupCacheForTesting()
         _ = try QuickAddSaveService.save(parsed: coffeeParse(), modelContext: ctx,
                                          defaultCurrencyCode: "USD")
         XCTAssertEqual(try ctx.fetchCount(FetchDescriptor<Transaction>()), 1,

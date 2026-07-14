@@ -130,10 +130,14 @@ struct QuickAddSaveServiceTests {
         }
     }
 
-    // MARK: - Idempotency / dedup (Bug 4)
+    // MARK: - The save path always inserts (no content dedup)
+    //
+    // These replace the old "Idempotency / dedup (Bug 4)" tests, which asserted that a
+    // repeat save returns the existing row. That was the data-loss bug: identical
+    // content does not imply an accidental duplicate, and the write layer must never
+    // guess. Double-submit protection moved to SaveActionGate (content-blind).
 
-    @Test func test_duplicateWithin30s_returnsExisting() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
+    @Test func test_identicalSaveSecondsLater_insertsNewTransaction() throws {
         let ctx = try makeContext()
         _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
         try ctx.save()
@@ -149,13 +153,12 @@ struct QuickAddSaveServiceTests {
             parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now.addingTimeInterval(5)
         )
 
-        #expect(first.uuid == second.uuid, "second save within 30s must return the same transaction")
+        #expect(first.uuid != second.uuid, "a save must never hand back a previously-saved row")
         let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
-        #expect(count == 1, "only one row should exist after a duplicate save")
+        #expect(count == 2, "filling up twice in one trip is two transactions")
     }
 
     @Test func test_sameAmountDifferentMerchant_savesBoth() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
         let ctx = try makeContext()
         _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
         try ctx.save()
@@ -171,8 +174,10 @@ struct QuickAddSaveServiceTests {
         #expect(count == 2, "same amount but different merchant are distinct transactions")
     }
 
-    @Test func test_sameTransactionAfter31s_savesAgain() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
+    /// The pathological case for any time-window heuristic: back-to-back saves in the
+    /// SAME instant. Even here the save path inserts both — it is not the save path's
+    /// job to decide whether the user meant it (see SaveActionGate, which is).
+    @Test func test_identicalSavesInSameInstant_insertBoth() throws {
         let ctx = try makeContext()
         _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)
         try ctx.save()
@@ -185,12 +190,12 @@ struct QuickAddSaveServiceTests {
             parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now
         )
         let second = try QuickAddSaveService.save(
-            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now.addingTimeInterval(31)
+            parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", now: now
         )
 
-        #expect(first.uuid != second.uuid, "after the 30s window the same input creates a new transaction")
+        #expect(first.uuid != second.uuid)
         let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
-        #expect(count == 2)
+        #expect(count == 2, "the write layer never drops a save, whatever the clock says")
     }
 
     // MARK: - resolveCategory
@@ -281,7 +286,6 @@ struct QuickAddSaveServiceTests {
     }
 
     @Test func testVoicePath_remembersAndLookups() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
         let ctx = try makeContext()
         let mashina = makeCategory(name: "Машина", kindRaw: "expense", in: ctx)
         _ = makeCategory(name: "Other", kindRaw: "expense", in: ctx)

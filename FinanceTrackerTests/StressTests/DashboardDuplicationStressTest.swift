@@ -41,7 +41,6 @@ final class DashboardDuplicationStressTest: XCTestCase {
     // 100 distinct saves through the shared Quick Add service (Dashboard / voice /
     // AppIntent all funnel through this one path) must yield exactly 100 rows.
     func testHundredMixedSavesProducesExactCountInStore() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
         let container = try makeContainer()
         let ctx = container.mainContext
         try seedOther(ctx)
@@ -66,10 +65,13 @@ final class DashboardDuplicationStressTest: XCTestCase {
             "All 100 merchants must be distinct rows.")
     }
 
-    // Idempotency at scale: the same amount+type+merchant fired 10× within the 30s
-    // window collapses to one row (the recognizer can deliver repeated finals).
-    func testRapidSameMerchantSavesWithin30sStillRespectsIdempotency() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
+    // REVERSED. This used to assert that 10 identical saves "collapse to one row"
+    // and called it idempotency. It was data loss: the shared save path cannot tell a
+    // redelivered voice final from a user buying the same thing ten times, so it must
+    // not try — it always inserts. Repeat-fire protection now lives at the action
+    // (SaveActionGate + QuickEntryView's isSaving guard), where it is content-blind
+    // and cannot swallow a distinct entry.
+    func testRapidSameMerchantSavesEachPersist() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         try seedOther(ctx)
@@ -85,8 +87,8 @@ final class DashboardDuplicationStressTest: XCTestCase {
         }
 
         let stored = try ctx.fetch(FetchDescriptor<Transaction>())
-        XCTAssertEqual(stored.count, 1,
-            "Idempotency at scale failed: got \(stored.count) Баклажаны entries.")
+        XCTAssertEqual(stored.count, 10,
+            "Every save must land: got \(stored.count) of 10 Баклажаны entries.")
     }
 
     // A bulk insert then two identical fetches (simulating @Query re-evaluation)

@@ -51,6 +51,11 @@ struct QuickEntryView: View {
     // transaction 2-3×. Set once on the first successful entry and only reset on
     // failure so a retry is still possible. See Bug 7 (duplicate voice transactions).
     @State private var isSaving = false
+    // Debounces an accidental double-fire of the Save action. Complements `isSaving`:
+    // that guard covers a save still in flight, this one covers a second tap arriving
+    // just after the first returned but before the view tears down. Content-blind, so
+    // it cannot drop a distinct entry — see SaveActionGate.
+    @State private var saveGate = SaveActionGate()
     @State private var placeholderIndex = 0
     @State private var parseTask: Task<Void, Never>? = nil
     @State private var appeared = false
@@ -996,29 +1001,38 @@ struct QuickEntryView: View {
         // On the single-entry happy path the view dismisses, so isSaving is intentionally
         // not reset there; the add-another path re-enables it via resetForNextEntry().
         guard let p = parsed, !isSaving else { return }
-        isSaving = true
-        withAnimation(.easeInOut(duration: 0.1)) { savePulseOn = false }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        do {
-            _ = try QuickAddSaveService.save(
-                parsed: p,
-                modelContext: modelContext,
-                defaultCurrencyCode: defaultCurrencyCode,
-                overrideCategory: effectiveCategory(for: p)
-            )
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            RatingPromptCoordinator.recordTransactionSaved()
-            if addAnother {
-                resetForNextEntry()
-            } else {
-                dismiss()
-            }
-        } catch {
-            logSaveFailure("QuickEntryView.handleSave", error)
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
-            isSaving = false   // allow a retry after a genuine failure
-            withAnimation {
-                saveError = true
+
+        // Debounce an accidental double-fire of THIS action (fast double-tap, a11y
+        // double-fire, a late voice .ended). Deliberately content-blind: it can only
+        // ever drop a second tap, never a distinct entry — unlike the content dedup it
+        // replaces, which silently ate a second identical coffee. "Save & add another"
+        // is unaffected: the form must be retyped, which takes far longer than 500ms.
+        saveGate.submit {
+            isSaving = true
+            withAnimation(.easeInOut(duration: 0.1)) { savePulseOn = false }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            do {
+                _ = try QuickAddSaveService.save(
+                    parsed: p,
+                    modelContext: modelContext,
+                    defaultCurrencyCode: defaultCurrencyCode,
+                    overrideCategory: effectiveCategory(for: p)
+                )
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                RatingPromptCoordinator.recordTransactionSaved()
+                if addAnother {
+                    resetForNextEntry()
+                } else {
+                    dismiss()
+                }
+            } catch {
+                logSaveFailure("QuickEntryView.handleSave", error)
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+                isSaving = false        // allow a retry after a genuine failure
+                saveGate.reset()        // ...and don't debounce that retry away
+                withAnimation {
+                    saveError = true
+                }
             }
         }
     }

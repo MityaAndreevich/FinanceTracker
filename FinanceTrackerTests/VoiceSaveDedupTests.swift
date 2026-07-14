@@ -3,22 +3,38 @@ import Testing
 import SwiftData
 @testable import FinanceTracker
 
-// MARK: - Bug 21: voice "Бензин 500" duplicated ×6 on the Dashboard
+// MARK: - Voice repeat-fire protection (Bug 21, reworked)
 //
-// Sprint A (9d4c316) added the idempotency key in QuickAddSaveService. Device
-// test #7 still reported ×6 voice duplicates. Investigation: the voice path
-// (QuickEntryView → handleSave → QuickAddSaveService.save, and Dashboard quick
-// add → the same service) is the ONLY voice write path — there is no bypass
-// that inserts a Transaction directly. The apparent ×6 was Bug 22's
-// position-keyed ForEach (id: \.offset) rendering one real row as several
-// stale/duplicated rows; fixed in the Bug 22 commit.
+// HISTORY — read before re-adding dedup to the save path.
 //
-// These tests lock in the two halves of the contract that must hold for voice:
-//  1. repeated final-transcript saves in the same instant collapse to one row;
-//  2. the dedup gate is an in-memory, time-boxed window — after a restart (which
-//     wipes the cache) the same input is a legitimate new entry, not swallowed.
+// Bug 4 reported a voiced "Бензин 500" creating three identical transactions, and the
+// fix was a 30-second content-identity window (amount + type + merchant) inside
+// QuickAddSaveService. Two things later proved that fix wrong:
+//
+//  1. It was aimed at a bug that largely wasn't there. This suite's own investigation
+//     found the apparent ×6 was Bug 22's position-keyed ForEach (id: \.offset)
+//     rendering ONE row several times — a view bug, not duplicate writes.
+//
+//  2. It caused a worse bug than it prevented. The window sat on the SHARED save path,
+//     so it also ate typed entries: two coffees at the same price on the same day
+//     collapsed into one row while the UI reported "saved" (device log:
+//     `dedup-hit (returned existing)`). Silent data loss.
+//
+// Content identity cannot distinguish "the recognizer redelivered a final" from "the
+// user bought the same thing twice", so the save path must not try: it always inserts.
+// Repeat-fire is caught at the ACTION, where it is content-blind and cannot swallow a
+// distinct entry:
+//
+//   * QuickEntryView.isSaving — in-flight re-entrancy guard (voice only live-binds the
+//     transcript into the input; a human still taps Save, so a redelivered final
+//     cannot itself commit).
+//   * SaveActionGate — a 500ms debounce on the Save action.
+//
+// Import dedup is a different problem with a different answer and stays in
+// CSVImportService: a file may restate rows the user already has, with no human in the
+// loop to ask.
 
-@Suite("Voice save dedup (Bug 21)")
+@Suite("Voice save: repeat-fire is gated, never content-deduped")
 @MainActor
 struct VoiceSaveDedupTests {
 
@@ -29,6 +45,13 @@ struct VoiceSaveDedupTests {
             configurations: config
         )
         return ModelContext(container)
+    }
+
+    private func seeded() throws -> ModelContext {
+        let ctx = try makeContext()
+        ctx.insert(FinanceTracker.Category(name: "Other", kindRaw: "expense", order: 0))
+        try ctx.save()
+        return ctx
     }
 
     /// Mirrors the QuickEntryView voice save: a parsed input committed through the
@@ -48,41 +71,45 @@ struct VoiceSaveDedupTests {
         )
     }
 
-    @Test func testVoiceSave_calledTwiceInSameTick_creates1Entry() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
-        let ctx = try makeContext()
-        let cat = FinanceTracker.Category(name: "Other", kindRaw: "expense", order: 0)
-        ctx.insert(cat)
-        try ctx.save()
-
-        // The recognizer can deliver the same final result repeatedly; both races
-        // hit the shared gate in the same instant.
+    /// REVERSED from `testVoiceSave_calledTwiceInSameTick_creates1Entry`, which
+    /// asserted the collapse that was losing user data.
+    @Test func testVoiceSave_calledTwice_persistsTwoRows() throws {
+        let ctx = try seeded()
         let now = Date()
+
         let first = try voiceSave(ctx, now: now)
         let second = try voiceSave(ctx, now: now)
 
-        #expect(first.uuid == second.uuid, "a repeated voice final in the same tick must return the existing row")
-        let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
-        #expect(count == 1, "voice ×N in the dedup window persists exactly one transaction")
+        #expect(first.uuid != second.uuid, "the save path never returns an existing row")
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 2,
+                "filling up twice is two transactions — the write layer does not second-guess the user")
     }
 
-    @Test func testVoiceSave_calledTwiceAcrossRestart_creates2Entries() throws {
-        QuickAddSaveService._resetDedupCacheForTesting()
-        let ctx = try makeContext()
-        let cat = FinanceTracker.Category(name: "Other", kindRaw: "expense", order: 0)
-        ctx.insert(cat)
-        try ctx.save()
-
+    /// The genuine voice hazard — one action firing twice in a tick — collapsed at the
+    /// gate, which never inspects what is being saved.
+    @Test func testRepeatedFinalInSameTick_isCollapsedByTheGate() throws {
+        let ctx = try seeded()
+        let gate = SaveActionGate()
         let now = Date()
-        let first = try voiceSave(ctx, now: now)
 
-        // Simulate an app restart: the dedup window lives in process memory only, so
-        // a relaunch clears it. The same input is then a legitimate new entry.
-        QuickAddSaveService._resetDedupCacheForTesting()
-        let second = try voiceSave(ctx, now: now)
+        try gate.submit(now: now) { try voiceSave(ctx, now: now) }
+        try gate.submit(now: now) { try voiceSave(ctx, now: now) }
 
-        #expect(first.uuid != second.uuid, "after a restart the gate is empty — the same voice input is a new row")
-        let count = try ctx.fetchCount(FetchDescriptor<Transaction>())
-        #expect(count == 2, "voicing the same thing again after a restart is intentional, not a duplicate")
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 1,
+                "one utterance, redelivered, is one save")
+    }
+
+    /// And the gate must still let a real second entry through moments later.
+    @Test func testDeliberateSecondVoiceEntry_isNotSwallowed() throws {
+        let ctx = try seeded()
+        let gate = SaveActionGate()
+        let now = Date()
+        let later = now.addingTimeInterval(SaveActionGate.debounceWindow + 0.01)
+
+        try gate.submit(now: now) { try voiceSave(ctx, now: now) }
+        try gate.submit(now: later) { try voiceSave(ctx, now: later) }
+
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 2,
+                "saying the same thing again is a new entry, not a duplicate")
     }
 }
