@@ -15,17 +15,39 @@
 
 import Foundation
 import SwiftData
+import UserNotifications
 
 @MainActor
 enum ProactiveAlertRefresher {
 
+    /// What the app calls. Reads the live entitlement, then hands off to the testable
+    /// form below.
+    ///
+    /// (The entitlement cannot be a *default argument* on that function: default-argument
+    /// expressions are evaluated in a nonisolated context, and `AccessManager` is
+    /// main-actor isolated.)
     static func refresh(modelContext: ModelContext) {
-        let defaults = UserDefaults.standard
+        refresh(
+            modelContext: modelContext,
+            isAllowed: AccessManager.shared.isAllowed(.proactiveAlerts)
+        )
+    }
 
+    /// The dependencies are injectable because this function is the *join* — the one place
+    /// where a wiring slip (feeding the policy the wrong field) would produce a
+    /// confidently-wrong number in a notification. The pure pieces either side of it are
+    /// already well covered; this is what makes the seam between them testable too.
+    static func refresh(
+        modelContext: ModelContext,
+        isAllowed: Bool,
+        defaults: UserDefaults = .standard,
+        now: Date = Date(),
+        center: NotificationScheduling = UNUserNotificationCenter.current()
+    ) {
         // Re-checked on every pass rather than trusting the toggle, so an expired trial
         // cannot leave a premium notification in flight.
-        guard AccessManager.shared.isAllowed(.proactiveAlerts) else {
-            ProactiveAlertScheduler.cancel()
+        guard isAllowed else {
+            ProactiveAlertScheduler.cancel(center: center)
             return
         }
 
@@ -39,7 +61,6 @@ enum ProactiveAlertRefresher {
         let transactions = (try? modelContext.fetch(FetchDescriptor<Transaction>())) ?? []
         let budget = defaults.integer(forKey: "monthlyBudgetCents")
         let currency = defaults.string(forKey: "defaultCurrencyCode") ?? "USD"
-        let now = Date()
 
         let agg = SafeToSpend.aggregate(
             entries: SafeToSpend.entries(from: transactions),
@@ -72,6 +93,6 @@ enum ProactiveAlertRefresher {
             now: now
         )
 
-        ProactiveAlertScheduler.apply(plan: plan, currencyCode: currency)
+        ProactiveAlertScheduler.apply(plan: plan, currencyCode: currency, center: center)
     }
 }
