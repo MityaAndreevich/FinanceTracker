@@ -1,0 +1,37 @@
+[
+  {
+    "id": "placeholder-001",
+    "term": "[ES] Sample term one",
+    "explanation": "Placeholder explanation — real content pending.",
+    "strategy": "Placeholder strategy — real content pending.",
+    "category": "sample"
+  },
+  {
+    "id": "placeholder-002",
+    "term": "[ES] Sample term two",
+    "explanation": "Placeholder explanation — real content pending.",
+    "strategy": "Placeholder strategy — real content pending.",
+    "category": "sample"
+  },
+  {
+    "id": "placeholder-003",
+    "term": "[ES] Sample term three",
+    "explanation": "Placeholder explanation — real content pending.",
+    "strategy": "Placeholder strategy — real content pending.",
+    "category": "sample"
+  },
+  {
+    "id": "placeholder-004",
+    "term": "[ES] Sample term four",
+    "explanation": "Placeholder explanation — real content pending.",
+    "strategy": "Placeholder strategy — real content pending.",
+    "category": "sample"
+  },
+  {
+    "id": "placeholder-005",
+    "term": "[ES] Sample term five",
+    "explanation": "Placeholder explanation — real content pending.",
+    "strategy": "Placeholder strategy — real content pending.",
+    "category": "sample"
+  }
+]

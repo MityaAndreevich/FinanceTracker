@@ -172,3 +172,62 @@ struct TipLibraryTests {
         #expect(tips.first?.category == nil)
     }
 }
+
+// MARK: - Locale file parity
+
+/// The locale files must stay *parallel*: same count, same ids, same order, so
+/// that `item[N]` is the same tip in every language. If they drift, a locale shows
+/// a different tip than everyone else on the same day and the per-index fallback
+/// starts matching translations to the wrong tips.
+struct TipContentParityTests {
+
+    private let locales = ["en", "ru", "es", "pt-BR", "uk"]
+
+    private func tips(for locale: String) -> [DailyTip] {
+        guard let path = Bundle.main.path(forResource: locale, ofType: "lproj"),
+              let bundle = Bundle(path: path)
+        else { return [] }
+        return TipLibrary.decodeTips(from: bundle)
+    }
+
+    @Test func everyLocaleShipsATipsFile() {
+        for locale in locales {
+            #expect(!tips(for: locale).isEmpty, "\(locale).lproj/tips.json is missing or empty")
+        }
+    }
+
+    @Test func everyLocaleHasTheSameIdsInTheSameOrder() {
+        let baseIDs = tips(for: "en").map(\.id)
+        #expect(!baseIDs.isEmpty)
+
+        for locale in locales {
+            #expect(tips(for: locale).map(\.id) == baseIDs,
+                    "\(locale).lproj/tips.json is not parallel with en")
+        }
+    }
+
+    @Test func noTipHasAnEmptyField() {
+        for locale in locales {
+            for tip in tips(for: locale) {
+                #expect(!tip.term.trimmingCharacters(in: .whitespaces).isEmpty)
+                #expect(!tip.explanation.trimmingCharacters(in: .whitespaces).isEmpty)
+                #expect(!tip.strategy.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+    }
+
+    @Test func idsAreUnique() {
+        let ids = tips(for: "en").map(\.id)
+        #expect(Set(ids).count == ids.count)
+    }
+
+    @Test func loadedLibraryCyclesThroughEveryTip() {
+        let library = TipLibrary.loadFromBundle()
+        #expect(library.canonicalCount == tips(for: "en").count)
+
+        let visited = (0..<library.canonicalCount).compactMap {
+            TipRotation.tipIndex(dayIndex: $0, canonicalCount: library.canonicalCount)
+        }
+        #expect(Set(visited).count == library.canonicalCount)
+    }
+}
