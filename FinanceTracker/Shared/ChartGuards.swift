@@ -39,6 +39,38 @@ enum ChartGuards {
         pointCount >= 2
     }
 
+    /// Whether a continuous series spans a domain a scale can actually be mapped
+    /// onto: at least two points, every value finite, and a **strictly positive
+    /// spread** (`min < max`).
+    ///
+    /// The count check above is necessary but NOT sufficient, and that gap is the
+    /// second half of this crash. No chart in this app sets an explicit
+    /// `.chartYScale(domain:)`, so Charts derives the domain from the data — and N
+    /// *identical* points collapse it to `[v, v]`, zero height. Charts then
+    /// subdivides a zero extent hunting for "nice" ticks and traps inside its own
+    /// scale math, with no app frame on the stack.
+    ///
+    /// This is an ordinary state, not an exotic one, because both real series are
+    /// dense and zero-filled: Pulse is every day of the month (0 on quiet days),
+    /// Horizon is 12 months (0 on quiet months). A user who only logs expenses has
+    /// a flat-zero *income* series; a day whose expense is cancelled by an equal
+    /// income nets the whole Pulse series to zero.
+    static func canRenderContinuous(values: [Double]) -> Bool {
+        guard values.count >= 2 else { return false }
+        guard values.allSatisfy({ $0.isFinite }) else { return false }
+        guard let lo = values.min(), let hi = values.max() else { return false }
+        return lo < hi
+    }
+
+    /// `Int`-cents form — our money is stored as `Int`, so this is what every real
+    /// caller passes. Deliberately a distinct argument label rather than an
+    /// overload on `values:`: an `[0, 0, 0]` literal is ambiguous between `[Int]`
+    /// and `[Double]`, and a guard this load-bearing must never fail to compile
+    /// for a reason that has nothing to do with charts.
+    static func canRenderContinuous(cents: [Int]) -> Bool {
+        canRenderContinuous(values: cents.map(Double.init))
+    }
+
     /// Coerce a `Double` mark value / scale bound to a finite number (NaN and ±inf
     /// collapse to 0). Preserves sign — a legitimately negative net stays negative.
     static func finite(_ value: Double) -> Double {
