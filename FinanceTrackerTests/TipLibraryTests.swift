@@ -230,4 +230,31 @@ struct TipContentParityTests {
         }
         #expect(Set(visited).count == library.canonicalCount)
     }
+
+    /// The trap this whole design exists to avoid.
+    ///
+    /// The in-app language override swizzles `Bundle.main` to intercept
+    /// `localizedString(forKey:)` — but NOT resource-URL lookup. So a `tips.json`
+    /// fetched via `Bundle.main.url(forResource:)` silently serves whatever language
+    /// the app *launched* in, ignoring the user's pick, and the bug is invisible in
+    /// English. Loading through `LocalizedBundle.shared.bundle` is what fixes it.
+    ///
+    /// The placeholder content is tagged per locale ([EN], [RU], …) precisely so this
+    /// is assertable: if this test ever reads [EN] after switching to Russian, the
+    /// loader has regressed back to `Bundle.main`.
+    @MainActor
+    @Test func switchingLanguageSwitchesTheTipContent() {
+        let original = LocalizedBundle.shared.languageCode
+        defer { LocalizedBundle.shared.setLanguage(original) }
+
+        for (code, tag) in [("ru", "[RU]"), ("es", "[ES]"), ("uk", "[UK]"), ("pt", "[PT-BR]")] {
+            LocalizedBundle.shared.setLanguage(code)
+            let tip = TipLibrary.loadFromBundle().tip(at: 0)
+            #expect(tip?.term.hasPrefix(tag) == true,
+                    "after switching to \(code), tip content should come from \(tag), got: \(tip?.term ?? "nil")")
+        }
+
+        LocalizedBundle.shared.setLanguage("en")
+        #expect(TipLibrary.loadFromBundle().tip(at: 0)?.term.hasPrefix("[EN]") == true)
+    }
 }
