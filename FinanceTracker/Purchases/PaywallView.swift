@@ -32,7 +32,7 @@ struct PaywallView: View {
                             .multilineTextAlignment(.center)
                     }
 
-                    featureSection
+                    PaywallClarityView()
 
                     footerSection
                         .padding(.bottom, 24)
@@ -191,36 +191,6 @@ struct PaywallView: View {
                 planCard(product: product, kind: ProductKind(productID: product.id))
             }
         }
-    }
-
-    /// What Premium actually buys — and nothing else.
-    ///
-    /// This list used to promise "Unlimited transactions" and "All-time exports",
-    /// which are FREE, plus "Custom fields" and "Advanced filters", which do not
-    /// exist in the app at all. Selling a user a feature we don't ship is the
-    /// exact dark pattern this product is positioned against, so the list now
-    /// names only the four real premium capabilities, and states outright what
-    /// stays free forever. If a row here stops being true, delete the row.
-    private var featureSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("paywall.features.header")
-                .font(.footnote)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            FeatureRow(textKey: "paywall.feature.flexible_import")
-            FeatureRow(textKey: "paywall.feature.unlimited_accounts")
-            FeatureRow(textKey: "paywall.feature.unlimited_categories")
-            FeatureRow(textKey: "paywall.feature.reports_alltime")
-
-            Text("paywall.free_forever")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
-        }
-        .padding(.top, 4)
     }
 
     private var footerSection: some View {
@@ -581,21 +551,6 @@ private struct BadgeLabel: View {
         .padding(.vertical, 4)
         .background(Color.brand.opacity(0.12))
         .clipShape(Capsule())
-    }
-}
-
-private struct FeatureRow: View {
-    let textKey: LocalizedStringKey
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-            Text(textKey)
-                .font(.subheadline)
-            Spacer()
-        }
     }
 }
 

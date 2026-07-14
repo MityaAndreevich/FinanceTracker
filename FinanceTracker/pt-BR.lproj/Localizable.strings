@@ -452,7 +452,6 @@
 "paywall.title" = "Seu dinheiro, no seu iPhone para sempre";
 "paywall.subtitle" = "Tudo fica no seu iPhone — sem servidores, sem contas, sem rastreamento.";
 "paywall.loading" = "Carregando planos…";
-"paywall.features.header" = "Todos os planos incluem";
 "paywall.yearly.best_value" = "Melhor valor";
 "paywall.yearly.save_amount.format" = "Economize %d%%";
 "paywall.yearly.per_month.format" = "%@/mês, cobrança anual";
@@ -731,11 +730,6 @@
 "cs.categories.cap_hint" = "O plano gratuito inclui %d categorias personalizadas, além de todas as prontas. Assine o Premium para adicionar mais — as que você já criou continuam aí.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
-"paywall.feature.flexible_import" = "Importe CSV de qualquer banco, Mint, YNAB ou Monarch";
-"paywall.feature.unlimited_accounts" = "Contas ilimitadas";
-"paywall.feature.unlimited_categories" = "Categorias personalizadas ilimitadas";
-"paywall.feature.reports_alltime" = "Relatórios PDF e Excel de todo o período";
-"paywall.free_forever" = "Grátis para sempre: transações ilimitadas, todo o seu histórico e exportação CSV. Seus dados nunca ficam presos.";
 "paywall.trial_ended.title" = "Seu acesso grátis de 14 dias terminou";
 "paywall.trial_ended.body" = "Tudo o que você adicionou continua aqui — nada foi apagado nem escondido. O Premium traz de volta a importação CSV e permite adicionar mais contas e categorias.";
 
@@ -775,3 +769,26 @@
 "alerts.notif.title" = "Budget Crab";
 "alerts.notif.body.safe.format" = "Você tem %@ para gastar neste mês.";
 "alerts.notif.body.pace.format" = "Você está gastando um pouco mais rápido que o normal — %@ disponíveis para o resto do mês.";
+
+/* ---- Comparação: Grátis e Premium ---- */
+"paywall.compare.header" = "O que é grátis e o que é Premium";
+"paywall.compare.free" = "Grátis";
+"paywall.compare.premium" = "Premium";
+"paywall.compare.row.transactions" = "Transações ilimitadas";
+"paywall.compare.row.history" = "Todo o seu histórico";
+"paywall.compare.row.analytics" = "Análises do mês atual";
+"paywall.compare.row.widget" = "Widget na Tela de Início";
+"paywall.compare.row.csv_export" = "Exportação em CSV";
+"paywall.compare.row.accounts" = "Contas";
+"paywall.compare.row.categories" = "Categorias próprias";
+"paywall.compare.row.csv_import" = "Importe de qualquer banco, Mint, YNAB ou Monarch";
+"paywall.compare.row.reports_alltime" = "Relatórios PDF e Excel de todo o período";
+"paywall.compare.row.alerts" = "Aviso semanal do que dá para gastar";
+"paywall.compare.value.unlimited" = "Sem limite";
+"paywall.compare.value.included" = "Incluído";
+"paywall.compare.value.excluded" = "Não incluído";
+"paywall.compare.a11y.format" = "%1$@. Grátis: %2$@. Premium: %3$@.";
+
+/* ---- A promessa ao voltar para o plano grátis ---- */
+"paywall.data_safety.title" = "Seus dados são sempre seus";
+"paywall.data_safety.body" = "Nada é apagado se você voltar para o plano grátis: suas transações, seu histórico e suas categorias continuam aí. Você só não pode adicionar novos itens além do limite gratuito.";

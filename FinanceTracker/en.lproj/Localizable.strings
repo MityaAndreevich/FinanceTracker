@@ -421,7 +421,6 @@
 "paywall.subtitle" = "Everything stays on your iPhone — no servers, no accounts, no tracking.";
 "paywall.loading" = "Loading plans…";
 /* Paywall features */
-"paywall.features.header" = "Every plan includes";
 
 /* Plans */
 "paywall.yearly.best_value" = "Best value";
@@ -852,11 +851,6 @@
 "cs.categories.cap_hint" = "Free plan includes %d custom categories, plus all the built-in ones. Upgrade to add more — your existing categories always stay.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
-"paywall.feature.flexible_import" = "Import from any bank, Mint, YNAB or Monarch CSV";
-"paywall.feature.unlimited_accounts" = "Unlimited accounts";
-"paywall.feature.unlimited_categories" = "Unlimited custom categories";
-"paywall.feature.reports_alltime" = "All-time PDF & Excel reports";
-"paywall.free_forever" = "Free forever: unlimited transactions, your full history, and CSV export. Your data is never locked in.";
 "paywall.trial_ended.title" = "Your 14-day preview has ended";
 "paywall.trial_ended.body" = "Everything you added is still here — nothing was deleted or hidden. Premium brings back CSV import and lets you add more accounts and categories.";
 
@@ -896,3 +890,31 @@
 "alerts.notif.title" = "Budget Crab";
 "alerts.notif.body.safe.format" = "You have %@ safe to spend this month.";
 "alerts.notif.body.pace.format" = "You're spending a bit faster than usual — %@ safe for the rest of the month.";
+
+/* ---- Free vs Premium comparison (paywall) ----
+   Row labels are keyed by PaywallComparison.rows; the CELLS are derived from
+   AppCapability, so this file never states a limit the app doesn't enforce. */
+"paywall.compare.header" = "What's free, what's Premium";
+"paywall.compare.free" = "Free";
+"paywall.compare.premium" = "Premium";
+"paywall.compare.row.transactions" = "Unlimited transactions";
+"paywall.compare.row.history" = "Your full history";
+"paywall.compare.row.analytics" = "Current-month analytics";
+"paywall.compare.row.widget" = "Home Screen widget";
+"paywall.compare.row.csv_export" = "CSV export";
+"paywall.compare.row.accounts" = "Accounts";
+"paywall.compare.row.categories" = "Custom categories";
+"paywall.compare.row.csv_import" = "Import from any bank, Mint, YNAB or Monarch";
+"paywall.compare.row.reports_alltime" = "All-time PDF & Excel reports";
+"paywall.compare.row.alerts" = "Weekly safe-to-spend alert";
+/* Spoken by VoiceOver in place of the check / dash / infinity glyphs. */
+"paywall.compare.value.unlimited" = "Unlimited";
+"paywall.compare.value.included" = "Included";
+"paywall.compare.value.excluded" = "Not included";
+"paywall.compare.a11y.format" = "%1$@. Free: %2$@. Premium: %3$@.";
+
+/* ---- The downgrade promise. Describes FreeTierLimits, which blocks adding and
+   nothing else. If anything ever deletes or hides a lapsed user's rows, this is
+   the paragraph that has become a lie. ---- */
+"paywall.data_safety.title" = "Your data is always yours";
+"paywall.data_safety.body" = "Nothing is deleted if you go back to Free — your transactions, history and categories all stay. You just can't add new ones beyond the free limit.";

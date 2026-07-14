@@ -427,7 +427,6 @@
 "paywall.subtitle" = "Всё остаётся на вашем iPhone — без серверов, аккаунтов и слежки.";
 "paywall.loading" = "Загружаем планы…";
 /* Paywall features */
-"paywall.features.header" = "В каждый план входит";
 
 /* Plans */
 "paywall.yearly.best_value" = "Лучшая выгода";
@@ -860,11 +859,6 @@
 "cs.categories.cap_hint" = "На бесплатном плане доступно своих категорий: %d, плюс все встроенные. Оформите Premium, чтобы добавить ещё — уже созданные категории остаются с вами.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
-"paywall.feature.flexible_import" = "Импорт CSV из любого банка, Mint, YNAB или Monarch";
-"paywall.feature.unlimited_accounts" = "Неограниченное число счетов";
-"paywall.feature.unlimited_categories" = "Неограниченное число своих категорий";
-"paywall.feature.reports_alltime" = "Отчёты PDF и Excel за всё время";
-"paywall.free_forever" = "Бесплатно навсегда: неограниченные операции, вся история и экспорт в CSV. Ваши данные никогда не запираются.";
 "paywall.trial_ended.title" = "14-дневный бесплатный доступ закончился";
 "paywall.trial_ended.body" = "Всё, что вы добавили, на месте — ничего не удалено и не скрыто. Premium возвращает импорт CSV и позволяет добавлять больше счетов и категорий.";
 
@@ -904,3 +898,26 @@
 "alerts.notif.title" = "Budget Crab";
 "alerts.notif.body.safe.format" = "В этом месяце можно потратить ещё %@.";
 "alerts.notif.body.pace.format" = "Вы тратите немного быстрее обычного — до конца месяца можно потратить %@.";
+
+/* ---- Сравнение: бесплатно и Premium ---- */
+"paywall.compare.header" = "Что бесплатно, а что в Premium";
+"paywall.compare.free" = "Бесплатно";
+"paywall.compare.premium" = "Premium";
+"paywall.compare.row.transactions" = "Неограниченные операции";
+"paywall.compare.row.history" = "Вся ваша история";
+"paywall.compare.row.analytics" = "Аналитика за текущий месяц";
+"paywall.compare.row.widget" = "Виджет на экране «Домой»";
+"paywall.compare.row.csv_export" = "Экспорт в CSV";
+"paywall.compare.row.accounts" = "Счета";
+"paywall.compare.row.categories" = "Свои категории";
+"paywall.compare.row.csv_import" = "Импорт из любого банка, Mint, YNAB или Monarch";
+"paywall.compare.row.reports_alltime" = "Отчёты PDF и Excel за всё время";
+"paywall.compare.row.alerts" = "Еженедельное уведомление: сколько можно потратить";
+"paywall.compare.value.unlimited" = "Без ограничений";
+"paywall.compare.value.included" = "Входит";
+"paywall.compare.value.excluded" = "Не входит";
+"paywall.compare.a11y.format" = "%1$@. Бесплатно: %2$@. Premium: %3$@.";
+
+/* ---- Обещание при возврате на бесплатный план ---- */
+"paywall.data_safety.title" = "Ваши данные всегда ваши";
+"paywall.data_safety.body" = "Если вы вернётесь на бесплатный план, ничего не удалится: все операции, история и категории останутся на месте. Вы просто не сможете добавлять новые сверх бесплатного лимита.";

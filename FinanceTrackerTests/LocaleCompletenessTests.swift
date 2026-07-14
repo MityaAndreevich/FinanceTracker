@@ -174,7 +174,14 @@ final class LocaleCompletenessTests: XCTestCase {
         // Charts), and a flat series is a statement about the user's data, not a
         // transient layout condition, so it gets a sentence rather than a blank
         // 320pt hole. All 5 locales in parity. Was 676.
-        XCTAssertEqual(enKeys.count, 677, "English baseline changed; update the expected count.")
+        // 2026-07-15 (v1.0.2 paywall clarity): net +13. REMOVED the 6 keys of the
+        // one-sided "what Premium gives you" checklist (paywall.features.header,
+        // paywall.feature.*, paywall.free_forever). ADDED 19 for the free-vs-Premium
+        // table: header, the two column titles, 10 row labels, 3 spoken cell values
+        // and the row a11y format, plus the two data-safety keys. The table's CELLS
+        // are not localized at all — they derive from AppCapability, so a gate change
+        // can never leave the copy behind. All 5 locales in parity. Was 677.
+        XCTAssertEqual(enKeys.count, 690, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
