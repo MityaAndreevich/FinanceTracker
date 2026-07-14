@@ -20,6 +20,9 @@ struct DashboardView: View {
     // Item 5: the widget snapshot is baked in this language so the widget follows
     // the in-app language (it can't inherit the app's Bundle/AppleLanguages override).
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
+    // The day index the user dismissed the tip on, not a bool: the dismissal expires
+    // by itself at the next local midnight, so there is no timer and no cleanup pass.
+    @AppStorage(TipDismissal.storageKey) private var tipDismissedDayIndex: Int = TipDismissal.none
 
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
@@ -783,6 +786,25 @@ struct DashboardView: View {
         return daysSince >= 14
     }
 
+    /// Today's tip, or nil when the library is empty (no content shipped yet).
+    private var todaysTip: DailyTip? {
+        let library = TipLibraryCache.current
+        guard let index = TipRotation.tipIndex(
+            dayIndex: todayTipDayIndex,
+            canonicalCount: library.canonicalCount
+        ) else { return nil }
+        return library.tip(at: index)
+    }
+
+    /// Local timezone, so the tip rolls over at the user's own midnight.
+    private var todayTipDayIndex: Int {
+        TipRotation.dayIndex(for: .now, in: .current)
+    }
+
+    /// Exactly one teaching card at a time. The Day-0 card is onboarding for a
+    /// brand-new user; the daily tip is habit reinforcement for an established one.
+    /// Stacking both on a first run would be pure noise on the one screen that has
+    /// to stay calm, so they are exclusive branches of the same slot.
     @ViewBuilder
     private var insightSection: some View {
         if transactions.isEmpty {
@@ -791,6 +813,15 @@ struct DashboardView: View {
         } else if !hasUnlockedInsights {
             Day0EducationalCard(showAddTransaction: $showAddTransaction)
                 .padding(.horizontal, 16)
+        } else if let tip = todaysTip,
+                  !TipDismissal.isDismissed(
+                      dismissedDayIndex: tipDismissedDayIndex,
+                      todayIndex: todayTipDayIndex
+                  ) {
+            TipOfTheDayCard(tip: tip) {
+                tipDismissedDayIndex = todayTipDayIndex
+            }
+            .padding(.horizontal, 16)
         }
     }
 
