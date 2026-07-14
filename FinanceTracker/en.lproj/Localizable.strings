@@ -113,7 +113,6 @@
 "settings.about" = "About";
 
 // MARK: - Help & Tips (Brief 28I N1)
-"settings.help" = "Help & Tips";
 
 "help.getting_started.title" = "Getting Started";
 "help.advanced.title" = "Advanced Features";
@@ -867,3 +866,17 @@
 "paywall.plan.yearly.subtitle.trial.format" = "%1$@ free, then %2$@/year";
 "paywall.trial.disclosure.format" = "After %1$@ free, %2$@/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";
 "paywall.trial.modal.body.format" = "Your %1$@ free trial starts today. After it ends, %2$@/year auto-renews until you cancel. Cancel anytime in Settings › Apple ID › Subscriptions — no charge if you cancel before the trial ends.";
+
+"settings.help" = "Help & Tips";
+
+/* MARK: - Learn & Tips */
+"settings.learn_tips" = "Learn & Tips";
+"learn.tip_of_day" = "Tip of the day";
+"learn.all_tips" = "All tips";
+"learn.search" = "Search tips";
+"learn.dismiss" = "Dismiss tip";
+"learn.learn_more" = "Learn more";
+"learn.try_this" = "Try this";
+"learn.empty.title" = "No tips yet";
+"learn.empty.message" = "Daily tips will appear here soon.";
+"learn.no_results" = "No tips match your search.";

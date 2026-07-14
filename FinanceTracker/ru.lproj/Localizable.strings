@@ -124,7 +124,6 @@
 "settings.about" = "О приложении";
 
 // MARK: - Help & Tips (Brief 28I N1)
-"settings.help" = "Помощь и советы";
 
 "help.getting_started.title" = "Начало работы";
 "help.advanced.title" = "Дополнительно";
@@ -875,3 +874,17 @@
 "paywall.plan.yearly.subtitle.trial.format" = "%1$@ бесплатно, затем %2$@/год";
 "paywall.trial.disclosure.format" = "После %1$@ бесплатно — %2$@/год спишется автоматически. Отмена в любой момент: Настройки › Apple ID › Подписки.";
 "paywall.trial.modal.body.format" = "Бесплатный период (%1$@) начинается сегодня. После его окончания подписка %2$@/год продлевается автоматически, пока вы её не отмените. Отменить можно в любой момент: Настройки › Apple ID › Подписки. Если отменить до конца периода, оплата не спишется.";
+
+"settings.help" = "Помощь и советы";
+
+/* MARK: - Learn & Tips */
+"settings.learn_tips" = "Обучение и советы";
+"learn.tip_of_day" = "Совет дня";
+"learn.all_tips" = "Все советы";
+"learn.search" = "Поиск советов";
+"learn.dismiss" = "Скрыть совет";
+"learn.learn_more" = "Подробнее";
+"learn.try_this" = "Попробуйте";
+"learn.empty.title" = "Пока нет советов";
+"learn.empty.message" = "Ежедневные советы скоро появятся здесь.";
+"learn.no_results" = "Ничего не найдено.";

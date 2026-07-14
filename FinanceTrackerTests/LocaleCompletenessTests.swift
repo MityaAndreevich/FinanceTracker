@@ -156,7 +156,15 @@ final class LocaleCompletenessTests: XCTestCase {
         // keys fed by StoreKit's actual offer (so they can never go stale, and are
         // never rendered when there is no offer), plus paywall.preview_active.format
         // for the running 14-day reverse trial. All 5 locales in parity. Was 649.
-        XCTAssertEqual(enKeys.count, 652, "English baseline changed; update the expected count.")
+        // 2026-07-14 (Learn & Tips hub, chrome): +10 keys for the hub
+        // (settings.learn_tips + learn.*). settings.help stays for now — it is still
+        // referenced by SettingsView/HelpView, and testNoMissingLocalizationKeys
+        // rightly fails if a referenced key is absent. It is retired in the commit
+        // that removes its last code reference, which drops this to 661.
+        // Tip *content* deliberately does not appear here: it lives in tips.json per
+        // locale, so a 365-item library can land without touching this baseline.
+        // All 5 locales in parity. Was 652.
+        XCTAssertEqual(enKeys.count, 662, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

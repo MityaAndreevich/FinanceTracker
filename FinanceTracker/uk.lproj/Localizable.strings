@@ -120,7 +120,6 @@
 "settings.about" = "Про застосунок";
 
 // MARK: - Help & Tips
-"settings.help" = "Довідка та поради";
 
 "help.getting_started.title" = "Початок роботи";
 "help.advanced.title" = "Розширені функції";
@@ -872,3 +871,17 @@
 "paywall.plan.yearly.subtitle.trial.format" = "%1$@ безкоштовно, потім %2$@/рік";
 "paywall.trial.disclosure.format" = "Після %1$@ безкоштовно — %2$@/рік списується автоматично. Скасуйте будь-коли: Налаштування › Apple ID › Підписки.";
 "paywall.trial.modal.body.format" = "Безкоштовний період (%1$@) починається сьогодні. Після його завершення підписка %2$@/рік поновлюється автоматично, доки ви її не скасуєте. Скасувати можна будь-коли: Налаштування › Apple ID › Підписки. Якщо скасувати до кінця періоду, кошти не спишуться.";
+
+"settings.help" = "Довідка та поради";
+
+/* MARK: - Learn & Tips */
+"settings.learn_tips" = "Навчання та поради";
+"learn.tip_of_day" = "Порада дня";
+"learn.all_tips" = "Усі поради";
+"learn.search" = "Пошук порад";
+"learn.dismiss" = "Сховати пораду";
+"learn.learn_more" = "Докладніше";
+"learn.try_this" = "Спробуйте";
+"learn.empty.title" = "Порад ще немає";
+"learn.empty.message" = "Щоденні поради скоро з'являться тут.";
+"learn.no_results" = "Нічого не знайдено.";
