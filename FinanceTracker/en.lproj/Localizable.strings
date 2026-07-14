@@ -426,8 +426,8 @@
 
 /* Plans */
 "paywall.yearly.best_value" = "Best value";
-"paywall.yearly.save_amount" = "Save 42%";
-"paywall.yearly.per_month" = "$2.92/month, billed annually";
+"paywall.yearly.save_amount.format" = "Save %d%%";
+"paywall.yearly.per_month.format" = "%@/month, billed annually";
 "paywall.plan.yearly" = "Yearly";
 "paywall.plan.yearly.subtitle" = "Renews yearly · cancel anytime";
 "paywall.plan.monthly" = "Monthly";

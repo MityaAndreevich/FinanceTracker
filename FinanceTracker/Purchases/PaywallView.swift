@@ -163,9 +163,22 @@ struct PaywallView: View {
     /// (USD); every other string is the production localized key, so the cards
     /// render identically to the live paywall. Purchase actions are no-ops.
     private var mockPlanCardsSection: some View {
-        VStack(spacing: 12) {
+        // Derived from the mock prices with the SAME functions the live cards use,
+        // so a screenshot can never advertise a per-month figure or a saving that
+        // the real paywall wouldn't print.
+        let annual: Decimal = 34.99
+        let monthly: Decimal = 4.99
+        let usd = Decimal.FormatStyle.Currency(code: "USD", locale: Locale(identifier: "en_US"))
+
+        return VStack(spacing: 12) {
             // No intro offer: the screenshot must show exactly what the store shows.
-            YearlyPlanCard(displayPrice: "$34.99", freeTrialPeriod: nil) {}
+            YearlyPlanCard(
+                displayPrice: "$34.99",
+                perMonthText: PaywallPriceCopy.perMonthText(annualPrice: annual, format: usd),
+                savingsPercent: PaywallPriceCopy.savingsPercent(annualPrice: annual,
+                                                                monthlyPrice: monthly),
+                freeTrialPeriod: nil
+            ) {}
             LifetimePlanCard(displayPrice: "$99.99") {}
             MonthlyPlanCard(displayPrice: "$4.99") {}
         }
@@ -260,8 +273,17 @@ struct PaywallView: View {
     private func planCard(product: Product, kind: ProductKind) -> some View {
         switch kind {
         case .yearly:
+            // The savings claim is only as trustworthy as the monthly price it is
+            // measured against: if that product didn't load, the badge stays away.
+            let monthlyPrice = pm.products
+                .first { ProductKind(productID: $0.id) == .monthly }?
+                .price
+
             YearlyPlanCard(
                 displayPrice: product.displayPrice,
+                perMonthText: product.perMonthText,
+                savingsPercent: PaywallPriceCopy.savingsPercent(annualPrice: product.price,
+                                                                monthlyPrice: monthlyPrice),
                 freeTrialPeriod: PaywallTrialCopy.freeTrialPeriodText(for: product.freeTrialOffer)
             ) {
                 Task { await pm.purchase(product) }
@@ -293,6 +315,15 @@ struct PaywallView: View {
 
 private struct YearlyPlanCard: View {
     let displayPrice: String
+
+    /// Annual price ÷ 12, already formatted in the storefront's currency, or nil
+    /// when StoreKit gave us no price to divide. Nil hides the line: a wrong
+    /// per-month figure is worse than no per-month figure.
+    let perMonthText: String?
+
+    /// Whole-percent saving vs twelve monthly renewals, or nil when it cannot be
+    /// computed — no monthly product, or the annual plan simply isn't cheaper.
+    let savingsPercent: Int?
 
     /// Localized length of the StoreKit free trial ("30 days"), or nil when the
     /// product carries no free introductory offer — which is the production
@@ -355,16 +386,23 @@ private struct YearlyPlanCard: View {
                     Text(displayPrice)
                         .font(.headline)
                         .monospacedDigit()
-                    Text("paywall.yearly.per_month")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
+                    if let perMonthText {
+                        Text(String(format: NSLocalizedString("paywall.yearly.per_month.format", comment: ""),
+                                    perMonthText))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
                 }
             }
 
             HStack(spacing: 6) {
                 BadgeLabel(textKey: "paywall.yearly.best_value", systemImage: "crown.fill")
-                BadgeLabel(textKey: "paywall.yearly.save_amount", systemImage: "tag.fill")
+                if let savingsPercent {
+                    BadgeLabel(text: String(format: NSLocalizedString("paywall.yearly.save_amount.format", comment: ""),
+                                            savingsPercent),
+                               systemImage: "tag.fill")
+                }
             }
 
             Button {
@@ -515,13 +553,27 @@ private struct MonthlyPlanCard: View {
 // MARK: - Supporting Views
 
 private struct BadgeLabel: View {
-    let textKey: LocalizedStringKey
-    let systemImage: String
+    private let label: Text
+    private let systemImage: String
+
+    init(textKey: LocalizedStringKey, systemImage: String) {
+        self.label = Text(textKey)
+        self.systemImage = systemImage
+    }
+
+    /// For copy that was already localized AND interpolated (the savings percent).
+    /// Takes `Text(verbatim:)` so the finished sentence is never mistaken for a
+    /// lookup key and re-localized into itself.
+    init(text: String, systemImage: String) {
+        self.label = Text(verbatim: text)
+        self.systemImage = systemImage
+    }
+
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: systemImage)
                 .font(.system(size: 10, weight: .semibold))
-            Text(textKey)
+            label
                 .font(.caption2.weight(.medium))
         }
         .foregroundStyle(Color.brand)

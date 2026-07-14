@@ -432,8 +432,8 @@
 
 /* Plans */
 "paywall.yearly.best_value" = "Лучшая выгода";
-"paywall.yearly.save_amount" = "Экономия 42%";
-"paywall.yearly.per_month" = "$2.92/мес, оплата за год";
+"paywall.yearly.save_amount.format" = "Экономия %d%%";
+"paywall.yearly.per_month.format" = "%@/мес, оплата за год";
 "paywall.plan.yearly" = "Годовой";
 "paywall.plan.yearly.subtitle" = "Продление раз в год · отмена в любой момент";
 "paywall.plan.monthly" = "Месячный";
