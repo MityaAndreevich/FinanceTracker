@@ -203,6 +203,10 @@ struct ContentView: View {
             if DuplicateReviewDebugSeed.isRequested {
                 DuplicateReviewDebugSeed.seed(modelContext: modelContext)
             }
+            // UI-test seam: accounts survive a relaunch, so the account-cap test would
+            // otherwise inherit the accounts left by the previous run (or by a demo-mode
+            // screenshot session) and meet the cap before it had added anything.
+            AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
             #endif
         }
         .onChange(of: scenePhase) { _, new in

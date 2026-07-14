@@ -19,7 +19,13 @@ final class MonetizationGateFlowTests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
     /// Fresh install, trial backdated past its 14 days, nothing purchased → free tier.
-    private func launchAsLapsedFreeUser() -> XCUIApplication {
+    ///
+    /// `resettingAccounts` empties the account store first. Only the cap test needs it,
+    /// and it needs it badly: accounts are the one thing these tests count that SURVIVES
+    /// a relaunch, because `launch()` reuses the app container. Without the reset the cap
+    /// test inherits the two accounts it created last time (or the three a `--demo-mode`
+    /// screenshot run seeds), starts already at the cap, and fails on its first add.
+    private func launchAsLapsedFreeUser(resettingAccounts: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [
             "--expire-reverse-trial",       // DEBUG seam: backdates the real trial start
@@ -29,6 +35,9 @@ final class MonetizationGateFlowTests: XCTestCase {
             "-AppleLanguages", "(en)",
             "-AppleLocale", "en_US"
         ]
+        if resettingAccounts {
+            app.launchArguments += ["--reset-accounts"]
+        }
         app.launch()
         return app
     }
@@ -117,8 +126,11 @@ final class MonetizationGateFlowTests: XCTestCase {
     /// paywall — while every account already created is still sitting in the list.
     /// That second assertion is the whole ethic of the brief: the cap blocks the
     /// add, it does not take anything away.
+    ///
+    /// Starts from an empty account store, so "the 3rd add" means the 3rd — not the
+    /// 3rd since whatever the last run on this simulator happened to leave behind.
     func test_accountCap_blocksTheNextAdd_butKeepsExistingAccounts() {
-        let app = launchAsLapsedFreeUser()
+        let app = launchAsLapsedFreeUser(resettingAccounts: true)
         dismissTrialEndPaywall(app)
 
         let settingsTab = app.tabBars.buttons.element(boundBy: 4)
