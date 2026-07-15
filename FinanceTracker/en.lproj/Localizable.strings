@@ -867,6 +867,8 @@
 "learn.tip_of_day" = "Tip of the day";
 "learn.seen_tips" = "Tips you’ve seen";
 "learn.more_each_day" = "A new tip appears here each day.";
+"learn.unlocked_count" = "%1$d of %2$d unlocked · a new one each day";
+"learn.collection_complete" = "You’ve unlocked every tip.";
 "learn.search" = "Search tips";
 "learn.dismiss" = "Dismiss tip";
 "learn.learn_more" = "Learn more";

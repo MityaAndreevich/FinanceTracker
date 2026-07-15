@@ -30,37 +30,35 @@ struct TipLibrary: Sendable {
 
     var isEmpty: Bool { base.isEmpty }
 
-    /// Every tip, localized. Backs the hub's browsable list.
+    /// Every tip, localized. Backs the library-wide search primitive.
     var allTips: [DailyTip] { base.indices.compactMap { tip(at: $0) } }
 
-    /// Tips the user has already been shown, **most-recent first** (today first).
-    ///
-    /// "Seen" is derived, not stored: every day from the epoch through today has
-    /// surfaced one tip of the day, so a tip is seen iff its day-index is ≤ today's.
-    /// Because the rotation cycles every `canonicalCount` days, the *distinct* seen
-    /// tips are just the last `canonicalCount` days — fewer before a full cycle has
-    /// elapsed, which is what makes day 1 show exactly one tip. Deriving this keeps
-    /// the hub honest with zero persistence: it can never claim a tip was seen that
-    /// the rotation never actually surfaced.
-    ///
-    /// A `todayDayIndex` before the epoch (device clock in the past) yields no seen
-    /// tips, so the hub falls back to its day-1 state rather than indexing nonsense.
-    func seenTips(todayDayIndex: Int) -> [DailyTip] {
-        guard canonicalCount > 0, todayDayIndex >= 0 else { return [] }
-        let distinctCount = min(canonicalCount, todayDayIndex + 1)
-        return (0..<distinctCount).compactMap { offset in
-            TipRotation.tipIndex(dayIndex: todayDayIndex - offset,
-                                 canonicalCount: canonicalCount)
-                .flatMap(tip(at:))
-        }
+    /// The canonical tip ids, in base order — locale-independent, so a user's deck
+    /// (see `TipDeck`) and their persisted collection are keyed by id, not position.
+    /// This is the list the reveal engine shuffles.
+    var canonicalIDs: [String] { base.map(\.id) }
+
+    /// The localized tip for a canonical id, or nil if this library doesn't contain
+    /// it. The persisted collection is a list of ids; a library that later drops or
+    /// renames a tip simply resolves fewer, never crashes.
+    func tip(forID id: String) -> DailyTip? {
+        base.firstIndex { $0.id == id }.flatMap(tip(at:))
+    }
+
+    /// Resolves `ids` to localized tips **in the order given**, skipping any the
+    /// current library doesn't know. The hub passes its revealed ids most-recent
+    /// first; this preserves that order.
+    func tips(forIDs ids: [String]) -> [DailyTip] {
+        ids.compactMap(tip(forID:))
     }
 
     /// Tips in `candidates` matching `query` across term, explanation, and strategy.
     /// An empty or whitespace-only query returns `candidates` unchanged.
     ///
-    /// Takes the candidate list explicitly so the hub can scope search to the *seen*
-    /// tips — searching the whole library would leak unseen future tips through the
-    /// search field and defeat the daily-surprise the seen-only rule exists to keep.
+    /// Takes the candidate list explicitly so the hub can scope search to the
+    /// *revealed* tips — searching the whole library would leak still-locked tips
+    /// through the search field and defeat the daily surprise the collection exists
+    /// to keep. The hub passes its revealed set as the candidates.
     ///
     /// Matches the *localized* text, not the base text: a Spanish user typing a
     /// Spanish word must find the tip even though the canonical content is English.
@@ -75,7 +73,7 @@ struct TipLibrary: Sendable {
     }
 
     /// Search across the entire library. Retained for callers/tests that want the
-    /// unscoped behaviour; the hub uses `matching(_:in:)` over `seenTips`.
+    /// unscoped behaviour; the hub uses `matching(_:in:)` over its revealed set.
     func search(_ query: String) -> [DailyTip] {
         matching(query, in: allTips)
     }

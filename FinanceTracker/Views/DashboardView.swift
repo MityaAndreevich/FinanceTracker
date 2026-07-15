@@ -24,6 +24,10 @@ struct DashboardView: View {
     // by itself at the next local midnight, so there is no timer and no cleanup pass.
     @AppStorage(TipDismissal.storageKey) private var tipDismissedDayIndex: Int = TipDismissal.none
 
+    // The per-user tip collection. Observed so the daily card appears the instant a
+    // launch reveals today's tip (the reveal is driven from the app's launch task).
+    @ObservedObject private var tipCollection = TipCollection.shared
+
     @Query(sort: \Transaction.date, order: .reverse)
     private var transactions: [Transaction]
 
@@ -813,14 +817,10 @@ struct DashboardView: View {
         return daysSince >= 14
     }
 
-    /// Today's tip, or nil when the library is empty (no content shipped yet).
+    /// Today's tip — the user's most-recently unlocked tip — or nil when the library
+    /// is empty (no content shipped yet) or nothing has been revealed yet.
     private var todaysTip: DailyTip? {
-        let library = TipLibraryCache.current
-        guard let index = TipRotation.tipIndex(
-            dayIndex: todayTipDayIndex,
-            canonicalCount: library.canonicalCount
-        ) else { return nil }
-        return library.tip(at: index)
+        tipCollection.todaysTip
     }
 
     /// Local timezone, so the tip rolls over at the user's own midnight.

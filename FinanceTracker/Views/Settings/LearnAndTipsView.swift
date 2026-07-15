@@ -22,39 +22,42 @@ struct LearnAndTipsView: View {
     @State private var searchText = ""
     @State private var showCopiedToast = false
 
+    // The per-user collection. Observed so the list updates the instant a launch
+    // reveals a new tip while this screen is open.
+    @ObservedObject private var tips = TipCollection.shared
+
     private var library: TipLibrary { TipLibraryCache.current }
 
-    /// Today's rotation day. Computed once so the hero, the history list, and the
-    /// search scope all agree on what "today" is within a single render.
-    private var todayDayIndex: Int {
-        TipRotation.dayIndex(for: .now, in: .current)
-    }
+    /// Today's hero: the user's most-recently unlocked tip.
+    private var todaysTip: DailyTip? { tips.todaysTip }
 
-    private var todaysTip: DailyTip? {
-        guard let index = TipRotation.tipIndex(
-            dayIndex: todayDayIndex,
-            canonicalCount: library.canonicalCount
-        ) else { return nil }
-        return library.tip(at: index)
-    }
-
-    /// The revealed history: seen tips minus today's, most-recent first. Today's tip
-    /// is the hero above this list, so repeating it here would be noise. Empty on
-    /// day 1 (nothing seen yet but today) — the view shows a "more each day" line.
+    /// The rest of the unlocked collection, most-recent first. Today's hero is shown
+    /// above this list, so it is filtered out here to avoid showing it twice. Empty
+    /// on day 1 (only today's tip unlocked) — the section footer promises more.
     private var seenHistory: [DailyTip] {
-        Array(library.seenTips(todayDayIndex: todayDayIndex).dropFirst())
+        let heroID = todaysTip?.id
+        return tips.collection.filter { $0.id != heroID }
     }
 
     private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// Search is scoped to the tips the user has already seen — including today's.
-    /// Scoping to the full library would surface tomorrow's tip through the search
-    /// field and spoil the daily reveal the hub exists to preserve. Filtering lives
-    /// on `TipLibrary` so it is unit-tested rather than trapped in a view.
+    /// Search is scoped to the UNLOCKED collection. Scoping to the full library
+    /// would surface a still-locked tip through the search field and spoil the daily
+    /// reveal the hub exists to preserve. Filtering lives on `TipLibrary` so it is
+    /// unit-tested rather than trapped in a view.
     private var searchResults: [DailyTip] {
-        library.matching(searchText, in: library.seenTips(todayDayIndex: todayDayIndex))
+        library.matching(searchText, in: tips.collection)
+    }
+
+    /// The progress line under the collection: a count only, never any locked
+    /// content. Once everything is unlocked, it says so instead of a count.
+    private var unlockedProgress: String {
+        tips.isComplete
+            ? String(localized: "learn.collection_complete")
+            : String(format: String(localized: "learn.unlocked_count"),
+                     tips.unlockedCount, tips.totalCount)
     }
 
     var body: some View {
@@ -71,8 +74,8 @@ struct LearnAndTipsView: View {
                     .listRowBackground(Color.clear)
                 }
             } else if isSearching {
-                // Scoped to seen tips only, so the search field can never reveal a
-                // tip the user hasn't reached yet.
+                // Scoped to the unlocked collection only, so the search field can
+                // never reveal a tip the user hasn't unlocked yet.
                 Section("learn.seen_tips") {
                     if searchResults.isEmpty {
                         Text("learn.no_results")
@@ -91,20 +94,21 @@ struct LearnAndTipsView: View {
                     }
                 }
 
-                // Only tips already revealed as a past tip of the day. The future
-                // library is never browsable — that is the whole point of the hub.
-                Section("learn.seen_tips") {
-                    if seenHistory.isEmpty {
-                        // Day 1: nothing seen but today. Promise more rather than
-                        // showing a bare empty section.
-                        Text("learn.more_each_day")
-                            .font(.bcCaption)
-                            .foregroundStyle(Color.bcTextSecondary)
-                    } else {
-                        ForEach(seenHistory) { tip in
-                            tipNavigationRow(tip)
-                        }
+                // Only tips the user has already unlocked. Still-locked tips are
+                // never listed or previewed — the collection grows one per day, and
+                // that daily surprise is the whole point of the hub. The footer shows
+                // progress as a count so there is a sense of "more to come" without
+                // revealing anything locked.
+                Section {
+                    ForEach(seenHistory) { tip in
+                        tipNavigationRow(tip)
                     }
+                } header: {
+                    Text("learn.seen_tips")
+                } footer: {
+                    Text(verbatim: unlockedProgress)
+                        .font(.bcCaption)
+                        .foregroundStyle(Color.bcTextSecondary)
                 }
             }
 

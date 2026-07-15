@@ -187,7 +187,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // ADDED learn.seen_tips (the section header) + learn.more_each_day (the
         // day-1 line when nothing but today has been seen). All 5 locales in parity.
         // Was 690.
-        XCTAssertEqual(enKeys.count, 691, "English baseline changed; update the expected count.")
+        // 2026-07-15 (per-user collection-under-lock): net +2. The collection is now
+        // driven by the user's own usage, so ADDED learn.unlocked_count (the "X of Y
+        // unlocked" progress line) + learn.collection_complete (shown once every tip
+        // is unlocked). learn.more_each_day is retained. All 5 locales in parity.
+        // Was 691.
+        XCTAssertEqual(enKeys.count, 693, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

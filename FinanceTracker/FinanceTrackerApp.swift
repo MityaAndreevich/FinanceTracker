@@ -98,6 +98,12 @@ struct FinanceTrackerApp: App {
                     // subscribes to its entitlement stream and stamps the reverse
                     // trial start on the very first launch (idempotent thereafter).
                     AccessManager.shared.start()
+                    // Reveal today's tip (at most one per calendar day). Runs after
+                    // the language is applied so the hero resolves in the right locale.
+                    #if DEBUG
+                    TipCollection.shared.resetForDebugIfRequested()
+                    #endif
+                    TipCollection.shared.start()
                     if UserDefaults.standard.object(forKey: "firstLaunchDate") == nil {
                         firstLaunchInterval = Date().timeIntervalSinceReferenceDate
                     }
@@ -118,6 +124,9 @@ struct FinanceTrackerApp: App {
                     ProactiveAlertRefresher.refresh(
                         modelContext: SharedModelContainer.shared.mainContext
                     )
+                    // Catch a midnight rollover while the app was backgrounded, so a
+                    // new day's tip appears without a cold relaunch.
+                    TipCollection.shared.refresh()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
                     ProactiveAlertRefresher.refresh(

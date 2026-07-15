@@ -875,6 +875,8 @@
 "learn.tip_of_day" = "Совет дня";
 "learn.seen_tips" = "Увиденные советы";
 "learn.more_each_day" = "Каждый день здесь появляется новый совет.";
+"learn.unlocked_count" = "Открыто %1$d из %2$d · новый совет каждый день";
+"learn.collection_complete" = "Вы открыли все советы.";
 "learn.search" = "Поиск советов";
 "learn.dismiss" = "Скрыть совет";
 "learn.learn_more" = "Подробнее";

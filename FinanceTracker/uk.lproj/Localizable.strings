@@ -872,6 +872,8 @@
 "learn.tip_of_day" = "Порада дня";
 "learn.seen_tips" = "Переглянуті поради";
 "learn.more_each_day" = "Щодня тут з’являється нова порада.";
+"learn.unlocked_count" = "Відкрито %1$d з %2$d · нова порада щодня";
+"learn.collection_complete" = "Ви відкрили всі поради.";
 "learn.search" = "Пошук порад";
 "learn.dismiss" = "Сховати пораду";
 "learn.learn_more" = "Докладніше";
