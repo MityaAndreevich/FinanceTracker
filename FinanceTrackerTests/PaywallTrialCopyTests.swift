@@ -177,7 +177,7 @@ struct PaywallCopyHonestyTests {
 
 // MARK: - Reverse-trial ("preview") copy
 
-@Suite("The 14-day reverse trial reads as a preview, not a subscription trial")
+@Suite("The reverse trial reads as a preview, not a subscription trial")
 struct ReverseTrialCopyTests {
 
     private static let locales = ["en", "ru", "es", "pt-BR", "uk"]
@@ -193,25 +193,53 @@ struct ReverseTrialCopyTests {
         return dict
     }
 
-    @Test("The active-preview line exists in every locale and takes a day count")
-    func activePreviewRendersWithDaysRemaining() throws {
+    /// A duration no real configuration would use: if it shows up in the rendered
+    /// string, the number genuinely came through the format arg — not from a
+    /// hand-typed "14" that will lie the day `ReverseTrial.durationDays` moves
+    /// (v1.0.2 review, item 3 — the drift class the comparison table already
+    /// kills for the caps).
+    private static let sentinelDays = 99
+
+    @Test("The active-preview line derives BOTH numbers: duration and days left")
+    func activePreviewRendersWithDurationAndDaysRemaining() throws {
         for locale in Self.locales {
             let dict = try #require(Self.strings(locale), "Missing locale: \(locale)")
             let value = try #require(dict["paywall.preview_active.format"],
                                      "\(locale) is missing paywall.preview_active.format")
-            #expect(value.contains("%d"), "\(locale) preview line lost its day count")
-            #expect(String(format: value, 7).contains("7"))
+            let rendered = String(format: value, Self.sentinelDays, 7)
+            #expect(rendered.contains("\(Self.sentinelDays)"),
+                    "\(locale) preview line does not derive its duration from the constant")
+            #expect(rendered.contains("7"), "\(locale) preview line lost its days-left count")
         }
     }
 
-    @Test("The preview-ended notice exists in every locale")
+    @Test("The preview-ended notice exists in every locale and derives its duration")
     func previewEndedRenders() throws {
         for locale in Self.locales {
             let dict = try #require(Self.strings(locale), "Missing locale: \(locale)")
             let title = try #require(dict["paywall.trial_ended.title"], "\(locale) missing trial_ended.title")
             let body = try #require(dict["paywall.trial_ended.body"], "\(locale) missing trial_ended.body")
-            #expect(title.isEmpty == false)
+            #expect(String(format: title, Self.sentinelDays).contains("\(Self.sentinelDays)"),
+                    "\(locale) trial-ended title does not derive its duration from the constant")
             #expect(body.isEmpty == false)
+        }
+    }
+
+    /// The regression that reintroduces the bug is a translator (or a merge)
+    /// replacing the placeholder with a literal number again. Any digit left in
+    /// the raw format string once %-placeholders are stripped is that regression.
+    @Test("No locale hand-types a number into the trial-duration copy")
+    func noHardcodedNumbersSurvive() throws {
+        for locale in Self.locales {
+            let dict = try #require(Self.strings(locale), "Missing locale: \(locale)")
+            for key in ["paywall.preview_active.format", "paywall.trial_ended.title"] {
+                let value = try #require(dict[key], "\(locale) is missing \(key)")
+                let withoutPlaceholders = value.replacingOccurrences(
+                    of: #"%\d+\$[a-z@]|%[a-z@]"#, with: "", options: .regularExpression)
+                let hasHandTypedNumber = withoutPlaceholders.contains { $0.isNumber }
+                #expect(!hasHandTypedNumber,
+                        "\(locale) \(key) contains a hand-typed number — the duration must be a format arg")
+            }
         }
     }
 

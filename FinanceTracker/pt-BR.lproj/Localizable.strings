@@ -730,12 +730,12 @@
 "cs.categories.cap_hint" = "O plano gratuito inclui %d categorias personalizadas, além de todas as prontas. Assine o Premium para adicionar mais — as que você já criou continuam aí.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
-"paywall.trial_ended.title" = "Seu acesso grátis de 14 dias terminou";
+"paywall.trial_ended.title" = "Seu acesso grátis de %d dias terminou";
 "paywall.trial_ended.body" = "Tudo o que você adicionou continua aqui — nada foi apagado nem escondido. O Premium traz de volta a importação CSV e permite adicionar mais contas e categorias.";
 
 /* v1.0.2 — sem teste do StoreKit. O acesso de 14 dias é o teste; as chaves
    abaixo só aparecem se o StoreKit reportar uma oferta real. */
-"paywall.preview_active.format" = "Você tem acesso grátis por 14 dias — faltam %d dias. Sem cartão, nada para cancelar.";
+"paywall.preview_active.format" = "Você tem acesso grátis por %1$d dias — faltam %2$d dias. Sem cartão, nada para cancelar.";
 "paywall.cta.yearly.trial" = "Iniciar teste grátis";
 "paywall.plan.yearly.subtitle.trial.format" = "%1$@ grátis, depois %2$@/ano";
 "paywall.trial.disclosure.format" = "Após %1$@ grátis, %2$@/ano cobrado automaticamente. Cancele a qualquer momento em Ajustes › ID Apple › Assinaturas.";

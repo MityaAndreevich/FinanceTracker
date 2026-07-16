@@ -851,12 +851,12 @@
 "cs.categories.cap_hint" = "Free plan includes %d custom categories, plus all the built-in ones. Upgrade to add more — your existing categories always stay.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
-"paywall.trial_ended.title" = "Your 14-day preview has ended";
+"paywall.trial_ended.title" = "Your %d-day preview has ended";
 "paywall.trial_ended.body" = "Everything you added is still here — nothing was deleted or hidden. Premium brings back CSV import and lets you add more accounts and categories.";
 
 /* v1.0.2 — no StoreKit trial. The 14-day reverse trial is the trial; the
    keys below render ONLY if StoreKit reports a real free intro offer. */
-"paywall.preview_active.format" = "You're on your free 14-day preview — %d days left. No card, nothing to cancel.";
+"paywall.preview_active.format" = "You're on your free %1$d-day preview — %2$d days left. No card, nothing to cancel.";
 "paywall.cta.yearly.trial" = "Start free trial";
 "paywall.plan.yearly.subtitle.trial.format" = "%1$@ free, then %2$@/year";
 "paywall.trial.disclosure.format" = "After %1$@ free, %2$@/year auto-renews. Cancel anytime in Settings › Apple ID › Subscriptions.";

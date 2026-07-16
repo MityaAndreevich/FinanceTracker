@@ -99,7 +99,12 @@ struct PaywallView: View {
     /// subscription trial, because no card was taken and there is nothing to
     /// cancel. Being straight about that is the whole pitch of this app.
     private var previewActiveNotice: some View {
+        // The duration is a format arg, not a hand-typed number: when
+        // ReverseTrial.durationDays moves, this copy moves with it in every
+        // locale (v1.0.2 review, item 3 — the same drift class the comparison
+        // table eliminated for the caps).
         Text(String(format: NSLocalizedString("paywall.preview_active.format", comment: ""),
+                    ReverseTrial.durationDays,
                     access.trialDaysRemaining))
             .font(.footnote)
             .foregroundStyle(.secondary)
@@ -116,7 +121,9 @@ struct PaywallView: View {
     /// copy is a description of the code, not a reassurance we hope holds.
     private var trialEndedNotice: some View {
         VStack(spacing: 4) {
-            Text("paywall.trial_ended.title")
+            // Duration derives from the constant — see previewActiveNotice.
+            Text(String(format: NSLocalizedString("paywall.trial_ended.title", comment: ""),
+                        ReverseTrial.durationDays))
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
