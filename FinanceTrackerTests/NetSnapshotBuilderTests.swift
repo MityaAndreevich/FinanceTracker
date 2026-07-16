@@ -15,6 +15,23 @@ import SwiftData
 @Suite("NetSnapshotBuilder")
 struct NetSnapshotBuilderTests {
 
+    /// The expected label, resolved from the `en` bundle EXPLICITLY.
+    ///
+    /// These builds pass `locale: en_US`, so the builder's labels are English by
+    /// contract. The old assertions compared against process-locale
+    /// `String(localized:)` — which floats with `LocalizedBundle`, a process
+    /// GLOBAL that other suites legitimately switch (TipLibraryTests walks
+    /// ru/es/uk/pt), and Swift Testing runs suites in parallel in-process. The
+    /// result was an order/interleaving-dependent failure that looked like a
+    /// builder bug and reproduced or vanished with unrelated suite additions.
+    /// Both sides of the comparison are now pinned to the same locale.
+    private func en(_ key: String) -> String {
+        guard let path = Bundle.main.path(forResource: "en", ofType: "lproj"),
+              let bundle = Bundle(path: path)
+        else { return key }
+        return bundle.localizedString(forKey: key, value: key, table: nil)
+    }
+
     // MARK: - Ring fraction guards (pure)
 
     @Test func ring_budgetPath_isSpentOverBudget() {
@@ -274,7 +291,7 @@ struct NetSnapshotBuilderTests {
                                             monthlyBudgetCents: 200_000,
                                             locale: Locale(identifier: "en_US"))
 
-        #expect(snap.heroLabel == String(localized: "widget.safe_to_spend"))
+        #expect(snap.heroLabel == en("widget.safe_to_spend"))
         #expect(!snap.heroIsAlert)
         #expect(!snap.heroSubtitle.isEmpty)                     // "of $2,000"
         #expect(abs(snap.ringFraction - (65_000.0 / 200_000.0)) < 0.0001)
@@ -294,7 +311,7 @@ struct NetSnapshotBuilderTests {
                                             locale: Locale(identifier: "en_US"))
 
         #expect(snap.heroIsAlert)
-        #expect(snap.heroLabel == String(localized: "widget.over_budget"))
+        #expect(snap.heroLabel == en("widget.over_budget"))
         #expect(snap.ringFraction == 1.0)
     }
 
@@ -313,7 +330,7 @@ struct NetSnapshotBuilderTests {
                                             monthlyBudgetCents: 0,
                                             locale: Locale(identifier: "en_US"))
 
-        #expect(snap.heroLabel == String(localized: "widget.safe_to_spend"))
+        #expect(snap.heroLabel == en("widget.safe_to_spend"))
         #expect(!snap.heroIsAlert)
         #expect(!snap.heroSubtitle.isEmpty)                     // "of $80 earned"
         #expect(!snap.ringIsNeutral)                            // income present → spent/income
@@ -334,7 +351,7 @@ struct NetSnapshotBuilderTests {
                                             locale: Locale(identifier: "en_US"))
 
         #expect(snap.heroIsAlert)
-        #expect(snap.heroLabel == String(localized: "widget.overspent"))
+        #expect(snap.heroLabel == en("widget.overspent"))
         #expect(snap.ringFraction == 1.0)
     }
 
@@ -350,7 +367,7 @@ struct NetSnapshotBuilderTests {
                                             monthlyBudgetCents: 0,
                                             locale: Locale(identifier: "en_US"))
 
-        #expect(snap.heroLabel == String(localized: "widget.hero.spent"))
+        #expect(snap.heroLabel == en("widget.hero.spent"))
         #expect(!snap.heroIsAlert)
         #expect(snap.heroSubtitle.isEmpty)
         #expect(snap.ringIsNeutral)                             // no denominator to fill
