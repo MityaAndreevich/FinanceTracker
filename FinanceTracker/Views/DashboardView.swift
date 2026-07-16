@@ -828,27 +828,35 @@ struct DashboardView: View {
         TipRotation.dayIndex(for: .now, in: .current)
     }
 
-    /// Exactly one teaching card at a time. The Day-0 card is onboarding for a
-    /// brand-new user; the daily tip is habit reinforcement for an established one.
-    /// Stacking both on a first run would be pure noise on the one screen that has
-    /// to stay calm, so they are exclusive branches of the same slot.
+    /// Exactly one teaching card at a time — see `DashboardTeachingSlot.decide`
+    /// for the precedence and the day-1 contract (v1.0.2 review, item 2).
     @ViewBuilder
     private var insightSection: some View {
-        if transactions.isEmpty {
+        let slot = DashboardTeachingSlot.decide(
+            hasTransactions: !transactions.isEmpty,
+            tipAvailable: todaysTip != nil,
+            tipDismissedToday: TipDismissal.isDismissed(
+                dismissedDayIndex: tipDismissedDayIndex,
+                todayIndex: todayTipDayIndex
+            ),
+            insightsUnlocked: hasUnlockedInsights
+        )
+        switch slot {
+        case .emptyState:
             DashboardEmptyState(animateArrow: animateArrow)
                 .padding(.horizontal, 16)
-        } else if !hasUnlockedInsights {
+        case .tip:
+            if let tip = todaysTip {
+                TipOfTheDayCard(tip: tip) {
+                    tipDismissedDayIndex = todayTipDayIndex
+                }
+                .padding(.horizontal, 16)
+            }
+        case .day0:
             Day0EducationalCard(showAddTransaction: $showAddTransaction)
                 .padding(.horizontal, 16)
-        } else if let tip = todaysTip,
-                  !TipDismissal.isDismissed(
-                      dismissedDayIndex: tipDismissedDayIndex,
-                      todayIndex: todayTipDayIndex
-                  ) {
-            TipOfTheDayCard(tip: tip) {
-                tipDismissedDayIndex = todayTipDayIndex
-            }
-            .padding(.horizontal, 16)
+        case .none:
+            EmptyView()
         }
     }
 
@@ -943,6 +951,43 @@ private struct DashboardEmptyState: View {
 }
 
 // MARK: - Day-0 Educational Card
+
+/// Which single teaching card the Dashboard's insight slot shows. Pure, so the
+/// precedence — the part that has regressed three times from three different
+/// angles (global epoch, orphan-inflated count, a borrowed maturity gate) — is
+/// unit-tested rather than trapped in a ViewBuilder.
+///
+/// Precedence (v1.0.2 review, item 2):
+///   1. No transactions yet → the empty state. Adding the first transaction is
+///      the one action that matters on an empty dashboard; nothing competes.
+///   2. A tip exists and wasn't dismissed today → the daily tip, FROM DAY 1.
+///      Tips are static content and need no data. The old order borrowed
+///      `hasUnlockedInsights` — a DATA-maturity gate (10 transactions / 14
+///      days) that exists so analytics mean something — which kept the
+///      dashboard silent while reveals accumulated, then debuted the card
+///      alongside the very back-catalogue the per-user deck exists to prevent.
+///   3. Otherwise, while insights are still locked → the Day-0 "keep tracking"
+///      nudge. The tip supersedes it, but the nudge keeps its job for an early
+///      user who dismissed today's tip.
+///
+/// Exactly one card at a time, always — a calm dashboard is the invariant.
+enum DashboardTeachingSlot: Equatable {
+    case emptyState
+    case tip
+    case day0
+    case none
+
+    static func decide(
+        hasTransactions: Bool,
+        tipAvailable: Bool,
+        tipDismissedToday: Bool,
+        insightsUnlocked: Bool
+    ) -> DashboardTeachingSlot {
+        guard hasTransactions else { return .emptyState }
+        if tipAvailable && !tipDismissedToday { return .tip }
+        return insightsUnlocked ? .none : .day0
+    }
+}
 
 private struct Day0EducationalCard: View {
     @Binding var showAddTransaction: Bool
