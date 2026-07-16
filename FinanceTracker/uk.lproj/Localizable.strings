@@ -905,7 +905,7 @@
 "paywall.compare.premium" = "Premium";
 "paywall.compare.row.transactions" = "Необмежені операції";
 "paywall.compare.row.history" = "Уся ваша історія";
-"paywall.compare.row.analytics" = "Аналітика за поточний місяць";
+"paywall.compare.row.analytics" = "Аналітика і тренди";
 "paywall.compare.row.widget" = "Віджет на екрані «Дім»";
 "paywall.compare.row.csv_export" = "Експорт у CSV";
 "paywall.compare.row.accounts" = "Рахунки";

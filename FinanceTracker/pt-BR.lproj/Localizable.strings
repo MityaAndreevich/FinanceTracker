@@ -779,7 +779,7 @@
 "paywall.compare.premium" = "Premium";
 "paywall.compare.row.transactions" = "Transações ilimitadas";
 "paywall.compare.row.history" = "Todo o seu histórico";
-"paywall.compare.row.analytics" = "Análises do mês atual";
+"paywall.compare.row.analytics" = "Análises e tendências";
 "paywall.compare.row.widget" = "Widget na Tela de Início";
 "paywall.compare.row.csv_export" = "Exportação em CSV";
 "paywall.compare.row.accounts" = "Contas";

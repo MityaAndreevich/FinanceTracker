@@ -908,7 +908,7 @@
 "paywall.compare.premium" = "Premium";
 "paywall.compare.row.transactions" = "Неограниченные операции";
 "paywall.compare.row.history" = "Вся ваша история";
-"paywall.compare.row.analytics" = "Аналитика за текущий месяц";
+"paywall.compare.row.analytics" = "Аналитика и тренды";
 "paywall.compare.row.widget" = "Виджет на экране «Домой»";
 "paywall.compare.row.csv_export" = "Экспорт в CSV";
 "paywall.compare.row.accounts" = "Счета";

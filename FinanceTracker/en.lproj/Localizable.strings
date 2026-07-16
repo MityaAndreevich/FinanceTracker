@@ -902,7 +902,7 @@
 "paywall.compare.premium" = "Premium";
 "paywall.compare.row.transactions" = "Unlimited transactions";
 "paywall.compare.row.history" = "Your full history";
-"paywall.compare.row.analytics" = "Current-month analytics";
+"paywall.compare.row.analytics" = "Analytics & trends";
 "paywall.compare.row.widget" = "Home Screen widget";
 "paywall.compare.row.csv_export" = "CSV export";
 "paywall.compare.row.accounts" = "Accounts";
