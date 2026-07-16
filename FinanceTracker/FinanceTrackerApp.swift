@@ -119,19 +119,22 @@ struct FinanceTrackerApp: App {
                 // moves on a write, so these two hooks are sufficient: every in-app write
                 // lands on didSave, and anything that happened while we were away (an
                 // out-of-process Siri write, a month rollover) is caught on foreground.
+                //
+                // COALESCED + OFF-MAIN (hang-brief Item 1): the synchronous form of this
+                // recompute fetched the ENTIRE transaction table on the main actor — at
+                // ~1s per pass at 12k rows, fired twice per QuickAdd (transaction save +
+                // merchant-learning save), it WAS the founder's multi-second freeze.
+                // scheduleRefresh collapses a didSave burst to one pass and runs the
+                // read on LedgerAggregator's executor.
                 .onChange(of: scenePhase) { _, phase in
                     guard phase == .active else { return }
-                    ProactiveAlertRefresher.refresh(
-                        modelContext: SharedModelContainer.shared.mainContext
-                    )
+                    ProactiveAlertRefreshScheduler.shared.schedule()
                     // Catch a midnight rollover while the app was backgrounded, so a
                     // new day's tip appears without a cold relaunch.
                     TipCollection.shared.refresh()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
-                    ProactiveAlertRefresher.refresh(
-                        modelContext: SharedModelContainer.shared.mainContext
-                    )
+                    ProactiveAlertRefreshScheduler.shared.schedule()
                 }
                 // Redirect Bundle.main string lookups the instant the in-app
                 // language changes. GeneralSettingView already defers this state
