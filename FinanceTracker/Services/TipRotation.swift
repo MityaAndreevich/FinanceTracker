@@ -10,18 +10,16 @@ import Foundation
 
 enum TipRotation {
 
-    /// Day 0 of the rotation. Arbitrary, but **fixed by contract**: ContentStudio
-    /// derives the social calendar from this same index, so changing the epoch
-    /// reshuffles every user's sequence and desynchronizes the calendar.
-    static let epoch = DateComponents(year: 2026, month: 1, day: 1)
-
-    /// The zone ContentStudio uses to derive "day N".
+    /// Day 0 of the day-index arithmetic. Arbitrary and internal.
     ///
-    /// The app itself passes `.current`, so the tip rolls over at the user's local
-    /// midnight. That means a user near the dateline can sit ±1 day off the derived
-    /// post — pinning this zone removes ambiguity from the derivation, it does not
-    /// (and cannot) eliminate that skew. Accepted cost of local rollover.
-    static let referenceTimeZone = TimeZone(identifier: "UTC")!
+    /// HISTORY: this used to be a cross-system contract — the pre-1.0.2 rotation
+    /// showed every user the same "day N" tip and ContentStudio derived a social
+    /// calendar from the same index. That model was abandoned for the per-user
+    /// shuffled deck (see TipDeck); ContentStudio schedules independently now.
+    /// Today the index only gates "one reveal per calendar day" and drives the
+    /// post-completion hero rotation, both per-user. Moving the epoch would
+    /// change nothing except which tip a *completed* deck rotates to today.
+    static let epoch = DateComponents(year: 2026, month: 1, day: 1)
 
     /// Whole days from the epoch to `date`'s start-of-day in `timeZone`.
     /// Negative for dates before the epoch.
