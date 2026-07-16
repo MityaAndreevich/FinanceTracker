@@ -28,11 +28,46 @@ struct DashboardView: View {
     // launch reveals today's tip (the reveal is driven from the app's launch task).
     @ObservedObject private var tipCollection = TipCollection.shared
 
-    @Query(sort: \Transaction.date, order: .reverse)
-    private var transactions: [Transaction]
+    // SCOPED queries (hang-brief Item 1, stage 2). The old single
+    // `@Query(all transactions)` re-fetched and re-walked the ENTIRE table on
+    // the main thread on every body evaluation after every save — several
+    // O(n)-with-Calendar passes per eval (currentMonth filter, prefix, widget
+    // signature), measured at ~5.5s of blocked UI per QuickAdd save at 8k rows.
+    // Everything this screen renders is current-month or recent-5; the only
+    // all-time facts it needs are COUNTS, which are SQL aggregates (see
+    // `totalTransactionCount` / `hasDemoData`) and never materialize rows.
+    //
+    // The month window is fixed at view-identity creation; ContentView flips the
+    // Dashboard's `.id` on a month rollover so the predicate follows the
+    // calendar (see `dashboardMonthKey` there).
+    @Query private var monthTransactions: [Transaction]
+
+    /// The 5 newest rows, any date — the "Recent" list. Also the cheapest
+    /// correct emptiness probe: this is empty iff the table is empty.
+    @Query private var recentTransactions: [Transaction]
 
     @Query(sort: \Category.order, order: .forward)
     private var allCategories: [Category]
+
+    init() {
+        let calendar = Calendar.current
+        let monthStart = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: .now)
+        ) ?? .now
+        let nextMonthStart = calendar.date(byAdding: .month, value: 1, to: monthStart) ?? .distantFuture
+
+        _monthTransactions = Query(
+            filter: #Predicate<Transaction> { $0.date >= monthStart && $0.date < nextMonthStart },
+            sort: \Transaction.date,
+            order: .reverse
+        )
+
+        var recent = FetchDescriptor<Transaction>(
+            sortBy: [SortDescriptor(\Transaction.date, order: .reverse)]
+        )
+        recent.fetchLimit = 5
+        _recentTransactions = Query(recent)
+    }
 
     @State private var showAddTransaction = false
     @State private var animateArrow = false
@@ -79,8 +114,14 @@ struct DashboardView: View {
         return Date().timeIntervalSince(at) < 30
     }
 
-    private var currentMonthTransactions: [Transaction] {
-        PeriodScope.currentMonth.filter(transactions)
+    /// The @Query is already month-scoped; the name survives so the dozen
+    /// call sites below don't churn.
+    private var currentMonthTransactions: [Transaction] { monthTransactions }
+
+    /// All-time row count as a SQL COUNT — no row materialization, ~ms at any
+    /// scale. Recomputed per body eval, which is exactly when it can change.
+    private var totalTransactionCount: Int {
+        (try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? 0
     }
 
     private var expenseCents: Int {
@@ -93,9 +134,6 @@ struct DashboardView: View {
 
     private var netCents: Int { incomeCents - expenseCents }
 
-    private var recentTransactions: [Transaction] {
-        Array(transactions.prefix(5))
-    }
 
     // MARK: - Budget / safe-to-spend
 
@@ -294,7 +332,10 @@ struct DashboardView: View {
     /// Content fingerprint driving the widget rebuild — moves on edits, not just
     /// on add/delete (Item 3). Cheap: hashes ints/uuids over the current set.
     private var widgetSnapshotSignature: Int {
-        NetSnapshotBuilder.contentSignature(transactions: transactions,
+        // Month-scoped input: NetSnapshotBuilder.build month-filters internally,
+        // so the widget only ever renders current-month data — walking the whole
+        // table here was pure waste (and O(n) on the main thread per change).
+        NetSnapshotBuilder.contentSignature(transactions: monthTransactions,
                                             currencyCode: defaultCurrencyCode,
                                             monthlyBudgetCents: monthlyBudgetCents,
                                             languageCode: appLanguageCode)
@@ -310,7 +351,7 @@ struct DashboardView: View {
     }
 
     private func refreshWidgetSnapshot() {
-        NetSnapshotBuilder.updateSnapshot(transactions: transactions,
+        NetSnapshotBuilder.updateSnapshot(transactions: monthTransactions,
                                           currencyCode: defaultCurrencyCode,
                                           monthlyBudgetCents: monthlyBudgetCents,
                                           languageCode: appLanguageCode)
@@ -575,7 +616,12 @@ struct DashboardView: View {
 
     // MARK: - Demo sandbox banner (Brief 28-C)
 
-    private var hasDemoData: Bool { transactions.contains { $0.isDemo } }
+    /// SQL COUNT with a predicate — never materializes rows.
+    private var hasDemoData: Bool {
+        ((try? modelContext.fetchCount(
+            FetchDescriptor<Transaction>(predicate: #Predicate { $0.isDemo })
+        )) ?? 0) > 0
+    }
 
     private var demoBanner: some View {
         HStack(spacing: 10) {
@@ -811,7 +857,7 @@ struct DashboardView: View {
     // MARK: - Insight / Day-0
 
     private var hasUnlockedInsights: Bool {
-        if transactions.count >= 10 { return true }
+        if totalTransactionCount >= 10 { return true }
         let firstLaunchDate = Date(timeIntervalSinceReferenceDate: firstLaunchInterval)
         let daysSince = Calendar.current.dateComponents([.day], from: firstLaunchDate, to: .now).day ?? 0
         return daysSince >= 14
@@ -833,7 +879,9 @@ struct DashboardView: View {
     @ViewBuilder
     private var insightSection: some View {
         let slot = DashboardTeachingSlot.decide(
-            hasTransactions: !transactions.isEmpty,
+            // recent-5 is empty iff the table is empty — first-frame correct,
+            // no COUNT round-trip on the teaching-slot path.
+            hasTransactions: !recentTransactions.isEmpty,
             tipAvailable: todaysTip != nil,
             tipDismissedToday: TipDismissal.isDismissed(
                 dismissedDayIndex: tipDismissedDayIndex,

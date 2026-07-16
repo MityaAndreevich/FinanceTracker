@@ -47,6 +47,17 @@ struct ContentView: View {
     // plain, id-reset NavigationStack is the canonical pairing for destination links.
     @State private var settingsResetToken = UUID()
 
+    // The Dashboard's view identity is keyed to the calendar month because its
+    // @Query month-window is fixed at identity creation (see DashboardView.init).
+    // Refreshed on foreground; flipping it re-creates the Dashboard with the new
+    // month's predicate. "yyyy-MM" of the current month.
+    @State private var dashboardMonthKey = ContentView.currentMonthKey()
+
+    private static func currentMonthKey(now: Date = .now) -> String {
+        let c = Calendar.current.dateComponents([.year, .month], from: now)
+        return "\(c.year ?? 0)-\(c.month ?? 0)"
+    }
+
     // Tab tags in left-to-right swipe order. The center "+" tab (tag 2) is an
     // action, not a destination, so swipe navigation skips over it: Transactions
     // (1) pages straight to Analytics (3).
@@ -102,6 +113,11 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 DashboardView()
+                    // The Dashboard's @Query month-window is fixed at view-identity
+                    // creation (hang-brief stage 2), so a month rollover must mint a
+                    // new identity or the screen keeps showing last month. Updated on
+                    // foreground — the only moment a rollover can become visible.
+                    .id(dashboardMonthKey)
             }
             .tabItem { Label("tab.dashboard", systemImage: "house") }
             .tag(0)
@@ -214,7 +230,12 @@ struct ContentView: View {
             #endif
         }
         .onChange(of: scenePhase) { _, new in
-            if new == .active { handlePendingIntentNavigation() }
+            if new == .active {
+                handlePendingIntentNavigation()
+                // Month rollover while backgrounded → re-key the Dashboard so its
+                // month-scoped @Query follows the calendar (no-op within a month).
+                dashboardMonthKey = Self.currentMonthKey()
+            }
         }
         // App-opening intents post this right after writing their flag, so the
         // app consumes the *fresh* flag even when it's already foreground and no

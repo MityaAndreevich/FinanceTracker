@@ -14,16 +14,6 @@ struct TransactionsView: View {
 
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
 
-    @Query(sort: \Transaction.date, order: .reverse)
-    private var transactions: [Transaction]
-
-    /// Rows the importer flagged as possible duplicates. Queried separately from
-    /// `transactions` on purpose: a flagged row may sit in ANY period, so scoping
-    /// the banner to the selected month would hide the very rows it exists to
-    /// surface.
-    @Query(filter: #Predicate<Transaction> { $0.isPossibleDuplicate })
-    private var possibleDuplicates: [Transaction]
-
     @State private var scope: PeriodScope = .currentMonth
     // One-shot hint teaching the ‹ › month pager, first Transactions visit (Brief 28 Part B).
     @AppStorage("hasSeenPeriodHint") private var hasSeenPeriodHint = false
@@ -36,75 +26,30 @@ struct TransactionsView: View {
 
     // Pending destructive deletion — set by the swipe / context-menu trash button,
     // performed only after the user confirms in the alert below (data-loss safety).
+    // Lives in the PARENT so the period-keyed identity flip below can't drop an
+    // in-flight confirmation.
     @State private var pendingDeleteTx: Transaction?
 
-    // MARK: - Derived
-
-    private var filtered: [Transaction] {
-        var base = scope.filter(transactions)
-
-        switch typeFilter {
-        case .all:     break
-        case .income:  base = base.filter { $0.isIncome }
-        case .expense: base = base.filter { !$0.isIncome }
-        }
-
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return base }
-
-        // Multi-token, diacritic/case-insensitive, amount-searchable match.
-        // See TransactionSearch for the documented semantics.
-        return base.filter { tx in
-            TransactionSearch.matches(
-                query: q,
-                fields: [tx.merchant, tx.category.displayName(), tx.category.name, tx.source?.name, tx.note],
-                amountCents: tx.amountCents
-            )
-        }
-    }
-
-    /// A search or type filter is actively narrowing the list (period scope
-    /// excluded — that has its own "nothing in this period" message).
-    private var isFiltering: Bool {
-        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        || typeFilter != .all
-    }
-
-    private var grouped: [Date: [Transaction]] {
-        let cal = Calendar.current
-        return Dictionary(grouping: filtered) { tx in
-            cal.startOfDay(for: tx.date)
-        }
-    }
-
-    private var sortedDays: [Date] {
-        grouped.keys.sorted(by: >)
-    }
-
     var body: some View {
-        List {
-            // Sits above the period-scoped content because the flagged rows it
-            // points at may live in any month — including one the user isn't
-            // looking at.
-            if !possibleDuplicates.isEmpty {
-                duplicateBanner
-            }
-
-            if filtered.isEmpty {
-                if transactions.isEmpty {
-                    firstRunEmptyRow
-                } else if isFiltering {
-                    noResultsRow
-                } else {
-                    noneInPeriodRow
-                }
-            } else {
-                ForEach(sortedDays, id: \.self) { day in
-                    daySection(for: day)
-                }
-            }
-        }
-        .listStyle(.insetGrouped)
+        // The list content is a child so its @Query can be built from the
+        // selected period (hang-brief Item 1, stage 2): the old view-wide
+        // `@Query(all transactions)` materialized and re-walked the whole table
+        // on the main thread on every save and every keystroke — ~4.5s to open
+        // this tab at 8k rows. `.id(scope)` mints a new child identity per
+        // period so the query window is rebuilt; every piece of state and every
+        // presentation registration stays UP HERE, outside the flip —
+        // `.navigationDestination` inside a re-identified subtree is the exact
+        // landmine the edit-presentation investigation documented.
+        ScopedTransactionList(
+            scope: scope,
+            searchText: $searchText,
+            typeFilter: $typeFilter,
+            editTx: $editTx,
+            pendingDeleteTx: $pendingDeleteTx,
+            presentQuickEntry: $presentQuickEntry,
+            presentDuplicateReview: $presentDuplicateReview
+        )
+        .id(scope.queryIdentity)
         .scrollContentBackground(.hidden)
         .background(Color.bcPage.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -178,6 +123,197 @@ struct TransactionsView: View {
         }
     }
 
+    private var filterChips: some View {
+        HStack(spacing: 8) {
+            ForEach(TransactionFilter.allCases) { filter in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { typeFilter = filter }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: filter.symbol)
+                            .font(.caption.weight(.medium))
+                        Text(filter.labelKey)
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(typeFilter == filter ? Color.bcAccent : Color.bcSurface2)
+                    )
+                    .foregroundStyle(typeFilter == filter ? Color.black : Color.bcTextPrimary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func delete(_ tx: Transaction) {
+        modelContext.delete(tx)
+        do { try modelContext.save() }
+        catch {
+            #if DEBUG
+            print("Failed to delete transaction: \(error.localizedDescription)")
+            #endif
+        }
+    }
+}
+
+
+private extension PeriodScope {
+    /// Identity for the scoped list child: a new period = a new child = a fresh
+    /// @Query window. Stable within a period so ordinary re-renders don't churn.
+    var queryIdentity: String {
+        switch self {
+        case .all:
+            return "all"
+        case .month(let ref):
+            let c = Calendar.current.dateComponents([.year, .month], from: ref)
+            return "month-\(c.year ?? 0)-\(c.month ?? 0)"
+        }
+    }
+}
+
+// MARK: - Scoped list content
+
+/// The list itself, with its @Query built from the selected period (hang-brief
+/// Item 1, stage 2). The parent owns every piece of state and every presentation
+/// registration; this child owns nothing but the query window and the rows, so
+/// the `.id(scope)` flip that rebuilds the window can never drop a sheet, an
+/// alert, or the navigationDestination registration (the documented landmine).
+private struct ScopedTransactionList: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
+
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
+    @Binding var searchText: String
+    @Binding var typeFilter: TransactionFilter
+    @Binding var editTx: Transaction?
+    @Binding var pendingDeleteTx: Transaction?
+    @Binding var presentQuickEntry: Bool
+    @Binding var presentDuplicateReview: Bool
+
+    /// Period-scoped: a month scope fetches ONLY that month's rows. `.all` keeps
+    /// the unscoped fetch — an explicit user choice to look at everything, and
+    /// the single remaining full-table walk on this screen.
+    @Query private var transactions: [Transaction]
+
+    /// Flagged rows may sit in ANY period, so the banner query is deliberately
+    /// unscoped — but predicate-filtered, so it only materializes flagged rows.
+    @Query(filter: #Predicate<Transaction> { $0.isPossibleDuplicate })
+    private var possibleDuplicates: [Transaction]
+
+    init(
+        scope: PeriodScope,
+        searchText: Binding<String>,
+        typeFilter: Binding<TransactionFilter>,
+        editTx: Binding<Transaction?>,
+        pendingDeleteTx: Binding<Transaction?>,
+        presentQuickEntry: Binding<Bool>,
+        presentDuplicateReview: Binding<Bool>
+    ) {
+        _searchText = searchText
+        _typeFilter = typeFilter
+        _editTx = editTx
+        _pendingDeleteTx = pendingDeleteTx
+        _presentQuickEntry = presentQuickEntry
+        _presentDuplicateReview = presentDuplicateReview
+
+        switch scope {
+        case .all:
+            _transactions = Query(sort: \Transaction.date, order: .reverse)
+        case .month(let ref):
+            let calendar = Calendar.current
+            let monthStart = calendar.date(
+                from: calendar.dateComponents([.year, .month], from: ref)
+            ) ?? ref
+            let nextMonthStart = calendar.date(byAdding: .month, value: 1, to: monthStart) ?? .distantFuture
+            _transactions = Query(
+                filter: #Predicate<Transaction> { $0.date >= monthStart && $0.date < nextMonthStart },
+                sort: \Transaction.date,
+                order: .reverse
+            )
+        }
+    }
+
+    // MARK: - Derived
+
+    /// All-time emptiness as a SQL COUNT — the first-run empty state must not
+    /// claim "no transactions" just because the selected MONTH is quiet.
+    private var storeIsEmpty: Bool {
+        ((try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? 0) == 0
+    }
+
+    private var filtered: [Transaction] {
+        // The @Query is already period-scoped; only type + search narrow further.
+        var base: [Transaction] = transactions
+
+        switch typeFilter {
+        case .all:     break
+        case .income:  base = base.filter { $0.isIncome }
+        case .expense: base = base.filter { !$0.isIncome }
+        }
+
+        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return base }
+
+        // Multi-token, diacritic/case-insensitive, amount-searchable match.
+        // See TransactionSearch for the documented semantics.
+        return base.filter { tx in
+            TransactionSearch.matches(
+                query: q,
+                fields: [tx.merchant, tx.category.displayName(), tx.category.name, tx.source?.name, tx.note],
+                amountCents: tx.amountCents
+            )
+        }
+    }
+
+    /// A search or type filter is actively narrowing the list (period scope
+    /// excluded — that has its own "nothing in this period" message).
+    private var isFiltering: Bool {
+        !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        || typeFilter != .all
+    }
+
+    private var grouped: [Date: [Transaction]] {
+        let cal = Calendar.current
+        return Dictionary(grouping: filtered) { tx in
+            cal.startOfDay(for: tx.date)
+        }
+    }
+
+    private var sortedDays: [Date] {
+        grouped.keys.sorted(by: >)
+    }
+
+    var body: some View {
+        List {
+            // Sits above the period-scoped content because the flagged rows it
+            // points at may live in any month — including one the user isn't
+            // looking at.
+            if !possibleDuplicates.isEmpty {
+                duplicateBanner
+            }
+
+            if filtered.isEmpty {
+                if storeIsEmpty {
+                    firstRunEmptyRow
+                } else if isFiltering {
+                    noResultsRow
+                } else {
+                    noneInPeriodRow
+                }
+            } else {
+                ForEach(sortedDays, id: \.self) { day in
+                    daySection(for: day)
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+    }
+
     /// "N possible duplicates — review". The count is rendered as a standalone
     /// numeral chip rather than interpolated into the sentence: ru and uk have
     /// three plural forms, the project ships no .stringsdict, and "2 возможных
@@ -235,31 +371,6 @@ struct TransactionsView: View {
         .accessibilityAddTraits(.isButton)
     }
 
-    private var filterChips: some View {
-        HStack(spacing: 8) {
-            ForEach(TransactionFilter.allCases) { filter in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { typeFilter = filter }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: filter.symbol)
-                            .font(.caption.weight(.medium))
-                        Text(filter.labelKey)
-                            .font(.subheadline.weight(.medium))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(typeFilter == filter ? Color.bcAccent : Color.bcSurface2)
-                    )
-                    .foregroundStyle(typeFilter == filter ? Color.black : Color.bcTextPrimary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
 
     /// True empty state — there are zero transactions at all. Only here do we
     /// invite "Add your first"; showing this while data exists reads as loss.
@@ -419,15 +530,6 @@ struct TransactionsView: View {
         return Text(df.string(from: day))
     }
 
-    private func delete(_ tx: Transaction) {
-        modelContext.delete(tx)
-        do { try modelContext.save() }
-        catch {
-            #if DEBUG
-            print("Failed to delete transaction: \(error.localizedDescription)")
-            #endif
-        }
-    }
 }
 
 // MARK: - Type filter
