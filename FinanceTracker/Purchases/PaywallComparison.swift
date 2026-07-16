@@ -84,6 +84,11 @@ enum PaywallComparison {
             labelKey: "paywall.compare.row.categories"),
         Row(capability: .csvImport,
             labelKey: "paywall.compare.row.csv_import"),
+        // CAVEAT: this label says "PDF & Excel" but derives from ONE capability.
+        // That is the single crack in this file's no-second-copy rule, and it is
+        // acceptable only while `.exportExcelAll` is gated identically —
+        // `PaywallComparisonTests.excelSharesThePDFGate` fails the moment the
+        // two diverge, at which point Excel needs its own row.
         Row(capability: .exportPDFAll,
             labelKey: "paywall.compare.row.reports_alltime"),
         Row(capability: .proactiveAlerts,

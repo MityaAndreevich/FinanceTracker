@@ -85,7 +85,11 @@ struct PaywallComparisonTests {
         }
     }
 
-    /// The four things money actually buys, each present and each shown as paid.
+    /// The three non-counted premium gates (the two counted caps are pinned by
+    /// `capRowsShowRealLimits` above), each present and each shown as paid.
+    /// `.exportExcelAll` is deliberately absent: it has no row of its own — the
+    /// reports row's label speaks for it, which is exactly why the next test
+    /// exists.
     @Test("The real premium gates are all listed, and listed as paid")
     func premiumGatesAreListed() throws {
         for capability in [AppCapability.csvImport,
@@ -96,6 +100,22 @@ struct PaywallComparisonTests {
             #expect(row.free == .excluded)
             #expect(row.premium == .included)
         }
+    }
+
+    /// The one place a label makes a claim its capability doesn't carry: the
+    /// reports row says "PDF & Excel" but derives from `.exportPDFAll` alone.
+    /// That shortcut is honest only while both capabilities sit on the same side
+    /// of the paywall — at BOTH scopes, since the table's free CSV/monthly story
+    /// implies the month-scoped pair matches too. If either pair diverges, this
+    /// fails and Excel needs its own row (or the label needs to stop naming it).
+    @Test("Excel shares the PDF gate for as long as one label speaks for both")
+    func excelSharesThePDFGate() {
+        #expect(AppCapability.exportExcelAll.requiresPremium
+                    == AppCapability.exportPDFAll.requiresPremium,
+                "reports_alltime's label claims PDF and Excel together, but their gates diverged")
+        #expect(AppCapability.exportExcelMonth.requiresPremium
+                    == AppCapability.exportPDFMonth.requiresPremium,
+                "the month-scoped PDF/Excel pair diverged — the table's story no longer covers Excel")
     }
 
     // MARK: - Copy exists in every shipping locale
