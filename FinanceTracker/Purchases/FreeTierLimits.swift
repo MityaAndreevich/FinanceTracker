@@ -79,11 +79,18 @@ enum AppCapability: CaseIterable {
     case addAccountBeyondFreeCap
     case addCustomCategoryBeyondFreeCap
 
+    /// Shipped in v1.0.2: gated in AlertsSettingsView + ProactiveAlertRefresher,
+    /// and sold on the paywall ("Weekly safe-to-spend alert"). Do NOT move this
+    /// into `PaywallComparison.unshippedCapabilities` — that would rip a paid
+    /// row off the paywall for a feature users can buy today.
+    case proactiveAlerts
+
     // MARK: Premium hooks — NOT built yet
 
-    /// Declared so the gate exists the day the feature lands. Do not build here.
+    /// Declared so the gate exists the day the feature lands (1.0.3). Do not
+    /// build here, and do not list it on the paywall until it ships — it is in
+    /// `PaywallComparison.unshippedCapabilities` for exactly that reason.
     case iCloudSync
-    case proactiveAlerts
 
     var requiresPremium: Bool {
         switch self {
