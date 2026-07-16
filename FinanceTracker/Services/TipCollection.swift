@@ -120,7 +120,9 @@ final class TipCollection: ObservableObject {
 
     /// How many tips are unlocked, and the total in the library — drives the hub's
     /// "X of Y unlocked" progress line without revealing any locked content.
-    var unlockedCount: Int { revealedIDs.count }
+    /// Counts only ids the current library resolves, so a log entry orphaned by a
+    /// catalogue replacement can't show "5 of 102" above an empty list.
+    var unlockedCount: Int { collection.count }
     var totalCount: Int { library().canonicalCount }
     var isComplete: Bool { totalCount > 0 && unlockedCount >= totalCount }
 

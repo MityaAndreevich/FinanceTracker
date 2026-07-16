@@ -189,4 +189,43 @@ struct TipDeckTests {
         // No duplicates anywhere.
         #expect(Set(r.revealed).count == r.revealed.count)
     }
+
+    // MARK: - Library REPLACEMENT is safe (orphaned reveal log)
+
+    /// v1.0.2 replaced the placeholder catalogue wholesale, so a live install's
+    /// entire log can point at ids the library no longer ships. That user sees an
+    /// empty collection, so they are effectively fresh: the same-day gate must not
+    /// hold today's first real tip hostage behind a reveal of a tip that no longer
+    /// exists. The log itself is never rewritten — orphans stay, the reveal appends.
+    @Test func fullyOrphanedLogStillRevealsOneTodayEvenOnTheSameDay() {
+        let orphans = (1...5).map { "placeholder-00\($0)" }
+        let r = TipDeck.evaluate(ids: ids, seed: 3, revealed: orphans,
+                                 lastRevealDay: 100, today: 100)
+        #expect(Array(r.revealed.prefix(orphans.count)) == orphans)
+        #expect(r.revealed.count == orphans.count + 1)
+        #expect(ids.contains(r.revealed.last!))
+        #expect(r.lastRevealDay == 100)
+
+        // And the reveal makes the hero resolvable again.
+        #expect(TipDeck.hero(ids: ids, seed: 3, revealed: r.revealed, today: 100)
+                == r.revealed.last)
+    }
+
+    /// The hero is the newest RESOLVABLE reveal — an orphaned id at the end of the
+    /// log must never blank the hero card.
+    @Test func orphanedIdsNeverBecomeTheHero() {
+        let revealed = ["placeholder-001", ids[0], "placeholder-002"]
+        #expect(TipDeck.hero(ids: ids, seed: 3, revealed: revealed, today: 7) == ids[0])
+    }
+
+    /// Orphans must not count toward completion: a log longer than the library is
+    /// not "everything unlocked" if some entries resolve to nothing — flipping into
+    /// the daily rotation early would leak tips the user never revealed.
+    @Test func orphanedIdsDoNotCountTowardCompletion() {
+        let deck = TipDeck.ordered(ids: ids, seed: 3)
+        let orphans = (1...5).map { "placeholder-00\($0)" }
+        let revealed = orphans + deck.dropLast()   // 5 orphans + 19 valid ≥ 20 ids
+        #expect(TipDeck.hero(ids: ids, seed: 3, revealed: revealed, today: 9)
+                == deck[deck.count - 2])
+    }
 }

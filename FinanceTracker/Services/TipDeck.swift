@@ -77,7 +77,13 @@ enum TipDeck {
         lastRevealDay: Int,
         today: Int
     ) -> Reveal {
-        guard today != lastRevealDay else {
+        // A log whose EVERY id has left the library (the placeholder catalogue was
+        // replaced wholesale in v1.0.2) unlocks nothing the user can see. Treat
+        // that user as fresh: the same-day gate must not hold their first real tip
+        // hostage behind a reveal of a tip that no longer exists.
+        let known = Set(ids)
+        let hasResolvableReveal = revealed.contains(where: known.contains)
+        guard today != lastRevealDay || !hasResolvableReveal else {
             return Reveal(revealed: revealed, lastRevealDay: lastRevealDay)
         }
         let seen = Set(revealed)
@@ -100,8 +106,14 @@ enum TipDeck {
     /// still a fresh-feeling tip each day.
     static func hero(ids: [String], seed: UInt64, revealed: [String], today: Int) -> String? {
         guard !ids.isEmpty else { return nil }
-        if revealed.count < ids.count {
-            return revealed.last
+        // Only ids the library still contains count. An orphaned id (revealed from
+        // a catalogue since replaced) resolves to no tip — surfacing it would blank
+        // the hero, and counting it would flip the "complete" branch early and leak
+        // unrevealed tips through the daily rotation.
+        let known = Set(ids)
+        let resolvable = revealed.filter(known.contains)
+        if resolvable.count < ids.count {
+            return resolvable.last
         }
         let deck = ordered(ids: ids, seed: seed)
         // Reuse the rotation's wrap-safe modulo (handles a clock before the epoch,

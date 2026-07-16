@@ -221,6 +221,29 @@ struct TipContentParityTests {
         #expect(Set(ids).count == ids.count)
     }
 
+    /// The shipped library baseline: 102 tips (v1.0.2 content drop). A change here
+    /// must be a conscious content decision — update the number alongside the drop.
+    @Test func shippedLibraryHas102Tips() {
+        #expect(tips(for: "en").count == 102)
+    }
+
+    /// The deck reveals every shipped tip exactly once before exhausting: 102
+    /// consecutive days produce 102 distinct reveals, then nothing new — the
+    /// one-per-calendar-day cadence, driven end to end over the real bundle ids.
+    @Test func deckRevealsEveryShippedTipOnceBeforeRepeating() {
+        let ids = TipLibrary.loadFromBundle().canonicalIDs
+        var revealed: [String] = []
+        var last = TipDeck.neverRevealed
+        for day in 0..<(ids.count + 3) {   // 3 extra days past exhaustion
+            let r = TipDeck.evaluate(ids: ids, seed: 12_345, revealed: revealed,
+                                     lastRevealDay: last, today: day)
+            revealed = r.revealed
+            last = r.lastRevealDay
+        }
+        #expect(revealed.count == ids.count)
+        #expect(Set(revealed).count == ids.count)
+    }
+
     @Test func loadedLibraryCyclesThroughEveryTip() {
         let library = TipLibrary.loadFromBundle()
         #expect(library.canonicalCount == tips(for: "en").count)
@@ -239,22 +262,28 @@ struct TipContentParityTests {
     /// the app *launched* in, ignoring the user's pick, and the bug is invisible in
     /// English. Loading through `LocalizedBundle.shared.bundle` is what fixes it.
     ///
-    /// The placeholder content is tagged per locale ([EN], [RU], …) precisely so this
-    /// is assertable: if this test ever reads [EN] after switching to Russian, the
-    /// loader has regressed back to `Bundle.main`.
+    /// The real library carries no per-locale tags, but the first tip's term is
+    /// translated differently in every locale, so the property stays assertable:
+    /// after switching, `tip(at: 0)` must serve that locale's own term — and never
+    /// the English one, which is exactly what a regression to `Bundle.main` yields.
     @MainActor
     @Test func switchingLanguageSwitchesTheTipContent() {
         let original = LocalizedBundle.shared.languageCode
         defer { LocalizedBundle.shared.setLanguage(original) }
 
-        for (code, tag) in [("ru", "[RU]"), ("es", "[ES]"), ("uk", "[UK]"), ("pt", "[PT-BR]")] {
+        let englishTerm = tips(for: "en").first?.term
+        #expect(englishTerm != nil)
+
+        for (code, folder) in [("ru", "ru"), ("es", "es"), ("uk", "uk"), ("pt", "pt-BR")] {
             LocalizedBundle.shared.setLanguage(code)
-            let tip = TipLibrary.loadFromBundle().tip(at: 0)
-            #expect(tip?.term.hasPrefix(tag) == true,
-                    "after switching to \(code), tip content should come from \(tag), got: \(tip?.term ?? "nil")")
+            let term = TipLibrary.loadFromBundle().tip(at: 0)?.term
+            #expect(term == tips(for: folder).first?.term,
+                    "after switching to \(code), tip 0 should serve \(folder)'s term, got: \(term ?? "nil")")
+            #expect(term != englishTerm,
+                    "after switching to \(code), tip 0 still serves English — loader regressed to Bundle.main")
         }
 
         LocalizedBundle.shared.setLanguage("en")
-        #expect(TipLibrary.loadFromBundle().tip(at: 0)?.term.hasPrefix("[EN]") == true)
+        #expect(TipLibrary.loadFromBundle().tip(at: 0)?.term == englishTerm)
     }
 }

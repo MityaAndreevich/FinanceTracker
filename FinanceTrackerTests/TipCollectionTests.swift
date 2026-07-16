@@ -121,4 +121,36 @@ struct TipCollectionTests {
         #expect(store.revealedIDs.count == before.count + 1)      // exactly one new
         #expect(Set(store.revealedIDs).count == store.revealedIDs.count)   // no dup
     }
+
+    // MARK: - Library replacement (orphaned reveal log)
+
+    /// v1.0.2 replaced the placeholder library wholesale, so live installs carry a
+    /// reveal log made ONLY of ids the library no longer contains. That user must
+    /// crash nowhere, see an empty-ish collection (orphans just vanish), and still
+    /// get a valid tip of the day — even launching on the same calendar day as
+    /// their last (now meaningless) reveal.
+    @Test func replacingTheLibraryUnderAFullyOrphanedLogStillProducesTodaysTip() {
+        let orphans = (1...5).map { "placeholder-00\($0)" }
+        let backing = InMemoryBacking()
+        backing.deckSeed = 42
+        backing.revealedIDs = orphans
+        backing.lastRevealDay = TipRotation.dayIndex(for: dayA, in: .current)
+
+        let store = TipCollection(backing: backing, library: { self.lib(["a", "b", "c"]) })
+        store.start(now: dayA)   // same day as the orphaned "reveal"
+
+        // Today's tip resolves to a real, current tip.
+        #expect(store.todaysTip != nil)
+        #expect(["a", "b", "c"].contains(store.todaysTip?.id ?? ""))
+
+        // The collection shows only resolvable tips; the progress count agrees
+        // with the list instead of counting invisible orphans.
+        #expect(store.collection.count == 1)
+        #expect(store.unlockedCount == 1)
+        #expect(store.isComplete == false)
+
+        // The log is never rewritten: orphans stay put, the new reveal appends.
+        #expect(Array(backing.revealedIDs.prefix(orphans.count)) == orphans)
+        #expect(backing.revealedIDs.count == orphans.count + 1)
+    }
 }
