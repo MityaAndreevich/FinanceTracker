@@ -207,6 +207,10 @@ struct ContentView: View {
             // otherwise inherit the accounts left by the previous run (or by a demo-mode
             // screenshot session) and meet the cap before it had added anything.
             AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
+            // Perf seam: fill the real store with ~8k rows across 24 months so the
+            // main-thread hang (which scales with row count) is measurable on a
+            // simulator and on the founder's device.
+            LargeDatasetDebugSeed.seedIfRequested(modelContext: modelContext)
             #endif
         }
         .onChange(of: scenePhase) { _, new in
