@@ -75,6 +75,14 @@ struct AddTransactionView: View {
     @StateObject private var access = AccessManager.shared
     @State private var showPaywall = false
 
+    // Double-submit protection, standardized across all three entry surfaces
+    // (v1.0.2 release review, item 1). `isSaving` blocks re-entry while a save is
+    // in flight; the gate debounces a fast double-fire of the SAME action (both
+    // Add buttons route through `add()`). Content-blind by design — it can only
+    // drop a second tap, never a distinct entry — see SaveActionGate.
+    @State private var isSaving = false
+    @State private var saveGate = SaveActionGate()
+
     // MARK: - Derived
 
     private var filteredCategories: [Category] {
@@ -465,6 +473,11 @@ struct AddTransactionView: View {
     private func add() {
         hideKeyboard()
 
+        // Re-entrancy guard: ignore repeat invocations while a save is in flight.
+        // On the happy path the view dismisses, so isSaving is deliberately not
+        // reset there — mirrors QuickEntryView.handleSave.
+        guard !isSaving else { return }
+
         guard let category = selectedCategory else {
             showErrorKey("add.error.select_category")
             return
@@ -511,33 +524,40 @@ struct AddTransactionView: View {
             recurrenceRaw: isRecurring ? recurrenceType.raw : nil
         )
 
-        modelContext.insert(tx)
+        // Debounce an accidental double-fire of THIS action (fast double-tap on
+        // either Add button, a11y double-fire). Validation stays OUTSIDE the gate:
+        // a validation error must not consume the window and debounce away the
+        // fix-and-retap that follows it.
+        saveGate.submit {
+            isSaving = true
+            do {
+                try AddTransactionSaveService.save(tx, in: modelContext)
 
-        do {
-            try modelContext.save()
+                MerchantLearningService.record(
+                    merchant: merchant.isEmpty ? nil : merchant,
+                    categoryName: category.name,
+                    in: modelContext
+                )
 
-            MerchantLearningService.record(
-                merchant: merchant.isEmpty ? nil : merchant,
-                categoryName: category.name,
-                in: modelContext
-            )
+                if isRecurring {
+                    RecurrenceService.scheduleNotification(for: tx)
+                }
 
-            if isRecurring {
-                RecurrenceService.scheduleNotification(for: tx)
+                #if os(iOS)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                #endif
+
+                RatingPromptCoordinator.recordTransactionSaved()
+                dismiss()
+            } catch {
+                logSaveFailure("AddTransactionView.add", error)
+                showErrorKey("add.error.save_failed")
+                isSaving = false   // allow a retry after a genuine failure...
+                saveGate.reset()   // ...and don't debounce that retry away
+                #if DEBUG
+                print("Save failed: \(error.localizedDescription)")
+                #endif
             }
-
-            #if os(iOS)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            #endif
-
-            RatingPromptCoordinator.recordTransactionSaved()
-            dismiss()
-        } catch {
-            logSaveFailure("AddTransactionView.add", error)
-            showErrorKey("add.error.save_failed")
-            #if DEBUG
-            print("Save failed: \(error.localizedDescription)")
-            #endif
         }
     }
 
