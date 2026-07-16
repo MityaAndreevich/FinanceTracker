@@ -61,6 +61,48 @@ struct TransactionEditServiceTests {
         #expect(updated.amountCents == 999_900, "edit did not persist — the list would not reflect it")
     }
 
+    /// An edit is an UPDATE of the existing row — never an insert. The row count
+    /// must be invariant across any number of edits (2026-07-16 device-QA brief:
+    /// "assert no duplicate is created").
+    @Test func testEdit_updatesTheSameRow_neverInsertsASecond() throws {
+        let ctx = try makeContext()
+        let (tx, cat) = seedOne(in: ctx)
+        let uuid = tx.uuid
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 1)
+
+        try TransactionEditService.update(tx, with: fields(from: tx, cat: cat, amountCents: 777_700), in: ctx)
+        try TransactionEditService.update(tx, with: fields(from: tx, cat: cat, amountCents: 888_800), in: ctx)
+
+        let rows = try ctx.fetch(FetchDescriptor<Transaction>())
+        #expect(rows.count == 1, "editing must never insert a second row")
+        #expect(rows.first?.uuid == uuid, "the edited row is the SAME row")
+        #expect(rows.first?.amountCents == 888_800)
+    }
+
+    /// The edit Save action is gated like every other save surface: a same-tick
+    /// double-fire runs the update once. (Content-wise an edit is idempotent, so
+    /// this pins the action contract — one tap, one update — not data safety.)
+    @Test func testDoubleTapSave_isCollapsedByTheGate_oneUpdate() throws {
+        let ctx = try makeContext()
+        let (tx, cat) = seedOne(in: ctx)
+        let gate = SaveActionGate()
+        let now = Date()
+        var updatesRun = 0
+
+        try gate.submit(now: now) {
+            updatesRun += 1
+            try TransactionEditService.update(tx, with: fields(from: tx, cat: cat, amountCents: 100_000), in: ctx)
+        }
+        try gate.submit(now: now) {
+            updatesRun += 1
+            try TransactionEditService.update(tx, with: fields(from: tx, cat: cat, amountCents: 100_000), in: ctx)
+        }
+
+        #expect(updatesRun == 1, "a double-fired Save runs one update, not two")
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == 1)
+        #expect(tx.amountCents == 100_000)
+    }
+
     @Test func testSaveFailure_rollsBackEdit_andContextNotPoisoned() throws {
         let ctx = try makeContext()
         let (tx, cat) = seedOne(in: ctx)

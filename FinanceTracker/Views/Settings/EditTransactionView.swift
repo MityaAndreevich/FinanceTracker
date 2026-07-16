@@ -36,6 +36,14 @@ struct EditTransactionView: View {
     @State private var errorMessageKey: String = "edit.error.unknown"
     @State private var errorExtra: String? = nil
 
+    // Double-submit protection, same pattern as all three entry surfaces. An
+    // edit is idempotent by construction (TransactionEditService UPDATES the
+    // existing row, never inserts), so a double-fire can't duplicate data —
+    // the gate exists so one tap means one update + one dismiss, and so this
+    // surface doesn't quietly diverge from the standard. Content-blind.
+    @State private var isSaving = false
+    @State private var saveGate = SaveActionGate()
+
     private var filteredCategories: [Category] {
         categories.filter { $0.kindRaw == typeRaw }
     }
@@ -222,6 +230,10 @@ struct EditTransactionView: View {
     }
 
     private func save() {
+        // Re-entrancy guard: one in-flight save at a time. Not reset on the happy
+        // path — the view dismisses (mirrors QuickEntryView.handleSave).
+        guard !isSaving else { return }
+
         guard let newCategory = selectedCategory else {
             fail(key: "edit.error.select_category", extra: nil)
             return
@@ -272,22 +284,29 @@ struct EditTransactionView: View {
             source: selectedSource     // Account allowed for both income and expense.
         )
 
-        do {
-            try TransactionEditService.update(transaction, with: fields, in: modelContext)
+        // Debounce a double-fire of THIS action. Validation stays outside the
+        // gate so a validation error can't debounce away the fix-and-retap.
+        saveGate.submit {
+            isSaving = true
+            do {
+                try TransactionEditService.update(transaction, with: fields, in: modelContext)
 
-            MerchantLearningService.record(
-                merchant: merchant.isEmpty ? nil : merchant,
-                categoryName: newCategory.name,
-                in: modelContext
-            )
+                MerchantLearningService.record(
+                    merchant: merchant.isEmpty ? nil : merchant,
+                    categoryName: newCategory.name,
+                    in: modelContext
+                )
 
-            #if os(iOS)
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            #endif
-            RatingPromptCoordinator.recordTransactionSaved()
-            dismiss()
-        } catch {
-            fail(key: "edit.error.save_failed", extra: error.localizedDescription)
+                #if os(iOS)
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                #endif
+                RatingPromptCoordinator.recordTransactionSaved()
+                dismiss()
+            } catch {
+                fail(key: "edit.error.save_failed", extra: error.localizedDescription)
+                isSaving = false   // allow the deliberate retry...
+                saveGate.reset()   // ...and don't debounce it away
+            }
         }
     }
 
