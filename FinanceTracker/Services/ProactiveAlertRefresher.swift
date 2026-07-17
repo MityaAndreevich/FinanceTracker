@@ -39,7 +39,12 @@ final class ProactiveAlertRefreshScheduler {
     /// How long a burst is allowed to coalesce. The scheduled alert genuinely
     /// does not care about sub-second freshness; short enough that the pending
     /// notification is re-planned long before any alert could plausibly fire.
-    static let defaultCoalesceWindow: Duration = .seconds(2)
+    ///
+    /// `nonisolated` because it is read as a default-argument expression (on
+    /// `schedule(coalesceWindow:)`), which is evaluated in a nonisolated context.
+    /// Safe: an immutable `let` of a `Sendable` value type has no shared mutable
+    /// state to race on — hence plain `nonisolated`, never `nonisolated(unsafe)`.
+    nonisolated static let defaultCoalesceWindow: Duration = .seconds(2)
 
     private var aggregator: LedgerAggregator?
     private var pending: Task<Void, Never>?
