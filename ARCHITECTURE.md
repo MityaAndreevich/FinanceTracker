@@ -152,6 +152,19 @@ swiftlint
 - Prefer `@Observable` over `@ObservedObject` for any new view models
 - Any class touching `ModelContext` is `@MainActor`; SwiftData is not background-thread-safe without a `ModelActor`
 
+## Debug scaffolding to remove (don't let it rot)
+
+Instruments added to bisect a specific bug, to be deleted once that bug is closed —
+never before (they're the only handle we have on it).
+
+- **Chart-bisection panel** — `#if DEBUG` toggles in Settings → Debug that force each
+  chart into a degenerate state to bisect the Swift Charts render crash (#22). Delete
+  the whole plumbing when #22 is confirmed closed: `Shared/ChartDebug.swift`
+  (`ChartBisection`, `BisectableChart`, the observable toggle store), the per-chart
+  `#if DEBUG` bisection hooks in `CategoryDonutView` / `AnalyticsPulseView` /
+  `AnalyticsBreakdownView` / `AnalyticsHorizonView` / `DaySpendingSheet`, and the
+  Settings → Debug section that drives them.
+
 ## App Store readiness
 
 ### Done
