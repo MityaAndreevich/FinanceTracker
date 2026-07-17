@@ -89,7 +89,15 @@ struct TransactionsView: View {
             await PurchaseManager.shared.refreshStatus()
         }
         .navigationDestination(item: $editTx) { tx in
-            EditTransactionView(transaction: tx)
+            editorDestination(for: tx)
+        }
+        // DEBUG instrument (2026-07-17 device report): record every editTx
+        // transition — nil→id is the arm, id→nil is a pop OR a silent sticky
+        // reset. See EditPresentationLog. No-op in Release.
+        .onChange(of: editTx) { old, new in
+            #if DEBUG
+            EditPresentationLog.binding(old: old?.uuid, new: new?.uuid)
+            #endif
         }
         .sheet(isPresented: $presentQuickEntry) {
             QuickEntryView()
@@ -149,6 +157,21 @@ struct TransactionsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// The pushed editor, with DEBUG instrumentation bracketing SwiftUI's two
+    /// observable moments: the destination closure being BUILT (DEST-INVOKED) and
+    /// the view actually MOUNTING (EDITOR-APPEAR). The gap between TAP-SET and
+    /// DEST-INVOKED is where a dropped push hides. No-op in Release.
+    @ViewBuilder
+    private func editorDestination(for tx: Transaction) -> some View {
+        #if DEBUG
+        let _ = EditPresentationLog.destInvoked(row: tx.uuid)
+        EditTransactionView(transaction: tx)
+            .onAppear { EditPresentationLog.editorAppear(row: tx.uuid) }
+        #else
+        EditTransactionView(transaction: tx)
+        #endif
+    }
+
     private func delete(_ tx: Transaction) {
         modelContext.delete(tx)
         do { try modelContext.save() }
@@ -205,6 +228,14 @@ private struct ScopedTransactionList: View {
     @Query(filter: #Predicate<Transaction> { $0.isPossibleDuplicate })
     private var possibleDuplicates: [Transaction]
 
+    /// Short, log-safe key for the active period scope (DEBUG instrument only).
+    private let scopeDescription: String
+
+    /// Per-identity token for the DEBUG instrument: `@State` is created once per
+    /// view identity and survives ordinary struct re-inits, so a change in this
+    /// value across CHILD-APPEAR is a REAL `.id(scope)` flip. Unused in Release.
+    @State private var childIdentity = UUID()
+
     init(
         scope: PeriodScope,
         searchText: Binding<String>,
@@ -223,6 +254,7 @@ private struct ScopedTransactionList: View {
 
         switch scope {
         case .all:
+            scopeDescription = "all"
             _transactions = Query(sort: \Transaction.date, order: .reverse)
         case .month(let ref):
             let calendar = Calendar.current
@@ -230,12 +262,31 @@ private struct ScopedTransactionList: View {
                 from: calendar.dateComponents([.year, .month], from: ref)
             ) ?? ref
             let nextMonthStart = calendar.date(byAdding: .month, value: 1, to: monthStart) ?? .distantFuture
+            let c = calendar.dateComponents([.year, .month], from: ref)
+            scopeDescription = "month-\(c.year ?? 0)-\(c.month ?? 0)"
             _transactions = Query(
                 filter: #Predicate<Transaction> { $0.date >= monthStart && $0.date < nextMonthStart },
                 sort: \Transaction.date,
                 order: .reverse
             )
         }
+    }
+
+    /// Route every Edit affordance (row / swipe / context) through one place so
+    /// the DEBUG instrument records the tap context — period row-count, scope,
+    /// child-build sequence — the instant BEFORE the binding is armed. The set
+    /// itself is unchanged in Release.
+    private func setEdit(_ tx: Transaction) {
+        #if DEBUG
+        EditPresentationLog.tapSet(
+            row: tx.uuid,
+            periodCount: transactions.count,
+            filteredCount: filtered.count,
+            scope: scopeDescription,
+            editTxWasNil: editTx == nil
+        )
+        #endif
+        editTx = tx
     }
 
     // MARK: - Derived
@@ -312,6 +363,13 @@ private struct ScopedTransactionList: View {
             }
         }
         .listStyle(.insetGrouped)
+        // DEBUG instrument: mount/unmount of THIS scoped identity. A new-id pair
+        // racing a TAP-SET is the `.id(scope)` flip the 2026-07-17 report suspects;
+        // a disappear after the editor mounts is just the list being covered.
+        #if DEBUG
+        .onAppear { EditPresentationLog.childAppear(id: childIdentity, scope: scopeDescription) }
+        .onDisappear { EditPresentationLog.childDisappear(id: childIdentity, scope: scopeDescription) }
+        #endif
     }
 
     /// "N possible duplicates — review". The count is rendered as a standalone
@@ -460,7 +518,7 @@ private struct ScopedTransactionList: View {
             // scale (Round 9 ghost duplication, gone after restart). uuid is fixed
             // at init.
             ForEach(dayItems, id: \.uuid) { tx in
-                Button { editTx = tx } label: {
+                Button { setEdit(tx) } label: {
                     CategoryTileRow(tx: tx)
                 }
                 .buttonStyle(.plain)
@@ -472,13 +530,13 @@ private struct ScopedTransactionList: View {
                         Label("common.delete", systemImage: "trash")
                     }
 
-                    Button { editTx = tx } label: {
+                    Button { setEdit(tx) } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
                     .tint(.blue)
                 }
                 .contextMenu {
-                    Button { editTx = tx } label: {
+                    Button { setEdit(tx) } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
 
