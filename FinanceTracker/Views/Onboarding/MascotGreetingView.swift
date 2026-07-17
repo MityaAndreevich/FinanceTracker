@@ -41,12 +41,17 @@ struct MascotGreetingView: View {
                     // Type on a small device) scrolls instead of clipping.
                     .frame(minHeight: geo.size.height)
                     .frame(maxWidth: .infinity)
+                    // Fade + scale the *content* only. The bcPage surface stays
+                    // opaque from the first frame — so the Dashboard beneath never
+                    // flashes through the fade, and the surface's opacity is a
+                    // testable invariant (the original defect was a translucent
+                    // scrim/card over the live Dashboard).
+                    .opacity(appeared ? 1 : 0)
+                    .scaleEffect(appeared || reduceMotion ? 1 : 0.97)
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }
         }
-        .opacity(appeared ? 1 : 0)
-        .scaleEffect(appeared || reduceMotion ? 1 : 0.97)
         .onAppear {
             withAnimation(reduceMotion ? nil : .easeOut(duration: 0.45)) {
                 appeared = true
