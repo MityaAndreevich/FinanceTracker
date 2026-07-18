@@ -2,8 +2,16 @@
 //  SecondTransactionCrashTests.swift
 //  FinanceTrackerUITests
 //
-//  Reproduces the device-confirmed LAUNCH BLOCKER: the app crashes when the
-//  SECOND transaction is saved (EXC_BREAKPOINT during a SwiftUI render pass).
+//  REGRESSION GUARD for a fixed bug — not a live repro. The device-confirmed
+//  launch blocker (EXC_BREAKPOINT during a SwiftUI render pass when the SECOND
+//  transaction was saved) was root-caused to a degenerate chart frame and fixed.
+//  These tests exist so it cannot come back.
+//
+//  Consequently: each test asserts that the app STAYS ALIVE and returns to the
+//  Dashboard across a save flow. Name them for that, never `...doesNotCrash` —
+//  a harness failure under such a name reads as "the crash is back" and costs
+//  someone an afternoon proving it isn't. If one of these fails, read the
+//  failure message before drawing any conclusion.
 //
 //  This has to be a UI test, not a unit test. Hosting the chart views directly
 //  with a synthetic ModelContainer does NOT reproduce it — the crash needs the
@@ -38,12 +46,41 @@ final class SecondTransactionCrashTests: XCTestCase {
             "-AppleLocale", locale,
             "-defaultCurrencyCode", currency
         ]
+        // Appended AFTER the array, never inside it: these launch args are
+        // NSUserDefaults `-key value` pairs, and a lone extra dash-token in
+        // the middle shifts that pairing. Keeps the StoreKit rating prompt (an
+        // out-of-process window that covers the app and eats taps) from firing
+        // mid-suite.
+        app.launchArguments.append("--suppress-rating-prompt")
         if let budgetCents {
             // A budget makes the safe-to-spend hero (and the pace cue) live.
             app.launchArguments += ["-monthlyBudgetCents", String(budgetCents)]
         }
         app.launch()
         return app
+    }
+
+    /// Tap a text input and type into it, only once it genuinely holds keyboard
+    /// focus.
+    ///
+    /// `tap()` merely *requests* first responder and returns before the
+    /// responder change and keyboard animation finish; typing into that gap
+    /// fails with "Neither element nor any descendant has keyboard focus". The
+    /// wait also turns a stolen tap into an honest error message — see
+    /// `suppressRatingPrompt` in `launchClean`, which is what actually used to
+    /// steal them.
+    private func focusAndType(_ app: XCUIApplication, _ input: XCUIElement, _ text: String) {
+        input.tap()
+
+        XCTAssertTrue(app.keyboards.element.waitForExistence(timeout: 10),
+                      "keyboard never appeared for the QuickEntry input — "
+                      + "something is covering the app and swallowing taps")
+
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        expectation(for: focused, evaluatedWith: input)
+        waitForExpectations(timeout: 10)
+
+        input.typeText(text)
     }
 
     /// Type an entry into QuickAdd and commit it, returning to the Dashboard.
@@ -68,8 +105,7 @@ final class SecondTransactionCrashTests: XCTestCase {
             ? app.textViews.firstMatch
             : app.textFields.firstMatch
         XCTAssertTrue(input.waitForExistence(timeout: 10), "QuickEntry input missing")
-        input.tap()
-        input.typeText(text)
+        focusAndType(app, input, text)
 
         let save = app.buttons.matching(
             NSPredicate(format: "label BEGINSWITH %@ AND NOT (label CONTAINS %@)",
@@ -90,7 +126,7 @@ final class SecondTransactionCrashTests: XCTestCase {
     }
 
     /// The exact reported flow: fresh store → save #1 → save #2 (crash) → save #3.
-    func test_savingSecondTransaction_doesNotCrash() {
+    func test_savingThreeConsecutiveTransactions_appStaysAliveAndReturnsToDashboard() {
         let app = launchClean()
 
         addTransaction(app, text: "12 coffee", index: 1)
@@ -107,7 +143,7 @@ final class SecondTransactionCrashTests: XCTestCase {
     /// MerchantLearningService's *update existing row* branch (save #1 inserts).
     /// A failure there calls `rollback()` on the shared mainContext, which can
     /// destroy model instances the Dashboard is mid-render on.
-    func test_savingSecondTransaction_sameMerchant_doesNotCrash() {
+    func test_secondSaveWithSameMerchant_appStaysAlive() {
         let app = launchClean()
 
         addTransaction(app, text: "12 coffee", index: 1)
@@ -121,7 +157,7 @@ final class SecondTransactionCrashTests: XCTestCase {
     /// The reporter's real device configuration: Russian UI, RUB, and a monthly
     /// budget set (so the safe-to-spend hero and the pace cue are both live —
     /// neither is exercised by the default en/no-budget launch).
-    func test_savingSecondTransaction_russianLocale_withBudget_doesNotCrash() {
+    func test_savingTransactions_inRussianLocaleWithBudget_appStaysAlive() {
         let app = launchClean(language: "ru", locale: "ru_RU", currency: "RUB", budgetCents: 5_000_000)
 
         let ru = "Сохранить"
@@ -139,7 +175,7 @@ final class SecondTransactionCrashTests: XCTestCase {
 
     /// Same flow, but with the Analytics tab (Pulse/Horizon/Breakdown charts) as
     /// the visible screen when the writes land.
-    func test_savingSecondTransaction_withAnalyticsVisible_doesNotCrash() {
+    func test_savingTransactions_withAnalyticsVisible_appStaysAlive() {
         let app = launchClean()
 
         addTransaction(app, text: "12 coffee", index: 1)

@@ -86,6 +86,12 @@ final class LanguageSwitchTests: XCTestCase {
             "-appLanguageCode", startCode,
             "-AppleLanguages", "(\(appleLanguage(for: startCode)))"
         ]
+        // Appended AFTER the array, never inside it: these launch args are
+        // NSUserDefaults `-key value` pairs, and a lone extra dash-token in
+        // the middle shifts that pairing. Keeps the StoreKit rating prompt (an
+        // out-of-process window that covers the app and eats taps) from firing
+        // mid-suite.
+        app.launchArguments.append("--suppress-rating-prompt")
         app.launch()
 
         // Settings is the 5th tab item (index 4): Dashboard, Transactions, +, Analytics, Settings.

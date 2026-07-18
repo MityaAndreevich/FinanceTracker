@@ -59,9 +59,37 @@ enum RatingPromptCoordinator {
         UserDefaults.standard.removeObject(forKey: lastDaySeenKey)
     }
 
+    // MARK: - Test seam
+
+    #if DEBUG
+    /// Suppresses the *presentation* of the rating prompt. UI tests only.
+    ///
+    /// The milestone counters below live in `UserDefaults.standard` and
+    /// `XCUIApplication.launch()` reuses the existing app container, so they
+    /// accumulate across the WHOLE suite rather than resetting per test. Around
+    /// the 5th saved transaction of the run the prompt fires — inside whichever
+    /// test happens to be executing.
+    ///
+    /// That is uniquely destructive here, because `AppStore.requestReview`
+    /// presents an OUT-OF-PROCESS window that covers the app and swallows every
+    /// tap. The victim test then fails somewhere that looks unrelated to
+    /// ratings: a keyboard that never appears, a button that never responds. It
+    /// is invisible in single-test runs, because one test never reaches the
+    /// milestone.
+    ///
+    /// This suppresses the request only. Every counter and eligibility rule
+    /// still executes exactly as in production — a seam that skipped the logic
+    /// would stop testing the thing it claims to test.
+    static let suppressPromptArgument = "--suppress-rating-prompt"
+    #endif
+
     // MARK: - Eligibility + request
 
     private static func requestReviewIfEligible() {
+        #if DEBUG
+        if CommandLine.arguments.contains(suppressPromptArgument) { return }
+        #endif
+
         // Quarterly cooldown — Apple rate-limits to 3/year; we add our own gate for control.
         if let last = UserDefaults.standard.object(forKey: lastPromptDateKey) as? Date {
             let days = Calendar.current.dateComponents([.day], from: last, to: .now).day ?? 0

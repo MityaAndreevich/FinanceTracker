@@ -38,6 +38,12 @@ final class EditPresentationReproTests: XCTestCase {
             "-AppleLanguages", "(\(language))",
             "-AppleLocale", locale
         ]
+        // Appended AFTER the array, never inside it: these launch args are
+        // NSUserDefaults `-key value` pairs, and a lone extra dash-token in
+        // the middle shifts that pairing. Keeps the StoreKit rating prompt (an
+        // out-of-process window that covers the app and eats taps) from firing
+        // mid-suite.
+        app.launchArguments.append("--suppress-rating-prompt")
         app.launch()
         return app
     }

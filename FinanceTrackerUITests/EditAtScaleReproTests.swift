@@ -42,6 +42,12 @@ final class EditAtScaleReproTests: XCTestCase {
             "-AppleLocale", "en_US",
             "-defaultCurrencyCode", "USD"
         ]
+        // Appended AFTER the array, never inside it: these launch args are
+        // NSUserDefaults `-key value` pairs, and a lone extra dash-token in
+        // the middle shifts that pairing. Keeps the StoreKit rating prompt (an
+        // out-of-process window that covers the app and eats taps) from firing
+        // mid-suite.
+        app.launchArguments.append("--suppress-rating-prompt")
         if seeded { app.launchArguments.append("--seed-large-dataset") }
         app.launch()
         return app
