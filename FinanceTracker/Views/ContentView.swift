@@ -122,11 +122,13 @@ struct ContentView: View {
             .tabItem { Label("tab.dashboard", systemImage: "house") }
             .tag(0)
 
-            NavigationStack {
-                TransactionsView()
-            }
-            .tabItem { Label("tab.transactions", systemImage: "list.bullet") }
-            .tag(1)
+            // TransactionsView owns its own NavigationStack because it drives the
+            // editor push from a path it holds (see the editPath note there). Intent
+            // routing only ever selects this tab, never pushes into it, so nothing
+            // outside needs a handle on the stack.
+            TransactionsView()
+                .tabItem { Label("tab.transactions", systemImage: "list.bullet") }
+                .tag(1)
 
             // Center tab: tapping triggers Add sheet rather than navigating.
             // Per Apple HIG: "Use a tab bar to support navigation, not to provide actions."

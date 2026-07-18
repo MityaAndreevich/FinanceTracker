@@ -20,7 +20,17 @@ struct TransactionsView: View {
     @State private var searchText: String = ""
     @State private var typeFilter: TransactionFilter = .all
 
-    @State private var editTx: Transaction?
+    // The editor push is driven by a path WE own, not by an item binding SwiftUI
+    // resets for us. `navigationDestination(item:)` presented only on nil→value
+    // and was cleared ONLY as a side effect of SwiftUI's own pop — so any route
+    // that took the destination off screen without a tracked pop (the "+" tab
+    // bouncing selection through tag 2 while QuickEntry presents above the stack,
+    // an `.id` flip around the registration, an offscreen stack teardown) left the
+    // item stuck non-nil, and every later Edit tap was a silent value→value no-op
+    // until the app was backgrounded. Assigning a path is idempotent: `[tx]`
+    // presents that row whatever the previous value was, and `.isEmpty` is a state
+    // we can assert and restore ourselves.
+    @State private var editPath: [Transaction] = []
     @State private var presentQuickEntry = false
     @State private var presentDuplicateReview = false
 
@@ -40,16 +50,29 @@ struct TransactionsView: View {
         // presentation registration stays UP HERE, outside the flip —
         // `.navigationDestination` inside a re-identified subtree is the exact
         // landmine the edit-presentation investigation documented.
+        NavigationStack(path: $editPath) {
+            listContent
+        }
+    }
+
+    private var listContent: some View {
         ScopedTransactionList(
             scope: scope,
             searchText: $searchText,
             typeFilter: $typeFilter,
-            editTx: $editTx,
+            editPath: $editPath,
             pendingDeleteTx: $pendingDeleteTx,
             presentQuickEntry: $presentQuickEntry,
             presentDuplicateReview: $presentDuplicateReview
         )
         .id(scope.queryIdentity)
+        // Re-localize filter chips, day headers and empty state live on an in-app
+        // language change (device QA round 1 #2), navigation preserved. Applied to
+        // the LIST, innermost: this modifier is an `.id(languageCode)`, and further
+        // out it would re-identify the `.navigationDestination` registration (and
+        // now the NavigationStack itself) rather than just the strings it exists to
+        // re-resolve.
+        .languageReactive()
         .scrollContentBackground(.hidden)
         .background(Color.bcPage.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -88,15 +111,15 @@ struct TransactionsView: View {
         .refreshable {
             await PurchaseManager.shared.refreshStatus()
         }
-        .navigationDestination(item: $editTx) { tx in
+        .navigationDestination(for: Transaction.self) { tx in
             editorDestination(for: tx)
         }
-        // DEBUG instrument (2026-07-17 device report): record every editTx
-        // transition — nil→id is the arm, id→nil is a pop OR a silent sticky
-        // reset. See EditPresentationLog. No-op in Release.
-        .onChange(of: editTx) { old, new in
+        // DEBUG instrument (2026-07-17 device report): record every path
+        // transition — empty→row is the arm, row→empty is a pop. See
+        // EditPresentationLog. No-op in Release.
+        .onChange(of: editPath) { old, new in
             #if DEBUG
-            EditPresentationLog.binding(old: old?.uuid, new: new?.uuid)
+            EditPresentationLog.binding(old: old.last?.uuid, new: new.last?.uuid)
             #endif
         }
         .sheet(isPresented: $presentQuickEntry) {
@@ -118,16 +141,13 @@ struct TransactionsView: View {
                 pendingDeleteTx = nil
             }
         }
-        // Re-localize filter chips, day headers and empty state live on an in-app
-        // language change (device QA round 1 #2), navigation preserved.
-        .languageReactive()
         // Drop a stale search when leaving the tab (device QA round 2 #1). Without
         // this, a search like "Футболка 550" survives a tab switch and silently
         // hides the whole list on return, reading as data loss. Keep it while
-        // pushing into edit (editTx != nil) so returning from an edit still shows
+        // pushing into edit (path non-empty) so returning from an edit still shows
         // the same filtered results the user tapped from.
         .onDisappear {
-            if editTx == nil { searchText = "" }
+            if editPath.isEmpty { searchText = "" }
         }
     }
 
@@ -213,7 +233,7 @@ private struct ScopedTransactionList: View {
 
     @Binding var searchText: String
     @Binding var typeFilter: TransactionFilter
-    @Binding var editTx: Transaction?
+    @Binding var editPath: [Transaction]
     @Binding var pendingDeleteTx: Transaction?
     @Binding var presentQuickEntry: Bool
     @Binding var presentDuplicateReview: Bool
@@ -240,14 +260,14 @@ private struct ScopedTransactionList: View {
         scope: PeriodScope,
         searchText: Binding<String>,
         typeFilter: Binding<TransactionFilter>,
-        editTx: Binding<Transaction?>,
+        editPath: Binding<[Transaction]>,
         pendingDeleteTx: Binding<Transaction?>,
         presentQuickEntry: Binding<Bool>,
         presentDuplicateReview: Binding<Bool>
     ) {
         _searchText = searchText
         _typeFilter = typeFilter
-        _editTx = editTx
+        _editPath = editPath
         _pendingDeleteTx = pendingDeleteTx
         _presentQuickEntry = presentQuickEntry
         _presentDuplicateReview = presentDuplicateReview
@@ -283,10 +303,14 @@ private struct ScopedTransactionList: View {
             periodCount: transactions.count,
             filteredCount: filtered.count,
             scope: scopeDescription,
-            editTxWasNil: editTx == nil
+            editTxWasNil: editPath.isEmpty
         )
         #endif
-        editTx = tx
+        // Assignment, not append: one editor at a time, and the result does not
+        // depend on what the path held before. A leftover entry from a dropped pop
+        // is replaced rather than blocking the push — which is what made the old
+        // item binding go permanently dead.
+        editPath = [tx]
     }
 
     // MARK: - Derived
@@ -617,6 +641,6 @@ enum TransactionFilter: String, CaseIterable, Identifiable {
 }
 
 #Preview {
-    NavigationStack { TransactionsView() }
+    TransactionsView()
         .modelContainer(for: [Transaction.self, Category.self, Source.self, MerchantCategoryLearning.self], inMemory: true)
 }
