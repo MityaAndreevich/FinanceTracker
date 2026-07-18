@@ -1,0 +1,7 @@
+Date,Description,Original Description,Amount,Transaction Type,Category,Account Name,Labels,Notes
+07/03/2026,Starbucks,STARBUCKS #123,5.75,debit,Coffee Shops,Chase Checking,,
+07/05/2026,Paycheck,ACME CORP DIRECT DEP,"2,500.00",credit,Income,Chase Checking,,income-as-credit
+07/06/2026,"Amazon, Inc.",AMZN MKTP US*2A4,"1,234.56",debit,Shopping,Chase Visa,,comma-in-name + grouped amount
+07/10/2026,Uber,UBER TRIP HELP.UBER.COM,24.00,debit,Auto & Transport,Chase Visa,,
+07/11/2026,Amazon Refund,AMZN REFUND,15.00,credit,Shopping,Chase Visa,,refund-as-credit
+07/12/2026,Rent,PROPERTY MGMT LLC,1500.00,debit,Bills & Utilities,Chase Checking,,
