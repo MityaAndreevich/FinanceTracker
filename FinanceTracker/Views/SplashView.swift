@@ -2,10 +2,11 @@
 //  SplashView.swift
 //  FinanceTracker
 //
-//  Post-launch branded splash. The OS launch screen (auto-generated, system
-//  background) is static per Apple HIG; animation belongs here, in the SwiftUI
-//  layer. Background is `systemBackground` so it matches the launch screen for a
-//  seamless launch → splash → content transition with no color flash.
+//  Post-launch branded splash. The OS launch screen (`LaunchScreen.storyboard`)
+//  is static per Apple HIG; animation belongs here, in the SwiftUI layer. This
+//  view mirrors that storyboard exactly — same `MascotCrab` asset, same 160×145
+//  size, same `systemBackground` — so launch → splash → content introduces no
+//  color flash and no jump in the mark.
 //
 
 import SwiftUI
@@ -20,14 +21,14 @@ struct SplashView: View {
             Color(.systemBackground)
                 .ignoresSafeArea()
 
-            Image("LaunchLogo")
+            // Same transparent crab, at the same size, as the static launch
+            // screen — so the launch → splash handoff swaps nothing but the
+            // motion. (The old app-icon PNG carried a baked navy square, which
+            // reappeared here one beat after the launch screen dropped it.)
+            Image("MascotCrab")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 120, height: 120)
-                // The source PNG is the full square app icon; clip to the iOS
-                // continuous-corner squircle so it reads as the app's mark.
-                .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
-                .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
+                .frame(width: 160, height: 145)
                 .scaleEffect(scale)
                 .rotationEffect(.degrees(rotation))
                 .accessibilityHidden(true)
