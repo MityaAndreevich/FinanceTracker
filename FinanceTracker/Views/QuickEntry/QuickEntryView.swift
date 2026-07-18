@@ -730,6 +730,7 @@ struct QuickEntryView: View {
                 }
 
                 TextField("", text: $inputText, axis: .vertical)
+                    .plainTextEntry()
                     .font(.system(size: 17, weight: .regular, design: .rounded))
                     .lineLimit(1...3)
                     .tint(Color.bcAccent)

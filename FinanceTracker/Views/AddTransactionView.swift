@@ -227,12 +227,14 @@ struct AddTransactionView: View {
     @ViewBuilder private var amountSection: some View {
         Section {
             TextField("add.amount.placeholder", text: $amountText)
+                .plainTextEntry()
                 .keyboardType(.decimalPad)
                 .onChange(of: amountText) { _, newValue in
                     amountText = Money.sanitizeInput(newValue)
                 }
 
             TextField("add.tax.placeholder", text: $taxText)
+                .plainTextEntry()
                 .keyboardType(.decimalPad)
                 .onChange(of: taxText) { _, newValue in
                     taxText = Money.sanitizeInput(newValue)
@@ -245,6 +247,7 @@ struct AddTransactionView: View {
     @ViewBuilder private var titleSection: some View {
         Section {
             TextField("add.title.placeholder", text: $merchantText)
+                .plainTextEntry()
                 .onChange(of: merchantText) { _, _ in
                     scheduleSuggestion()
                 }
@@ -427,6 +430,7 @@ struct AddTransactionView: View {
     @ViewBuilder private var noteSection: some View {
         Section {
             TextField("add.note.placeholder", text: $note, axis: .vertical)
+                .plainTextEntry()
                 .lineLimit(2...4)
         } header: {
             Text("add.section.note")
@@ -690,7 +694,9 @@ private struct AddSourceSheet: View {
             Form {
                 Section {
                     TextField("add.source_sheet.name.placeholder", text: $name)
+                        .plainTextEntry()
                     TextField("add.source_sheet.note.placeholder", text: $note)
+                        .plainTextEntry()
                 } header: {
                     Text("add.source_sheet.section.title")
                 }

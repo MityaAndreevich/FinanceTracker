@@ -124,12 +124,14 @@ struct EditTransactionView: View {
     private var amountSection: some View {
         Section("edit.section.amount") {
             TextField("edit.amount.placeholder", text: $amountText)
+                .plainTextEntry()
                 .keyboardType(.decimalPad)
                 .onChange(of: amountText) { _, newValue in
                     amountText = Money.sanitizeInput(newValue)
                 }
 
             TextField("edit.tax.placeholder", text: $taxText)
+                .plainTextEntry()
                 .keyboardType(.decimalPad)
                 .onChange(of: taxText) { _, newValue in
                     taxText = Money.sanitizeInput(newValue)
@@ -140,6 +142,7 @@ struct EditTransactionView: View {
     private var titleSection: some View {
         Section("edit.section.merchant") {
             TextField("edit.merchant.placeholder", text: $merchantText)
+                .plainTextEntry()
         }
     }
 
@@ -206,6 +209,7 @@ struct EditTransactionView: View {
     private var noteSection: some View {
         Section("edit.section.note") {
             TextField("edit.note.placeholder", text: $note, axis: .vertical)
+                .plainTextEntry()
                 .lineLimit(2...4)
         }
     }

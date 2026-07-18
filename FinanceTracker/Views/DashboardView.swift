@@ -1080,6 +1080,7 @@ private struct QuickAddBar: View {
                 .foregroundStyle(Color.bcAccent)
 
             TextField("quickadd.placeholder", text: $text)
+                .plainTextEntry()
                 .submitLabel(.done)
                 .lineLimit(1)
                 .truncationMode(.tail)

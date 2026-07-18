@@ -293,6 +293,7 @@ struct GeneralSettingsView: View {
                 Label("settings.budget.label", systemImage: "target")
                 Spacer(minLength: 12)
                 TextField("settings.budget.placeholder", text: $budgetText)
+                    .plainTextEntry()
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .focused($budgetFieldFocused)

@@ -63,6 +63,7 @@ struct ElevatedSelectionList<Item: Identifiable & Hashable>: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField("common.search", text: $searchText)
+                .plainTextEntry()
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)

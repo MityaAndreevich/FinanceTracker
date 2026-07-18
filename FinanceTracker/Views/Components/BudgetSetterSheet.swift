@@ -25,6 +25,7 @@ struct BudgetSetterSheet: View {
                 Section {
                     HStack {
                         TextField("settings.budget.placeholder", text: $budgetText)
+                            .plainTextEntry()
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.leading)
                             .focused($fieldFocused)

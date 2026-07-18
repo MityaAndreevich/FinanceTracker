@@ -77,6 +77,7 @@ struct SFSymbolPicker: View {
                 }
             }
             .searchable(text: $query, prompt: Text("icons.search"))
+            .plainTextEntry()
         }
         .presentationDetents([.medium, .large])
     }

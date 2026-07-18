@@ -39,6 +39,7 @@ struct SearchablePickerSheet<Item: Identifiable & Hashable>: View {
             }
             .accessibilityIdentifier(sheetIdentifier)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .plainTextEntry()
             .navigationTitle(titleKey)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

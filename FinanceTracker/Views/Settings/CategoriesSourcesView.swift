@@ -414,10 +414,12 @@ private struct AddSourceSheet: View {
             Form {
                 Section {
                     TextField("cs.source_sheet.name.placeholder", text: $name)
+                        .plainTextEntry()
                         .focused($focusedField, equals: .name)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .note }
                     TextField("cs.source_sheet.note.placeholder", text: $note)
+                        .plainTextEntry()
                         .focused($focusedField, equals: .note)
                         .submitLabel(.done)
                         .onSubmit { add() }

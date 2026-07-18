@@ -120,6 +120,7 @@ struct LearnAndTipsView: View {
         }
         .listStyle(.insetGrouped)
         .searchable(text: $searchText, prompt: Text("learn.search"))
+        .plainTextEntry()
         .navigationTitle("settings.learn_tips")
         .navigationBarTitleDisplayMode(.inline)
         .alert("help.email_copied", isPresented: $showCopiedToast) {

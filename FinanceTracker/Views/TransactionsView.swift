@@ -108,6 +108,7 @@ struct TransactionsView: View {
             placement: .navigationBarDrawer(displayMode: .always),
             prompt: Text("transactions.search.prompt")
         )
+        .plainTextEntry()
         .refreshable {
             await PurchaseManager.shared.refreshStatus()
         }

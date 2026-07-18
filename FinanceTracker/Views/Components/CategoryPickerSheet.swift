@@ -75,6 +75,7 @@ struct CategoryPickerSheet: View {
                 }
             }
             .searchable(text: $search)
+            .plainTextEntry()
             .navigationTitle("quickadd.pick_category")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

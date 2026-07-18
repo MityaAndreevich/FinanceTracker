@@ -58,6 +58,7 @@ struct AddCategorySheet: View {
 
                 Section {
                     TextField("cs.category_sheet.name.placeholder", text: $name)
+                        .plainTextEntry()
                         .focused($nameFocused)
                         // Return commits the name straight into create() (device QA
                         // Item 2: previously the keyboard had no dismiss affordance).
