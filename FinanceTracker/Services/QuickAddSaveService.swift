@@ -110,7 +110,13 @@ enum QuickAddSaveService {
             modelContext.delete(tx)
             throw error
         }
+        // Success-path instrumentation only — it answered "is Save firing once per
+        // tap or looping?" during the duplication investigation and has no value to
+        // a shipped build. DEBUG-only, unlike the failure log below it: a save that
+        // THREW still needs to be root-causable off-device (see PersistenceLog.swift).
+        #if DEBUG
         persistenceLog.info("QuickAddSave #\(callNo, privacy: .public): inserted 1 row")
+        #endif
 
         MerchantLearningService.record(
             merchant: parsed.merchant,
