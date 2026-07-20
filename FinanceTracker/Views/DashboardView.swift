@@ -175,20 +175,26 @@ struct DashboardView: View {
 
     private struct CategorySpend: Identifiable {
         let id: String
-        let category: Category
+        let category: Category?   // nil = the uncategorized bucket (§1.4)
         let cents: Int
     }
 
+    /// A-path (design doc §2.4 A2): sums CategoryAttribution shares, so a
+    /// split purchase's money lands in the splits' categories. The donut's
+    /// center total stays the parent-summed `expenseCents` — the two agree by
+    /// the conservation invariant (canary: donutAttributionSumEqualsMonthExpenseTotal).
     private var monthCategorySpend: [CategorySpend] {
         let expenses = currentMonthTransactions.filter { !$0.isIncome }
-        var byCat: [PersistentIdentifier: (Category, Int)] = [:]
+        var byBucket: [UUID: (Category?, Int)] = [:]
         for tx in expenses {
-            let cat = tx.category
-            let running = byCat[cat.persistentModelID]?.1 ?? 0
-            byCat[cat.persistentModelID] = (cat, running + tx.amountCents)
+            for share in CategoryAttribution.shares(for: tx) {
+                let key = share.category.bucketID
+                let running = byBucket[key]?.1 ?? 0
+                byBucket[key] = (share.category, running + share.amountCents)
+            }
         }
-        return byCat.values
-            .map { CategorySpend(id: $0.0.uuid.uuidString, category: $0.0, cents: $0.1) }
+        return byBucket
+            .map { CategorySpend(id: $0.key.uuidString, category: $0.value.0, cents: $0.value.1) }
             .sorted { $0.cents > $1.cents }
     }
 
@@ -199,9 +205,9 @@ struct DashboardView: View {
         func slice(_ s: CategorySpend) -> CategoryDonutView.Slice {
             CategoryDonutView.Slice(
                 id: s.id,
-                name: s.category.displayName(),
+                name: s.category.displayNameOrFallback(),
                 cents: s.cents,
-                color: s.category.themeColor
+                color: s.category.themeColorOrFallback
             )
         }
         guard sorted.count > maxSlices else { return sorted.map(slice) }
@@ -378,7 +384,7 @@ struct DashboardView: View {
             typeRaw: template.typeRaw,
             amountText: String(format: "%.2f", Double(template.amountCents) / 100),
             merchant: template.merchant ?? "",
-            categoryUUID: template.category.uuid,
+            categoryUUID: template.category?.uuid,
             sourceUUID: template.source?.uuid,
             recurrence: nil
         )
@@ -878,10 +884,10 @@ struct DashboardView: View {
         let pct = expenseCents > 0 ? Int((Double(item.cents) / Double(expenseCents) * 100).rounded()) : 0
         HStack(spacing: 8) {
             Circle()
-                .fill(item.category.themeColor)
+                .fill(item.category.themeColorOrFallback)
                 .frame(width: 9, height: 9)
 
-            Text(item.category.displayName())
+            Text(item.category.displayNameOrFallback())
                 .font(.system(size: 14))
                 .foregroundStyle(Color.bcTextPrimary)
                 .lineLimit(1)

@@ -71,7 +71,7 @@ struct NetSnapshot: Codable {
     var hasData: Bool
     var generatedAt: Date
 
-    struct Item: Codable, Identifiable {
+    struct Item: Codable, Identifiable, Equatable {
         var id: String { name }
         var name: String            // localized category name
         var symbol: String          // SF Symbol

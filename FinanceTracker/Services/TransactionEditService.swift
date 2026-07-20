@@ -28,7 +28,7 @@ enum TransactionEditService {
         var merchant: String?
         var note: String?
         var date: Date
-        var category: Category
+        var category: Category?   // optional as of V2; the editor always passes one
         var source: Source?
     }
 

@@ -194,6 +194,7 @@
 "category.rent" = "Aluguel";
 "category.supplies" = "Compras";
 "category.other" = "Sem categoria";
+"category.uncategorized" = "Sem categoria";
 "category.income" = "Renda";
 "category.food_drink" = "Comida e Bebida";
 "category.transport" = "Transporte";
@@ -806,3 +807,21 @@
 /* ---- A promessa ao voltar para o plano grátis ---- */
 "paywall.data_safety.title" = "Seus dados são sempre seus";
 "paywall.data_safety.body" = "Nada é apagado se você voltar para o plano grátis: suas transações, seu histórico e suas categorias continuam aí. Você só não pode adicionar novos itens além do limite gratuito.";
+
+/* 1.0.3 migration safety belt (design doc §9–§10) */
+"premigration.title" = "Melhoramos a forma de armazenar seus dados";
+"premigration.caption" = "Seus dados acabaram de ser copiados automaticamente. Como precaução extra, você pode exportar uma cópia antes de continuar.";
+"premigration.export" = "Exportar uma cópia…";
+"premigration.export_failed" = "A exportação falhou — você ainda pode continuar com segurança: o backup automático já foi feito.";
+"premigration.continue" = "Continuar";
+"migration.working" = "Atualizando seus dados…";
+"backupfail.title" = "Não foi possível fazer o backup dos seus dados";
+"backupfail.caption" = "Nada foi alterado. Libere um pouco de espaço e tente de novo — a atualização nunca roda sem um backup.";
+"backupfail.retry" = "Tentar novamente";
+"floor.title" = "Seus dados estão seguros";
+"floor.caption" = "Não conseguimos concluir a atualização do formato de armazenamento. Tudo o que você registrou está intacto — exporte uma cópia e escreva para nós para corrigirmos rápido.";
+"floor.export" = "Exportar meus dados";
+"floor.contact" = "Falar com o suporte";
+"restore.title" = "Restauramos seus dados de um backup";
+"restore.caption.format" = "A atualização encontrou um problema, então trouxemos tudo de volta do backup feito há instantes. Está tudo aqui: %d transações.";
+"restore.ack" = "OK";

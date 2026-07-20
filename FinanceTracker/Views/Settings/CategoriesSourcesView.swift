@@ -320,7 +320,7 @@ struct CategoriesSourcesView: View {
             let categoryUUID = category.uuid
             let descriptor = FetchDescriptor<Transaction>(
                 predicate: #Predicate { tx in
-                    tx.category.uuid == categoryUUID
+                    tx.category?.uuid == categoryUUID
                 }
             )
             return try modelContext.fetchCount(descriptor)

@@ -66,7 +66,7 @@ final class CSVRoundTripTests: XCTestCase {
         XCTAssertEqual(txs.count, 1, "Column spill would drop/duplicate the row")
         XCTAssertEqual(txs[0].amountCents, 152, "Decimals must not spill into the currency column")
         XCTAssertEqual(txs[0].currency, "EUR")
-        XCTAssertEqual(txs[0].category.displayName(), "Еда и напитки")
+        XCTAssertEqual(txs[0].category.displayNameOrFallback(), "Еда и напитки")
         XCTAssertEqual(txs[0].merchant, "Картошка, лук")
     }
 

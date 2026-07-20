@@ -57,12 +57,19 @@ struct DaySpendingSheet: View {
     private var categorySlices: [CategorySlice] {
         struct Acc { var name: String; var symbol: String; var color: Color; var cents: Int; var isIncome: Bool }
         var sums: [UUID: Acc] = [:]
+        // A-path (design doc §2.4 A5): a split purchase's money lands in the
+        // splits' categories; the day-net figure above stays parent-summed.
         for tx in filtered {
-            let cat = tx.category
-            var cur = sums[cat.uuid]
-                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.symbolName, color: cat.themeColor, cents: 0, isIncome: tx.isIncome)
-            cur.cents += tx.amountCents
-            sums[cat.uuid] = cur
+            for share in CategoryAttribution.shares(for: tx) {
+                let key = share.category.bucketID
+                var cur = sums[key]
+                    ?? Acc(name: share.category.displayNameOrFallback(locale: locale),
+                           symbol: share.category.symbolNameOrFallback,
+                           color: share.category.themeColorOrFallback,
+                           cents: 0, isIncome: tx.isIncome)
+                cur.cents += share.amountCents
+                sums[key] = cur
+            }
         }
         return sums
             .map { CategorySlice(id: $0.key, name: $0.value.name, symbol: $0.value.symbol, color: $0.value.color, cents: $0.value.cents, isIncome: $0.value.isIncome) }

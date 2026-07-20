@@ -176,7 +176,7 @@ enum SeedService {
 
             // Re-point all transactions from loser to winner
             let allTxs = (try? modelContext.fetch(FetchDescriptor<Transaction>())) ?? []
-            for tx in allTxs where tx.category.uuid == loser.uuid {
+            for tx in allTxs where tx.category?.uuid == loser.uuid {
                 tx.category = winner
                 didChange = true
             }

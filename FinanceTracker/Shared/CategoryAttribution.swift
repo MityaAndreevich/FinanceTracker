@@ -19,11 +19,13 @@
 //                             is nil — deleted or not-yet-synced), plus a
 //                             remainder share (total − Σ splits, parent
 //                             category) when the remainder is > 0
-//    • over-sum (transient  → splits counted as stated, remainder clamped to 0.
-//      two-device merge)      The editor prevents creating this locally.
+//    • over-sum (only a bug → splits consume the total IN ORDER with a
+//      or a future sync       running cap — truncated at the boundary, never
+//      merge can create it)   scaled. The editor makes over-sum impossible to
+//                             SAVE; this is the read-side guarantee on top.
 //
-//  Invariant: Σ shares == max(total, Σ splits) — equal to the parent total
-//  whenever the editor's Σ splits ≤ total invariant holds.
+//  Invariant: Σ shares == parent total, ALWAYS — including over-sum input.
+//  Category totals can therefore never disagree with the grand total.
 //
 
 import Foundation
@@ -69,20 +71,30 @@ enum CategoryAttribution {
                         isIncome: isIncome)]
         }
 
-        var out: [Row] = effective.map { split in
-            Row(amountCents: split.amountCents,
-                // nil split category (deleted / not yet synced) falls back to
-                // the purchase's own category — money never silently vanishes
-                // into a bucket the user can't see.
-                categoryUUID: split.categoryUUID ?? parentCategoryUUID,
-                date: date,
-                isIncome: isIncome)
+        // EXACT CONSERVATION: Σ rows == totalCents, always — including the
+        // over-sum state (Σ splits > total) that only a bug or a future sync
+        // merge could produce. Splits consume the total in order with a
+        // running cap, so an over-sum is truncated at the boundary rather
+        // than over-counting category totals against the grand total. The
+        // editor independently makes over-sum impossible to SAVE; this is the
+        // read-side guarantee that the numbers cannot lie even if bad data
+        // arrives anyway.
+        var out: [Row] = []
+        var budget = max(0, totalCents)
+        for split in effective {
+            guard budget > 0 else { break }
+            let take = min(split.amountCents, budget)
+            budget -= take
+            // nil split category (deleted / not yet synced) falls back to
+            // the purchase's own category — money never silently vanishes
+            // into a bucket the user can't see.
+            out.append(Row(amountCents: take,
+                           categoryUUID: split.categoryUUID ?? parentCategoryUUID,
+                           date: date,
+                           isIncome: isIncome))
         }
-
-        let assigned = effective.reduce(0) { $0 + $1.amountCents }
-        let remainder = max(0, totalCents - assigned)   // over-sum rule: clamp, never scale
-        if remainder > 0 {
-            out.append(Row(amountCents: remainder,
+        if budget > 0 {
+            out.append(Row(amountCents: budget,
                            categoryUUID: parentCategoryUUID,
                            date: date,
                            isIncome: isIncome))
@@ -102,15 +114,31 @@ enum CategoryAttribution {
     /// The model-level decomposition every category-dimension consumer uses.
     ///
     /// A transaction without splits yields exactly one share — byte-for-byte
-    /// today's (amount, category) pair — so pre-split stores and non-splitting
-    /// users see zero behavioral change.
-    ///
-    /// NOTE (build order, §13): the split branch lands together with the
-    /// `TransactionSplit` entity; until then every transaction is unsplit and
-    /// this is exactly the pre-split identity decomposition. The SplitCanary
-    /// suite pins that identity from day one.
+    /// the pre-split (amount, category) pair — so existing stores and
+    /// non-splitting users see zero behavioral change.
     static func shares(for tx: Transaction) -> [AttributedShare] {
-        [AttributedShare(amountCents: tx.amountCents, category: tx.category)]
+        let splits = orderedSplits(of: tx)
+        guard !splits.isEmpty else {
+            return [AttributedShare(amountCents: tx.amountCents, category: tx.category)]
+        }
+
+        // Same exact-conservation walk as the pure core: Σ shares ==
+        // tx.amountCents always, over-sum truncated at the boundary.
+        var out: [AttributedShare] = []
+        var budget = max(0, tx.amountCents)
+        for split in splits {
+            guard budget > 0 else { break }
+            let take = min(split.amountCents, budget)
+            budget -= take
+            // nil split category (deleted / not yet synced) falls back to the
+            // purchase's own category — money never silently vanishes.
+            out.append(AttributedShare(amountCents: take,
+                                       category: split.category ?? tx.category))
+        }
+        if budget > 0 {
+            out.append(AttributedShare(amountCents: budget, category: tx.category))
+        }
+        return out
     }
 
     /// Same decomposition as pure rows (for arithmetic-only consumers).
@@ -121,5 +149,19 @@ enum CategoryAttribution {
                 date: tx.date,
                 isIncome: tx.isIncome)
         }
+    }
+
+    /// The parent's splits in stable display order, with non-positive amounts
+    /// defensively dropped. The single choke point so every consumer agrees on
+    /// ordering and validity; nil and empty `splits` are equivalent here.
+    static func orderedSplits(of tx: Transaction) -> [TransactionSplit] {
+        (tx.splits ?? [])
+            .filter { $0.amountCents > 0 }
+            .sorted { $0.order < $1.order }
+    }
+
+    /// Whether the purchase carries any effective split.
+    static func isSplit(_ tx: Transaction) -> Bool {
+        !orderedSplits(of: tx).isEmpty
     }
 }

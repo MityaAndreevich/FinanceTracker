@@ -212,7 +212,7 @@ enum PDFExportService {
 
         let date = shortDate(tx.date)
 
-        let categoryName = tx.category.displayName()
+        let categoryName = tx.category.displayNameOrFallback()
         let title = (tx.merchant?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
             ? tx.merchant!
             : categoryName

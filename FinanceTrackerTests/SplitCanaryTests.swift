@@ -49,7 +49,7 @@ struct SplitMirrorFixture {
     static func make(applySplitsToStore: Bool) throws -> SplitMirrorFixture {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
-            for: Transaction.self, FinanceTracker.Category.self, Source.self,
+            for: Transaction.self, FinanceTracker.Category.self, Source.self, TransactionSplit.self,
             configurations: config
         )
         let ctx = container.mainContext
@@ -105,17 +105,25 @@ struct SplitMirrorFixture {
 
     /// Decorate store B with splits — NO parent field changes.
     ///
-    /// STEP-5 ACTIVATION POINT: implemented as a no-op until the
-    /// TransactionSplit entity exists; returns whether splits were created.
-    /// When activated it must give `amazonOrder` a 3-way split
-    /// (4 000 → Home, 1 800 → Health, remainder 6 200 stays Food) and
-    /// `hardware` a partial split (2 500 → Food, remainder 2 500 stays Home).
+    /// `amazonOrder` (12 000, Food): 4 000 → Home, 1 800 → Health, remainder
+    /// 6 200 stays Food. `hardware` (5 000, Home): 2 500 → Food, remainder
+    /// 2 500 stays Home. The deliberate over-sum case lives in its own
+    /// targeted test, never in this mirror — its category totals would
+    /// legitimately differ and poison the equality assertions.
     private static func applySplits(
         amazonOrder: Transaction, hardware: Transaction,
         home: FinanceTracker.Category, health: FinanceTracker.Category,
         food: FinanceTracker.Category, in ctx: ModelContext
     ) throws -> Bool {
-        false   // ← flips to real splits in the TransactionSplit commit (§13 step 4)
+        let s1 = TransactionSplit(amountCents: 4_000, category: home, note: "cable", order: 0)
+        let s2 = TransactionSplit(amountCents: 1_800, category: health, note: "vitamins", order: 1)
+        let s3 = TransactionSplit(amountCents: 2_500, category: food, note: "snacks", order: 0)
+        [s1, s2, s3].forEach { ctx.insert($0) }
+        s1.parent = amazonOrder
+        s2.parent = amazonOrder
+        s3.parent = hardware
+        try ctx.save()
+        return true
     }
 
     /// The current-month subset, the way month-scoped consumers see it.
@@ -174,16 +182,30 @@ struct CategoryAttributionConservationTests {
         #expect(total(rows) == 6_000)
     }
 
-    @Test func overSumCountsSplitsAsStatedAndClampsRemainderToZero() {
-        // §2.2: a transient two-device merge state. Splits as stated, no
-        // negative remainder, never scaled.
+    @Test func overSumIsTruncatedSoAttributionStillConservesTheTotal() {
+        // Σ splits > total can only come from a bug (or a future sync merge) —
+        // the editor forbids saving it. The read side must STILL conserve:
+        // splits consume the total in order with a running cap, truncated at
+        // the boundary, never scaled, never over-counting the grand total.
         let rows = CategoryAttribution.rows(
             totalCents: 5_000, parentCategoryUUID: parent, date: day, isIncome: false,
             splits: [.init(amountCents: 4_000, categoryUUID: catA),
                      .init(amountCents: 3_000, categoryUUID: catB)]
         )
-        #expect(total(rows) == 7_000, "over-sum: Σ rows == Σ splits (= max(total, Σ splits))")
-        #expect(rows.allSatisfy { $0.amountCents > 0 })
+        #expect(total(rows) == 5_000, "over-sum input must still sum to EXACTLY the parent total")
+        #expect(rows == [
+            CategoryAttribution.Row(amountCents: 4_000, categoryUUID: catA, date: day, isIncome: false),
+            CategoryAttribution.Row(amountCents: 1_000, categoryUUID: catB, date: day, isIncome: false),
+        ])
+
+        // A split entirely past the boundary contributes nothing.
+        let past = CategoryAttribution.rows(
+            totalCents: 3_000, parentCategoryUUID: parent, date: day, isIncome: false,
+            splits: [.init(amountCents: 3_000, categoryUUID: catA),
+                     .init(amountCents: 500, categoryUUID: catB)]
+        )
+        #expect(total(past) == 3_000)
+        #expect(past.count == 1)
     }
 
     @Test func nilSplitCategoryFallsBackToParentCategory() {
@@ -412,6 +434,51 @@ struct SplitCanaryTests {
         #expect(snapA.ringFraction == snapB.ringFraction)
         #expect(snapA.ringIsNeutral == snapB.ringIsNeutral)
         #expect(snapA.spendSeries == snapB.spendSeries)
+    }
+
+    // Vacuity guard — the mirror must actually split, or every green canary
+    // above is meaningless. The A-path top-categories list is EXPECTED to
+    // differ between the stores; if a fixture refactor ever stops creating
+    // splits, this fails first.
+    @Test func fixtureIsNotVacuous_topCategoriesDiffer() throws {
+        let a = try SplitMirrorFixture.make(applySplitsToStore: false)
+        let b = try SplitMirrorFixture.make(applySplitsToStore: true)
+        #expect(b.hasSplits, "the mirror fixture must create real splits")
+
+        let locale = Locale(identifier: "en_US")
+        let snapA = NetSnapshotBuilder.build(transactions: try a.allTransactions(),
+                                             currencyCode: "USD", monthlyBudgetCents: 0, locale: locale)
+        let snapB = NetSnapshotBuilder.build(transactions: try b.allTransactions(),
+                                             currencyCode: "USD", monthlyBudgetCents: 0, locale: locale)
+        #expect(snapA.topCategories != snapB.topCategories,
+                "splitting moves money between categories — the A-path must see it")
+    }
+
+    /// Over-sum, store-level (user hardening request): even a transaction whose
+    /// splits EXCEED its total must attribute exactly its own amount — the
+    /// running-cap truncation, verified against the real model. The editor
+    /// forbids saving this state; the read side must conserve regardless.
+    @Test func overSumSplitsStillConserveTheParentTotalAtStoreLevel() throws {
+        let fixture = try SplitMirrorFixture.make(applySplitsToStore: false)
+        let ctx = fixture.container.mainContext
+        let categories = try ctx.fetch(FetchDescriptor<FinanceTracker.Category>())
+        let food = try #require(categories.first { $0.name == "Food" })
+        let home = try #require(categories.first { $0.name == "Home" })
+
+        let tx = Transaction(typeRaw: "expense", amountCents: 5_000, currency: "USD",
+                             date: fixture.now, category: food, merchant: "OverSum")
+        ctx.insert(tx)
+        let s1 = TransactionSplit(amountCents: 4_000, category: home, order: 0)
+        let s2 = TransactionSplit(amountCents: 3_000, category: food, order: 1)
+        [s1, s2].forEach { ctx.insert($0) }
+        s1.parent = tx
+        s2.parent = tx
+        try ctx.save()
+
+        let shares = CategoryAttribution.shares(for: tx)
+        #expect(shares.reduce(0) { $0 + $1.amountCents } == 5_000,
+                "attribution must sum to EXACTLY the transaction total, even on over-sum input")
+        #expect(shares.map(\.amountCents) == [4_000, 1_000])
     }
 
     // C6 — Counts -------------------------------------------------------------

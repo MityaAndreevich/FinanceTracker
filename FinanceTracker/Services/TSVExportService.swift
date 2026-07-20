@@ -41,7 +41,7 @@ enum TSVExportService {
             let currency = tx.currency
 
             // ✅ displayName()
-            let category = safe(tx.category.displayName())
+            let category = safe(tx.category.displayNameOrFallback())
             let source = safe(tx.source?.name ?? "")
             let merchant = safe(tx.merchant ?? "")
             let note = safe(tx.note ?? "")

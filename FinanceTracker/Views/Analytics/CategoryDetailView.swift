@@ -33,7 +33,7 @@ struct CategoryDetailView: View {
         let window = monthWindow
         let cal = Calendar.current
         return allTransactions.filter { tx in
-            guard tx.category.uuid == categoryUUID else { return false }
+            guard tx.category?.uuid == categoryUUID else { return false }
             let day = cal.startOfDay(for: tx.date)
             return day >= window.start && day <= window.end
         }

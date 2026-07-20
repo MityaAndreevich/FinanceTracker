@@ -4,6 +4,11 @@
 //
 //  Created by Dmitry Logachev (USA) on 15.01.2026.
 //
+//  V2 (1.0.3): CloudKit-shaped — every attribute defaulted, every relationship
+//  optional with an explicit inverse, no `.unique` (design doc §1.2). iCloud
+//  sync itself stays OFF until 1.0.4; this release ships the sync-compatible
+//  schema so the flip is a config change, not a migration.
+//
 
 import Foundation
 import SwiftData
@@ -13,20 +18,23 @@ final class Transaction {
 
     /// Stable external identifier (not the SwiftData PersistentIdentifier).
     /// Used for UI selection, exports, imports, and future cloud sync.
-    @Attribute(.unique) var uuid: UUID
+    ///
+    /// V2: no longer `@Attribute(.unique)` — CloudKit forbids it. Uniqueness is
+    /// enforced at the write sites instead (the importer fetches-by-uuid before
+    /// insert; SeedService is idempotent by nameKey).
+    var uuid: UUID = UUID()
 
     /// Stored as raw string for SwiftData stability. Use `.type` for safe access.
-    var typeRaw: String
+    var typeRaw: String = "expense"
 
-    var amountCents: Int          // Money stored as Int cents — avoids float drift
-    var currency: String
-    var date: Date
+    var amountCents: Int = 0      // Money stored as Int cents — avoids float drift
+    var currency: String = "USD"
+    var date: Date = Date()
     var taxCents: Int?
     var note: String?
     var merchant: String?
 
     /// nil = one-time transaction. Otherwise "weekly" | "monthly" | "yearly".
-    /// Optional with no default → SwiftData lightweight migration handles existing stores.
     var recurrenceRaw: String?
 
     /// True for transactions seeded by DemoDataController (opt-in sample data).
@@ -43,27 +51,32 @@ final class Transaction {
     /// Rows carrying our own export's UUID are never flagged — an exact UUID
     /// match is skipped outright, which is why an own-export re-import stays
     /// idempotent.
-    ///
-    /// Defaulted → additive, SwiftData lightweight migration handles it.
     var isPossibleDuplicate: Bool = false
 
-    // Relationships
-    // .nullify (SwiftData default): deleting a Transaction simply detaches it from its
-    // Category. It must NOT be `.deny`: a delete rule governs deletion of the object
-    // that OWNS the relationship (the Transaction), so `.deny` here denied deleting ANY
-    // transaction whose `category` was set — and since `category` is non-optional, that
-    // was every transaction. That surfaced on device as NSCocoaError 1600
-    // (NSValidationRelationshipDeniedDeleteError) on "Reset transactions", whose
-    // un-committable pending deletes then poisoned every later save. Protecting a
-    // Category that still has transactions is a UX concern handled in CategoriesSourcesView
-    // (there is no inverse relationship here for a delete rule to enforce anyway).
-    @Relationship(deleteRule: .nullify) var category: Category
+    // Relationships — inverse macros live on the far side (Category.transactions,
+    // Source.transactions); SwiftData wants `@Relationship(inverse:)` declared on
+    // exactly one side of each pair.
 
-    // .nullify: deleting a Source clears the back-reference on transactions.
-    @Relationship(deleteRule: .nullify) var source: Source?
+    /// OPTIONAL as of V2 (CloudKit rule, and a sync reality: with iCloud on, a
+    /// Transaction record can land on a second device before its Category
+    /// record). nil renders as "Uncategorized" via the Optional<Category>
+    /// fallback helpers — never force-unwrap this.
+    var category: Category?
 
-    var createdAt: Date
-    var updatedAt: Date
+    /// Deleting a Source now genuinely nullifies this: the explicit inverse on
+    /// Source.transactions gives the store the back-reference it needs to
+    /// enforce `.nullify` at delete time (the pre-V2 dangling-reference crash).
+    var source: Source?
+
+    /// Child splits of this purchase ("one Amazon order, three categories").
+    /// Cascade: a split cannot outlive its purchase. Optional array per the
+    /// CloudKit shape; nil and empty are equivalent (use
+    /// `CategoryAttribution.orderedSplits`).
+    @Relationship(deleteRule: .cascade, inverse: \TransactionSplit.parent)
+    var splits: [TransactionSplit]?
+
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
     init(
         uuid: UUID = UUID(),
@@ -71,7 +84,7 @@ final class Transaction {
         amountCents: Int,
         currency: String = "USD",
         date: Date,
-        category: Category,
+        category: Category?,
         source: Source? = nil,
         taxCents: Int? = nil,
         note: String? = nil,

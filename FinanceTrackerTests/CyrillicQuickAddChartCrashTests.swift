@@ -75,10 +75,10 @@ final class CyrillicQuickAddChartCrashTests: XCTestCase {
         amountCents=\(parsed.amountCents) type=\(parsed.typeRaw) \
         merchant=\(String(describing: parsed.merchant)) \
         suggested=\(String(describing: parsed.suggestedCategoryName)) \
-        -> category.name=\(cat.name.debugDescription) \
-        displayName=\(cat.displayName().debugDescription) \
-        nameKey=\(String(describing: cat.nameKey)) \
-        uuid=\(cat.uuid)
+        -> category.name=\(String(describing: cat?.name)) \
+        displayName=\(cat.displayNameOrFallback().debugDescription) \
+        nameKey=\(String(describing: cat?.nameKey)) \
+        uuid=\(String(describing: cat?.uuid))
         """)
         return tx
     }

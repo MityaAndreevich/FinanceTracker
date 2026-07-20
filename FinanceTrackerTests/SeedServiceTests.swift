@@ -69,7 +69,7 @@ struct SeedServiceTests {
         // The transaction still points at the (same) fallback category.
         let txs = try context.fetch(FetchDescriptor<Transaction>())
         #expect(txs.count == 1)
-        #expect(txs.first?.category.uuid == legacyUUID)
+        #expect(txs.first?.category?.uuid == legacyUUID)
     }
 
     @Test func testMigration_userCustomizedOtherIcon_isPreserved() throws {

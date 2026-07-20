@@ -24,7 +24,7 @@ struct ProactiveAlertRefresherTests {
     /// context lets it deallocate and takes the store with it.
     private func makeStore() throws -> (ModelContainer, ModelContext, FinanceTracker.Category) {
         let container = try ModelContainer(
-            for: SharedModelContainer.schema,
+            for: SharedModelContainer.fullSchema,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = ModelContext(container)

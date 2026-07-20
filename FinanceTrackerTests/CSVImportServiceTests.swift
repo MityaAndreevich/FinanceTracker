@@ -48,7 +48,7 @@ final class CSVImportServiceTests: XCTestCase {
         XCTAssertEqual(tx.typeRaw, "income")
         XCTAssertEqual(tx.amountCents, 10_000)
         XCTAssertEqual(tx.currency, "USD")
-        XCTAssertEqual(tx.category.name, "Salary")
+        XCTAssertEqual(tx.category?.name, "Salary")
         XCTAssertEqual(tx.source?.name, "Amazon Flex")
         XCTAssertEqual(tx.taxCents, 1_000)
         XCTAssertEqual(tx.note, "Weekly payout")

@@ -38,7 +38,7 @@ extension TransactionEntity {
         self.amountCents = tx.amountCents
         self.currency = tx.currency
         self.typeRaw = tx.typeRaw
-        self.categoryName = tx.category.displayName()
+        self.categoryName = tx.category.displayNameOrFallback()
         self.merchant = tx.merchant
         self.occurredAt = tx.date
     }
@@ -49,7 +49,8 @@ extension TransactionEntity {
 struct TransactionEntityQuery: EntityQuery {
     func entities(for identifiers: [UUID]) async throws -> [TransactionEntity] {
         await MainActor.run {
-            let ctx = SharedModelContainer.shared.mainContext
+            guard let container = SharedModelContainer.readyContainer() else { return [] }
+            let ctx = container.mainContext
             let all = (try? ctx.fetch(FetchDescriptor<Transaction>())) ?? []
             return identifiers.compactMap { id in
                 all.first { $0.uuid == id }.map { TransactionEntity(from: $0) }

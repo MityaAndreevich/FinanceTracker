@@ -74,7 +74,7 @@ struct QuickEntryBugfixRegressionTests {
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
         #expect(all.count == 1)
         #expect(tx.amountCents == 5_000)
-        #expect(tx.category.uuid == food.uuid)   // saved category == the previewed one
+        #expect(tx.category?.uuid == food.uuid)   // saved category == the previewed one
     }
 
     /// REVERSED. This test used to assert `all.count == 1` — it encoded the 30s

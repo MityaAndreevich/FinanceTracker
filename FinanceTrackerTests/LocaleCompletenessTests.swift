@@ -203,7 +203,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // feedback mail composer — feedback.row, feedback.body_prompt, the
         // no-mail-account fallback trio (mail_unavailable.title/.caption,
         // copy_address) and feedback.copied. All 5 locales in parity. Was 698.
-        XCTAssertEqual(enKeys.count, 704, "English baseline changed; update the expected count.")
+        // 2026-07-21 (1.0.3 V2 schema + migration safety belt): net +17.
+        // category.uncategorized (the §1.4 nil-category contract) + the launch
+        // safety surfaces — premigration.* (5), migration.working,
+        // backupfail.* (3), floor.* (4), restore.* (3). All 5 locales in
+        // parity. Was 704.
+        XCTAssertEqual(enKeys.count, 721, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

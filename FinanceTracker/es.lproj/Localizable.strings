@@ -194,6 +194,7 @@
 "category.rent" = "Alquiler";
 "category.supplies" = "Suministros";
 "category.other" = "Sin categoría";
+"category.uncategorized" = "Sin categoría";
 "category.income" = "Ingresos";
 "category.food_drink" = "Comida y Bebida";
 "category.transport" = "Transporte";
@@ -805,3 +806,21 @@
 /* ---- La promesa al volver al plan gratuito ---- */
 "paywall.data_safety.title" = "Tus datos siempre son tuyos";
 "paywall.data_safety.body" = "No se borra nada si vuelves al plan gratuito: tus transacciones, tu histórico y tus categorías se quedan. Solo no podrás añadir más allá del límite gratuito.";
+
+/* 1.0.3 migration safety belt (design doc §9–§10) */
+"premigration.title" = "Mejoramos la forma en que se guardan tus datos";
+"premigration.caption" = "Tus datos se respaldaron automáticamente hace un momento. Como precaución extra, puedes exportar una copia antes de continuar.";
+"premigration.export" = "Exportar una copia…";
+"premigration.export_failed" = "La exportación falló — puedes continuar con seguridad: el respaldo automático ya está hecho.";
+"premigration.continue" = "Continuar";
+"migration.working" = "Actualizando tus datos…";
+"backupfail.title" = "No se pudo respaldar tus datos";
+"backupfail.caption" = "No se cambió nada. Libera algo de espacio e inténtalo de nuevo — la actualización nunca se ejecuta sin un respaldo.";
+"backupfail.retry" = "Reintentar";
+"floor.title" = "Tus datos están a salvo";
+"floor.caption" = "No pudimos terminar de actualizar su formato de almacenamiento. Todo lo que registraste está intacto — exporta una copia y escríbenos para arreglarlo pronto.";
+"floor.export" = "Exportar mis datos";
+"floor.contact" = "Contactar soporte";
+"restore.title" = "Restauramos tus datos desde un respaldo";
+"restore.caption.format" = "La actualización tuvo un problema, así que recuperamos todo del respaldo hecho hace un momento. Todo está aquí: %d transacciones.";
+"restore.ack" = "OK";

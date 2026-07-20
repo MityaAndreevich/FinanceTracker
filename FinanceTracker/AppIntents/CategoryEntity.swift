@@ -38,7 +38,8 @@ struct CategoryQuery: EntityQuery {
 
     func entities(for identifiers: [UUID]) async throws -> [CategoryEntity] {
         await MainActor.run {
-            let ctx = SharedModelContainer.shared.mainContext
+            guard let container = SharedModelContainer.readyContainer() else { return [] }
+            let ctx = container.mainContext
             let all = (try? ctx.fetch(FetchDescriptor<Category>())) ?? []
             return identifiers.compactMap { id in
                 all.first { $0.uuid == id }.map { CategoryEntity(from: $0) }
@@ -48,14 +49,16 @@ struct CategoryQuery: EntityQuery {
 
     func suggestedEntities() async throws -> [CategoryEntity] {
         await MainActor.run {
-            let ctx = SharedModelContainer.shared.mainContext
+            guard let container = SharedModelContainer.readyContainer() else { return [] }
+            let ctx = container.mainContext
             return Self.sortedEntities(from: ctx)
         }
     }
 
     func defaultResult() async -> CategoryEntity? {
         await MainActor.run {
-            let ctx = SharedModelContainer.shared.mainContext
+            guard let container = SharedModelContainer.readyContainer() else { return nil }
+            let ctx = container.mainContext
             let all = (try? ctx.fetch(FetchDescriptor<Category>())) ?? []
             return all.first { $0.isPrimary }.map { CategoryEntity(from: $0) }
         }

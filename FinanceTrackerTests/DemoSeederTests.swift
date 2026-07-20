@@ -72,7 +72,7 @@ final class DemoSeederTests: XCTestCase {
         //     "last 7 days" filter is fragile (most rows collapse onto today early in
         //     the month). The anomaly's defining trait is the amount, not the date.
         let foodExpenses = txs
-            .filter { $0.isExpense && $0.category.nameKey == "category.food_drink" }
+            .filter { $0.isExpense && $0.category?.nameKey == "category.food_drink" }
             .map(\.amountCents)
             .sorted()
         XCTAssertFalse(foodExpenses.isEmpty, "Demo seed must include Food & Drink expenses")
@@ -92,12 +92,12 @@ final class DemoSeederTests: XCTestCase {
 
         // Housing (rent) is allowed to exceed $200 — all others should not
         let nonHousingExpenses = txs.filter {
-            $0.isExpense && $0.category.nameKey != "category.housing"
+            $0.isExpense && $0.category?.nameKey != "category.housing"
         }
         for tx in nonHousingExpenses {
             XCTAssertLessThanOrEqual(
                 tx.amountCents, 20_000,
-                "Expense \(tx.amountCents)¢ exceeds $200 (category: \(tx.category.name), merchant: \(tx.merchant ?? "-"))"
+                "Expense \(tx.amountCents)¢ exceeds $200 (category: \(tx.category?.name ?? "nil"), merchant: \(tx.merchant ?? "-"))"
             )
         }
     }

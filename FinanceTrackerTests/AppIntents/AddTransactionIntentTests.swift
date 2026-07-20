@@ -60,7 +60,7 @@ struct AddTransactionIntentTests {
         )
         let tx = try QuickAddSaveService.save(parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD")
 
-        #expect(tx.category.name == "Other")
+        #expect(tx.category?.name == "Other")
     }
 
     @Test func test_save_nilMerchant_savesWithoutMerchant() throws {
@@ -152,7 +152,7 @@ struct AddTransactionIntentTests {
         let tx = try QuickAddSaveService.save(
             parsed: parsed, modelContext: ctx, defaultCurrencyCode: "USD", overrideCategory: income)
         #expect(tx.typeRaw == "income")
-        #expect(tx.category.name == "Income")
+        #expect(tx.category?.name == "Income")
     }
 
     private func seededIncome(ctx: ModelContext) -> FinanceTracker.Category {

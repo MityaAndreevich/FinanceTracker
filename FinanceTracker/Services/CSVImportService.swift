@@ -511,7 +511,7 @@ struct CSVImportService {
                     amountCents: t.amountCents,
                     currency: t.currency,
                     dayKey: dayFormatter.string(from: t.date),
-                    categoryName: t.category.displayName(),
+                    categoryName: t.category.displayNameOrFallback(),
                     merchant: t.merchant ?? ""
                 ))
             }

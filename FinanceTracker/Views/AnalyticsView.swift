@@ -253,14 +253,22 @@ struct AnalyticsView: View {
         // view filters by `isIncome` for its segmented Expenses/Income control.
         var sums: [UUID: Acc] = [:]
 
+        // A-path (design doc §2.4 A1): a split purchase's money lands in the
+        // splits' categories via CategoryAttribution; nil categories fold into
+        // the reserved uncategorized bucket.
         for tx in transactions {
             let day = cal.startOfDay(for: tx.date)
             guard day >= monthStart && day <= today else { continue }
-            let cat = tx.category
-            var cur = sums[cat.uuid]
-                ?? Acc(name: cat.displayName(locale: locale), symbol: cat.symbolName, color: cat.themeColor, cents: 0, isIncome: tx.isIncome)
-            cur.cents += tx.amountCents
-            sums[cat.uuid] = cur
+            for share in CategoryAttribution.shares(for: tx) {
+                let key = share.category.bucketID
+                var cur = sums[key]
+                    ?? Acc(name: share.category.displayNameOrFallback(locale: locale),
+                           symbol: share.category.symbolNameOrFallback,
+                           color: share.category.themeColorOrFallback,
+                           cents: 0, isIncome: tx.isIncome)
+                cur.cents += share.amountCents
+                sums[key] = cur
+            }
         }
 
         breakdownCategories = sums.map { id, acc in

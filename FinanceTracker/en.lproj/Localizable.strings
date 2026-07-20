@@ -549,6 +549,7 @@
 "category.rent" = "Rent";
 "category.supplies" = "Supplies";
 "category.other" = "Uncategorized";
+"category.uncategorized" = "Uncategorized";
 "category.income" = "Income";
 
 "common.choose" = "Choose";
@@ -932,3 +933,21 @@
    the paragraph that has become a lie. ---- */
 "paywall.data_safety.title" = "Your data is always yours";
 "paywall.data_safety.body" = "Nothing is deleted if you go back to Free — your transactions, history and categories all stay. You just can't add new ones beyond the free limit.";
+
+/* 1.0.3 migration safety belt (design doc §9–§10) */
+"premigration.title" = "We've improved how your data is stored";
+"premigration.caption" = "Your data was backed up automatically a moment ago. As an extra precaution, you can export a copy before we finish.";
+"premigration.export" = "Export a copy…";
+"premigration.export_failed" = "The export didn't work — you can still continue safely, the automatic backup is in place.";
+"premigration.continue" = "Continue";
+"migration.working" = "Updating your data…";
+"backupfail.title" = "Couldn't back up your data";
+"backupfail.caption" = "Nothing was changed. Free up some space and try again — the update never runs without a backup.";
+"backupfail.retry" = "Try again";
+"floor.title" = "Your data is safe";
+"floor.caption" = "We couldn't finish updating its storage format. Everything you entered is intact — export a copy, and write to us so we can fix this quickly.";
+"floor.export" = "Export my data";
+"floor.contact" = "Contact support";
+"restore.title" = "We restored your data from a backup";
+"restore.caption.format" = "The update hit a problem, so we brought everything back from the backup made a moment ago. Everything is here: %d transactions.";
+"restore.ack" = "OK";

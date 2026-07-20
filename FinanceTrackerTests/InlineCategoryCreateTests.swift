@@ -74,8 +74,8 @@ struct InlineCategoryCreateTests {
         #expect(transactions.count == 1, "exactly one transaction is saved")
 
         // …and correctly LINKED — filed against the created category, not "Other".
-        #expect(transactions.first?.category.uuid == newCat.uuid,
+        #expect(transactions.first?.category?.uuid == newCat.uuid,
                 "the transaction must be filed against the inline-created category")
-        #expect(transactions.first?.category.name == "Test")
+        #expect(transactions.first?.category?.name == "Test")
     }
 }

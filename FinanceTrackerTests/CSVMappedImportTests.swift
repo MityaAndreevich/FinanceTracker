@@ -176,7 +176,7 @@ final class CSVMappedImportTests: XCTestCase {
         let r = try CSVImportService.importMappedCSV(modelContext: context, data: Data(csv.utf8), mapping: mintMapping())
         XCTAssertEqual(r.imported, 1, "Empty category must NOT block import")
         let tx = try XCTUnwrap(try context.fetch(FetchDescriptor<Transaction>()).first)
-        XCTAssertEqual(tx.category.nameKey, "category.other", "Falls back to the seeded uncategorized bucket")
+        XCTAssertEqual(tx.category?.nameKey, "category.other", "Falls back to the seeded uncategorized bucket")
     }
 
     // MARK: - Malformed rows are reported, not dropped

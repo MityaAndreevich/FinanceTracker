@@ -13,10 +13,12 @@ final class Category {
 
     /// Stable external identifier (used for UI selection, export/import, future cloud sync).
     /// Not the same as Category.ID, which is SwiftData's PersistentIdentifier.
-    @Attribute(.unique) var uuid: UUID
+    /// V2: no longer `@Attribute(.unique)` — CloudKit forbids it; uniqueness is
+    /// a write-site responsibility (SeedService is idempotent by nameKey).
+    var uuid: UUID = UUID()
 
     /// Legacy / fallback (оставляем, чтобы не ломать старые данные и миграции)
-    var name: String
+    var name: String = ""
 
     /// Localization key для системных категорий (например "category.food")
     var nameKey: String?
@@ -25,17 +27,34 @@ final class Category {
     var nameCustom: String?
 
     /// "expense" | "income"
-    var kindRaw: String
+    var kindRaw: String = "expense"
 
     /// SF Symbol name
     var icon: String?
 
     /// Sort order
-    var order: Int
+    var order: Int = 0
 
     /// False = shown only when user taps "Show all" in pickers. True = always visible.
     /// Default true so existing user categories stay visible after migration.
     var isPrimary: Bool = true
+
+    /// Optional monthly spend limit in cents (1.0.3 Item 3). nil = no limit —
+    /// the default for every existing and new category. Only meaningful on
+    /// expense categories; the UI never offers it on income ones.
+    var limitCents: Int?
+
+    /// Explicit inverse of Transaction.category (V2). `.nullify`: deleting a
+    /// Category detaches its transactions — legal now that the far side is
+    /// optional, and actually ENFORCED now that the inverse exists.
+    /// CategoriesSourcesView keeps its "block delete while in use" UX on top.
+    @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
+    var transactions: [Transaction]?
+
+    /// Explicit inverse of TransactionSplit.category. Same rule; "in use" for
+    /// the delete guard now means transactions OR splits.
+    @Relationship(deleteRule: .nullify, inverse: \TransactionSplit.category)
+    var splits: [TransactionSplit]?
 
     init(
         uuid: UUID = UUID(),
@@ -45,7 +64,8 @@ final class Category {
         order: Int = 0,
         nameKey: String? = nil,
         nameCustom: String? = nil,
-        isPrimary: Bool = true
+        isPrimary: Bool = true,
+        limitCents: Int? = nil
     ) {
         self.uuid = uuid
         self.name = name
@@ -55,6 +75,7 @@ final class Category {
         self.nameKey = nameKey
         self.nameCustom = nameCustom
         self.isPrimary = isPrimary
+        self.limitCents = limitCents
     }
 }
 

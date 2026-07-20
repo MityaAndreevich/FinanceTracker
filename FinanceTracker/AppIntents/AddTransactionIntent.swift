@@ -77,7 +77,12 @@ struct AddTransactionIntent: AppIntent {
 
         // Run SwiftData work on the main actor, then return the entity to the caller.
         let entity: TransactionEntity = try await MainActor.run {
-            let ctx = SharedModelContainer.shared.mainContext
+            // Migration gate (design doc §9.1): a headless background intent
+            // must never be the process that runs the V1→V2 store migration.
+            guard let container = SharedModelContainer.readyContainer() else {
+                throw IntentError.custom("Open Budget Crab once to finish updating, then try again.")
+            }
+            let ctx = container.mainContext
             let currencyCode = UserDefaults.appGroup.string(forKey: "defaultCurrencyCode") ?? "USD"
             let all = (try? ctx.fetch(FetchDescriptor<Category>())) ?? []
 

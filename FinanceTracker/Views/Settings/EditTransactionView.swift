@@ -224,7 +224,7 @@ struct EditTransactionView: View {
         note = transaction.note ?? ""
         date = transaction.date
 
-        selectedCategoryUUID = transaction.category.uuid
+        selectedCategoryUUID = transaction.category?.uuid
         selectedSourceUUID = transaction.source?.uuid
 
         // If category doesn't match the type (legacy data), pick the first matching one.

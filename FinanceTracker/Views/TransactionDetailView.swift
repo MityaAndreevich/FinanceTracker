@@ -28,7 +28,7 @@ struct TransactionDetailView: View {
             }
 
             Section("tx_detail.section.category") {
-                row("tx_detail.category", tx.category.displayName())
+                row("tx_detail.category", tx.category.displayNameOrFallback())
             }
 
             Section("tx_detail.section.source") {

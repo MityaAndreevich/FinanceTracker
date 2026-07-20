@@ -75,7 +75,11 @@ struct FinanceTrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            // V2 (1.0.3): launch routes through the migration gate. The model
+            // container attaches INSIDE LaunchGateView's ready branch — never
+            // here at scene level, where it would lazily open (and migrate)
+            // the store before the backup and consent screen could run.
+            LaunchGateView()
                 .environment(\.locale, appLocale)
                 .environmentObject(localizedBundle)
                 .applyLayoutDirection(overrideLayoutDirection)
@@ -128,13 +132,20 @@ struct FinanceTrackerApp: App {
                 // read on LedgerAggregator's executor.
                 .onChange(of: scenePhase) { _, phase in
                     guard phase == .active else { return }
-                    ProactiveAlertRefreshScheduler.shared.schedule()
+                    // Pre-migration launches reach .active while the store is
+                    // still gated — never let the refresher be the first
+                    // container touch (readyContainer() is nil until bootstrap).
+                    if let container = SharedModelContainer.readyContainer() {
+                        ProactiveAlertRefreshScheduler.shared.schedule(container: container)
+                    }
                     // Catch a midnight rollover while the app was backgrounded, so a
                     // new day's tip appears without a cold relaunch.
                     TipCollection.shared.refresh()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave)) { _ in
-                    ProactiveAlertRefreshScheduler.shared.schedule()
+                    if let container = SharedModelContainer.readyContainer() {
+                        ProactiveAlertRefreshScheduler.shared.schedule(container: container)
+                    }
                 }
                 // Redirect Bundle.main string lookups the instant the in-app
                 // language changes. GeneralSettingView already defers this state
@@ -144,7 +155,8 @@ struct FinanceTrackerApp: App {
                     LocalizedBundle.shared.setLanguage(new)
                 }
         }
-        .modelContainer(SharedModelContainer.shared)
+        // No .modelContainer here — LaunchGateView attaches it after the
+        // guarded bootstrap (see the comment on the WindowGroup content).
     }
 }
 

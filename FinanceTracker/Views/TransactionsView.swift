@@ -340,7 +340,7 @@ private struct ScopedTransactionList: View {
         return base.filter { tx in
             TransactionSearch.matches(
                 query: q,
-                fields: [tx.merchant, tx.category.displayName(), tx.category.name, tx.source?.name, tx.note],
+                fields: [tx.merchant, tx.category.displayNameOrFallback(), tx.category?.name, tx.source?.name, tx.note],
                 amountCents: tx.amountCents
             )
         }

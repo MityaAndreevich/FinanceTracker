@@ -19,7 +19,7 @@ import SwiftUI
 struct CategoryTileRow: View {
     let tx: Transaction
 
-    private var tileColor: Color { tx.category.themeColor }
+    private var tileColor: Color { tx.category.themeColorOrFallback }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -28,7 +28,7 @@ struct CategoryTileRow: View {
                 .fill(tileColor.opacity(0.16))
                 .frame(width: 36, height: 36)
                 .overlay(
-                    Image(systemName: tx.category.symbolName)
+                    Image(systemName: tx.category.symbolNameOrFallback)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(tileColor)
                 )
@@ -90,11 +90,11 @@ struct CategoryTileRow: View {
     private var primaryTitle: String {
         let merchant = (tx.merchant ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !merchant.isEmpty { return merchant }
-        return tx.category.displayName()
+        return tx.category.displayNameOrFallback()
     }
 
     private var subtitle: String {
-        let category = tx.category.displayName()
+        let category = tx.category.displayNameOrFallback()
         if let source = tx.source?.name.trimmingCharacters(in: .whitespaces), !source.isEmpty {
             return "\(category) · \(source)"
         }

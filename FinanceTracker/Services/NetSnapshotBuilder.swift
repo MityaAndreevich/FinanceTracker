@@ -66,18 +66,23 @@ enum NetSnapshotBuilder {
 
         // Top-3 expense categories by spend, each with its curated SF Symbol and
         // its share of this period's spend (for the mini bars).
-        let grouped = Dictionary(grouping: month.filter { !$0.isIncome }) { $0.category.uuid }
-        let topCategories: [NetSnapshot.Item] = grouped
-            .compactMap { _, txns -> (Category, Int)? in
-                guard let first = txns.first else { return nil }
-                return (first.category, txns.reduce(0) { $0 + $1.amountCents })
+        // A-path (design doc §2.4 A3): sums CategoryAttribution shares so a
+        // split purchase's money lands in the splits' categories. The period
+        // totals above stay parent-summed (B-path) — never sum shares there.
+        var byBucket: [UUID: (Category?, Int)] = [:]
+        for tx in month where !tx.isIncome {
+            for share in CategoryAttribution.shares(for: tx) {
+                let key = share.category.bucketID
+                byBucket[key] = (share.category, (byBucket[key]?.1 ?? 0) + share.amountCents)
             }
+        }
+        let topCategories: [NetSnapshot.Item] = byBucket.values
             .sorted { $0.1 > $1.1 }
             .prefix(3)
             .map { category, cents in
                 NetSnapshot.Item(
-                    name: category.displayName(bundle: bundle),
-                    symbol: category.symbolName,
+                    name: category.displayNameOrFallback(bundle: bundle),
+                    symbol: category.symbolNameOrFallback,
                     amount: compact(cents),
                     fraction: categoryFraction(cents: cents, totalSpentCents: expenseCents)
                 )
@@ -189,7 +194,15 @@ enum NetSnapshotBuilder {
             hasher.combine(tx.amountCents)
             hasher.combine(tx.typeRaw)
             hasher.combine(tx.date)
-            hasher.combine(tx.category.uuid)
+            hasher.combine(tx.category?.uuid)
+            // Splits move money between the widget's top categories without
+            // touching any parent field — fold them in or a split edit leaves
+            // the widget stale (the same class of bug as the count-only trigger).
+            for split in CategoryAttribution.orderedSplits(of: tx) {
+                hasher.combine(split.uuid)
+                hasher.combine(split.amountCents)
+                hasher.combine(split.category?.uuid)
+            }
         }
         return hasher.finalize()
     }
