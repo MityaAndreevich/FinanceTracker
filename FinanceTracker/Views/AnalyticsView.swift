@@ -235,34 +235,15 @@ struct AnalyticsView: View {
     }
 
     private func recomputePulse(cal: Calendar, monthStart: Date, today: Date) {
-        var dayNet: [Date: Int] = [:]
-        // Gross totals accumulated per-transaction (not from the netted day buckets),
-        // so an income logged on the same day as larger expenses still counts toward
-        // Earned instead of being cancelled out (Item 3).
-        var earned = 0
-        var spent = 0
-        for tx in transactions {
-            let day = cal.startOfDay(for: tx.date)
-            guard day >= monthStart && day <= today else { continue }
-            dayNet[day, default: 0] += tx.signedAmountCents
-            if tx.isIncome {
-                earned += tx.amountCents
-            } else {
-                spent += tx.amountCents
-            }
-        }
-        pulseEarnedCents = earned
-        pulseSpentCents = spent
-
-        var out: [AnalyticsPulseView.DailyTotal] = []
-        var cursor = monthStart
-        while cursor <= today {
-            out.append(.init(date: cursor, cents: dayNet[cursor] ?? 0))
-            guard let next = cal.date(byAdding: .day, value: 1, to: cursor) else { break }
-            cursor = next
-        }
-        pulseDaily = out
-        pulseNetCents = out.reduce(0) { $0 + $1.cents }
+        // Accumulation extracted to AnalyticsSeries (design doc §8.1) so the
+        // SplitCanary suite pins the production formula. Category-blind.
+        let pulse = AnalyticsSeries.pulse(
+            transactions: transactions, calendar: cal, monthStart: monthStart, today: today
+        )
+        pulseEarnedCents = pulse.earnedCents
+        pulseSpentCents = pulse.spentCents
+        pulseDaily = pulse.daily.map { .init(date: $0.date, cents: $0.cents) }
+        pulseNetCents = pulse.netCents
     }
 
     private func recomputeBreakdown(cal: Calendar, monthStart: Date, today: Date) {
@@ -288,35 +269,11 @@ struct AnalyticsView: View {
     }
 
     private func recomputeHorizon(cal: Calendar, monthStart: Date) {
-        guard let horizonStart = cal.date(byAdding: .month, value: -11, to: monthStart) else {
-            horizonMonths = []
-            return
-        }
-
-        // Track income and expense magnitudes separately so the Horizon mode
-        // toggle (Net / Expenses / Income / Combined) can plot each absolute
-        // series; net is derived as income − expense.
-        struct MonthAcc { var income = 0; var expense = 0 }
-        var monthAcc: [Date: MonthAcc] = [:]
-        for tx in transactions {
-            guard let mStart = cal.date(from: cal.dateComponents([.year, .month], from: tx.date)) else { continue }
-            guard mStart >= horizonStart && mStart <= monthStart else { continue }
-            if tx.isIncome {
-                monthAcc[mStart, default: MonthAcc()].income += tx.amountCents
-            } else {
-                monthAcc[mStart, default: MonthAcc()].expense += tx.amountCents
-            }
-        }
-
-        var out: [AnalyticsHorizonView.MonthlyTotal] = []
-        var cursor = horizonStart
-        while cursor <= monthStart {
-            let acc = monthAcc[cursor] ?? MonthAcc()
-            out.append(.init(date: cursor, incomeCents: acc.income, expenseCents: acc.expense))
-            guard let next = cal.date(byAdding: .month, value: 1, to: cursor) else { break }
-            cursor = next
-        }
-        horizonMonths = out
+        // Accumulation extracted to AnalyticsSeries (design doc §8.1) so the
+        // SplitCanary suite pins the production formula. Category-blind.
+        horizonMonths = AnalyticsSeries.horizon(
+            transactions: transactions, calendar: cal, monthStart: monthStart
+        ).map { .init(date: $0.monthStart, incomeCents: $0.incomeCents, expenseCents: $0.expenseCents) }
     }
 }
 

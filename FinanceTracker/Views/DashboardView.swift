@@ -124,12 +124,14 @@ struct DashboardView: View {
         (try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? 0
     }
 
+    // Extracted to MonthTotals (design doc §8.1) so the SplitCanary suite pins
+    // the production formula. Category-blind: parent transactions only.
     private var expenseCents: Int {
-        currentMonthTransactions.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
+        MonthTotals.expenseCents(currentMonthTransactions)
     }
 
     private var incomeCents: Int {
-        currentMonthTransactions.filter { $0.isIncome }.reduce(0) { $0 + $1.amountCents }
+        MonthTotals.incomeCents(currentMonthTransactions)
     }
 
     private var netCents: Int { incomeCents - expenseCents }
