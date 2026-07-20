@@ -283,6 +283,12 @@
 "dashboard.budget_used.a11y" = "Использовано %d%% месячного бюджета";
 "dashboard.pace.on_track" = "Такими темпами месяц закончится в рамках бюджета";
 "dashboard.pace.hold_the_line" = "Держитесь сегодняшней суммы — и останетесь в рамках бюджета";
+"feedback.row" = "Расскажите, чего не хватает";
+"feedback.body_prompt" = "Чего не хватает или что мешает?";
+"feedback.mail_unavailable.title" = "Почта на этом устройстве не настроена";
+"feedback.mail_unavailable.caption" = "Напишите напрямую — я читаю каждое письмо:";
+"feedback.copy_address" = "Скопировать адрес";
+"feedback.copied" = "Скопировано";
 "dashboard.spending_by_category" = "Расходы по категориям";
 "dashboard.total_spent" = "Потрачено";
 

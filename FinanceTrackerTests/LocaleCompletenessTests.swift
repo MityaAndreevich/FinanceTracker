@@ -199,7 +199,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // dashboard.pace.on_track / dashboard.pace.hold_the_line.
         // dashboard.safe_per_day is retained (superseded, still shipped). All 5
         // locales in parity. Was 693.
-        XCTAssertEqual(enKeys.count, 698, "English baseline changed; update the expected count.")
+        // 2026-07-21 (1.0.3 feedback channel, Item 5): net +6. The privacy-first
+        // feedback mail composer — feedback.row, feedback.body_prompt, the
+        // no-mail-account fallback trio (mail_unavailable.title/.caption,
+        // copy_address) and feedback.copied. All 5 locales in parity. Was 698.
+        XCTAssertEqual(enKeys.count, 704, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

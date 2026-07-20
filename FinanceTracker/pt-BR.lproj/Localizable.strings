@@ -353,6 +353,12 @@
 "dashboard.budget_used.a11y" = "Você usou %d%% do seu orçamento mensal";
 "dashboard.pace.on_track" = "Nesse ritmo, você termina o mês dentro do orçamento";
 "dashboard.pace.hold_the_line" = "Mantendo o valor de hoje, você fica dentro do orçamento";
+"feedback.row" = "Diga o que está faltando";
+"feedback.body_prompt" = "O que está faltando ou o que atrapalha?";
+"feedback.mail_unavailable.title" = "O e-mail não está configurado neste aparelho";
+"feedback.mail_unavailable.caption" = "Escreva diretamente — cada mensagem é lida:";
+"feedback.copy_address" = "Copiar endereço";
+"feedback.copied" = "Copiado";
 "dashboard.spending_by_category" = "Gastos por categoria";
 "dashboard.total_spent" = "Gasto";
 "dashboard.day0.title" = "Estatísticas em breve";

@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var pm = PurchaseManager.shared
     @StateObject private var access = AccessManager.shared
+    @State private var showFeedback = false
 
     var body: some View {
         List {
@@ -64,6 +65,16 @@ struct SettingsView: View {
                     Label("settings.learn_tips", systemImage: "lightbulb")
                 }
 
+                // 1.0.3 Item 5: the only feedback channel a no-analytics app
+                // can have. A Button (not a NavigationLink): the composer is a
+                // modal mail sheet, not a settings screen.
+                Button {
+                    showFeedback = true
+                } label: {
+                    Label("feedback.row", systemImage: "bubble.left.and.text.bubble.right")
+                        .foregroundStyle(Color.bcTextPrimary)
+                }
+
                 NavigationLink {
                     AboutView()
                 } label: {
@@ -73,6 +84,9 @@ struct SettingsView: View {
         }
         .navigationTitle("settings.title")
         .listStyle(.insetGrouped)
+        .sheet(isPresented: $showFeedback) {
+            FeedbackView()
+        }
         .task {
             // Гарантируем актуальный статус, если вернулись с paywall/restore.
             await pm.refreshStatus()

@@ -272,6 +272,12 @@
 "dashboard.budget_used.a11y" = "%d%% of your monthly budget used";
 "dashboard.pace.on_track" = "On pace to finish the month under budget";
 "dashboard.pace.hold_the_line" = "Keeping to today's number lands you under budget";
+"feedback.row" = "Tell me what's missing";
+"feedback.body_prompt" = "What's missing, or what gets in your way?";
+"feedback.mail_unavailable.title" = "Mail isn't set up on this device";
+"feedback.mail_unavailable.caption" = "Write to me directly — every message is read:";
+"feedback.copy_address" = "Copy address";
+"feedback.copied" = "Copied";
 "dashboard.spending_by_category" = "Spending by category";
 "dashboard.total_spent" = "Spent";
 

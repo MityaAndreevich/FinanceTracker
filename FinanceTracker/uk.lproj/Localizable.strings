@@ -279,6 +279,12 @@
 "dashboard.budget_used.a11y" = "Використано %d%% місячного бюджету";
 "dashboard.pace.on_track" = "Таким темпом місяць завершиться в межах бюджету";
 "dashboard.pace.hold_the_line" = "Тримайтеся сьогоднішньої суми — і залишитеся в межах бюджету";
+"feedback.row" = "Розкажіть, чого бракує";
+"feedback.body_prompt" = "Чого бракує або що заважає?";
+"feedback.mail_unavailable.title" = "Пошту на цьому пристрої не налаштовано";
+"feedback.mail_unavailable.caption" = "Напишіть напряму — я читаю кожен лист:";
+"feedback.copy_address" = "Скопіювати адресу";
+"feedback.copied" = "Скопійовано";
 "dashboard.spending_by_category" = "Витрати за категоріями";
 "dashboard.total_spent" = "Витрачено";
 
