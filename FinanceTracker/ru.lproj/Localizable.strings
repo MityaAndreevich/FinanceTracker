@@ -278,6 +278,11 @@
 "dashboard.budget.edit.a11y" = "Изменить месячный бюджет";
 "dashboard.safe_per_day" = "%1$@/день · осталось дней: %2$d";
 "dashboard.over_budget" = "Превышение бюджета на %@";
+"dashboard.safe_today" = "Можно потратить сегодня";
+"dashboard.days_left" = "Осталось дней в этом месяце: %d";
+"dashboard.budget_used.a11y" = "Использовано %d%% месячного бюджета";
+"dashboard.pace.on_track" = "Такими темпами месяц закончится в рамках бюджета";
+"dashboard.pace.hold_the_line" = "Держитесь сегодняшней суммы — и останетесь в рамках бюджета";
 "dashboard.spending_by_category" = "Расходы по категориям";
 "dashboard.total_spent" = "Потрачено";
 

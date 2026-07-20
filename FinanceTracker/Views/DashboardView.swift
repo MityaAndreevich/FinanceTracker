@@ -162,17 +162,13 @@ struct DashboardView: View {
         )
     }
 
-    /// Days remaining in the current month, today inclusive.
-    private var daysLeftInMonth: Int {
-        let cal = Calendar.current
-        let now = Date()
-        guard let range = cal.range(of: .day, in: .month, for: now) else { return 1 }
-        let today = cal.component(.day, from: now)
-        return max(1, range.count - today + 1)
-    }
-
-    private var perDayCents: Int {
-        remainingCents > 0 ? remainingCents / daysLeftInMonth : 0
+    /// The Velocity Dashboard numbers (Item 2): today's allowance, the budget
+    /// ring fraction, and the month-end forecast. nil while no budget is set.
+    private var allowance: DailyAllowance.Snapshot? {
+        DailyAllowance.compute(
+            monthlyBudgetCents: monthlyBudgetCents,
+            spentThisMonthCents: expenseCents
+        )
     }
 
     // MARK: - Category spend aggregation (this month, expenses)
@@ -656,57 +652,110 @@ struct DashboardView: View {
     // MARK: - Hero (safe-to-spend / net fallback)
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // When a budget is set the header doubles as the EDIT entry point (label +
-            // pencil), so the budget is adjustable straight from the Dashboard — not a
-            // bare, inert number (Brief 28-A #1). The unset case shows a plain caption;
-            // the "Set budget" CTA card below the hero handles that path instead.
-            if budgetIsSet {
-                Button {
-                    showBudgetSheet = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("dashboard.safe_to_spend")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color.bcTextSecondary)
-                        Image(systemName: "pencil")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Color.bcAccent)
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                // When a budget is set the header doubles as the EDIT entry point (label +
+                // pencil), so the budget is adjustable straight from the Dashboard — not a
+                // bare, inert number (Brief 28-A #1). The unset case shows a plain caption;
+                // the "Set budget" CTA card below the hero handles that path instead.
+                if budgetIsSet {
+                    Button {
+                        showBudgetSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            // Velocity Dashboard (Item 2): the hero is the DAILY
+                            // number — budgets are monthly but life is daily.
+                            Text("dashboard.safe_today")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color.bcTextSecondary)
+                            Image(systemName: "pencil")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color.bcAccent)
+                        }
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("dashboard.budget.edit.a11y"))
+                } else {
+                    // No budget: still lead with the gain frame when income is known
+                    // ("Safe to spend {income − spent}"); fall back to a calm "Spent"
+                    // only when there's nothing to frame against.
+                    Text(heroMode == .income ? "dashboard.safe_to_spend" : "dashboard.hero.spent")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color.bcTextSecondary)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("dashboard.budget.edit.a11y"))
-            } else {
-                // No budget: still lead with the gain frame when income is known
-                // ("Safe to spend {income − spent}"); fall back to a calm "Spent"
-                // only when there's nothing to frame against.
-                Text(heroMode == .income ? "dashboard.safe_to_spend" : "dashboard.hero.spent")
-                    .font(.system(size: 15, weight: .medium))
+
+                Text(heroBigNumber)
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.55)
+                    .lineLimit(1)
+                    .foregroundStyle(heroNumberColor)
+                    .privacySensitive(true)
+
+                Text(heroSubtitle)
+                    .font(.system(size: 13))
+                    .monospacedDigit()
                     .foregroundStyle(Color.bcTextSecondary)
+                    .privacySensitive(true)
+
+                if let allowance, !allowance.isOverBudget {
+                    paceLine(allowance)
+                        .padding(.top, 2)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(heroBigNumber)
-                .font(.system(size: 44, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .minimumScaleFactor(0.55)
-                .lineLimit(1)
-                .foregroundStyle(heroNumberColor)
-                .privacySensitive(true)
-
-            Text(heroSubtitle)
-                .font(.system(size: 13))
-                .monospacedDigit()
-                .foregroundStyle(Color.bcTextSecondary)
-                .privacySensitive(true)
-
-            if budgetIsSet {
-                budgetProgressBar
-                    .padding(.top, 4)
+            // The monthly budget's whole presence in the hero: a non-numeric
+            // percentage ring — status, not a second competing currency figure.
+            if let allowance {
+                budgetStatusDonut(allowance)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .bcCard(padding: 18)
+    }
+
+    /// Gain-framed month-end pace verdict (Item 2). Muted tints, never alarm
+    /// red — the over-pace line is a nudge phrased as a win ("keeping to
+    /// today's number lands you under"), not a warning.
+    private func paceLine(_ a: DailyAllowance.Snapshot) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: a.onPaceToStayUnder
+                  ? "gauge.with.dots.needle.33percent"
+                  : "gauge.with.dots.needle.67percent")
+                .font(.system(size: 12, weight: .semibold))
+            Text(a.onPaceToStayUnder ? "dashboard.pace.on_track" : "dashboard.pace.hold_the_line")
+                .font(.system(size: 12))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(a.onPaceToStayUnder ? Color.bcPositive : Color.bcWarningInk)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// The budget as a status ring: fill = fraction used, muted mint at every
+    /// level (never alarm red — Item 2), percentage in the center. Plain
+    /// SwiftUI strokes, no Charts — nothing here can hit a degenerate domain.
+    private func budgetStatusDonut(_ a: DailyAllowance.Snapshot) -> some View {
+        ZStack {
+            Circle()
+                .stroke(Color.bcSurface2, lineWidth: 7)
+            Circle()
+                .trim(from: 0, to: a.fractionUsed)   // clamped 0…1 at the source
+                .stroke(Color.bcAccent.opacity(0.85),
+                        style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text(verbatim: "\(a.percentUsed)%")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+                .foregroundStyle(Color.bcTextSecondary)
+                .padding(6)
+        }
+        .frame(width: 64, height: 64)
+        .accessibilityLabel(Text(String(
+            format: String(localized: "dashboard.budget_used.a11y"), a.percentUsed
+        )))
     }
 
     /// Brief 28-A #1: prominent, obviously-tappable CTA shown under the hero while no
@@ -746,11 +795,16 @@ struct DashboardView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// The large amount in the hero. Budget mode shows the remaining budget
-    /// (locale-formatted, negative when over); fallback shows signed net.
+    /// The large amount in the hero. Budget mode is the Velocity Dashboard's
+    /// DAILY allowance (gain-framed "safe to spend today"); over budget it
+    /// falls back to the truthful monthly remainder. Fallbacks show signed net.
     private var heroBigNumber: String {
         switch heroMode {
-        case .budget: return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
+        case .budget:
+            if let allowance, !allowance.isOverBudget {
+                return Money.format(cents: allowance.perDayCents, currencyCode: defaultCurrencyCode)
+            }
+            return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
         case .income: return Money.format(cents: netCents, currencyCode: defaultCurrencyCode)
         case .spent:  return Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode)
         }
@@ -769,11 +823,13 @@ struct DashboardView: View {
 
     private var heroSubtitle: String {
         if budgetIsSet {
-            if remainingCents >= 0 {
+            if let allowance, !allowance.isOverBudget {
+                // Non-currency by design: the daily amount above is the only
+                // money figure in the healthy hero (Item 2 — one number is
+                // "gist", the ring is "status").
                 return String(
-                    format: String(localized: "dashboard.safe_per_day"),
-                    Money.format(cents: perDayCents, currencyCode: defaultCurrencyCode),
-                    daysLeftInMonth
+                    format: String(localized: "dashboard.days_left"),
+                    allowance.daysLeft
                 )
             }
             return String(
@@ -786,23 +842,6 @@ struct DashboardView: View {
             Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
             Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
         )
-    }
-
-    /// Spent-vs-budget bar. Fills mint; flips to warning once over budget.
-    private var budgetProgressBar: some View {
-        let fraction = min(max(Double(expenseCents) / Double(max(monthlyBudgetCents, 1)), 0), 1)
-        return GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.bcSurface2)
-                Capsule()
-                    .fill(remainingCents < 0 ? Color.bcWarning : Color.bcAccent)
-                    // `fraction` is already clamped, but the proposed width is
-                    // not ours — a collapsed parent can offer NaN/negative.
-                    .frame(width: ChartGuards.dimension(geo.size.width * fraction))
-            }
-        }
-        .frame(height: 8)
-        .accessibilityHidden(true)
     }
 
     // MARK: - Spending by category (donut + legend)

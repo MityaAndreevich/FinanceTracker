@@ -343,6 +343,11 @@
 "dashboard.budget.edit.a11y" = "Editar presupuesto mensual";
 "dashboard.safe_per_day" = "%1$@/día · quedan %2$d días";
 "dashboard.over_budget" = "Presupuesto superado en %@";
+"dashboard.safe_today" = "Disponible para gastar hoy";
+"dashboard.days_left" = "Quedan %d días este mes";
+"dashboard.budget_used.a11y" = "Has usado el %d%% de tu presupuesto mensual";
+"dashboard.pace.on_track" = "A este ritmo terminarás el mes dentro del presupuesto";
+"dashboard.pace.hold_the_line" = "Si mantienes la cifra de hoy, terminarás dentro del presupuesto";
 "dashboard.spending_by_category" = "Gastos por categoría";
 "dashboard.total_spent" = "Gastado";
 "dashboard.day0.title" = "Estadísticas próximamente";

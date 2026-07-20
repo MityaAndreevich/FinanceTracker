@@ -267,6 +267,11 @@
 "dashboard.budget.edit.a11y" = "Edit monthly budget";
 "dashboard.safe_per_day" = "%1$@/day · %2$d days left";
 "dashboard.over_budget" = "Over budget by %@";
+"dashboard.safe_today" = "Safe to spend today";
+"dashboard.days_left" = "%d days left this month";
+"dashboard.budget_used.a11y" = "%d%% of your monthly budget used";
+"dashboard.pace.on_track" = "On pace to finish the month under budget";
+"dashboard.pace.hold_the_line" = "Keeping to today's number lands you under budget";
 "dashboard.spending_by_category" = "Spending by category";
 "dashboard.total_spent" = "Spent";
 

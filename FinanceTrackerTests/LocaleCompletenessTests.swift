@@ -192,7 +192,14 @@ final class LocaleCompletenessTests: XCTestCase {
         // unlocked" progress line) + learn.collection_complete (shown once every tip
         // is unlocked). learn.more_each_day is retained. All 5 locales in parity.
         // Was 691.
-        XCTAssertEqual(enKeys.count, 693, "English baseline changed; update the expected count.")
+        // 2026-07-21 (1.0.3 Velocity Dashboard, Item 2): net +5. The hero leads
+        // with the DAILY allowance, so ADDED dashboard.safe_today,
+        // dashboard.days_left (non-currency subtitle), dashboard.budget_used.a11y
+        // (the status ring's VoiceOver line) + the two gain-framed pace verdicts
+        // dashboard.pace.on_track / dashboard.pace.hold_the_line.
+        // dashboard.safe_per_day is retained (superseded, still shipped). All 5
+        // locales in parity. Was 693.
+        XCTAssertEqual(enKeys.count, 698, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
