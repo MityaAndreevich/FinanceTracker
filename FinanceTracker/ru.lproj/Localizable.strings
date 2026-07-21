@@ -967,3 +967,11 @@
 "split.fully_assigned" = "Сумма полностью распределена по частям.";
 "tx_detail.section.split" = "Разбивка по категориям";
 "analytics.category_total.split_note" = "Некоторые покупки здесь разделены по категориям — строки показывают полные суммы, а итог учитывает только долю этой категории.";
+
+/* 1.0.3 category limits (Item 3) */
+"limit.sheet.title" = "Месячный лимит";
+"limit.sheet.caption" = "Мы мягко предупредим, пока в этой категории ещё остаются деньги — и никогда после того, как они закончились.";
+"limit.amount.placeholder" = "Сумма в месяц";
+"limit.clear" = "Убрать лимит";
+"cs.category.limit_label.format" = "Лимит: %@/мес";
+"alerts.notif.body.limit.format" = "В категории «%2$@» осталось %1$@ в этом месяце.";

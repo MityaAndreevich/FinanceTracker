@@ -119,17 +119,17 @@ enum ProactiveAlertRefresher {
         // deterministic, awaitable-free join) and must never be wired to a hot
         // path again: at 12k rows it costs ~1s on whatever thread runs it. The
         // app goes through `scheduleRefresh`, which does this read on the
-        // LedgerAggregator's executor.
+        // LedgerAggregator's executor. Shares SafeToSpend.makeAggregate with
+        // the actor so the two paths cannot drift.
         let transactions = (try? modelContext.fetch(FetchDescriptor<Transaction>())) ?? []
-        let agg = SafeToSpend.aggregate(
-            entries: SafeToSpend.entries(from: transactions),
-            now: now
-        )
+        let limited = ((try? modelContext.fetch(FetchDescriptor<Category>())) ?? [])
+            .compactMap { category -> (uuid: UUID, displayName: String, limitCents: Int)? in
+                guard let limit = category.limitCents, limit > 0 else { return nil }
+                return (category.uuid, category.displayName(), limit)
+            }
         apply(
-            aggregate: SafeToSpend.Aggregate(
-                spentThisMonthCents: agg.spentThisMonthCents,
-                priorExpenseCents: agg.priorExpenseCents,
-                priorSpanDays: agg.priorSpanDays
+            aggregate: SafeToSpend.makeAggregate(
+                transactions: transactions, limitedCategories: limited, now: now
             ),
             isAllowed: isAllowed,
             defaults: defaults,
@@ -184,13 +184,45 @@ enum ProactiveAlertRefresher {
             baselineDailyCents: baseline
         )
 
+        // Category-limit latch maintenance (design §6.4): a previously PLANNED
+        // limit warning whose fire date has passed has been delivered — latch
+        // that category for the fire date's month so it warns once per month.
+        // Latching at plan time would burn the latch on every re-plan; this is
+        // the same frozen-body re-plan machinery, one extra comparison.
+        if let plannedUUIDString = defaults.string(forKey: plannedLimitCategoryKey),
+           let plannedFireDate = defaults.object(forKey: plannedLimitFireDateKey) as? Date,
+           let plannedUUID = UUID(uuidString: plannedUUIDString),
+           now >= plannedFireDate {
+            defaults.set(true, forKey: CategoryLimitPolicy.latchKey(
+                categoryUUID: plannedUUID, month: plannedFireDate))
+            defaults.removeObject(forKey: plannedLimitCategoryKey)
+            defaults.removeObject(forKey: plannedLimitFireDateKey)
+        }
+
         let plan = ProactiveAlertPolicy.plan(
             snapshot: snapshot,
             pace: pace,
+            limitStatuses: aggregate.limitStatuses,
+            isLatched: { uuid in
+                defaults.bool(forKey: CategoryLimitPolicy.latchKey(categoryUUID: uuid, month: now))
+            },
             settings: settings,
             now: now
         )
 
+        // Record (or clear) the planned limit warning for the latch above.
+        if case .categoryLimit(let uuid, _, _)? = plan?.body {
+            defaults.set(uuid.uuidString, forKey: plannedLimitCategoryKey)
+            defaults.set(plan?.fireDate, forKey: plannedLimitFireDateKey)
+        } else {
+            defaults.removeObject(forKey: plannedLimitCategoryKey)
+            defaults.removeObject(forKey: plannedLimitFireDateKey)
+        }
+
         ProactiveAlertScheduler.apply(plan: plan, currencyCode: currency, center: center)
     }
+
+    /// Defaults keys for the pending category-limit warning (latch mechanics).
+    static let plannedLimitCategoryKey = "limitWarnPlannedCategory"
+    static let plannedLimitFireDateKey = "limitWarnPlannedFireDate"
 }

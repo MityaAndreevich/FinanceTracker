@@ -30,6 +30,9 @@ struct CategoriesSourcesView: View {
     @StateObject private var access = AccessManager.shared
     @State private var showPaywall = false
 
+    // Category-limit sheet target (1.0.3 Item 3) — expense rows only.
+    @State private var editingLimitCategory: Category?
+
     @State private var showBlockedDeleteAlert = false
     @State private var blockedDeleteMessage = ""
 
@@ -90,6 +93,10 @@ struct CategoriesSourcesView: View {
             Button("common.delete", role: .destructive) { performPendingDelete() }
         }
         .sheet(isPresented: $showPaywall) { PaywallView() }
+        .sheet(item: $editingLimitCategory) { category in
+            CategoryLimitSheet(category: category)
+                .presentationDetents([.medium])
+        }
         .confirmationToast($toastMessage)
     }
 
@@ -163,7 +170,10 @@ struct CategoriesSourcesView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(expenseCategories, id: \.uuid) { cat in
-                    CategoryRow(category: cat)
+                    // Expense rows open the monthly-limit sheet (Item 3) —
+                    // the one shared surface for limit setting; income
+                    // categories have no limit concept.
+                    CategoryRow(category: cat) { editingLimitCategory = cat }
                 }
                 .onDelete { offsets in
                     pendingDelete = .categories(subset: expenseCategories, offsets: offsets)
@@ -381,7 +391,10 @@ private struct SourceRow: View {
 }
 
 private struct CategoryRow: View {
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @Bindable var category: Category
+    /// Present when the row is tappable (expense categories → limit sheet).
+    var onTap: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -393,10 +406,82 @@ private struct CategoryRow: View {
                     : "cs.category.secondary_label"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if let limit = category.limitCents, limit > 0 {
+                    Text(String(
+                        format: NSLocalizedString("cs.category.limit_label.format", comment: ""),
+                        Money.format(cents: limit, currencyCode: defaultCurrencyCode)
+                    ))
+                    .font(.caption)
+                    .foregroundStyle(Color.bcAccent)
+                }
             }
             Spacer()
             Toggle("cs.category.shown_by_default", isOn: $category.isPrimary)
                 .labelsHidden()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap?() }
+    }
+}
+
+// MARK: - Category monthly limit (1.0.3 Item 3)
+
+private struct CategoryLimitSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
+
+    let category: Category
+    @State private var amountText: String = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("limit.amount.placeholder", text: $amountText)
+                        .plainTextEntry()
+                        .keyboardType(.decimalPad)
+                        .onChange(of: amountText) { _, newValue in
+                            amountText = Money.sanitizeInput(newValue)
+                        }
+                } header: {
+                    Text(category.displayName())
+                } footer: {
+                    Text("limit.sheet.caption")
+                }
+
+                if category.limitCents != nil {
+                    Button(role: .destructive) {
+                        category.limitCents = nil
+                        try? modelContext.save()
+                        dismiss()
+                    } label: {
+                        Text("limit.clear")
+                    }
+                }
+            }
+            .navigationTitle("limit.sheet.title")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("common.cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("common.save") {
+                        if let cents = Money.parseCents(from: amountText), cents > 0 {
+                            category.limitCents = cents
+                            try? modelContext.save()
+                        }
+                        dismiss()
+                    }
+                    .disabled(Money.parseCents(from: amountText) == nil)
+                }
+            }
+            .onAppear {
+                if let limit = category.limitCents {
+                    amountText = Money.plainDecimalString(cents: limit)
+                }
+            }
         }
     }
 }

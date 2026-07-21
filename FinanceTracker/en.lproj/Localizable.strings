@@ -964,3 +964,11 @@
 "split.fully_assigned" = "Fully assigned across the parts.";
 "tx_detail.section.split" = "Split breakdown";
 "analytics.category_total.split_note" = "Some purchases here are split across categories — rows show full amounts, the total counts only this category's share.";
+
+/* 1.0.3 category limits (Item 3) */
+"limit.sheet.title" = "Monthly limit";
+"limit.sheet.caption" = "You'll get a gentle heads-up while there's still money left in this category — never after it's gone.";
+"limit.amount.placeholder" = "Amount per month";
+"limit.clear" = "Remove limit";
+"cs.category.limit_label.format" = "Limit: %@/month";
+"alerts.notif.body.limit.format" = "%1$@ left in %2$@ this month.";

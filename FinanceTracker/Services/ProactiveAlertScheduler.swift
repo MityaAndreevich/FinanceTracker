@@ -85,6 +85,14 @@ enum ProactiveAlertScheduler {
                 format: String(localized: "alerts.notif.body.pace.format"),
                 Money.format(cents: cents, currencyCode: currencyCode)
             )
+        case .categoryLimit(_, let name, let remainingCents):
+            // Gain-framed by construction: the policy only emits this while
+            // remaining > 0 ("X left in Dining"), never an exceeded message.
+            return String(
+                format: String(localized: "alerts.notif.body.limit.format"),
+                Money.format(cents: remainingCents, currencyCode: currencyCode),
+                name
+            )
         }
     }
 

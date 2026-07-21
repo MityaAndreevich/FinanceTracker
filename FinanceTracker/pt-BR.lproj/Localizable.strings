@@ -838,3 +838,11 @@
 "split.fully_assigned" = "Totalmente distribuído entre as partes.";
 "tx_detail.section.split" = "Detalhamento da divisão";
 "analytics.category_total.split_note" = "Algumas compras aqui estão divididas entre categorias — as linhas mostram valores completos e o total conta apenas a parte desta categoria.";
+
+/* 1.0.3 category limits (Item 3) */
+"limit.sheet.title" = "Limite mensal";
+"limit.sheet.caption" = "Você receberá um aviso gentil enquanto ainda houver dinheiro nesta categoria — nunca depois que acabar.";
+"limit.amount.placeholder" = "Valor por mês";
+"limit.clear" = "Remover limite";
+"cs.category.limit_label.format" = "Limite: %@/mês";
+"alerts.notif.body.limit.format" = "Restam %1$@ em %2$@ neste mês.";
