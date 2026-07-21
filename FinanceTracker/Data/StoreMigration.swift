@@ -87,7 +87,21 @@ enum StoreRepair {
     /// before the container opens) and this pass only reads, throws, and
     /// never mutates — `updatedAt` untouched, no save(), no-op on a clean
     /// store by construction.
+    #if DEBUG
+    /// §11 rollback drill seam: `--fail-migration` makes the migration throw
+    /// deterministically so the restore→retry→floor ladder can be walked on a
+    /// simulator/TestFlight build. DEBUG-only; does not exist in the store build.
+    struct SimulatedMigrationFailure: LocalizedError {
+        var errorDescription: String? { "simulated migration failure (--fail-migration)" }
+    }
+    #endif
+
     static func verifyNoDanglingReferences(in context: ModelContext) throws {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--fail-migration") {
+            throw SimulatedMigrationFailure()
+        }
+        #endif
         let sourceIDs = Set(try context.fetch(FetchDescriptor<Source>()).map(\.persistentModelID))
         let categoryIDs = Set(try context.fetch(FetchDescriptor<Category>()).map(\.persistentModelID))
 

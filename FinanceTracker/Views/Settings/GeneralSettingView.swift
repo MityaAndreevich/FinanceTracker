@@ -59,6 +59,8 @@ struct GeneralSettingsView: View {
 
     #if DEBUG
     @ObservedObject private var chartDebug = ChartDebug.shared
+    @State private var debugStoreArchiveURL: URL? = nil
+    @State private var debugStoreArchiveError: String? = nil
     #endif
 
     var body: some View {
@@ -70,6 +72,7 @@ struct GeneralSettingsView: View {
             maintenanceSection
             #if DEBUG
             chartBisectionSection
+            storeToolsSection
             #endif
         }
         .navigationTitle("general.title")
@@ -519,6 +522,67 @@ struct GeneralSettingsView: View {
             3. Still crashing ⇒ Hide all charts. No crash ⇒ it IS a chart: turn them \
             back on one at a time. Still crashing ⇒ it is NOT a chart.
             """)
+        }
+    }
+    #endif
+
+    // MARK: - Store tools (DEBUG only — §11 real-store rehearsal)
+
+    #if DEBUG
+    /// "Share raw store files": zips Vela.sqlite + -wal/-shm from the App
+    /// Group and hands them to the share sheet (AirDrop → Mac). The ONLY way
+    /// to get the real store off a device: Xcode's Download Container does NOT
+    /// include App Group containers. Instrument, not product UI — delete after
+    /// 1.0.3 ships (ARCHITECTURE.md "debug scaffolding to remove").
+    @ViewBuilder
+    private var storeToolsSection: some View {
+        Section {
+            if let url = debugStoreArchiveURL {
+                ShareLink(item: url) {
+                    Label("Share raw store files", systemImage: "externaldrive.badge.timemachine")
+                }
+            } else {
+                Button("Prepare raw store archive") { prepareDebugStoreArchive() }
+            }
+            if let error = debugStoreArchiveError {
+                Text(error).font(.footnote).foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Debug · store tools")
+        } footer: {
+            Text("""
+            For the 1.0.3 migration rehearsal (design doc §11): AirDrop the \
+            archive to the Mac, run the migration against the COPY. Launch with \
+            --fail-migration to drill the rollback ladder.
+            """)
+        }
+    }
+
+    private func prepareDebugStoreArchive() {
+        do {
+            guard let groupURL = SharedModelContainer.groupURL() else {
+                debugStoreArchiveError = "App Group unavailable"
+                return
+            }
+            let store = SharedModelContainer.storeURL(groupURL: groupURL)
+            let stage = FileManager.default.temporaryDirectory
+                .appendingPathComponent("store-share-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: true)
+            var copied = 0
+            for name in StoreBackup.storeFileNames(storeURL: store) {
+                let src = store.deletingLastPathComponent().appendingPathComponent(name)
+                guard FileManager.default.fileExists(atPath: src.path) else { continue }
+                try FileManager.default.copyItem(at: src, to: stage.appendingPathComponent(name))
+                copied += 1
+            }
+            guard copied > 0 else {
+                debugStoreArchiveError = "No store files found"
+                return
+            }
+            debugStoreArchiveURL = stage
+            debugStoreArchiveError = nil
+        } catch {
+            debugStoreArchiveError = error.localizedDescription
         }
     }
     #endif
