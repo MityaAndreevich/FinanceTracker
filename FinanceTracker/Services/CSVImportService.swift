@@ -634,6 +634,10 @@ struct CSVImportService {
             // `id` column (our export) is optional: absent in legacy/foreign CSVs.
             let idStr = cols.count >= 10 ? cols[9].trimmingCharacters(in: .whitespacesAndNewlines) : ""
             let fileUUID: UUID? = idStr.isEmpty ? nil : UUID(uuidString: idStr)
+            // `splits` column (1.0.3 export) is optional: absent in foreign and
+            // pre-1.0.3 own CSVs. Reading it back is what keeps the own-export
+            // round trip lossless once purchases carry splits (A8).
+            let splitsCell = cols.count >= 11 ? cols[10] : ""
 
             guard let date = parseCSVDate(dateStr) else {
                 throw makeLineError(i, "Invalid date: \(dateStr)")
@@ -722,6 +726,33 @@ struct CSVImportService {
             )
 
             modelContext.insert(tx)
+
+            // Reconstruct splits (A8). Defensive gates: a hand-edited file
+            // whose parts exceed the total imports as UNSPLIT rather than as a
+            // corrupt decomposition (the parent row — the money — is never
+            // dropped); split categories resolve through the same cache as the
+            // parent's, so re-import never mints duplicate categories.
+            let decodedSplits = CSVExportService.decodeSplits(splitsCell).prefix(50)
+            if !decodedSplits.isEmpty,
+               decodedSplits.reduce(0, { $0 + $1.amountCents }) <= amountCents {
+                for (index, decoded) in decodedSplits.enumerated() {
+                    let splitCategory = try? getOrCreateCategory(
+                        modelContext: modelContext,
+                        cache: &categoryCache,
+                        nameFromCSV: decoded.categoryName,
+                        kindRaw: typeRaw,
+                        createdCount: &result.createdCategories
+                    )
+                    let split = TransactionSplit(
+                        amountCents: decoded.amountCents,
+                        category: splitCategory,
+                        order: index
+                    )
+                    modelContext.insert(split)
+                    split.parent = tx
+                }
+            }
+
             seenUUIDs.insert(resolvedUUID)
             seenHeuristics.insert(heuristic)
             result.imported += 1

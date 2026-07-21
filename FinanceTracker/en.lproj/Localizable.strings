@@ -951,3 +951,16 @@
 "restore.title" = "We restored your data from a backup";
 "restore.caption.format" = "The update hit a problem, so we brought everything back from the backup made a moment ago. Everything is here: %d transactions.";
 "restore.ack" = "OK";
+
+/* 1.0.3 split transactions (Item 4) */
+"split.section" = "Split across categories";
+"split.add_part" = "Add a part";
+"split.amount.placeholder" = "Amount";
+"split.pick_category" = "Pick a category";
+"split.hint" = "One purchase, several categories — assign parts of this amount elsewhere. The rest stays in the category above.";
+"split.over_sum.format" = "The parts exceed the total by %@ — reduce a part to save.";
+"split.incomplete_row" = "Each part needs an amount and a category.";
+"split.remainder.format" = "%1$@ stays in %2$@.";
+"split.fully_assigned" = "Fully assigned across the parts.";
+"tx_detail.section.split" = "Split breakdown";
+"analytics.category_total.split_note" = "Some purchases here are split across categories — rows show full amounts, the total counts only this category's share.";

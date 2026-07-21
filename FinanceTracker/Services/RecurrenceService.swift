@@ -91,6 +91,19 @@ enum RecurrenceService {
             recurrenceRaw: nil               // concrete occurrence, not a new template
         )
         modelContext.insert(instance)
+        // Deep-copy the template's splits (A10): a split recurring purchase
+        // that materialized without them would mis-categorize silently every
+        // period. Fresh uuids — these are new child rows of a new purchase.
+        for templateSplit in CategoryAttribution.orderedSplits(of: template) {
+            let copy = TransactionSplit(
+                amountCents: templateSplit.amountCents,
+                category: templateSplit.category,
+                note: templateSplit.note,
+                order: templateSplit.order
+            )
+            modelContext.insert(copy)
+            copy.parent = instance
+        }
         setHandledDate(prompt.dueDate, for: prompt.id)
         try? modelContext.save()
         scheduleNotification(for: template)

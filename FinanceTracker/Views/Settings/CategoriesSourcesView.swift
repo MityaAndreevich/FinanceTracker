@@ -323,7 +323,16 @@ struct CategoriesSourcesView: View {
                     tx.category?.uuid == categoryUUID
                 }
             )
+            // "In use" now includes SPLIT references (A11): a category that
+            // only appears inside split parts still holds user money and must
+            // stay delete-protected.
+            let splitDescriptor = FetchDescriptor<TransactionSplit>(
+                predicate: #Predicate { split in
+                    split.category?.uuid == categoryUUID
+                }
+            )
             return try modelContext.fetchCount(descriptor)
+                 + (try modelContext.fetchCount(splitDescriptor))
         } catch {
             return 0
         }

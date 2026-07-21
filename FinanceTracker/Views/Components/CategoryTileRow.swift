@@ -94,7 +94,20 @@ struct CategoryTileRow: View {
     }
 
     private var subtitle: String {
-        let category = tx.category.displayNameOrFallback()
+        // A split purchase's subtitle names ALL its categories — the row is
+        // one purchase (ledger rule), the subtitle is where its multi-category
+        // nature shows (A4/A7 companion; the detail view has the amounts).
+        let category: String
+        if CategoryAttribution.isSplit(tx) {
+            var names: [String] = []
+            for share in CategoryAttribution.shares(for: tx) {
+                let name = share.category.displayNameOrFallback()
+                if !names.contains(name) { names.append(name) }
+            }
+            category = names.joined(separator: " + ")
+        } else {
+            category = tx.category.displayNameOrFallback()
+        }
         if let source = tx.source?.name.trimmingCharacters(in: .whitespaces), !source.isEmpty {
             return "\(category) · \(source)"
         }

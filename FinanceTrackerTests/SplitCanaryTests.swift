@@ -498,6 +498,40 @@ struct SplitCanaryTests {
 
     // C7 — Import content-dedup -----------------------------------------------
 
+    /// Own-export round trip with splits (§8.2 C7b + A8): export the split
+    /// store → import into a fresh store → splits intact; import the same file
+    /// AGAIN → row-stable (uuid-skip idempotence without `.unique`).
+    @Test func ownExportRoundTripKeepsSplitsAndStaysRowStable() throws {
+        let b = try SplitMirrorFixture.make(applySplitsToStore: true)
+        let export = try CSVExportService.makeCSV(modelContext: b.container.mainContext, scope: .all)
+
+        let fresh = try SplitMirrorFixture.make(applySplitsToStore: false)
+        // Import into a SEPARATE store seeded with the same categories.
+        let ctx = fresh.container.mainContext
+        let before = try ctx.fetchCount(FetchDescriptor<Transaction>())
+        _ = try CSVImportService.importCSV(modelContext: ctx, data: export.data)
+
+        // The imported copy of the split Amazon order attributes exactly like
+        // the original: 4000 Home + 1800 Health + 6200 remainder Food.
+        let imported = try ctx.fetch(FetchDescriptor<Transaction>())
+            .filter { $0.merchant == "Amazon" && CategoryAttribution.isSplit($0) }
+        #expect(imported.count == 1, "the split purchase must arrive split")
+        if let amazon = imported.first {
+            let shares = CategoryAttribution.shares(for: amazon)
+            #expect(shares.map(\.amountCents) == [4_000, 1_800, 6_200])
+            #expect(shares.reduce(0) { $0 + $1.amountCents } == amazon.amountCents)
+        }
+
+        // Second import of the same file: exact-uuid rows skip (idempotent),
+        // so both Transaction AND TransactionSplit counts hold.
+        let txCount = try ctx.fetchCount(FetchDescriptor<Transaction>())
+        let splitCount = try ctx.fetchCount(FetchDescriptor<TransactionSplit>())
+        #expect(txCount == before + b.seededTransactionCount)
+        _ = try CSVImportService.importCSV(modelContext: ctx, data: export.data)
+        #expect(try ctx.fetchCount(FetchDescriptor<Transaction>()) == txCount)
+        #expect(try ctx.fetchCount(FetchDescriptor<TransactionSplit>()) == splitCount)
+    }
+
     @Test func importContentDedupIsIdenticalOnSplitMirror() throws {
         // A foreign CSV imported twice content-matches itself on the second
         // pass; the matcher sees parent content only, so a split transaction

@@ -208,7 +208,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // safety surfaces — premigration.* (5), migration.working,
         // backupfail.* (3), floor.* (4), restore.* (3). All 5 locales in
         // parity. Was 704.
-        XCTAssertEqual(enKeys.count, 721, "English baseline changed; update the expected count.")
+        // 2026-07-21 (1.0.3 split transactions, Item 4): net +11. The split
+        // editor (split.* — section, add_part, amount placeholder, picker,
+        // hint, over-sum/incomplete validation, remainder/fully-assigned
+        // footers), the detail breakdown section, and the drill-down's
+        // partial-amounts footnote. All 5 locales in parity. Was 721.
+        XCTAssertEqual(enKeys.count, 732, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

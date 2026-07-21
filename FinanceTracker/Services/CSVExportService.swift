@@ -33,7 +33,39 @@ struct CSVExportService {
         let note: String
         let merchant: String
         let id: String
+        /// Raw split decomposition (cents + category display name), in order.
+        /// Empty for unsplit rows and for the V1 (pre-split) export path.
+        var splits: [(amountCents: Int, categoryName: String)] = []
     }
+
+    /// The trailing `splits` cell: `cents:name;cents:name`, category names
+    /// percent-encoded so `;` `:` in a custom name can't corrupt the field.
+    /// Cents as plain integers — our own machine format, locale-proof.
+    static func encodeSplits(_ splits: [(amountCents: Int, categoryName: String)]) -> String {
+        splits.map { split in
+            let name = split.categoryName.addingPercentEncoding(
+                withAllowedCharacters: splitNameAllowed) ?? split.categoryName
+            return "\(split.amountCents):\(name)"
+        }.joined(separator: ";")
+    }
+
+    static func decodeSplits(_ cell: String) -> [(amountCents: Int, categoryName: String)] {
+        let trimmed = cell.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+        return trimmed.split(separator: ";").compactMap { pair in
+            guard let colon = pair.firstIndex(of: ":"),
+                  let cents = Int(pair[..<colon]), cents > 0 else { return nil }
+            let encoded = String(pair[pair.index(after: colon)...])
+            let name = encoded.removingPercentEncoding ?? encoded
+            return name.isEmpty ? nil : (cents, name)
+        }
+    }
+
+    private static let splitNameAllowed: CharacterSet = {
+        var set = CharacterSet.urlQueryAllowed
+        set.remove(charactersIn: ";:%,\"")
+        return set
+    }()
 
     // MARK: - Public entry points
 
@@ -51,7 +83,10 @@ struct CSVExportService {
                 taxCents: tx.taxCents,
                 note: tx.note ?? "",
                 merchant: tx.merchant ?? "",
-                id: tx.uuid.uuidString
+                id: tx.uuid.uuidString,
+                splits: CategoryAttribution.orderedSplits(of: tx).map {
+                    ($0.amountCents, ($0.category ?? tx.category).displayNameOrFallback())
+                }
             )
         }
         return (makeCSV(rows: rows), filenameFor(scope: scope))
@@ -112,7 +147,10 @@ struct CSVExportService {
         var lines: [String] = []
         // `id` is the LAST column so the leading `date,type,amount…` prefix stays
         // stable for header detection and for interop with foreign 9-column CSVs.
-        lines.append("date,type,amount,currency,category,source,tax,note,merchant,id")
+        // `splits` is the LAST column (after `id`): 9-column foreign CSVs and
+        // 10-column legacy own exports keep parsing everywhere, and the 1.0.2
+        // importer's `cols.count >= 9` guard simply ignores the extra cell.
+        lines.append("date,type,amount,currency,category,source,tax,note,merchant,id,splits")
 
         // Exact ISO-8601 timestamp (with time), locale-invariant. Day-only export
         // lost intra-day ordering and made same-day transactions indistinguishable;
@@ -144,7 +182,8 @@ struct CSVExportService {
             let note = escape(row.note)
             let merchant = escape(row.merchant)
 
-            lines.append("\(date),\(row.typeRaw),\(amount),\(row.currency),\(category),\(source),\(tax),\(note),\(merchant),\(row.id)")
+            let splits = escape(encodeSplits(row.splits))
+            lines.append("\(date),\(row.typeRaw),\(amount),\(row.currency),\(category),\(source),\(tax),\(note),\(merchant),\(row.id),\(splits)")
         }
 
         return Data(lines.joined(separator: "\n").utf8)

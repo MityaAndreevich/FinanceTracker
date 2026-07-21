@@ -31,6 +31,23 @@ struct TransactionDetailView: View {
                 row("tx_detail.category", tx.category.displayNameOrFallback())
             }
 
+            // One purchase, several categories: show the itemized breakdown —
+            // shares, not raw split rows, so the remainder line ("what stays in
+            // the main category") appears exactly as aggregation counts it.
+            if CategoryAttribution.isSplit(tx) {
+                Section("tx_detail.section.split") {
+                    ForEach(Array(CategoryAttribution.shares(for: tx).enumerated()), id: \.offset) { _, share in
+                        HStack {
+                            Text(share.category.displayNameOrFallback(locale: locale))
+                            Spacer()
+                            Text(Money.format(cents: share.amountCents, currencyCode: tx.currency))
+                                .foregroundStyle(.secondary)
+                        }
+                        .privacySensitive()
+                    }
+                }
+            }
+
             Section("tx_detail.section.source") {
                 row("tx_detail.source", tx.source?.name ?? "—")
             }

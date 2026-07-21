@@ -30,6 +30,18 @@ enum TransactionEditService {
         var date: Date
         var category: Category?   // optional as of V2; the editor always passes one
         var source: Source?
+        /// The purchase's split decomposition, in display order. Empty = not
+        /// split (today's behavior). The EDITOR is responsible for the
+        /// Σ splits ≤ amountCents invariant — over-sum must be impossible to
+        /// even reach this service (design §2.2; read-side truncation is the
+        /// safety net, never the mechanism).
+        var splits: [SplitInput] = []
+
+        struct SplitInput {
+            var amountCents: Int
+            var category: Category?
+            var note: String?
+        }
     }
 
     /// Test seam: force `save()` to throw AFTER the mutation so the rollback
@@ -48,15 +60,19 @@ enum TransactionEditService {
         // (verified in TransactionEditServiceTests), so a bare rollback could leave
         // the bad edit sitting in memory to be flushed by the next save. Restoring
         // the snapshot guarantees the object returns to its clean pre-edit state.
+        // (Split objects need no snapshot: they are reconciled by delete+insert,
+        // both PENDING operations that rollback() genuinely reverses.)
         let prior = snapshot(of: tx)
-        apply(fields, to: tx)
+        apply(fields, to: tx, in: context)
 
         do {
             if _forceSaveFailureForTesting { throw _SimulatedSaveError() }
             try context.save()
         } catch {
-            apply(prior, to: tx)   // revert the object's fields
-            context.rollback()     // drop any pending context state → stays saveable
+            apply(prior, to: tx, in: context)  // revert the object's fields
+            context.rollback()                 // drop any pending context state
+                                               // (incl. the split delete+insert
+                                               // churn) → stays saveable
             throw error
         }
     }
@@ -65,11 +81,14 @@ enum TransactionEditService {
         Fields(
             typeRaw: tx.typeRaw, amountCents: tx.amountCents, taxCents: tx.taxCents,
             currency: tx.currency, merchant: tx.merchant, note: tx.note,
-            date: tx.date, category: tx.category, source: tx.source
+            date: tx.date, category: tx.category, source: tx.source,
+            splits: CategoryAttribution.orderedSplits(of: tx).map {
+                Fields.SplitInput(amountCents: $0.amountCents, category: $0.category, note: $0.note)
+            }
         )
     }
 
-    private static func apply(_ f: Fields, to tx: Transaction) {
+    private static func apply(_ f: Fields, to tx: Transaction, in context: ModelContext) {
         tx.typeRaw = f.typeRaw
         tx.amountCents = f.amountCents
         tx.taxCents = f.taxCents
@@ -80,5 +99,22 @@ enum TransactionEditService {
         tx.category = f.category
         tx.source = f.source
         tx.updatedAt = Date()
+
+        // Reconcile splits by replacement (delete old, insert new) — simpler
+        // to reason about under rollback than in-place mutation, and split
+        // rows are tiny.
+        for stale in tx.splits ?? [] {
+            context.delete(stale)
+        }
+        for (index, input) in f.splits.enumerated() {
+            let split = TransactionSplit(
+                amountCents: input.amountCents,
+                category: input.category,
+                note: input.note,
+                order: index
+            )
+            context.insert(split)
+            split.parent = tx
+        }
     }
 }

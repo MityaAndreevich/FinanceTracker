@@ -32,6 +32,16 @@ struct EditTransactionView: View {
     @State private var selectedSourceUUID: UUID? = nil
     @State private var showCategoryPicker = false
 
+    // Split-across-categories drafts (1.0.3 Item 4). Expense-only surface.
+    @State private var splitDrafts: [SplitDraft] = []
+    @State private var splitPickerIndex: Int? = nil
+
+    struct SplitDraft: Identifiable {
+        let id = UUID()
+        var amountText: String = ""
+        var categoryUUID: UUID? = nil
+    }
+
     @State private var showError = false
     @State private var errorMessageKey: String = "edit.error.unknown"
     @State private var errorExtra: String? = nil
@@ -59,7 +69,42 @@ struct EditTransactionView: View {
     }
 
     private var canSave: Bool {
-        Money.parseCents(from: amountText) != nil && selectedCategoryUUID != nil
+        Money.parseCents(from: amountText) != nil
+            && selectedCategoryUUID != nil
+            && splitValidation.isValid
+    }
+
+    // MARK: - Split validation (write-side over-sum prevention)
+
+    /// Σ splits > total must be IMPOSSIBLE TO SAVE — not clamped on read, not
+    /// warned about, but unsaveable (design §2.2 hardening). `isValid` gates
+    /// the Save button; the footer explains what's wrong in the meantime.
+    private struct SplitValidation {
+        var parsedCents: [Int] = []
+        var sumCents: Int = 0
+        var remainderCents: Int = 0
+        var isOverSum: Bool = false
+        var hasInvalidRow: Bool = false
+        var isValid: Bool { !isOverSum && !hasInvalidRow }
+    }
+
+    private var splitValidation: SplitValidation {
+        var v = SplitValidation()
+        guard !splitDrafts.isEmpty else { return v }
+        let totalCents = Money.parseCents(from: amountText) ?? 0
+
+        for draft in splitDrafts {
+            guard let cents = Money.parseCents(from: draft.amountText), cents > 0,
+                  draft.categoryUUID != nil else {
+                v.hasInvalidRow = true
+                continue
+            }
+            v.parsedCents.append(cents)
+            v.sumCents += cents
+        }
+        v.isOverSum = v.sumCents > totalCents
+        v.remainderCents = max(0, totalCents - v.sumCents)
+        return v
     }
 
     var body: some View {
@@ -68,6 +113,9 @@ struct EditTransactionView: View {
             amountSection
             titleSection
             categorySection
+            if typeRaw == TransactionType.expense.raw {
+                splitSection
+            }
             accountSection
             dateSection
             noteSection
@@ -182,6 +230,114 @@ struct EditTransactionView: View {
         .accessibilityValue(Text(selectedCategory?.displayName() ?? ""))
     }
 
+    // MARK: - Split across categories (1.0.3 Item 4)
+
+    /// One purchase, several categories — the Amazon-order case. The parent
+    /// total stays authoritative; whatever the parts don't cover remains in
+    /// the main category above (remainder model, design §2.2). Over-sum
+    /// disables Save via `splitValidation` — it cannot be created here.
+    private var splitSection: some View {
+        Section {
+            ForEach($splitDrafts) { $draft in
+                splitRow($draft)
+            }
+            .onDelete { offsets in
+                splitDrafts.remove(atOffsets: offsets)
+            }
+
+            Button {
+                splitDrafts.append(SplitDraft())
+            } label: {
+                Label("split.add_part", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("split.section")
+        } footer: {
+            splitFooter
+        }
+        .sheet(item: splitPickerBinding) { boxed in
+            CategoryPickerSheet(currentType: TransactionType.expense.raw) { picked in
+                if splitDrafts.indices.contains(boxed.index) {
+                    splitDrafts[boxed.index].categoryUUID = picked.uuid
+                }
+            }
+        }
+    }
+
+    private func splitRow(_ draft: Binding<SplitDraft>) -> some View {
+        HStack(spacing: 10) {
+            TextField("split.amount.placeholder", text: draft.amountText)
+                .plainTextEntry()
+                .keyboardType(.decimalPad)
+                .frame(maxWidth: 110)
+                .onChange(of: draft.wrappedValue.amountText) { _, newValue in
+                    draft.wrappedValue.amountText = Money.sanitizeInput(newValue)
+                }
+
+            Button {
+                splitPickerIndex = splitDrafts.firstIndex { $0.id == draft.wrappedValue.id }
+            } label: {
+                HStack(spacing: 8) {
+                    if let cat = categories.first(where: { $0.uuid == draft.wrappedValue.categoryUUID }) {
+                        CategoryIconTile(category: cat, size: 24)
+                        Text(cat.displayName())
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                    } else {
+                        Text("split.pick_category")
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 4)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var splitFooter: some View {
+        let v = splitValidation
+        if splitDrafts.isEmpty {
+            Text("split.hint")
+        } else if v.isOverSum {
+            // The reason Save is disabled — stated, not just enforced.
+            Text(String(
+                format: NSLocalizedString("split.over_sum.format", comment: ""),
+                Money.format(cents: v.sumCents - (Money.parseCents(from: amountText) ?? 0),
+                             currencyCode: defaultCurrencyCode)
+            ))
+            .foregroundStyle(Color.bcWarningInk)
+        } else if v.hasInvalidRow {
+            Text("split.incomplete_row")
+                .foregroundStyle(Color.bcWarningInk)
+        } else if v.remainderCents > 0 {
+            Text(String(
+                format: NSLocalizedString("split.remainder.format", comment: ""),
+                Money.format(cents: v.remainderCents, currencyCode: defaultCurrencyCode),
+                selectedCategory?.displayName() ?? NSLocalizedString("category.uncategorized", comment: "")
+            ))
+        } else {
+            Text("split.fully_assigned")
+        }
+    }
+
+    /// Identifiable box so `.sheet(item:)` re-presents correctly per row.
+    private struct SplitPickerTarget: Identifiable {
+        let index: Int
+        var id: Int { index }
+    }
+
+    private var splitPickerBinding: Binding<SplitPickerTarget?> {
+        Binding(
+            get: { splitPickerIndex.map(SplitPickerTarget.init(index:)) },
+            set: { splitPickerIndex = $0?.index }
+        )
+    }
+
     private var accountSection: some View {
         Section("add.section.source_optional") {
             Picker("edit.source.picker", selection: $selectedSourceUUID) {
@@ -227,6 +383,13 @@ struct EditTransactionView: View {
         selectedCategoryUUID = transaction.category?.uuid
         selectedSourceUUID = transaction.source?.uuid
 
+        splitDrafts = CategoryAttribution.orderedSplits(of: transaction).map {
+            SplitDraft(
+                amountText: Money.plainDecimalString(cents: $0.amountCents),
+                categoryUUID: $0.category?.uuid
+            )
+        }
+
         // If category doesn't match the type (legacy data), pick the first matching one.
         if let cat = selectedCategory, cat.kindRaw != typeRaw {
             selectedCategoryUUID = filteredCategories.first?.uuid
@@ -271,6 +434,21 @@ struct EditTransactionView: View {
             return
         }
 
+        // Splits: the gate above (`canSave` → splitValidation) already made an
+        // over-sum or half-filled row unreachable; income edits drop any
+        // leftover expense splits (the section is hidden for income).
+        let splitInputs: [TransactionEditService.Fields.SplitInput]
+        if typeRaw == TransactionType.expense.raw {
+            splitInputs = splitDrafts.compactMap { draft in
+                guard let cents = Money.parseCents(from: draft.amountText), cents > 0,
+                      let uuid = draft.categoryUUID,
+                      let category = categories.first(where: { $0.uuid == uuid }) else { return nil }
+                return .init(amountCents: cents, category: category, note: nil)
+            }
+        } else {
+            splitInputs = []
+        }
+
         // Route through the guarded edit path: on a thrown save() it rolls the
         // mutation back so the long-lived mainContext is never poisoned (an
         // unguarded save() here silently lost the edit AND broke later saves —
@@ -285,7 +463,8 @@ struct EditTransactionView: View {
             note: cleanNote.isEmpty ? nil : cleanNote,
             date: date,
             category: newCategory,
-            source: selectedSource     // Account allowed for both income and expense.
+            source: selectedSource,    // Account allowed for both income and expense.
+            splits: splitInputs
         )
 
         // Debounce a double-fire of THIS action. Validation stays outside the

@@ -824,3 +824,16 @@
 "restore.title" = "Restauramos tus datos desde un respaldo";
 "restore.caption.format" = "La actualización tuvo un problema, así que recuperamos todo del respaldo hecho hace un momento. Todo está aquí: %d transacciones.";
 "restore.ack" = "OK";
+
+/* 1.0.3 split transactions (Item 4) */
+"split.section" = "Dividir entre categorías";
+"split.add_part" = "Agregar una parte";
+"split.amount.placeholder" = "Monto";
+"split.pick_category" = "Elige una categoría";
+"split.hint" = "Una compra, varias categorías: asigna partes de este monto a otras categorías. El resto se queda en la categoría de arriba.";
+"split.over_sum.format" = "Las partes superan el total por %@ — reduce una parte para guardar.";
+"split.incomplete_row" = "Cada parte necesita un monto y una categoría.";
+"split.remainder.format" = "%1$@ se queda en %2$@.";
+"split.fully_assigned" = "Totalmente asignado entre las partes.";
+"tx_detail.section.split" = "Desglose de la división";
+"analytics.category_total.split_note" = "Algunas compras aquí están divididas entre categorías: las filas muestran montos completos y el total solo cuenta la parte de esta categoría.";

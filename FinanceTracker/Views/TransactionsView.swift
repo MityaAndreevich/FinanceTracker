@@ -338,9 +338,19 @@ private struct ScopedTransactionList: View {
         // Multi-token, diacritic/case-insensitive, amount-searchable match.
         // See TransactionSearch for the documented semantics.
         return base.filter { tx in
-            TransactionSearch.matches(
+            // Split categories/labels are searchable too (A7): "Health" must
+            // find the Amazon order whose vitamins were split into Health.
+            var fields: [String?] = [
+                tx.merchant, tx.category.displayNameOrFallback(), tx.category?.name,
+                tx.source?.name, tx.note,
+            ]
+            for split in CategoryAttribution.orderedSplits(of: tx) {
+                fields.append(split.category?.displayName())
+                fields.append(split.note)
+            }
+            return TransactionSearch.matches(
                 query: q,
-                fields: [tx.merchant, tx.category.displayNameOrFallback(), tx.category?.name, tx.source?.name, tx.note],
+                fields: fields,
                 amountCents: tx.amountCents
             )
         }

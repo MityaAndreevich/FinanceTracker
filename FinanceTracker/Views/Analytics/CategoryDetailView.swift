@@ -29,19 +29,38 @@ struct CategoryDetailView: View {
         return (start, today)
     }
 
+    /// A-path (design doc §2.4 A4): a purchase belongs here if ANY of its
+    /// attribution shares lands in this category — so a split Amazon order
+    /// shows up under Health when its vitamins do.
     private var filtered: [Transaction] {
         let window = monthWindow
         let cal = Calendar.current
         return allTransactions.filter { tx in
-            guard tx.category?.uuid == categoryUUID else { return false }
             let day = cal.startOfDay(for: tx.date)
-            return day >= window.start && day <= window.end
+            guard day >= window.start && day <= window.end else { return false }
+            return attributedCents(of: tx) > 0
         }
     }
 
-    /// Sum of the magnitudes — matches the donut slice value (Money.format unsigned).
+    /// This category's PORTION of one purchase (the whole amount for an
+    /// unsplit transaction; only the matching shares for a split one).
+    private func attributedCents(of tx: Transaction) -> Int {
+        CategoryAttribution.shares(for: tx)
+            .filter { $0.category.bucketID == categoryUUID }
+            .reduce(0) { $0 + $1.amountCents }
+    }
+
+    /// Sum of the ATTRIBUTED magnitudes — matches the donut slice value. The
+    /// subtle lie this prevents: a $120 order with $18 attributed here must
+    /// add $18 to this header, while its row still shows the full $120.
     private var totalCents: Int {
-        filtered.reduce(0) { $0 + $1.amountCents }
+        filtered.reduce(0) { $0 + attributedCents(of: $1) }
+    }
+
+    /// Whether any listed purchase contributes only a part of itself here —
+    /// drives the explanatory footnote so the header ≠ Σ(rows) is never a mystery.
+    private var includesSplitPortions: Bool {
+        filtered.contains { attributedCents(of: $0) != $0.amountCents }
     }
 
     var body: some View {
@@ -65,8 +84,14 @@ struct CategoryDetailView: View {
 
             // Stable uuid identity, not the default persistentModelID (temporary
             // until save) — avoids transient ghost rows at scale (Round 9).
-            ForEach(filtered, id: \.uuid) { tx in
-                CategoryTileRow(tx: tx)
+            Section {
+                ForEach(filtered, id: \.uuid) { tx in
+                    CategoryTileRow(tx: tx)
+                }
+            } footer: {
+                if includesSplitPortions {
+                    Text("analytics.category_total.split_note")
+                }
             }
         }
         .listStyle(.insetGrouped)

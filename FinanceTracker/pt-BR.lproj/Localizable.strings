@@ -825,3 +825,16 @@
 "restore.title" = "Restauramos seus dados de um backup";
 "restore.caption.format" = "A atualização encontrou um problema, então trouxemos tudo de volta do backup feito há instantes. Está tudo aqui: %d transações.";
 "restore.ack" = "OK";
+
+/* 1.0.3 split transactions (Item 4) */
+"split.section" = "Dividir entre categorias";
+"split.add_part" = "Adicionar uma parte";
+"split.amount.placeholder" = "Valor";
+"split.pick_category" = "Escolha uma categoria";
+"split.hint" = "Uma compra, várias categorias: distribua partes deste valor. O restante fica na categoria acima.";
+"split.over_sum.format" = "As partes excedem o total em %@ — reduza uma parte para salvar.";
+"split.incomplete_row" = "Cada parte precisa de um valor e uma categoria.";
+"split.remainder.format" = "%1$@ fica em %2$@.";
+"split.fully_assigned" = "Totalmente distribuído entre as partes.";
+"tx_detail.section.split" = "Detalhamento da divisão";
+"analytics.category_total.split_note" = "Algumas compras aqui estão divididas entre categorias — as linhas mostram valores completos e o total conta apenas a parte desta categoria.";
