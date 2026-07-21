@@ -112,6 +112,10 @@ private struct PreMigrationView: View {
 
     @State private var exportURL: URL?
     @State private var exportFailed = false
+    #if DEBUG
+    @State private var rawStoreURL: URL?
+    @State private var rawStoreError: String?
+    #endif
 
     var body: some View {
         VStack(spacing: 18) {
@@ -167,6 +171,34 @@ private struct PreMigrationView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.bcAccent)
+
+                #if DEBUG
+                // §11 Step 1 primary route, relocated from Settings → Debug:
+                // that seam sits BEHIND the migration gate, so on a device it
+                // could only ever share an already-migrated (V2) store. Here
+                // the store is still pristine V1 and nothing has opened it —
+                // share, force-quit WITHOUT tapping Continue, and the device
+                // remains an unmigrated 1.0.2 upgrade for the TestFlight gate.
+                // Instrument, not product UI — delete after 1.0.3 ships.
+                if let rawStoreURL {
+                    ShareLink(item: rawStoreURL) {
+                        Label("DEBUG · Share raw store files", systemImage: "externaldrive.badge.timemachine")
+                            .font(.footnote)
+                    }
+                } else {
+                    Button {
+                        prepareRawStoreArchive()
+                    } label: {
+                        Label("DEBUG · Prepare raw store files", systemImage: "externaldrive")
+                            .font(.footnote)
+                    }
+                }
+                if let rawStoreError {
+                    Text(verbatim: rawStoreError)
+                        .font(.caption2)
+                        .foregroundStyle(Color.bcTextSecondary)
+                }
+                #endif
             }
             .padding(.bottom, 28)
         }
@@ -194,6 +226,39 @@ private struct PreMigrationView: View {
             exportFailed = true
         }
     }
+
+    #if DEBUG
+    /// Mirrors GeneralSettingView's store-tools seam (§11 rehearsal
+    /// scaffolding). Copies the store triple into a temp folder for the share
+    /// sheet — the live files are never handed out directly.
+    private func prepareRawStoreArchive() {
+        do {
+            guard let groupURL = SharedModelContainer.groupURL() else {
+                rawStoreError = "App Group unavailable"
+                return
+            }
+            let store = SharedModelContainer.storeURL(groupURL: groupURL)
+            let stage = FileManager.default.temporaryDirectory
+                .appendingPathComponent("store-share-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: true)
+            var copied = 0
+            for name in StoreBackup.storeFileNames(storeURL: store) {
+                let src = store.deletingLastPathComponent().appendingPathComponent(name)
+                guard FileManager.default.fileExists(atPath: src.path) else { continue }
+                try FileManager.default.copyItem(at: src, to: stage.appendingPathComponent(name))
+                copied += 1
+            }
+            guard copied > 0 else {
+                rawStoreError = "No store files found"
+                return
+            }
+            rawStoreURL = stage
+            rawStoreError = nil
+        } catch {
+            rawStoreError = error.localizedDescription
+        }
+    }
+    #endif
 }
 
 // MARK: - Progress
