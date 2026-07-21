@@ -144,6 +144,19 @@ struct EditTransactionView: View {
                 selectedCategoryUUID = picked.uuid
             }
         }
+        // Split-row category picker. Anchored HERE, on the Form — NOT on the
+        // split Section. A presentation modifier attached to content inside
+        // Form/List lazy containers is torn down the moment the hosting row
+        // re-renders — the sheet slid down the instant it appeared (same
+        // teardown class as .languageReactive over navigationDestination):
+        // presentation registrations must live on stable anchors.
+        .sheet(item: splitPickerBinding) { boxed in
+            CategoryPickerSheet(currentType: TransactionType.expense.raw) { picked in
+                if splitDrafts.indices.contains(boxed.index) {
+                    splitDrafts[boxed.index].categoryUUID = picked.uuid
+                }
+            }
+        }
         .alert("common.error", isPresented: $showError) {
             Button("common.ok", role: .cancel) {
                 errorExtra = nil
@@ -254,13 +267,6 @@ struct EditTransactionView: View {
             Text("split.section")
         } footer: {
             splitFooter
-        }
-        .sheet(item: splitPickerBinding) { boxed in
-            CategoryPickerSheet(currentType: TransactionType.expense.raw) { picked in
-                if splitDrafts.indices.contains(boxed.index) {
-                    splitDrafts[boxed.index].categoryUUID = picked.uuid
-                }
-            }
         }
     }
 
