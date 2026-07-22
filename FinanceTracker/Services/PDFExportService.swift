@@ -74,8 +74,8 @@ enum PDFExportService {
         }
 
         let filename = (scope == .month)
-            ? "FinanceTracker_Report_ThisMonth.pdf"
-            : "FinanceTracker_Report_All.pdf"
+            ? "BudgetCrab_Report_ThisMonth.pdf"
+            : "BudgetCrab_Report_All.pdf"
 
         return PDFExportResult(data: data, filename: filename)
     }

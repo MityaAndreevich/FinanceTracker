@@ -229,12 +229,12 @@ struct CSVExportService {
 
         switch scope {
         case .all:
-            return "FinanceTracker_All_\(today).csv"
+            return "BudgetCrab_All_\(today).csv"
         case .month:
             let monthFormatter = DateFormatter()
             monthFormatter.dateFormat = "yyyy-MM"
             let month = monthFormatter.string(from: Date())
-            return "FinanceTracker_Month_\(month)_\(today).csv"
+            return "BudgetCrab_Month_\(month)_\(today).csv"
         }
     }
 }
