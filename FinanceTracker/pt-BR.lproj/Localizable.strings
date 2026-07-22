@@ -810,7 +810,7 @@
 
 /* 1.0.3 migration safety belt (design doc §9–§10) */
 "premigration.title" = "Melhoramos a forma de armazenar seus dados";
-"premigration.caption" = "Seus dados acabaram de ser copiados automaticamente. Como precaução extra, você pode exportar uma cópia antes de continuar.";
+"premigration.caption" = "Faremos backup dos seus dados automaticamente antes de atualizar. Como precaução extra, você pode exportar uma cópia antes.";
 "premigration.export" = "Exportar uma cópia…";
 "premigration.export_failed" = "A exportação falhou — você ainda pode continuar com segurança: o backup automático já foi feito.";
 "premigration.continue" = "Continuar";

@@ -809,7 +809,7 @@
 
 /* 1.0.3 migration safety belt (design doc §9–§10) */
 "premigration.title" = "Mejoramos la forma en que se guardan tus datos";
-"premigration.caption" = "Tus datos se respaldaron automáticamente hace un momento. Como precaución extra, puedes exportar una copia antes de continuar.";
+"premigration.caption" = "Haremos una copia de seguridad de tus datos automáticamente antes de actualizar. Como precaución extra, puedes exportar una copia antes.";
 "premigration.export" = "Exportar una copia…";
 "premigration.export_failed" = "La exportación falló — puedes continuar con seguridad: el respaldo automático ya está hecho.";
 "premigration.continue" = "Continuar";
