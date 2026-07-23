@@ -18,6 +18,10 @@ struct AnalyticsBreakdownView: View {
 
     @State private var typeFilter: TypeFilter = .expense
     @State private var selectedCategory: CategoryTotal?
+    // Whether the "Other" aggregate row is unfolded into its tail categories
+    // (device QA 2026-07-23 #1/#2: a small — often freshly split — category was
+    // unreachable because the fold had no way in).
+    @State private var otherExpanded = false
 
     // Bug 4 ext: Swift Charts captures Locale at first render and ignores later
     // environment(\.locale) updates, so labels stay stale until restart. Key the
@@ -92,6 +96,23 @@ struct AnalyticsBreakdownView: View {
         return named + [other]
     }
 
+    /// The categories folded into the "Other" aggregate, in rank order — empty
+    /// when no fold happened. Mirrors `displaySlices`' fold condition exactly so
+    /// the expanded legend and the donut can never disagree about what "Other"
+    /// contains. Pure + static for the same reason `displaySlices` is.
+    static func foldedTail(
+        from sorted: [CategoryTotal],
+        maxNamed: Int = 5
+    ) -> [CategoryTotal] {
+        guard sorted.count > maxNamed + 1 else { return [] }
+        return Array(sorted.dropFirst(maxNamed))
+    }
+
+    /// Tail rows revealed when the "Other" legend row is expanded.
+    private var foldedTailCategories: [CategoryTotal] {
+        Self.foldedTail(from: sortedCategories)
+    }
+
     /// The slices actually shown — top categories + an "Other" aggregate. Drives
     /// both the donut and the legend so the two never disagree.
     private var displayCategories: [CategoryTotal] {
@@ -142,8 +163,12 @@ struct AnalyticsBreakdownView: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .onChange(of: typeFilter) { _, _ in
-            // A focused slice from one direction makes no sense after switching.
-            withAnimation(.easeInOut(duration: 0.2)) { selectedCategory = nil }
+            // A focused slice or an unfolded "Other" from one direction makes no
+            // sense after switching.
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedCategory = nil
+                otherExpanded = false
+            }
         }
     }
 
@@ -235,15 +260,40 @@ struct AnalyticsBreakdownView: View {
         VStack(spacing: 8) {
             ForEach(displayCategories) { cat in
                 if cat.id == Self.otherBucketID {
-                    // The "Other" aggregate has no single category to drill into, so
-                    // it's a plain focusable row (tap dims the ring to its slice) —
-                    // no chevron, no navigation.
+                    // The "Other" aggregate has no single category to drill into.
+                    // Tapping unfolds it in place: the tail categories appear as
+                    // ordinary navigable rows (and the ring focuses the slice) —
+                    // a small/split category is never sealed inside the fold.
                     legendRow(cat)
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.25)) { selectedCategory = cat }
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                otherExpanded.toggle()
+                                selectedCategory = otherExpanded ? cat : nil
+                            }
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         }
+                        // NOTE: no accessibility modifiers here — adding a trait to
+                        // the row wraps it into ONE combined element and strips the
+                        // inner texts from the hierarchy (VoiceOver + XCUI).
+
+                    if otherExpanded {
+                        ForEach(foldedTailCategories) { tail in
+                            NavigationLink {
+                                CategoryDetailView(
+                                    categoryUUID: tail.id,
+                                    categoryName: tail.name,
+                                    currencyCode: currencyCode
+                                )
+                            } label: {
+                                legendRow(tail)
+                                    // Slight inset: these rows belong to the fold above.
+                                    .padding(.leading, 10)
+                            }
+                            .buttonStyle(.plain)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                    }
                 } else {
                     NavigationLink {
                         CategoryDetailView(
@@ -286,7 +336,7 @@ struct AnalyticsBreakdownView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.bcTextPrimary)
                         .lineLimit(1)
-                    Text(percentLabel(cat))
+                    Text(subtitleLabel(cat))
                         .font(.system(size: 13))
                         .monospacedDigit()
                         .foregroundStyle(Color.bcTextSecondary)
@@ -300,7 +350,13 @@ struct AnalyticsBreakdownView: View {
                     .foregroundStyle(Color.bcTextPrimary)
                     .privacySensitive(true)
 
-                if cat.id != Self.otherBucketID {
+                if cat.id == Self.otherBucketID {
+                    // Disclosure, not navigation: points down, flips when unfolded.
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(Color.bcTextMuted)
+                        .rotationEffect(.degrees(otherExpanded ? 180 : 0))
+                } else {
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundStyle(Color.bcTextMuted)
@@ -332,6 +388,18 @@ struct AnalyticsBreakdownView: View {
 
     private func percentLabel(_ cat: CategoryTotal) -> String {
         Self.percentString(cents: cat.cents, total: total)
+    }
+
+    /// Row subtitle: percent share for a real category; for the "Other" fold,
+    /// how many categories it hides ("+4 more") ahead of the percent — the cue
+    /// that the row opens.
+    private func subtitleLabel(_ cat: CategoryTotal) -> String {
+        guard cat.id == Self.otherBucketID else { return percentLabel(cat) }
+        let more = String(
+            format: NSLocalizedString("analytics.breakdown.other.more.format", comment: ""),
+            foldedTailCategories.count
+        )
+        return "\(more) · \(percentLabel(cat))"
     }
 
     /// A category's share of the total as a whole-percent label. A real (non-zero)

@@ -734,6 +734,7 @@
 "analytics.net_this_month" = "Net this month";
 "analytics.total" = "Total";
 "analytics.breakdown.other" = "Other";
+"analytics.breakdown.other.more.format" = "+%d more";
 "analytics.pace.title" = "Spending pace";
 "analytics.pace.faster" = "Spending faster than usual";
 "analytics.pace.on" = "On pace";

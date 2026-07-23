@@ -217,7 +217,7 @@ final class LocaleCompletenessTests: XCTestCase {
         // (limit.sheet.title/.caption, limit.amount.placeholder, limit.clear),
         // the row's limit label, and the gain-framed "X left in {category}"
         // notification body. All 5 locales in parity. Was 732.
-        XCTAssertEqual(enKeys.count, 738, "English baseline changed; update the expected count.")
+        XCTAssertEqual(enKeys.count, 739, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

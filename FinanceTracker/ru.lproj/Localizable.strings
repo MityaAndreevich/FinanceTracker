@@ -744,6 +744,7 @@
 "analytics.net_this_month" = "Чистыми за месяц";
 "analytics.total" = "Всего";
 "analytics.breakdown.other" = "Другое";
+"analytics.breakdown.other.more.format" = "+%d ещё";
 "analytics.pace.title" = "Темп трат";
 "analytics.pace.faster" = "Тратите быстрее обычного";
 "analytics.pace.on" = "В обычном темпе";

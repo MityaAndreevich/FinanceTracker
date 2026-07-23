@@ -615,6 +615,7 @@
 "analytics.net_this_month" = "Líquido este mês";
 "analytics.total" = "Total";
 "analytics.breakdown.other" = "Outros";
+"analytics.breakdown.other.more.format" = "+%d mais";
 "analytics.pace.title" = "Ritmo de gastos";
 "analytics.pace.faster" = "Gastando mais rápido que o normal";
 "analytics.pace.on" = "No ritmo";

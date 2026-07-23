@@ -65,6 +65,29 @@ final class AnalyticsBreakdownBucketTests: XCTestCase {
         XCTAssertEqual(other.cents, 120, "Other sums the remaining tail")
     }
 
+    // MARK: - Fold tail (the expandable "Other" contents)
+
+    /// `foldedTail` must mirror `displaySlices`' fold condition exactly: the
+    /// expanded legend shows precisely the categories the "Other" slice sums —
+    /// never more, never fewer (device QA 2026-07-23 #1/#2).
+    func test_foldedTail_isExactlyWhatOtherAggregates() {
+        let eight = makeSorted([800, 700, 600, 500, 400, 60, 40, 20])
+        let out = AnalyticsBreakdownView.displaySlices(
+            from: eight, otherName: "Other", otherColor: .gray)
+        let tail = AnalyticsBreakdownView.foldedTail(from: eight)
+
+        XCTAssertEqual(tail.map(\.cents), [60, 40, 20], "tail = ranks 6+ in order")
+        XCTAssertEqual(tail.reduce(0) { $0 + $1.cents }, out.last!.cents,
+                       "Σ tail == the Other slice value")
+    }
+
+    func test_foldedTail_emptyWhenNoFoldHappened() {
+        // ≤ maxNamed+1 passes through displaySlices untouched → no fold → no tail.
+        XCTAssertTrue(AnalyticsBreakdownView.foldedTail(
+            from: makeSorted([600, 500, 400, 300, 200, 100])).isEmpty)
+        XCTAssertTrue(AnalyticsBreakdownView.foldedTail(from: []).isEmpty)
+    }
+
     func test_other_inheritsDirection_ofTheSet() {
         let income = [800, 700, 600, 500, 400, 100, 50].enumerated().map { idx, c in
             Total(id: UUID(), name: "inc\(idx)", symbol: "circle",
