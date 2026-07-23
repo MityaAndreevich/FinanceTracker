@@ -555,7 +555,7 @@
 "category.gas" = "Пальне";
 "category.rent" = "Оренда";
 "category.supplies" = "Товари";
-"category.other" = "Без категорії";
+"category.other" = "Різне";
 "category.uncategorized" = "Без категорії";
 "category.income" = "Дохід";
 
@@ -829,7 +829,7 @@
 "import.map.decimal.period" = "Крапка (1,234.56)";
 "import.map.decimal.comma" = "Кома (1.234,56)";
 "import.map.section.optional" = "Необов'язкові";
-"import.map.section.optional.footer" = "Незіставлені поля лишаються порожніми; незіставлені категорії імпортуються як «Без категорії».";
+"import.map.section.optional.footer" = "Незіставлені поля лишаються порожніми; незіставлені категорії імпортуються в «Різне».";
 "import.map.field.category" = "Категорія";
 "import.map.field.merchant" = "Продавець";
 "import.map.field.note" = "Нотатка";

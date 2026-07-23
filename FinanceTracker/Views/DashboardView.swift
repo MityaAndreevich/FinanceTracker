@@ -215,7 +215,11 @@ struct DashboardView: View {
         let tail = sorted.dropFirst(maxSlices - 1).reduce(0) { $0 + $1.cents }
         result.append(CategoryDonutView.Slice(
             id: "__other",
-            name: String(localized: "category.other"),
+            // The FOLD aggregate, not the seeded catch-all category — it must
+            // share the Breakdown fold's label ("Other"/"Другое"), never
+            // `category.other` (device QA 2026-07-23 #3: three buckets rendered
+            // as "Без категории" and nobody could tell them apart).
+            name: String(localized: "analytics.breakdown.other"),
             cents: tail,
             color: CategoryTheme.map["other"]?.color ?? .gray
         ))

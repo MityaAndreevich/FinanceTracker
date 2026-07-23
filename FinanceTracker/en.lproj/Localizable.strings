@@ -548,7 +548,7 @@
 "category.gas" = "Gas";
 "category.rent" = "Rent";
 "category.supplies" = "Supplies";
-"category.other" = "Uncategorized";
+"category.other" = "Miscellaneous";
 "category.uncategorized" = "Uncategorized";
 "category.income" = "Income";
 
@@ -822,7 +822,7 @@
 "import.map.decimal.period" = "Period (1,234.56)";
 "import.map.decimal.comma" = "Comma (1.234,56)";
 "import.map.section.optional" = "Optional";
-"import.map.section.optional.footer" = "Unmapped fields are left empty; unmapped categories import as uncategorized.";
+"import.map.section.optional.footer" = "Unmapped fields are left empty; unmapped categories import into Miscellaneous.";
 "import.map.field.category" = "Category";
 "import.map.field.merchant" = "Merchant";
 "import.map.field.note" = "Note";

@@ -555,7 +555,7 @@
 "category.gas" = "Топливо";
 "category.rent" = "Аренда";
 "category.supplies" = "Покупки";
-"category.other" = "Без категории";
+"category.other" = "Разное";
 "category.uncategorized" = "Без категории";
 "category.income" = "Доход";
 
@@ -832,7 +832,7 @@
 "import.map.decimal.period" = "Точка (1,234.56)";
 "import.map.decimal.comma" = "Запятая (1.234,56)";
 "import.map.section.optional" = "Необязательные";
-"import.map.section.optional.footer" = "Несопоставленные поля остаются пустыми; несопоставленные категории импортируются как «Без категории».";
+"import.map.section.optional.footer" = "Несопоставленные поля остаются пустыми; несопоставленные категории импортируются в «Разное».";
 "import.map.field.category" = "Категория";
 "import.map.field.merchant" = "Продавец";
 "import.map.field.note" = "Заметка";

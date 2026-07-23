@@ -193,7 +193,7 @@
 "category.gas" = "Combustível";
 "category.rent" = "Aluguel";
 "category.supplies" = "Compras";
-"category.other" = "Sem categoria";
+"category.other" = "Diversos";
 "category.uncategorized" = "Sem categoria";
 "category.income" = "Renda";
 "category.food_drink" = "Comida e Bebida";
@@ -703,7 +703,7 @@
 "import.map.decimal.period" = "Ponto (1,234.56)";
 "import.map.decimal.comma" = "Vírgula (1.234,56)";
 "import.map.section.optional" = "Opcional";
-"import.map.section.optional.footer" = "Campos não mapeados ficam vazios; categorias não mapeadas são importadas como “Sem categoria”.";
+"import.map.section.optional.footer" = "Campos não mapeados ficam vazios; categorias não mapeadas são importadas em “Diversos”.";
 "import.map.field.category" = "Categoria";
 "import.map.field.merchant" = "Estabelecimento";
 "import.map.field.note" = "Nota";
