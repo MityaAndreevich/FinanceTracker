@@ -127,6 +127,14 @@ struct EditTransactionView: View {
                 Button("common.save") { save() }
                     .disabled(!canSave)
             }
+
+            // Same dismiss affordance as AddTransactionView — the decimal pad has
+            // no return key, so without this the split/amount/tax fields trap the
+            // keyboard on screen.
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("add.keyboard.hide") { hideKeyboard() }
+            }
         }
         .onAppear { loadFromTransaction() }
         .onChange(of: typeRaw) { _, _ in
