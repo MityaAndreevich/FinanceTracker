@@ -68,10 +68,34 @@ enum HangProbe {
 
     private static func nextIndex(for name: String) -> Int {
         lock.lock()
-        defer { lock.unlock() }
         let next = (counts[name] ?? 0) + 1
         counts[name] = next
+        let snapshot = counts
+        lock.unlock()
+        dumpIfRequested(snapshot)
         return next
+    }
+
+    /// Launch-arg-gated counter dump, so a UI test can assert on HOW MANY times
+    /// a span ran rather than on how long it took. A wall-clock ceiling would be
+    /// a flaky proxy for the real defect — the defect is a recomputation COUNT
+    /// that scales with the number of rendered sections.
+    ///
+    /// /tmp is the channel because simulator processes share the host
+    /// filesystem, which is the same route `MainThreadHangScaleTests.record`
+    /// already uses in the other direction.
+    static let dumpArgument = "--hangprobe-dump"
+    static let dumpPath = "/tmp/hangprobe-counts.txt"
+
+    private static let dumpRequested = CommandLine.arguments.contains(dumpArgument)
+
+    private static func dumpIfRequested(_ snapshot: [String: Int]) {
+        guard dumpRequested else { return }
+        let body = snapshot
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: "\n")
+        try? body.write(toFile: dumpPath, atomically: true, encoding: .utf8)
     }
 
     /// Times `body`, logs the span, and returns the value untouched.

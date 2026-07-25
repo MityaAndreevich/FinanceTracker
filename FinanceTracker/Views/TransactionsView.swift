@@ -297,12 +297,15 @@ private struct ScopedTransactionList: View {
     /// the DEBUG instrument records the tap context — period row-count, scope,
     /// child-build sequence — the instant BEFORE the binding is armed. The set
     /// itself is unchanged in Release.
-    private func setEdit(_ tx: Transaction) {
+    /// `filteredCount` is PASSED IN, never re-derived: reading `filtered.count`
+    /// here ran the entire filter again on every Edit tap, inside a DEBUG
+    /// instrument whose whole purpose is to observe that tap's timing.
+    private func setEdit(_ tx: Transaction, filteredCount: Int) {
         #if DEBUG
         EditPresentationLog.tapSet(
             row: tx.uuid,
             periodCount: transactions.count,
-            filteredCount: filtered.count,
+            filteredCount: filteredCount,
             scope: scopeDescription,
             editTxWasNil: editPath.isEmpty
         )
@@ -372,21 +375,31 @@ private struct ScopedTransactionList: View {
         || typeFilter != .all
     }
 
-    private var grouped: [Date: [Transaction]] {
-        hangProbe("Transactions.grouped") {
+    /// Day buckets for an ALREADY-FILTERED set. Takes its input rather than
+    /// reaching for `filtered` itself: as a computed property reading a computed
+    /// property, it re-ran the whole filter every time anything indexed into it.
+    private func grouped(_ rows: [Transaction]) -> [Date: [Transaction]] {
+        hangProbe("Transactions.grouped", rows: rows.count) {
             let cal = Calendar.current
-            return Dictionary(grouping: filtered) { tx in
+            return Dictionary(grouping: rows) { tx in
                 cal.startOfDay(for: tx.date)
             }
         }
     }
 
-    private var sortedDays: [Date] {
-        grouped.keys.sorted(by: >)
-    }
-
+    // Explicit `return` (so this is a plain function body, not a ViewBuilder
+    // block): the filter and the grouping run ONCE per body evaluation here and
+    // are threaded down as values. Previously `filtered` and `grouped` were
+    // computed properties that `daySection` AND `dayHeader` each re-derived per
+    // section — MEASURED at 256 filter passes and 252 grouping passes, ~1.6s of
+    // main-thread work, for ONE search interaction at 8k rows. Swift does not
+    // cache computed properties; the only fix is to stop asking twice.
     var body: some View {
-        List {
+        let rows = filtered
+        let dayBuckets = grouped(rows)
+        let days = dayBuckets.keys.sorted(by: >)
+
+        return List {
             // Sits above the period-scoped content because the flagged rows it
             // points at may live in any month — including one the user isn't
             // looking at.
@@ -394,7 +407,7 @@ private struct ScopedTransactionList: View {
                 duplicateBanner
             }
 
-            if filtered.isEmpty {
+            if rows.isEmpty {
                 if storeIsEmpty {
                     firstRunEmptyRow
                 } else if isFiltering {
@@ -403,8 +416,8 @@ private struct ScopedTransactionList: View {
                     noneInPeriodRow
                 }
             } else {
-                ForEach(sortedDays, id: \.self) { day in
-                    daySection(for: day)
+                ForEach(days, id: \.self) { day in
+                    daySection(for: day, items: dayBuckets[day] ?? [], filteredCount: rows.count)
                 }
             }
         }
@@ -553,10 +566,8 @@ private struct ScopedTransactionList: View {
         .listRowSeparator(.hidden)
     }
 
-    private func daySection(for day: Date) -> some View {
+    private func daySection(for day: Date, items dayItems: [Transaction], filteredCount: Int) -> some View {
         Section {
-            let dayItems = grouped[day] ?? []
-
             // Identity on the stable app-level uuid, never the default
             // persistentModelID: a freshly inserted row's persistentModelID is
             // temporary until save and flips to permanent on save, which makes a
@@ -564,7 +575,7 @@ private struct ScopedTransactionList: View {
             // scale (Round 9 ghost duplication, gone after restart). uuid is fixed
             // at init.
             ForEach(dayItems, id: \.uuid) { tx in
-                Button { setEdit(tx) } label: {
+                Button { setEdit(tx, filteredCount: filteredCount) } label: {
                     CategoryTileRow(tx: tx)
                 }
                 .buttonStyle(.plain)
@@ -576,13 +587,13 @@ private struct ScopedTransactionList: View {
                         Label("common.delete", systemImage: "trash")
                     }
 
-                    Button { setEdit(tx) } label: {
+                    Button { setEdit(tx, filteredCount: filteredCount) } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
                     .tint(.blue)
                 }
                 .contextMenu {
-                    Button { setEdit(tx) } label: {
+                    Button { setEdit(tx, filteredCount: filteredCount) } label: {
                         Label("common.edit", systemImage: "pencil")
                     }
 
@@ -592,15 +603,22 @@ private struct ScopedTransactionList: View {
                 }
             }
         } header: {
-            dayHeader(for: day)
+            dayHeader(for: day, items: dayItems)
         }
     }
 
     /// Day header: relative/formatted date + a calm neutral subtotal of that day's
     /// spending (running clarity). Neutral, not alarm-colored — a day's spend is
     /// normal, not a status.
-    private func dayHeader(for day: Date) -> some View {
-        let items = grouped[day] ?? []
+    private func dayHeader(for day: Date, items: [Transaction]) -> some View {
+        // Items are handed down from the single grouping pass. Indexing into a
+        // computed `grouped` here re-ran the filter once per visible section —
+        // half of the 252 grouping passes measured for one search.
+        //
+        // Category-BLIND on purpose: this sums PARENT amounts and must never be
+        // routed through CategoryAttribution. A day subtotal is a day subtotal;
+        // summing shares here would double-count nothing but would start
+        // disagreeing with the rows printed directly beneath it.
         let spend = items.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
         return HStack {
             sectionHeader(for: day)
