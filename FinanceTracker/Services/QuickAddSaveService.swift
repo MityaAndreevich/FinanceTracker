@@ -87,7 +87,12 @@ enum QuickAddSaveService {
         modelContext.insert(tx)
         do {
             if _forceSaveFailureForTesting { throw _SimulatedSaveError() }
-            try modelContext.save()
+            // Probed (2026-07-25): separates the WRITE itself from everything the
+            // write then triggers (widget signature, didSave refresher, every
+            // @Query-backed view re-rendering). A cheap span here with an
+            // expensive user-visible save means the cost is downstream, not in
+            // SwiftData.
+            try hangProbe("QuickAdd.contextSave") { try modelContext.save() }
         } catch {
             // Root-cause guard for the device duplication cascade.
             //

@@ -322,7 +322,16 @@ private struct ScopedTransactionList: View {
         ((try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? 0) == 0
     }
 
+    /// Probe (2026-07-25 freeze report, candidate B). Wrapper only — the real
+    /// filter is `filteredPass`, kept verbatim below. What this measures is not
+    /// one slow pass but how MANY passes a single body evaluation costs: the
+    /// emitted `n` climbs once per `grouped` re-derivation, and `grouped` is
+    /// itself non-cached and indexed into by both `daySection` and `dayHeader`.
     private var filtered: [Transaction] {
+        hangProbe("Transactions.filtered", rows: transactions.count) { filteredPass }
+    }
+
+    private var filteredPass: [Transaction] {
         // The @Query is already period-scoped; only type + search narrow further.
         var base: [Transaction] = transactions
 
@@ -364,9 +373,11 @@ private struct ScopedTransactionList: View {
     }
 
     private var grouped: [Date: [Transaction]] {
-        let cal = Calendar.current
-        return Dictionary(grouping: filtered) { tx in
-            cal.startOfDay(for: tx.date)
+        hangProbe("Transactions.grouped") {
+            let cal = Calendar.current
+            return Dictionary(grouping: filtered) { tx in
+                cal.startOfDay(for: tx.date)
+            }
         }
     }
 

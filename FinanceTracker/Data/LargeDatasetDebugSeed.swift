@@ -68,6 +68,29 @@ enum LargeDatasetDebugSeed {
                     recurrenceRaw: nil
                 )
                 modelContext.insert(tx)
+
+                // Every 7th expense carries a 2-part split (~1.1k split purchases
+                // at the 8k target). Without these the seeded store is a 1.0.2
+                // store and cannot reproduce a 1.0.3 symptom: `shares(for:)` and
+                // `orderedSplits(of:)` touch `tx.splits`, a SwiftData to-many
+                // relationship, so the per-row cost the freeze report is about
+                // simply isn't present in a split-free ledger. Sum is kept BELOW
+                // the parent total so the remainder share exists too — the
+                // partially-split shape, which is the one both attribution
+                // branches have to walk.
+                if !isIncome && i % 7 == 0 && expenseCategories.count >= 2 {
+                    let half = max(1, tx.amountCents / 4)
+                    for part in 0..<2 {
+                        let split = TransactionSplit(
+                            amountCents: half,
+                            category: expenseCategories[(i + part + 1) % expenseCategories.count],
+                            order: part
+                        )
+                        modelContext.insert(split)
+                        split.parent = tx
+                    }
+                }
+
                 if i % 500 == 0 { try modelContext.save() }   // bounded pending set
             }
             try modelContext.save()

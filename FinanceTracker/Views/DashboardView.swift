@@ -184,6 +184,12 @@ struct DashboardView: View {
     /// center total stays the parent-summed `expenseCents` — the two agree by
     /// the conservation invariant (canary: donutAttributionSumEqualsMonthExpenseTotal).
     private var monthCategorySpend: [CategorySpend] {
+        hangProbe("Dashboard.categorySpend", rows: currentMonthTransactions.count) {
+            monthCategorySpendPass
+        }
+    }
+
+    private var monthCategorySpendPass: [CategorySpend] {
         let expenses = currentMonthTransactions.filter { !$0.isIncome }
         var byBucket: [UUID: (Category?, Int)] = [:]
         for tx in expenses {
@@ -343,10 +349,16 @@ struct DashboardView: View {
         // Month-scoped input: NetSnapshotBuilder.build month-filters internally,
         // so the widget only ever renders current-month data — walking the whole
         // table here was pure waste (and O(n) on the main thread per change).
-        NetSnapshotBuilder.contentSignature(transactions: monthTransactions,
-                                            currencyCode: defaultCurrencyCode,
-                                            monthlyBudgetCents: monthlyBudgetCents,
-                                            languageCode: appLanguageCode)
+        //
+        // Probed (2026-07-25): this is a computed property feeding `.onChange`,
+        // so SwiftUI re-derives it on EVERY body evaluation, and since 1.0.3 its
+        // hash walk touches `tx.splits` per row (a to-many fault).
+        hangProbe("Dashboard.widgetSignature", rows: monthTransactions.count) {
+            NetSnapshotBuilder.contentSignature(transactions: monthTransactions,
+                                                currencyCode: defaultCurrencyCode,
+                                                monthlyBudgetCents: monthlyBudgetCents,
+                                                languageCode: appLanguageCode)
+        }
     }
 
     private func scheduleWidgetSnapshot() {
@@ -359,10 +371,12 @@ struct DashboardView: View {
     }
 
     private func refreshWidgetSnapshot() {
-        NetSnapshotBuilder.updateSnapshot(transactions: monthTransactions,
-                                          currencyCode: defaultCurrencyCode,
-                                          monthlyBudgetCents: monthlyBudgetCents,
-                                          languageCode: appLanguageCode)
+        hangProbe("Dashboard.widgetRebuild", rows: monthTransactions.count) {
+            NetSnapshotBuilder.updateSnapshot(transactions: monthTransactions,
+                                              currencyCode: defaultCurrencyCode,
+                                              monthlyBudgetCents: monthlyBudgetCents,
+                                              languageCode: appLanguageCode)
+        }
     }
 
     // MARK: - Recurring

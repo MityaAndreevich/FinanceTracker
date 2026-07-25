@@ -45,7 +45,22 @@ final class MainThreadHangScaleTests: XCTestCase {
         app.launchArguments.append("--suppress-rating-prompt")
         if seeded { app.launchArguments.append("--seed-large-dataset") }
         app.launch()
+        clearPreMigrationGate(app)
         return app
+    }
+
+    /// A simulator that already holds a V1 store opens on the pre-migration
+    /// consent screen ("We've improved how your data is stored") and waits for a
+    /// human to tap Continue. Nothing else mounts until then — so without this,
+    /// every assertion in this file fails as "app never became ready" and reads
+    /// exactly like the main-thread hang it is supposed to be measuring.
+    /// Harmless on a clean store, where the gate never appears.
+    private func clearPreMigrationGate(_ app: XCUIApplication) {
+        let proceed = app.buttons["Continue"]
+        if proceed.waitForExistence(timeout: 10) {
+            record("pre-migration consent gate present → tapping Continue")
+            proceed.tap()
+        }
     }
 
     private func record(_ line: String) {
@@ -141,5 +156,86 @@ final class MainThreadHangScaleTests: XCTestCase {
         let editorSave = app.buttons["Save"]
         XCTAssertTrue(editorSave.waitForExistence(timeout: 120), "editor never presented")
         record("(c) row tap → editor visible: \(ms(since: t0))ms @8k rows")
+    }
+
+    /// 2026-07-25 freeze report: isolates the TWO candidate main-thread paths
+    /// against each other at 8k rows with ~1.1k split purchases present.
+    ///
+    /// The decisive experiment is (e) vs (a): AnalyticsView holds an UNSCOPED
+    /// @Query and recomputes from `.onChange(of: transactions)`, so once its
+    /// tab has been visited its view stays alive in the TabView and every
+    /// subsequent save pays for it — even from the Dashboard, with Analytics
+    /// nowhere on screen. Measuring QuickAdd BEFORE any Analytics visit and
+    /// again AFTER one turns that into a subtraction instead of an argument.
+    ///
+    /// Read the HangProbe lines alongside these wall times:
+    ///   xcrun simctl spawn booted log stream --level info \
+    ///     --predicate 'subsystem == "com.dmitrylogachev.budgetcrab" AND category == "HangProbe"'
+    func test_measure_freezeCandidates_atScale() {
+        // Seeding is incremental (the loop starts at the existing count and
+        // saves every 500 rows), so a run that times out here leaves the store
+        // further along and the next run resumes. 8k transactions + ~2.3k split
+        // rows does not fit the 300s the split-free seed used to need.
+        var app = launch(seeded: true)
+        XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).waitForExistence(timeout: 900),
+                      "app never became ready while seeding")
+        app.terminate()
+
+        app = launch(seeded: true)   // idempotent: threshold guard skips re-seed
+        XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).waitForExistence(timeout: 300))
+
+        // (a) BASELINE — saves before Analytics has ever been constructed.
+        var baseline: [Int] = []
+        for (i, text) in ["11 baseline one", "22 baseline two"].enumerated() {
+            let cost = quickAddEntry(app, text: text)
+            baseline.append(cost)
+            record("(a) PRE-analytics QuickAdd #\(i + 1): \(cost)ms @8k+splits")
+        }
+
+        // (d) opening Analytics — the first full unscoped recompute.
+        let analyticsTab = app.tabBars.buttons.element(boundBy: 3)
+        XCTAssertTrue(analyticsTab.waitForExistence(timeout: 30), "Analytics tab missing")
+        var t0 = Date()
+        analyticsTab.tap()
+        // Any Analytics chrome will do as "the screen is live again"; the
+        // segmented sub-screen control is present on every sub-screen.
+        let analyticsMarker = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Pulse' OR label CONTAINS[c] 'Breakdown'")
+        ).firstMatch
+        XCTAssertTrue(analyticsMarker.waitForExistence(timeout: 180), "Analytics never became live")
+        record("(d) Analytics tab tap → live: \(ms(since: t0))ms @8k+splits")
+
+        // (e) THE SUBTRACTION — identical saves, Analytics now alive off-screen.
+        app.tabBars.buttons.element(boundBy: 0).tap()
+        var withAnalytics: [Int] = []
+        for (i, text) in ["33 after one", "44 after two"].enumerated() {
+            let cost = quickAddEntry(app, text: text)
+            withAnalytics.append(cost)
+            record("(e) POST-analytics QuickAdd #\(i + 1): \(cost)ms @8k+splits")
+        }
+        let preAvg = baseline.reduce(0, +) / max(1, baseline.count)
+        let postAvg = withAnalytics.reduce(0, +) / max(1, withAnalytics.count)
+        record("(e-a) DELTA attributable to AnalyticsView being alive: \(postAvg - preAvg)ms "
+               + "(pre \(preAvg)ms → post \(postAvg)ms)")
+
+        // (f) candidate B — typing a category name into Transactions search.
+        let txTab = app.tabBars.buttons.element(boundBy: 1)
+        txTab.tap()
+        let anyRow = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS ',' AND label CONTAINS '$'")
+        ).firstMatch
+        XCTAssertTrue(anyRow.waitForExistence(timeout: 120), "Transactions list never showed rows")
+
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 30), "search field missing")
+        search.tap()
+        t0 = Date()
+        search.typeText("Seed")
+        // Wait for the list to settle: the search field reporting the full typed
+        // value means the main thread drained every keystroke's filter passes.
+        let settled = NSPredicate(format: "value CONTAINS 'Seed'")
+        expectation(for: settled, evaluatedWith: search)
+        waitForExpectations(timeout: 180)
+        record("(f) typing a 4-char category query → list settled: \(ms(since: t0))ms @8k+splits")
     }
 }

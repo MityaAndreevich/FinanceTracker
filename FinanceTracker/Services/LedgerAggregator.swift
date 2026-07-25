@@ -93,4 +93,33 @@ actor LedgerAggregator {
             transactions: transactions, limitedCategories: limited, now: now
         )
     }
+
+    /// Analytics' 12-month Horizon series, off the main thread (2026-07-25
+    /// freeze fix). Horizon is the ONLY thing on that screen that needed more
+    /// than the current month, and it needs just 12 monthly aggregates — so
+    /// keeping a year of rows in a live `@Query` to produce 12 pairs of Ints was
+    /// paying a per-save main-actor fetch for a value that fits in a cache line.
+    ///
+    /// `AnalyticsSeries.horizon` stays the single source of the accumulation
+    /// (the SplitCanary suite pins that formula); this only relocates the fetch.
+    /// `MonthNet` is already `Sendable` — no PersistentModel crosses the
+    /// boundary, per the project rule.
+    func horizonSeries(now: Date, calendar: Calendar = .current) -> [AnalyticsSeries.MonthNet] {
+        let today = calendar.startOfDay(for: now)
+        let monthStart = calendar.date(
+            from: calendar.dateComponents([.year, .month], from: now)) ?? today
+        guard let horizonStart = calendar.date(byAdding: .month, value: -11, to: monthStart) else {
+            return []
+        }
+        var descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate<Transaction> { $0.date >= horizonStart }
+        )
+        // Horizon sums into month buckets; order is irrelevant and sorting a
+        // year of rows here would be pure cost.
+        descriptor.sortBy = []
+        let transactions = (try? modelContext.fetch(descriptor)) ?? []
+        return AnalyticsSeries.horizon(
+            transactions: transactions, calendar: calendar, monthStart: monthStart
+        )
+    }
 }

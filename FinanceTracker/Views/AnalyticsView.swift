@@ -23,8 +23,36 @@ struct AnalyticsView: View {
     // prior spend history). Item 3.
     @AppStorage("monthlyBudgetCents") private var monthlyBudgetCents: Int = 0
 
-    @Query(sort: \Transaction.date, order: .reverse)
-    private var transactions: [Transaction]
+    /// MONTH-SCOPED, not unscoped (2026-07-25 freeze fix). Only Pulse and
+    /// Breakdown read live rows, and both are current-month surfaces. The two
+    /// figures that need more history are computed off-main instead:
+    ///
+    ///   • Pace's all-time prior-spend baseline  → `LedgerAggregator.safeToSpendAggregate`
+    ///   • Horizon's 12 monthly aggregates       → `LedgerAggregator.horizonSeries`
+    ///
+    /// Both return small Sendable value types, so a year of rows never has to
+    /// sit in a live `@Query` to produce twelve pairs of Ints.
+    ///
+    /// MEASURED (8k rows, ~1.1k split purchases, iPhone 17 Pro sim): a QuickAdd
+    /// save cost +926ms while this screen was merely ALIVE in the TabView —
+    /// off-screen, on the Dashboard. Only ~110ms of that was `recompute()`; the
+    /// rest was SwiftData re-running the unscoped 8k-row fetch + sort on the
+    /// main actor on every write, a cost no probe inside `recompute()` can see.
+    /// Scoping to 12 months took the per-save delta to 433ms; scoping to the
+    /// month took it the rest of the way.
+    @Query private var transactions: [Transaction]
+
+    init() {
+        let cal = Calendar.current
+        let now = Date()
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? now
+        let nextMonthStart = cal.date(byAdding: .month, value: 1, to: monthStart) ?? .distantFuture
+        _transactions = Query(
+            filter: #Predicate<Transaction> { $0.date >= monthStart && $0.date < nextMonthStart },
+            sort: \Transaction.date,
+            order: .reverse
+        )
+    }
 
     @State private var screen: Screen = .pulse
 
@@ -40,6 +68,14 @@ struct AnalyticsView: View {
     @State private var horizonMonths: [AnalyticsHorizonView.MonthlyTotal] = []
     // Spending-velocity verdict for the Pulse screen (Item 3).
     @State private var pace: PaceMetric.State = .unavailable
+
+    /// All-time prior-spend baseline for Pace, computed OFF the main actor.
+    /// nil until the first pass lands — which `PaceMetric` already models
+    /// correctly as `.unavailable` ("not enough history to judge", cue hidden),
+    /// so a not-yet-loaded baseline shows nothing rather than a wrong number.
+    @State private var priorAggregate: SafeToSpend.Aggregate?
+    @State private var aggregator: LedgerAggregator?
+    @State private var aggregateTask: Task<Void, Never>?
 
     enum Screen: String, CaseIterable, Identifiable {
         case pulse, breakdown, horizon
@@ -88,8 +124,13 @@ struct AnalyticsView: View {
             #endif
             clearPendingIntentPeriod()
             recompute()
+            refreshPriorAggregate()
         }
-        .onChange(of: transactions) { _, _ in recompute() }
+        .onDisappear { aggregateTask?.cancel() }
+        .onChange(of: transactions) { _, _ in
+            recompute()
+            refreshPriorAggregate()
+        }
         .onChange(of: defaultCurrencyCode) { _, _ in recompute() }
         .onChange(of: monthlyBudgetCents) { _, _ in recompute() }
         .onChange(of: locale) { _, _ in recompute() }
@@ -181,6 +222,48 @@ struct AnalyticsView: View {
         UserDefaults.appGroup.removeObject(forKey: "pendingAnalyticsPeriod")
     }
 
+    // MARK: - Off-main prior-spend baseline
+
+    /// Coalesced, off-main refresh of Pace's all-time baseline. Same shape as
+    /// `ProactiveAlertRefreshScheduler`: a burst of saves collapses to one pass,
+    /// the full-table read happens on `LedgerAggregator`'s executor, and only a
+    /// three-Int value type crosses back to the main actor.
+    ///
+    /// Deliberately NOT folded into `recompute()`: that runs synchronously for
+    /// the three scoped series, and making it async would put a hop between a
+    /// keystroke-speed input change and the chart redraw for no benefit.
+    private func refreshPriorAggregate() {
+        aggregateTask?.cancel()
+        aggregateTask = Task { @MainActor in
+            // Short window: this only feeds a pace cue, and a save burst during
+            // rapid entry should cost ONE full-table pass, not one per save.
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+
+            // Pre-migration launches reach here while the store is still gated;
+            // never let this be the first container touch.
+            guard let container = SharedModelContainer.readyContainer() else { return }
+            if aggregator == nil { aggregator = LedgerAggregator(modelContainer: container) }
+            guard let aggregator else { return }
+
+            let now = Date()
+            let aggregate = await aggregator.safeToSpendAggregate(now: now)
+            let horizon = await aggregator.horizonSeries(now: now)
+            guard !Task.isCancelled else { return }
+
+            priorAggregate = aggregate
+            horizonMonths = horizon.map {
+                .init(date: $0.monthStart, incomeCents: $0.incomeCents, expenseCents: $0.expenseCents)
+            }
+            // Only Pace depends on the aggregate; Pulse and Breakdown are driven
+            // by the month-scoped @Query and are unaffected by this pass.
+            let cal = Calendar.current
+            let today = cal.startOfDay(for: now)
+            let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now)) ?? today
+            recomputePace(cal: cal, monthStart: monthStart, today: today)
+        }
+    }
+
     // MARK: - Recompute
 
     private func recompute() {
@@ -190,10 +273,26 @@ struct AnalyticsView: View {
         let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now))
             ?? today
 
-        recomputePulse(cal: cal, monthStart: monthStart, today: today)
-        recomputeBreakdown(cal: cal, monthStart: monthStart, today: today)
-        recomputeHorizon(cal: cal, monthStart: monthStart)
-        recomputePace(cal: cal, monthStart: monthStart, today: today)
+        // Probe (2026-07-25 freeze report, candidate A). This whole block runs
+        // on the main actor over an UNSCOPED @Query, fired by
+        // `.onChange(of: transactions)` — i.e. once per save. Sub-spans are
+        // measured individually so a capture says WHICH quarter is expensive,
+        // not just that the screen is slow.
+        hangProbe("Analytics.recompute", rows: transactions.count) {
+            hangProbe("Analytics.pulse", rows: transactions.count) {
+                recomputePulse(cal: cal, monthStart: monthStart, today: today)
+            }
+            hangProbe("Analytics.breakdown", rows: transactions.count) {
+                recomputeBreakdown(cal: cal, monthStart: monthStart, today: today)
+            }
+            // Horizon is NOT here any more: it needs 12 months of rows, which is
+            // exactly what forced the query to be wide. It is now produced by
+            // `LedgerAggregator.horizonSeries` on the actor's executor and
+            // arrives as 12 Sendable value types.
+            hangProbe("Analytics.pace", rows: transactions.count) {
+                recomputePace(cal: cal, monthStart: monthStart, today: today)
+            }
+        }
     }
 
     /// Spending-velocity for the current month. The baseline is the user's budget
@@ -205,18 +304,19 @@ struct AnalyticsView: View {
         // Days elapsed this month, today inclusive (the day-to-date window).
         let elapsedDays = (cal.dateComponents([.day], from: monthStart, to: today).day ?? 0) + 1
 
-        // Prior-history baseline: sum expense before this month + earliest such day.
-        var priorExpense = 0
-        var earliestPriorDay: Date?
-        for tx in transactions where tx.isExpense {
-            let day = cal.startOfDay(for: tx.date)
-            guard day < monthStart else { continue }
-            priorExpense += tx.amountCents
-            if let e = earliestPriorDay { earliestPriorDay = min(e, day) } else { earliestPriorDay = day }
-        }
-
-        let priorSpanDays = earliestPriorDay
-            .flatMap { cal.dateComponents([.day], from: $0, to: monthStart).day } ?? 0
+        // Prior-history baseline. This is the ONE figure on this screen that is
+        // genuinely all-time, and it used to be derived by walking the whole
+        // `transactions` array on the main actor — which is why the @Query had
+        // to be unscoped in the first place. It now arrives from
+        // `LedgerAggregator` (off-main), whose `SafeToSpend.aggregate` computes
+        // priorExpense / earliestPriorDay / priorSpanDays with byte-identical
+        // semantics to the loop this replaced — same single source of the
+        // arithmetic the Dashboard hero already uses.
+        //
+        // nil (first pass not landed) → 0/0 → `baselineDailyCents` returns 0 →
+        // `.unavailable` → the cue hides. Correct: no baseline is not a pace.
+        let priorExpense = priorAggregate?.priorExpenseCents ?? 0
+        let priorSpanDays = priorAggregate?.priorSpanDays ?? 0
         let daysInMonth = cal.range(of: .day, in: .month, for: monthStart)?.count ?? 30
 
         // Budget-prorated baseline when a budget is set, else the prior daily rate.
@@ -276,13 +376,11 @@ struct AnalyticsView: View {
         }
     }
 
-    private func recomputeHorizon(cal: Calendar, monthStart: Date) {
-        // Accumulation extracted to AnalyticsSeries (design doc §8.1) so the
-        // SplitCanary suite pins the production formula. Category-blind.
-        horizonMonths = AnalyticsSeries.horizon(
-            transactions: transactions, calendar: cal, monthStart: monthStart
-        ).map { .init(date: $0.monthStart, incomeCents: $0.incomeCents, expenseCents: $0.expenseCents) }
-    }
+    // `recomputeHorizon` intentionally no longer exists. It fed `horizonMonths`
+    // from the live `@Query`, which is precisely why that query had to hold a
+    // year of rows. The series is now produced by `LedgerAggregator.horizonSeries`
+    // in `refreshPriorAggregate()`; leaving a main-actor twin behind would be an
+    // invitation to reintroduce the wide query.
 }
 
 #Preview {
