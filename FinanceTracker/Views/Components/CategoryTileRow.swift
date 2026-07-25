@@ -21,6 +21,9 @@ struct CategoryTileRow: View {
 
     private var tileColor: Color { tx.category.themeColorOrFallback }
 
+    /// Computed once per row build; `subtitle` and the badge both need it.
+    private var isSplit: Bool { CategoryAttribution.isSplit(tx) }
+
     var body: some View {
         HStack(spacing: 12) {
             // Colored category icon tile
@@ -49,9 +52,17 @@ struct CategoryTileRow: View {
                 // possible-duplicate decision lived only in the import summary, so a
                 // re-imported foreign CSV left duplicate rows the user could see but
                 // never identify. The badge is where that decision becomes findable.
-                if tx.isPossibleDuplicate {
-                    DuplicateBadge()
-                        .padding(.top, 2)
+                // A split row carries its badge for the same reason: the amount
+                // shown here is the whole purchase, but Analytics attributes it
+                // to the split categories — the badge is what keeps "search
+                // shows 3,500, Analytics shows 0 for this category" legible
+                // instead of alarming.
+                if tx.isPossibleDuplicate || isSplit {
+                    HStack(spacing: 6) {
+                        if tx.isPossibleDuplicate { DuplicateBadge() }
+                        if isSplit { SplitBadge() }
+                    }
+                    .padding(.top, 2)
                 }
             }
 
@@ -83,8 +94,10 @@ struct CategoryTileRow: View {
             + Text(", ")
             + Text(Money.format(cents: tx.amountCents, currencyCode: tx.currency))
 
-        guard tx.isPossibleDuplicate else { return base }
-        return base + Text(", ") + Text("transactions.duplicate.badge")
+        var out = base
+        if tx.isPossibleDuplicate { out = out + Text(", ") + Text("transactions.duplicate.badge") }
+        if isSplit { out = out + Text(", ") + Text("transactions.split.badge") }
+        return out
     }
 
     private var primaryTitle: String {
@@ -98,7 +111,7 @@ struct CategoryTileRow: View {
         // one purchase (ledger rule), the subtitle is where its multi-category
         // nature shows (A4/A7 companion; the detail view has the amounts).
         let category: String
-        if CategoryAttribution.isSplit(tx) {
+        if isSplit {
             var names: [String] = []
             for share in CategoryAttribution.shares(for: tx) {
                 let name = share.category.displayNameOrFallback()

@@ -973,3 +973,9 @@
 "limit.clear" = "Remove limit";
 "cs.category.limit_label.format" = "Limit: %@/month";
 "alerts.notif.body.limit.format" = "%1$@ left in %2$@ this month.";
+
+"transactions.split.badge" = "Split";
+"transactions.search.split_note" = "Some results are split across categories — each row shows the full purchase, while Analytics counts each category's share.";
+
+"edit.category.fully_split_note" = "The parts use the whole amount, so this category receives nothing. It still applies if a part's category is removed.";
+

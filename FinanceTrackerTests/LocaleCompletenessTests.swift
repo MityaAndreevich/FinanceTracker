@@ -217,7 +217,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // (limit.sheet.title/.caption, limit.amount.placeholder, limit.clear),
         // the row's limit label, and the gain-framed "X left in {category}"
         // notification body. All 5 locales in parity. Was 732.
-        XCTAssertEqual(enKeys.count, 739, "English baseline changed; update the expected count.")
+        // 2026-07-25 (search/analytics split consistency): net +3. The row's
+        // split badge, the search-results footnote explaining why a row's amount
+        // can exceed the share Analytics counts, and the editor note for a
+        // fully-assigned split whose category therefore receives nothing.
+        // All 5 locales in parity. Was 739.
+        XCTAssertEqual(enKeys.count, 742, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

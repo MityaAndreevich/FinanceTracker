@@ -219,9 +219,33 @@ struct EditTransactionView: View {
         // Always route through the shared bottom sheet — even when no category of this
         // kind exists yet, the sheet's "＋ New category" affordance is the way out, so
         // the edit screen is never a dead end (device QA, Item 1).
-        Section("edit.section.category") {
+        Section {
             categorySelectRow
+        } header: {
+            Text("edit.section.category")
+        } footer: {
+            // When the parts consume the whole amount, this category receives
+            // NOTHING — the remainder is zero, so Analytics attributes every
+            // cent to the split categories and this one shows 0 for the
+            // purchase. Leaving the field looking like an ordinary selection
+            // made that silently self-contradictory: set a category, give all
+            // the money away, and the field still reads as though it holds it.
+            //
+            // Says what is true rather than forbidding the state: a fully
+            // assigned split is legitimate, and the category still matters as
+            // the fallback if a part's category is later deleted
+            // (CategoryAttribution falls back to the parent's category).
+            if isFullyAssignedSplit {
+                Text("edit.category.fully_split_note")
+            }
         }
+    }
+
+    /// Expense with at least one part, and the parts consume the entire amount.
+    private var isFullyAssignedSplit: Bool {
+        guard typeRaw == TransactionType.expense.raw else { return false }
+        let v = splitValidation
+        return !splitDrafts.isEmpty && !v.isOverSum && v.remainderCents == 0 && v.sumCents > 0
     }
 
     /// Tappable row showing the current selection; opens the full-set bottom sheet.

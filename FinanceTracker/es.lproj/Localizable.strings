@@ -846,3 +846,9 @@
 "limit.clear" = "Quitar límite";
 "cs.category.limit_label.format" = "Límite: %@/mes";
 "alerts.notif.body.limit.format" = "Te quedan %1$@ en %2$@ este mes.";
+
+"transactions.split.badge" = "Dividido";
+"transactions.search.split_note" = "Algunos resultados están divididos entre categorías: cada fila muestra la compra completa, mientras que Analíticas cuenta la parte de cada categoría.";
+
+"edit.category.fully_split_note" = "Las partes usan el importe completo, así que esta categoría no recibe nada. Se seguirá aplicando si se elimina la categoría de una parte.";
+

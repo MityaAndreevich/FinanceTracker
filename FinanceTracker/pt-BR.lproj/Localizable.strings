@@ -847,3 +847,9 @@
 "limit.clear" = "Remover limite";
 "cs.category.limit_label.format" = "Limite: %@/mês";
 "alerts.notif.body.limit.format" = "Restam %1$@ em %2$@ neste mês.";
+
+"transactions.split.badge" = "Dividido";
+"transactions.search.split_note" = "Alguns resultados estão divididos entre categorias — cada linha mostra a compra completa, enquanto a Análise conta a parte de cada categoria.";
+
+"edit.category.fully_split_note" = "As partes usam o valor inteiro, então esta categoria não recebe nada. Ela continua valendo se a categoria de uma parte for removida.";
+

@@ -350,19 +350,9 @@ private struct ScopedTransactionList: View {
         // Multi-token, diacritic/case-insensitive, amount-searchable match.
         // See TransactionSearch for the documented semantics.
         return base.filter { tx in
-            // Split categories/labels are searchable too (A7): "Health" must
-            // find the Amazon order whose vitamins were split into Health.
-            var fields: [String?] = [
-                tx.merchant, tx.category.displayNameOrFallback(), tx.category?.name,
-                tx.source?.name, tx.note,
-            ]
-            for split in CategoryAttribution.orderedSplits(of: tx) {
-                fields.append(split.category?.displayName())
-                fields.append(split.note)
-            }
-            return TransactionSearch.matches(
+            TransactionSearch.matches(
                 query: q,
-                fields: fields,
+                fields: TransactionSearch.searchableFields(for: tx),
                 amountCents: tx.amountCents
             )
         }
@@ -371,8 +361,11 @@ private struct ScopedTransactionList: View {
     /// A search or type filter is actively narrowing the list (period scope
     /// excluded — that has its own "nothing in this period" message).
     private var isFiltering: Bool {
+        isSearching || typeFilter != .all
+    }
+
+    private var isSearching: Bool {
         !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        || typeFilter != .all
     }
 
     /// Day buckets for an ALREADY-FILTERED set. Takes its input rather than
@@ -418,6 +411,18 @@ private struct ScopedTransactionList: View {
             } else {
                 ForEach(days, id: \.self) { day in
                     daySection(for: day, items: dayBuckets[day] ?? [], filteredCount: rows.count)
+                }
+
+                // Only while searching, and only when a split purchase is on
+                // screen: search membership is attribution-based, so a row here
+                // may show an amount larger than the share Analytics counts for
+                // the category that was typed. Saying so once at the bottom is
+                // what keeps the two numbers from reading as a contradiction.
+                if isSearching && rows.contains(where: { CategoryAttribution.isSplit($0) }) {
+                    Text("transactions.search.split_note")
+                        .font(.footnote)
+                        .foregroundStyle(Color.bcTextSecondary)
+                        .listRowBackground(Color.clear)
                 }
             }
         }

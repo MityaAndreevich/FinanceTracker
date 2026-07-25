@@ -19,8 +19,45 @@
 //
 
 import Foundation
+import SwiftData
 
 enum TransactionSearch {
+
+    // MARK: - Model adapter
+
+    /// The text haystack for one purchase.
+    ///
+    /// Category names come from `CategoryAttribution.shares(for:)` — the SAME
+    /// decomposition Analytics aggregates — and never from `tx.category` plus
+    /// the raw split list. That is the whole point (2026-07-23 hands-on report):
+    ///
+    ///   A 3,500 "Кошачий корм" filed under Питомцы and split 1500/2000 into two
+    ///   other categories contributes NOTHING to Питомцы. Analytics excludes it
+    ///   from that category (`CategoryDetailView` requires attributed > 0);
+    ///   search used to include it because the parent's own category field still
+    ///   said Питомцы. Two surfaces, two totals for one category — the numbers
+    ///   were each defensible and the pair was not.
+    ///
+    /// Reading shares makes the two agree BY CONSTRUCTION rather than by two
+    /// rules that happen to coincide: a fully-split purchase stops matching its
+    /// zero-remainder category, a partially-split one still matches through its
+    /// remainder share, and an unsplit one is untouched (`shares` returns
+    /// exactly one share = the old (amount, category) pair).
+    ///
+    /// Split NOTES stay searchable regardless of attribution: "HDMI cable" is a
+    /// label the user typed on this purchase, not a claim about where money went.
+    static func searchableFields(for tx: Transaction) -> [String?] {
+        var fields: [String?] = [tx.merchant, tx.source?.name, tx.note]
+
+        for share in CategoryAttribution.shares(for: tx) {
+            fields.append(share.category.displayNameOrFallback())
+            fields.append(share.category?.name)
+        }
+        for split in CategoryAttribution.orderedSplits(of: tx) {
+            fields.append(split.note)
+        }
+        return fields
+    }
 
     /// Returns whether a transaction with these fields matches `query`.
     /// - Parameters:
