@@ -189,7 +189,7 @@ struct AnalyticsHorizonView: View {
         // A flat series gives Charts a [v, v] domain — zero height — which it then
         // subdivides looking for ticks. Guard the plotted series, not the count.
         if ChartBisection.isEnabled(.horizon),
-           ChartBisection.canRenderSeries(cents: plottedSeries) {
+           ChartBisection.canRenderSeries(cents: plottedSeries, chart: .horizon) {
             trendChartBody
         } else {
             emptyTrendHint

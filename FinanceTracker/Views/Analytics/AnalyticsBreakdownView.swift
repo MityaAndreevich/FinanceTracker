@@ -141,6 +141,7 @@ struct AnalyticsBreakdownView: View {
 
                 // ChartBisection is a no-op in RELEASE; in DEBUG it switches this
                 // chart off on device to attribute the Charts EXC_BREAKPOINT.
+                let _ = ChartBisection.probe(.breakdownDonut, cents: renderableCategories.map(\.cents))
                 if renderableCategories.isEmpty || !ChartBisection.isEnabled(.breakdownDonut) {
                     emptyHint
                 } else {

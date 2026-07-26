@@ -88,6 +88,7 @@ struct DaySpendingSheet: View {
 
                 // ChartBisection is a no-op in RELEASE; in DEBUG it switches this
                 // chart off on device to attribute the Charts EXC_BREAKPOINT.
+                let _ = ChartBisection.probe(.daySpending, cents: categorySlices.map(\.cents))
                 if categorySlices.count > 1, ChartBisection.isEnabled(.daySpending) {
                     Section("analytics.day.by_category") {
                         breakdownChart

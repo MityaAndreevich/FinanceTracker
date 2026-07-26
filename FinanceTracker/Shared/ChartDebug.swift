@@ -30,6 +30,7 @@
 //
 
 import Foundation
+import OSLog
 import SwiftUI
 
 /// The charts that can independently be switched off on device.
@@ -166,10 +167,46 @@ enum ChartBisection {
     /// With the guard on, that means a real, finite, non-zero-width domain. With
     /// it off (DEBUG bisection only) it degrades to the old count-only check, which
     /// is what lets the founder reproduce the crashing baseline on demand.
-    static func canRenderSeries(cents: [Int]) -> Bool {
+    static func canRenderSeries(cents: [Int], chart: BisectableChart? = nil) -> Bool {
+        if let chart { probe(chart, cents: cents) }
         guard domainGuardEnabled else {
             return ChartGuards.canRenderContinuous(pointCount: cents.count)
         }
         return ChartGuards.canRenderContinuous(cents: cents)
     }
+
+    /// Record the exact numbers a chart is about to plot.
+    ///
+    /// Bisection answers WHICH chart traps; it cannot answer WITH WHAT. This
+    /// closes that gap: the last `[chart-input]` line before the debugger stops
+    /// IS the degenerate input, captured from the founder's real store rather
+    /// than guessed at in a harness. Emitted at every data decision point, so
+    /// the surviving line names the chart, the spread, and the smallest share.
+    ///
+    /// DEBUG-only, like the rest of this file — it compiles away in RELEASE.
+    /// Delete it together with the bisection panel when #22 closes.
+    static func probe(_ chart: BisectableChart, cents: [Int]) {
+        #if DEBUG
+        let total = cents.reduce(0, +)
+        let lo = cents.min() ?? 0
+        let hi = cents.max() ?? 0
+        // The share of the smallest slice — the number that decides whether an
+        // angular mark still has width once its inset is taken off both edges.
+        let minShare = total > 0 ? Double(lo) / Double(total) : 0
+        probeLog.debug("""
+            [chart-input] \(chart.rawValue, privacy: .public) \
+            n=\(cents.count, privacy: .public) \
+            total=\(total, privacy: .public) \
+            min=\(lo, privacy: .public) max=\(hi, privacy: .public) \
+            spread=\(hi - lo, privacy: .public) \
+            minShare=\(minShare, privacy: .public)
+            """)
+        #endif
+    }
+
+    #if DEBUG
+    private static let probeLog = Logger(
+        subsystem: "com.dmitrylogachev.budgetcrab", category: "ChartInput"
+    )
+    #endif
 }

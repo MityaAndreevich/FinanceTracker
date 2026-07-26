@@ -40,6 +40,11 @@ struct CategoryDonutView: View {
 
     var body: some View {
         ZStack {
+            // Records the exact magnitudes about to be plotted (DEBUG only, no-op
+            // in RELEASE). Bisection says WHICH chart; this says WITH WHAT — the
+            // last line before a device trap is the degenerate input itself.
+            let _ = ChartBisection.probe(.dashboardDonut, cents: renderableSlices.map(\.cents))
+
             // `ChartBisection` is a no-op in RELEASE; in DEBUG it lets the chart be
             // switched off on device to attribute the Charts EXC_BREAKPOINT.
             if renderableSlices.isEmpty || safeSize <= 0 || !ChartBisection.isEnabled(.dashboardDonut) {

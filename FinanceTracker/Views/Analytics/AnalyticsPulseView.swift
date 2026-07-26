@@ -160,7 +160,7 @@ struct AnalyticsPulseView: View {
         // `pointCount >= 2` catches only the first. N identical points sail
         // straight through it, which is why the earlier guard did not hold.
         if ChartBisection.isEnabled(.pulse),
-           ChartBisection.canRenderSeries(cents: dailyTotals.map(\.cents)) {
+           ChartBisection.canRenderSeries(cents: dailyTotals.map(\.cents), chart: .pulse) {
             cashFlowChartBody
         } else {
             insufficientDataHint
