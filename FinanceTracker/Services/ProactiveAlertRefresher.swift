@@ -58,14 +58,19 @@ final class ProactiveAlertRefreshScheduler {
         isAllowed: (@MainActor () -> Bool)? = nil
     ) {
         pending?.cancel()
-        pending = Task { @MainActor in
+        // `[weak self]`: `pending` holds this task and the task would otherwise
+        // hold `self`, so an instance dropped mid-window (tests create their own;
+        // the app's is the singleton) would outlive its owner for the whole
+        // coalescing window plus a full-table aggregation. Weak keeps the
+        // instance's lifetime the caller's business, not the timer's.
+        pending = Task { @MainActor [weak self] in
             try? await Task.sleep(for: coalesceWindow)
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, let self else { return }
 
-            if aggregator == nil {
-                aggregator = LedgerAggregator(modelContainer: container)
+            if self.aggregator == nil {
+                self.aggregator = LedgerAggregator(modelContainer: container)
             }
-            guard let aggregator else { return }
+            guard let aggregator = self.aggregator else { return }
 
             let now = Date()
             let aggregate = await aggregator.safeToSpendAggregate(now: now)
@@ -84,6 +89,13 @@ final class ProactiveAlertRefreshScheduler {
     /// Await the in-flight coalesced pass, if any (tests).
     func drain() async {
         await pending?.value
+    }
+
+    deinit {
+        // The weak capture above already lets this object die mid-window; this
+        // stops the orphaned task from sleeping out the rest of its window for
+        // an owner that no longer exists.
+        pending?.cancel()
     }
 }
 

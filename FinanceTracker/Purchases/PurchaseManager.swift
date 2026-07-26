@@ -78,7 +78,26 @@ final class PurchaseManager: ObservableObject {
 
         // Слушаем обновления транзакций (renewals, refunds, upgrades, etc.)
         updatesTask?.cancel()
-        updatesTask = Task { await listenForTransactionUpdates() }
+        updatesTask = Task { [weak self] in
+            // `SKTransaction.updates` never ends, so this task lives as long as
+            // the process. Capturing `self` strongly would close a real cycle
+            // (self → updatesTask → closure → self) and `deinit` below could
+            // then never run. Benign today — this type is a singleton — but the
+            // weak capture is what makes that a property of the *shape* rather
+            // than of the singleton, so a future per-view instantiation cannot
+            // silently start leaking one audio-free StoreKit listener per view.
+            for await result in SKTransaction.updates {
+                guard let self else { return }
+                await self.handleTransactionUpdate(result)
+            }
+        }
+    }
+
+    deinit {
+        // Unreachable while `shared` is the only instance; correct the moment it
+        // isn't. Pairs with the weak capture above — without it this would be
+        // dead code, because the cycle would keep `deinit` from ever firing.
+        updatesTask?.cancel()
     }
 
     // MARK: - Products
@@ -210,15 +229,17 @@ final class PurchaseManager: ObservableObject {
 
     // MARK: - Transaction updates
 
-    private func listenForTransactionUpdates() async {
-        for await result in SKTransaction.updates {
-            do {
-                let transaction = try verified(result)
-                await transaction.finish()
-                await refreshPremiumStatus()
-            } catch {
-                // ignore
-            }
+    /// One update from `SKTransaction.updates`. Split out of the `for await`
+    /// loop so the loop itself can hold `self` weakly (see `start()`) — `self`
+    /// is retained only for the duration of this call, not for the life of the
+    /// never-ending sequence.
+    private func handleTransactionUpdate(_ result: VerificationResult<SKTransaction>) async {
+        do {
+            let transaction = try verified(result)
+            await transaction.finish()
+            await refreshPremiumStatus()
+        } catch {
+            // ignore
         }
     }
 

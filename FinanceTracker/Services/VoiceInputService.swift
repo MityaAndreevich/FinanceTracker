@@ -325,8 +325,13 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
 
     nonisolated func speechRecognizer(_ speechRecognizer: SFSpeechRecognizer, availabilityDidChange available: Bool) {
         guard !available else { return }
-        Task { @MainActor in
-            self.stop()
+        // `[weak self]` for the same reason the recognition and silence-timer
+        // callbacks use it: this is a per-view object (`@StateObject` in
+        // QuickEntryView), and a strong capture here would keep a whole audio
+        // session's worth of state alive past the sheet's dismissal, hostage to
+        // when the hop to the main actor happens to run.
+        Task { @MainActor [weak self] in
+            self?.stop()
         }
     }
 }
