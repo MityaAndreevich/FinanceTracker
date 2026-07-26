@@ -37,18 +37,24 @@ if FONT is None:
     sys.exit("No usable bold font found. Set FONT=/path/to/font.ttf")
 CANVAS = (1320, 2868)
 FILES = ["01_dashboard", "02_privacy", "03_quickentry", "04_analytics",
-         "05_categories", "06_faceid", "07_export", "08_lifetime"]
+         "05_split", "06_limits", "07_export", "08_lifetime"]
 # Captions are OCR-indexed by Apple (2026) — keyword-rich, top-left, ≥40pt.
 # Sequence (ASC_METADATA_FINAL "Screenshot captions"): Private/on-device →
 # No bank linking → Track in 10s → Safe to spend → Export → Cancel anytime.
-# Mapped onto the 8 fixed storyboard screens; slots 2 combines the top-2
-# privacy props (highest-attention slot), slot 8 closes on honest billing.
+# Mapped onto the 8 storyboard screens; slot 2 combines the top-2 privacy props
+# (highest-attention slot), slot 8 closes on honest billing.
+#
+# 1.0.3: slots 5 and 6 now carry the two new features. Their wording reuses the
+# app's OWN shipped terms so the caption and the screen agree word-for-word —
+# split.section ("Split across categories" / "Разделить по категориям" / …) and
+# limit.sheet.title ("Monthly limit" / "Месячный лимит" / …). No caption may
+# state a trial length: the 30-day intro offer is being removed for 1.0.3.
 CAP = {
- "EN": ["Safe to spend, every day", "Private & on-device · No bank linking", "Track spending in 10 seconds", "See where your money goes", "Organize by category & account", "Locked with Face ID", "Export anytime · CSV / PDF / Excel", "Cancel anytime · no ads"],
- "RU": ["Сколько можно тратить — каждый день", "Приватно, на устройстве · Без привязки банка", "Записывайте траты за 10 секунд", "Видно, куда уходят деньги", "Категории и счета — всё на местах", "Защита входа через Face ID", "Экспорт в любой момент · CSV / PDF / Excel", "Отмена в любой момент · без рекламы"],
- "ES": ["Cuánto puedes gastar, cada día", "Privado, en tu iPhone · Sin vincular banco", "Registra gastos en 10 segundos", "Mira a dónde va tu dinero", "Organiza por categoría y cuenta", "Protegido con Face ID", "Exporta cuando quieras · CSV / PDF / Excel", "Cancela cuando quieras · sin anuncios"],
- "PT-BR": ["Quanto dá para gastar, todo dia", "Privado, no seu iPhone · Sem vincular banco", "Registre gastos em 10 segundos", "Veja para onde vai seu dinheiro", "Organize por categoria e conta", "Protegido com Face ID", "Exporte quando quiser · CSV / PDF / Excel", "Cancele quando quiser · sem anúncios"],
- "UK": ["Скільки можна витрачати — щодня", "Приватно, на пристрої · Без прив'язки банку", "Записуйте витрати за 10 секунд", "Дивіться, куди йдуть гроші", "Категорії та рахунки — усе на місці", "Захист входу через Face ID", "Експорт будь-коли · CSV / PDF / Excel", "Скасування будь-коли · без реклами"],
+ "EN": ["Safe to spend, every day", "Private & on-device · No bank linking", "Track spending in 10 seconds", "See where your money goes", "Split one purchase across categories", "Gentle monthly limits, never a scolding", "Export anytime · CSV / PDF / Excel", "Cancel anytime · no ads"],
+ "RU": ["Сколько можно тратить — каждый день", "Приватно, на устройстве · Без привязки банка", "Записывайте траты за 10 секунд", "Видно, куда уходят деньги", "Разделить покупку по категориям", "Мягкий месячный лимит, а не выговор", "Экспорт в любой момент · CSV / PDF / Excel", "Отмена в любой момент · без рекламы"],
+ "ES": ["Cuánto puedes gastar, cada día", "Privado, en tu iPhone · Sin vincular banco", "Registra gastos en 10 segundos", "Mira a dónde va tu dinero", "Una compra, dividida entre categorías", "Límite mensual amable, nunca un regaño", "Exporta cuando quieras · CSV / PDF / Excel", "Cancela cuando quieras · sin anuncios"],
+ "PT-BR": ["Quanto dá para gastar, todo dia", "Privado, no seu iPhone · Sem vincular banco", "Registre gastos em 10 segundos", "Veja para onde vai seu dinheiro", "Uma compra, dividida entre categorias", "Limite mensal gentil, nunca uma bronca", "Exporte quando quiser · CSV / PDF / Excel", "Cancele quando quiser · sem anúncios"],
+ "UK": ["Скільки можна витрачати — щодня", "Приватно, на пристрої · Без прив'язки банку", "Записуйте витрати за 10 секунд", "Дивіться, куди йдуть гроші", "Розділити покупку за категоріями", "М'який місячний ліміт, а не докір", "Експорт будь-коли · CSV / PDF / Excel", "Скасування будь-коли · без реклами"],
 }
 
 def wrap(draw, text, font, maxw):

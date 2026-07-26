@@ -239,7 +239,17 @@
       "source": "credit",
       "minor": 7800,
       "merchant": "Amazon",
-      "type": "expense"
+      "type": "expense",
+      "splits": [
+        {
+          "category": "Health",
+          "minor": 3400
+        },
+        {
+          "category": "Entertainment",
+          "minor": 1800
+        }
+      ]
     },
     {
       "dayOfMonth": 26,
@@ -280,6 +290,16 @@
       "minor": 6500,
       "merchant": "Concert",
       "type": "expense"
+    }
+  ],
+  "categoryLimits": [
+    {
+      "category": "Food & Drink",
+      "minor": 60000
+    },
+    {
+      "category": "Coffee",
+      "minor": 4000
     }
   ]
 }

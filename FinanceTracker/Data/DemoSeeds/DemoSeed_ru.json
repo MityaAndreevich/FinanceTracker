@@ -239,7 +239,17 @@
       "source": "credit",
       "minor": 450000,
       "merchant": "Ozon",
-      "type": "expense"
+      "type": "expense",
+      "splits": [
+        {
+          "category": "Health",
+          "minor": 180000
+        },
+        {
+          "category": "Entertainment",
+          "minor": 95000
+        }
+      ]
     },
     {
       "dayOfMonth": 26,
@@ -280,6 +290,16 @@
       "minor": 350000,
       "merchant": "Концерт",
       "type": "expense"
+    }
+  ],
+  "categoryLimits": [
+    {
+      "category": "Food & Drink",
+      "minor": 2700000
+    },
+    {
+      "category": "Coffee",
+      "minor": 240000
     }
   ]
 }

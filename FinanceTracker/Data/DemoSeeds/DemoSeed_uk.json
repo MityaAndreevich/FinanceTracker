@@ -239,7 +239,17 @@
       "source": "credit",
       "minor": 190000,
       "merchant": "Rozetka",
-      "type": "expense"
+      "type": "expense",
+      "splits": [
+        {
+          "category": "Health",
+          "minor": 78000
+        },
+        {
+          "category": "Entertainment",
+          "minor": 42000
+        }
+      ]
     },
     {
       "dayOfMonth": 26,
@@ -280,6 +290,16 @@
       "minor": 150000,
       "merchant": "Концерт",
       "type": "expense"
+    }
+  ],
+  "categoryLimits": [
+    {
+      "category": "Food & Drink",
+      "minor": 640000
+    },
+    {
+      "category": "Coffee",
+      "minor": 68000
     }
   ]
 }

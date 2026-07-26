@@ -290,7 +290,7 @@ struct ContentView: View {
         case .dashboard:  selectedTab = 0
         case .analytics:  selectedTab = 3   // AnalyticsView selects .breakdown itself
         case .quickentry: showAddSheet = true
-        case .privacy, .categories, .export, .lifetime:
+        case .privacy, .categories, .categorylimit, .split, .export, .lifetime:
             screenshotCover = screen
         case .lock:
             break   // handled upstream by AuthGateView
@@ -303,6 +303,17 @@ struct ContentView: View {
         switch screen {
         case .privacy:    PrivacySettingsView()
         case .categories: CategoriesSourcesView()
+        // Slot 06 is the same Categories surface; CategoriesSourcesView reads
+        // `requestedScreen` and auto-presents the monthly-limit sheet for the
+        // seeded limited category, so the frame shows the real gentle-limit UI.
+        case .categorylimit: CategoriesSourcesView()
+        // Slot 05 — the split editor on the seeded multi-category purchase.
+        case .split:
+            if let tx = screenshotSplitTransaction() {
+                EditTransactionView(transaction: tx)
+            } else {
+                EmptyView()
+            }
         case .export:     DataSettingsView()
         // Slot 08 renders the calm, no-price ownership close — not the mock
         // paywall. Prices are banned in screenshots and off-brand vs the Ruler
@@ -310,6 +321,16 @@ struct ContentView: View {
         case .lifetime:   OwnershipCloseView()
         default:          EmptyView()
         }
+    }
+
+    /// The seeded multi-category purchase (DemoSeed `splits`) that slot 05 edits.
+    /// Only ever reached through `ScreenshotMode.requestedScreen`, which is nil in
+    /// Release — so this fetch never runs in a shipped build.
+    private func screenshotSplitTransaction() -> Transaction? {
+        let all = (try? modelContext.fetch(FetchDescriptor<Transaction>())) ?? []
+        return all
+            .filter { CategoryAttribution.isSplit($0) }
+            .max { $0.amountCents < $1.amountCents }
     }
 
     private func handlePendingIntentNavigation() {

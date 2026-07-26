@@ -36,13 +36,16 @@ DERIVED="$REPO_ROOT/build/screenshots"
 APP_PATH="$DERIVED/Build/Products/Debug-iphonesimulator/FinanceTracker.app"
 
 # Storyboard order: "<screen-id>:<output-filename>" (see screenshots-storyboard.md)
+# 1.0.3 shelf: 05/06 now carry the two new features (split purchases + gentle
+# category limits), replacing 05_categories / 06_faceid. Both retired screens are
+# still routable (`--screenshot-screen categories|lock`) for ad-hoc captures.
 SCREENS=(
   "dashboard:01_dashboard"
   "privacy:02_privacy"
   "quickentry:03_quickentry"
   "analytics:04_analytics"
-  "categories:05_categories"
-  "lock:06_faceid"
+  "split:05_split"
+  "categorylimit:06_limits"
   "export:07_export"
   "lifetime:08_lifetime"
 )
@@ -112,6 +115,14 @@ build_and_install() {
       build >/dev/null
   fi
   [ -d "$APP_PATH" ] || die "Build product missing at $APP_PATH"
+  # Uninstall first — installing OVER an existing app keeps its container, and a
+  # container left by an older build carries a V1 store. `needsGuardedMigration`
+  # is (storeFileExists && !isMigrationComplete), so every launch would open on
+  # the pre-migration consent screen (LaunchGateView) and EVERY frame would be
+  # that screen instead of the app. Wiping the container also clears the stale
+  # `appLanguageCode` that used to leak the previous locale into a capture.
+  log "Uninstalling any previous container (avoids the V1 pre-migration gate)"
+  xcrun simctl uninstall "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
   log "Installing app"
   xcrun simctl install "$UDID" "$APP_PATH"
 }

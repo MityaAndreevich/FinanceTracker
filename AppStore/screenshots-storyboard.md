@@ -20,8 +20,8 @@ Most users see only the first 2–3 thumbnails, so the privacy wedge — the sin
 | 2 | Differentiator | Privacy / on-device | Lead with the wedge while attention is highest |
 | 3 | Core feature | QuickEntry | Show the "aha" — effortless capture |
 | 4 | Insight | Analytics breakdown | Proof of payoff |
-| 5 | Organization | Categories & Accounts | Depth + Ruler order |
-| 6 | Trust | Face ID lock | Reinforce privacy/control |
+| 5 | Depth (1.0.3) | Split editor | One purchase, several categories |
+| 6 | Care (1.0.3) | Category monthly limit | Warns while money is LEFT, never after |
 | 7 | Ownership of data | Export (CSV/PDF/Excel) | "Your data, portable" — no lock-in |
 | 8 | CTA | Lifetime / clean close | Calm close, ownership |
 
@@ -80,25 +80,26 @@ Most users see only the first 2–3 thumbnails, so the privacy wedge — the sin
   - **ES:** Mira a dónde va tu dinero
   - **PT-BR:** Veja para onde vai seu dinheiro
 
-### SCREENSHOT 5 — ORGANIZATION · Categories & Accounts
-- **Visual:** Categories & Accounts (Card, Cash, etc.) with SF Symbol icons. Shows the two-tier category taxonomy without clutter.
-- **Background:** consistent cream.
-- **Notes:** Ruler "everything in its place." Don't overcrowd — 6–8 tidy rows.
-- **Caption:**
-  - **EN:** Organize by category and account
-  - **RU:** Категории и счета — всё на местах
-  - **ES:** Organiza por categoría y cuenta
-  - **PT-BR:** Organize por categoria e conta
+### SCREENSHOT 5 — DEPTH · Split editor  *(new in 1.0.3, replaces Categories & Accounts)*
+- **Visual:** `EditTransactionView` on the seeded marketplace order (Amazon / Ozon / Rozetka).
+  The SPLIT ACROSS CATEGORIES section shows two parts plus the remainder footer
+  ("$26.00 stays in Shopping.") — the whole remainder model in one frame.
+- **Route:** `--screenshot-screen split`. Data comes from the DemoSeed `splits` block on the
+  day-14 Shopping row; the parts are whole numbers so no "18.5" appears in an amount field.
+- **Notes:** Caption reuses the app's own `split.section` wording per locale, so the caption and
+  the on-screen section header agree word-for-word.
 
-### SCREENSHOT 6 — TRUST · Face ID lock
-- **Visual:** AuthGate / Face ID lock screen (biometric prompt over the blurred privacy overlay).
-- **Background:** consistent cream.
-- **Notes:** Reinforces the privacy theme tangibly. "Lock it behind Face ID" — concrete, no banned terms.
-- **Caption:**
-  - **EN:** Lock it behind Face ID
-  - **RU:** Защитите вход через Face ID
-  - **ES:** Protégelo con Face ID
-  - **PT-BR:** Proteja com Face ID
+### SCREENSHOT 6 — CARE · Category monthly limit  *(new in 1.0.3, replaces Face ID lock)*
+- **Visual:** `CategoriesSourcesView` scrolled to the limited category (mint
+  "Limit: $600.00/month") with the Monthly limit sheet presented over it. The sheet's footer is
+  the proof of the caption: "a gentle heads-up while there's still money left — never after
+  it's gone."
+- **Route:** `--screenshot-screen categorylimit`. The seed sets limits so month-to-date spend
+  lands at ~70–80% used — the gentle warn band. NEVER seed an at/over-limit state: the app
+  deliberately says nothing there (`CategoryLimitPolicy`), so there'd be nothing to show.
+- **Notes:** There is no in-app "X left in <category>" surface — that sentence only exists as a
+  local-notification body, which can't be captured under `simctl` and mustn't be faked (2.3.3).
+  The limit label + the promise footer are the honest real-UI equivalent.
 
 ### SCREENSHOT 7 — DATA OWNERSHIP · Export
 - **Visual:** Data settings export sheet — CSV / PDF / Excel options visible.
@@ -124,14 +125,20 @@ Most users see only the first 2–3 thumbnails, so the privacy wedge — the sin
 
 ## Caption sheet (copy-ready, all locales)
 
+> **The shipped captions live in `AppStore/compose-screenshots.py` (`CAP`), which is the single
+> source of truth** — it covers all five shelf locales (incl. UK) and is what actually gets
+> baked into the composed PNGs. The table below is the original storyboard intent, kept for the
+> reasoning; where the two differ, the script wins. No caption may state a trial length (the
+> 30-day intro offer is removed for 1.0.3).
+
 | # | EN | RU | ES | PT-BR |
 |---|----|----|----|----|
 | 1 | Your money, calmly in control | Финансы под спокойным контролем | Tus finanzas, bajo control y en calma | Suas finanças sob controle e tranquilas |
 | 2 | Your data stays on your iPhone | Данные остаются на вашем iPhone | Tus datos se quedan en tu iPhone | Seus dados ficam no seu iPhone |
 | 3 | Log spending in seconds | Записывайте траты за секунды | Registra tus gastos en segundos | Registre gastos em segundos |
 | 4 | See where your money goes | Видно, куда уходят деньги | Mira a dónde va tu dinero | Veja para onde vai seu dinheiro |
-| 5 | Organize by category and account | Категории и счета — всё на местах | Organiza por categoría y cuenta | Organize por categoria e conta |
-| 6 | Lock it behind Face ID | Защитите вход через Face ID | Protégelo con Face ID | Proteja com Face ID |
+| 5 | Split one purchase across categories | Разделить покупку по категориям | Una compra, dividida entre categorías | Uma compra, dividida entre categorias |
+| 6 | Gentle monthly limits, never a scolding | Мягкий месячный лимит, а не выговор | Límite mensual amable, nunca un regaño | Limite mensal gentil, nunca uma bronca |
 | 7 | Export to CSV, PDF, or Excel | Экспорт в CSV, PDF и Excel | Exporta a CSV, PDF o Excel | Exporte para CSV, PDF ou Excel |
 | 8 | Yours to keep, for life | Останется с вами навсегда | Tuyo para siempre | Seu para sempre |
 

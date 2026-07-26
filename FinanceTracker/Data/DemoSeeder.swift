@@ -65,6 +65,9 @@ enum DemoSeeder {
             applyDemoBudget(seed.budgetMinor)
 
             let categories = seedDemoCategories(modelContext: modelContext)
+            // Monthly category limits (1.0.3 Item 3) — seeded so the limit surface
+            // shows a real, gentle "still money left" position, never "exceeded".
+            applyCategoryLimits(seed.categoryLimits, categories: categories)
             let sources = seedDemoSources(modelContext: modelContext, specs: seed.sources)
             seedDemoTransactions(
                 modelContext: modelContext,
@@ -198,6 +201,9 @@ enum DemoSeeder {
         let budgetMinor: Int       // overall monthly budget → @AppStorage("monthlyBudgetCents")
         let sources: [SourceSpec]
         let transactions: [TxSpec]
+        /// Per-category monthly limits (1.0.3 Item 3). Optional so the pre-1.0.3
+        /// seed shape still decodes.
+        let categoryLimits: [LimitSpec]?
 
         struct SourceSpec: Decodable {
             let key: String
@@ -210,6 +216,18 @@ enum DemoSeeder {
             let minor: Int         // amount in minor currency units (cents/kopecks/centavos)
             let merchant: String?
             let type: String       // "income" | "expense"
+            /// Child splits of this purchase (1.0.3 Item 4). Σ splits MUST be
+            /// ≤ minor — the remainder implicitly stays in `category`, exactly
+            /// as `CategoryAttribution` interprets it. Optional.
+            let splits: [SplitSpec]?
+        }
+        struct SplitSpec: Decodable {
+            let category: String   // English category name
+            let minor: Int
+        }
+        struct LimitSpec: Decodable {
+            let category: String   // English category name
+            let minor: Int         // monthly limit in minor units
         }
     }
 
@@ -222,7 +240,7 @@ enum DemoSeeder {
         #endif
         if let fallback = decodeSeed(named: "DemoSeed_en") { return fallback }
         // Last-resort empty USD seed so a missing-resource build never crashes.
-        return Seed(locale: "en", currencyCode: "USD", budgetMinor: 0, sources: [], transactions: [])
+        return Seed(locale: "en", currencyCode: "USD", budgetMinor: 0, sources: [], transactions: [], categoryLimits: nil)
     }
 
     private static func decodeSeed(named name: String) -> Seed? {
@@ -372,6 +390,48 @@ enum DemoSeeder {
                 isDemo: markAsDemo
             )
             modelContext.insert(tx)
+            attachSplits(e.splits, to: tx, categories: categories, modelContext: modelContext)
+        }
+    }
+
+    /// Attaches the seed's child splits to one purchase (1.0.3 Item 4). Guards the
+    /// remainder invariant the editor enforces (Σ splits ≤ parent total) so a
+    /// mis-edited seed can never produce an over-sum the app itself refuses to save.
+    private static func attachSplits(
+        _ specs: [Seed.SplitSpec]?,
+        to tx: Transaction,
+        categories: [String: Category],
+        modelContext: ModelContext
+    ) {
+        guard let specs, !specs.isEmpty else { return }
+        let sum = specs.reduce(0) { $0 + $1.minor }
+        guard sum <= tx.amountCents else {
+            #if DEBUG
+            print("[DemoSeeder] ⚠️ Splits over-sum for '\(tx.merchant ?? "—")' (\(sum) > \(tx.amountCents)) — skipping splits")
+            #endif
+            return
+        }
+        for (i, spec) in specs.enumerated() {
+            guard spec.minor > 0, let cat = categories[spec.category] else { continue }
+            let split = TransactionSplit(amountCents: spec.minor, category: cat, order: i)
+            // Insert BEFORE relating: the parent link materializes the inverse on
+            // Transaction.splits, and that must happen on an already-registered object.
+            modelContext.insert(split)
+            split.parent = tx
+        }
+    }
+
+    /// Sets `Category.limitCents` for the seeded limits. Amounts in the seeds are
+    /// chosen so month-to-date spend sits in the gentle warn band (~70–80% used):
+    /// money is still left, so the limit never reads as a scolding.
+    private static func applyCategoryLimits(
+        _ specs: [Seed.LimitSpec]?,
+        categories: [String: Category]
+    ) {
+        guard let specs else { return }
+        for spec in specs {
+            guard spec.minor > 0, let cat = categories[spec.category] else { continue }
+            cat.limitCents = spec.minor
         }
     }
 

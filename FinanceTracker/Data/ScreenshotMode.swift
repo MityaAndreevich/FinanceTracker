@@ -24,14 +24,19 @@ enum ScreenshotMode {
     enum Screen: String, Identifiable {
         var id: String { rawValue }
 
-        case dashboard      // 01 — hero
+        case dashboard      // 01 — hero (daily allowance / pace)
         case privacy        // 02 — on-device differentiator
         case quickentry     // 03 — fast capture
-        case analytics      // 04 — breakdown chart
-        case categories     // 05 — categories & accounts
-        case lock           // 06 — Face ID gate
+        case analytics      // 04 — breakdown chart (split contributes)
+        case split          // 05 — one purchase across categories (1.0.3)
+        case categorylimit  // 06 — gentle monthly category limit (1.0.3)
         case export         // 07 — data ownership / export
-        case lifetime       // 08 — paywall / ownership close
+        case lifetime       // 08 — ownership close
+        // Retired from the shelf at 1.0.3 (05_categories / 06_faceid) but kept
+        // routable: AuthGateView still reads `.lock`, and both remain useful for
+        // ad-hoc captures.
+        case categories
+        case lock
     }
 
     /// The screen to route to on launch, or `nil` for a normal launch.

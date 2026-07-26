@@ -63,6 +63,16 @@ struct CategoriesSourcesView: View {
     }
 
     var body: some View {
+        // ScrollViewReader is only here for the screenshot seam below (scroll the
+        // limited category into view before the sheet covers the lower half). It is
+        // a transparent container — normal scrolling and layout are unchanged.
+        ScrollViewReader { scroll in
+            listBody(scroll: scroll)
+        }
+    }
+
+    @ViewBuilder
+    private func listBody(scroll: ScrollViewProxy) -> some View {
         List {
             sourcesSection
             expenseSection
@@ -98,6 +108,22 @@ struct CategoriesSourcesView: View {
                 .presentationDetents([.medium])
         }
         .confirmationToast($toastMessage)
+        // Screenshot seam (slot 06): App Store capture routes here to show the
+        // gentle monthly-limit surface, and `simctl` can't tap a row. Present the
+        // sheet for the first limited expense category the demo seed set. Gated on
+        // `requestedScreen`, which is nil in Release — a shipped build never does this.
+        .task {
+            guard ScreenshotMode.requestedScreen == .categorylimit else { return }
+            // Let the @Query settle after the demo seed's save before reading it.
+            try? await Task.sleep(for: .milliseconds(500))
+            guard let limited = expenseCategories.first(where: { ($0.limitCents ?? 0) > 0 })
+            else { return }
+            // Scroll the limited row to the top so the strip left visible above the
+            // sheet shows the category and its limit, not the Accounts list.
+            scroll.scrollTo(limited.uuid, anchor: .top)
+            try? await Task.sleep(for: .milliseconds(400))
+            editingLimitCategory = limited
+        }
     }
 
     // MARK: - Free-tier caps
