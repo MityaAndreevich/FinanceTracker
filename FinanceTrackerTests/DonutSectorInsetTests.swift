@@ -457,6 +457,105 @@ final class DonutSectorInsetTests: XCTestCase {
         XCTAssertGreaterThan(total, 0)
     }
 
+    // MARK: - The two geometries `renderableSlices` never covered
+    //
+    // Both bypass every existing guard: a single full-turn sector and a sector
+    // narrower than its own inset are each non-empty, all-positive, and sum to a
+    // positive total, so `renderableSlices` passes them straight through. The
+    // simulator clamps both (every render case in this file is green); the
+    // device does not. These assert the guard, not the render.
+
+    /// One category is a full ring with no angle to divide. The view must take
+    /// the `Circle().stroke` path, never a one-sector `Chart`.
+    func test_singleSlice_takesTheRingPath_notTheChartPath() {
+        let one = CategoryDonutView(
+            slices: [.init(id: "a", name: "Shop", cents: 1_000, color: .red)],
+            centerTitle: "Total",
+            centerValue: "$10.00",
+            size: 150
+        )
+        XCTAssertTrue(one.rendersAsSolidRing,
+                      "a single renderable slice must render as a ring, not a 360° SectorMark")
+
+        // The founder's exact repro: "1000 Amazon Shop" as the first expense of
+        // the month, so the donut goes empty → one slice.
+        let two = CategoryDonutView(
+            slices: [
+                .init(id: "a", name: "Shop", cents: 1_000, color: .red),
+                .init(id: "b", name: "Food", cents: 4_200, color: .blue),
+            ],
+            centerTitle: "Total",
+            centerValue: "$52.00",
+            size: 150
+        )
+        XCTAssertFalse(two.rendersAsSolidRing, "two slices still belong on the Chart path")
+
+        // A zero-magnitude second slice is dropped by renderableSlices, which
+        // leaves ONE renderable slice — the ring path must still win.
+        let dropped = CategoryDonutView(
+            slices: [
+                .init(id: "a", name: "Shop", cents: 1_000, color: .red),
+                .init(id: "b", name: "Empty", cents: 0, color: .blue),
+            ],
+            centerTitle: "Total",
+            centerValue: "$10.00",
+            size: 150
+        )
+        XCTAssertTrue(dropped.rendersAsSolidRing,
+                      "renderableSlices drops the 0¢ slice, so this is the single-slice case")
+    }
+
+    /// For n ≥ 2, the inset handed to `SectorMark` must leave every sector a
+    /// positive width.
+    func test_safeAngularInset_keepsEverySectorWidthPositive() {
+        let side: CGFloat = 150
+        let ratio: CGFloat = 0.64
+        let defaultInset: CGFloat = 1.5
+
+        func assertEverySectorSurvives(_ cents: [Int], line: UInt = #line) {
+            let inset = ChartGuards.safeAngularInset(
+                cents: cents, defaultInset: defaultInset,
+                innerRadiusRatio: ratio, frameSide: side
+            )
+            let innerRadius = side / 2 * ratio
+            let insetAngle = 2 * inset / innerRadius
+            let total = CGFloat(cents.reduce(0, +))
+            for c in cents {
+                let sweep = 2 * CGFloat.pi * CGFloat(c) / total
+                XCTAssertGreaterThan(
+                    sweep - insetAngle, 0,
+                    "\(c)¢ of \(Int(total))¢ keeps no width after a \(inset)pt inset",
+                    line: line
+                )
+            }
+        }
+
+        // Comparable magnitudes: the default inset is affordable and kept.
+        XCTAssertEqual(
+            ChartGuards.safeAngularInset(cents: [4_200, 3_100, 2_800], defaultInset: defaultInset,
+                                        innerRadiusRatio: ratio, frameSide: side),
+            defaultInset
+        )
+        assertEverySectorSurvives([4_200, 3_100, 2_800])
+
+        // A $3 coffee against rent — 0.12% of the month. The default inset
+        // consumes it entirely, so the guard must drop to 0.
+        XCTAssertEqual(
+            ChartGuards.safeAngularInset(cents: [200_000, 42_000, 8_500, 300], defaultInset: defaultInset,
+                                        innerRadiusRatio: ratio, frameSide: side),
+            0
+        )
+        assertEverySectorSurvives([200_000, 42_000, 8_500, 300])
+        assertEverySectorSurvives([99_000, 1_000])       // 1%, right at the boundary
+        assertEverySectorSurvives([9_999_000, 1_000])    // 0.01%
+
+        // Degenerate geometry inputs can never yield a positive inset.
+        XCTAssertEqual(ChartGuards.safeAngularInset(cents: [1_000, 2_000], defaultInset: defaultInset,
+                                                    innerRadiusRatio: ratio, frameSide: 0), 0)
+        XCTAssertEqual(ChartGuards.safeAngularInset(cents: [], defaultInset: defaultInset,
+                                                    innerRadiusRatio: ratio, frameSide: side), 0)
+    }
+
     // MARK: - Fixtures
 
     @discardableResult

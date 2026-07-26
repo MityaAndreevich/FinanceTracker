@@ -97,6 +97,41 @@ enum ChartGuards {
         return total > 0 ? kept : []
     }
 
+    /// The angular inset a donut can safely ask for, given the magnitudes it is
+    /// about to plot.
+    ///
+    /// `angularInset` is a LINEAR inset in points, taken off BOTH angular edges
+    /// of every sector. At the inner radius it therefore costs an angle of
+    /// `inset / innerRadius` per edge — for the Dashboard donut (side 150,
+    /// innerRadius ratio 0.64 → 48pt) that is 2 × 1.5 / 48 = 0.0625 rad, about
+    /// 1% of a full turn. Any slice holding less than that much of the total is
+    /// asked to draw a sector whose width after insetting is NEGATIVE. A $3
+    /// coffee in a $2500 month is 0.12%, so ordinary data reaches it.
+    ///
+    /// `renderableSlices` does not catch this: it only drops non-positive
+    /// magnitudes and requires a positive total, both of which a sub-1% slice
+    /// satisfies. Returns 0 — visually acceptable, and provably safe because a
+    /// zero inset cannot consume any sector's width — whenever the default would
+    /// not survive the smallest sector; otherwise the default.
+    static func safeAngularInset(
+        cents: [Int],
+        defaultInset: CGFloat,
+        innerRadiusRatio: CGFloat,
+        frameSide: CGFloat
+    ) -> CGFloat {
+        let innerRadius = frameSide / 2 * innerRadiusRatio
+        guard innerRadius.isFinite, innerRadius > 0,
+              defaultInset.isFinite, defaultInset > 0 else { return 0 }
+
+        let total = cents.reduce(0, +)
+        guard total > 0, let smallest = cents.min(), smallest > 0 else { return 0 }
+
+        // Angle consumed by the inset across both edges of a sector.
+        let insetAngle = 2 * defaultInset / innerRadius
+        let smallestSweep = 2 * CGFloat.pi * CGFloat(smallest) / CGFloat(total)
+        return smallestSweep > insetAngle ? defaultInset : 0
+    }
+
     /// A box Swift Charts can actually map a scale onto: both dimensions finite
     /// and strictly positive.
     ///

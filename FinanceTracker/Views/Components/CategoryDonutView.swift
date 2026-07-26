@@ -38,6 +38,36 @@ struct CategoryDonutView: View {
         ChartGuards.dimension(size)
     }
 
+    /// The donut's `SectorMark` geometry, in one place so the guard below and
+    /// the mark itself can never drift apart.
+    private static let innerRadiusRatio: CGFloat = 0.64
+    private static let defaultAngularInset: CGFloat = 1.5
+
+    /// A single category IS a full ring — there is no angle to divide. Drawing
+    /// it as a one-sector `Chart` asks Charts to sweep a full turn and then take
+    /// `angularInset` off both edges of it, which leaves the arc self-crossing
+    /// with no width to give back. The `Circle().stroke` below is the same
+    /// picture with no angular scale involved at all.
+    /// Internal, not private: the ring branch is the fix for the device trap, so
+    /// a test has to be able to assert the view actually takes it.
+    var rendersAsSolidRing: Bool {
+        renderableSlices.count == 1
+    }
+
+    /// The inset the sectors can actually afford (see `ChartGuards`). Falls to 0
+    /// the moment the smallest slice's sweep is narrower than the inset would
+    /// consume — an ordinary state, not an exotic one.
+    var safeAngularInset: CGFloat {
+        // Kept on one line up to the first label: ChartGuardsCoverageTests scans
+        // for the contiguous `ChartGuards.safeAngularInset(cents:` call pattern,
+        // and a line break after the paren reads as "guard with no caller".
+        ChartGuards.safeAngularInset(cents: renderableSlices.map(\.cents),
+            defaultInset: Self.defaultAngularInset,
+            innerRadiusRatio: Self.innerRadiusRatio,
+            frameSide: safeSize
+        )
+    }
+
     var body: some View {
         ZStack {
             // Records the exact magnitudes about to be plotted (DEBUG only, no-op
@@ -54,12 +84,18 @@ struct CategoryDonutView: View {
                 Circle()
                     .stroke(Color.bcSurface2, lineWidth: safeSize * 0.18)
                     .frame(width: safeSize, height: safeSize)
+            } else if rendersAsSolidRing, let only = renderableSlices.first {
+                // One category: the same ring, in that category's colour, with no
+                // angular scale for Charts to divide.
+                Circle()
+                    .stroke(only.color, lineWidth: safeSize * 0.18)
+                    .frame(width: safeSize, height: safeSize)
             } else {
                 Chart(renderableSlices) { slice in
                     SectorMark(
                         angle: .value("amount", slice.cents),
-                        innerRadius: .ratio(0.64),
-                        angularInset: 1.5
+                        innerRadius: .ratio(Self.innerRadiusRatio),
+                        angularInset: safeAngularInset
                     )
                     .cornerRadius(3)
                     .foregroundStyle(slice.color)
