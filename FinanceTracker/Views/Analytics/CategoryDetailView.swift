@@ -50,17 +50,18 @@ struct CategoryDetailView: View {
             .reduce(0) { $0 + $1.amountCents }
     }
 
-    /// Sum of the ATTRIBUTED magnitudes — matches the donut slice value. The
-    /// subtle lie this prevents: a $120 order with $18 attributed here must
-    /// add $18 to this header, while its row still shows the full $120.
+    /// Sum of the ATTRIBUTED magnitudes — matches the donut slice value, and
+    /// now also matches Σ(rows), because every row below prints its own share.
+    ///
+    /// It used to be only the first of those. A $120 order with $18 attributed
+    /// here added $18 to the header while its row showed the full $120, and a
+    /// footnote under the list excused the difference. The first real user to
+    /// meet it (1.0.3 device QA: a 1000₽ Perekrestok split 500 Pets / 500 Food)
+    /// read the 1000 against a 500 header as a double-count and never scrolled
+    /// far enough to find the footnote. In a list already narrowed to ONE
+    /// category, every number on screen is now that category's.
     private var totalCents: Int {
         filtered.reduce(0) { $0 + attributedCents(of: $1) }
-    }
-
-    /// Whether any listed purchase contributes only a part of itself here —
-    /// drives the explanatory footnote so the header ≠ Σ(rows) is never a mystery.
-    private var includesSplitPortions: Bool {
-        filtered.contains { attributedCents(of: $0) != $0.amountCents }
     }
 
     var body: some View {
@@ -84,13 +85,14 @@ struct CategoryDetailView: View {
 
             // Stable uuid identity, not the default persistentModelID (temporary
             // until save) — avoids transient ghost rows at scale (Round 9).
+            // No footer any more: it existed only to excuse header ≠ Σ(rows),
+            // which passing the share below makes impossible.
             Section {
                 ForEach(filtered, id: \.uuid) { tx in
-                    CategoryTileRow(tx: tx)
-                }
-            } footer: {
-                if includesSplitPortions {
-                    Text("analytics.category_total.split_note")
+                    // The row still opens the WHOLE purchase for edit, which is
+                    // why it keeps the full amount visible in its split context
+                    // line rather than just swapping the number out.
+                    CategoryTileRow(tx: tx, attributedCents: attributedCents(of: tx))
                 }
             }
         }

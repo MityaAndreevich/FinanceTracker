@@ -837,7 +837,7 @@
 "split.remainder.format" = "%1$@ se queda en %2$@.";
 "split.fully_assigned" = "Totalmente asignado entre las partes.";
 "tx_detail.section.split" = "Desglose de la división";
-"analytics.category_total.split_note" = "Algunas compras aquí están divididas entre categorías: las filas muestran montos completos y el total solo cuenta la parte de esta categoría.";
+"category.row.part_of_split" = "parte de %@ · Dividido";
 
 /* 1.0.3 category limits (Item 3) */
 "limit.sheet.title" = "Límite mensual";

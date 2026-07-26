@@ -838,7 +838,7 @@
 "split.remainder.format" = "%1$@ fica em %2$@.";
 "split.fully_assigned" = "Totalmente distribuído entre as partes.";
 "tx_detail.section.split" = "Detalhamento da divisão";
-"analytics.category_total.split_note" = "Algumas compras aqui estão divididas entre categorias — as linhas mostram valores completos e o total conta apenas a parte desta categoria.";
+"category.row.part_of_split" = "parte de %@ · Dividido";
 
 /* 1.0.3 category limits (Item 3) */
 "limit.sheet.title" = "Limite mensal";

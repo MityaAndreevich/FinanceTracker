@@ -964,7 +964,7 @@
 "split.remainder.format" = "%1$@ stays in %2$@.";
 "split.fully_assigned" = "Fully assigned across the parts.";
 "tx_detail.section.split" = "Split breakdown";
-"analytics.category_total.split_note" = "Some purchases here are split across categories — rows show full amounts, the total counts only this category's share.";
+"category.row.part_of_split" = "part of %@ · Split";
 
 /* 1.0.3 category limits (Item 3) */
 "limit.sheet.title" = "Monthly limit";

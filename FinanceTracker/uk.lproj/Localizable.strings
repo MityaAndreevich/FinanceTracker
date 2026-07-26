@@ -964,7 +964,7 @@
 "split.remainder.format" = "%1$@ залишиться в категорії «%2$@».";
 "split.fully_assigned" = "Суму повністю розподілено між частинами.";
 "tx_detail.section.split" = "Розбивка за категоріями";
-"analytics.category_total.split_note" = "Деякі покупки тут розділені за категоріями — рядки показують повні суми, а підсумок враховує лише частку цієї категорії.";
+"category.row.part_of_split" = "частина з %@ · Розділено";
 
 /* 1.0.3 category limits (Item 3) */
 "limit.sheet.title" = "Місячний ліміт";

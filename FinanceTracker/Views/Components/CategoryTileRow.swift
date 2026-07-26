@@ -19,10 +19,39 @@ import SwiftUI
 struct CategoryTileRow: View {
     let tx: Transaction
 
+    /// In a CATEGORY-SCOPED list, this category's share of the purchase — so the
+    /// rows add up to the header the user is looking at.
+    ///
+    /// `nil` is the default and means "show the whole purchase", which is what
+    /// every GLOBAL surface must keep doing: the Dashboard's recent list,
+    /// Transactions, the day / month sheets and duplicate review are all ledgers
+    /// of purchases, and a purchase there is one amount. Only a screen that has
+    /// already narrowed to one category may pass a share.
+    var attributedCents: Int? = nil
+
     private var tileColor: Color { tx.category.themeColorOrFallback }
 
     /// Computed once per row build; `subtitle` and the badge both need it.
     private var isSplit: Bool { CategoryAttribution.isSplit(tx) }
+
+    /// The amount this row actually prints.
+    var displayCents: Int { attributedCents ?? tx.amountCents }
+
+    /// Whether this row is showing a PART of its purchase. Only true on a
+    /// category-scoped surface, and only when the share really differs from the
+    /// whole — a split whose every part lands in this category still reads as a
+    /// plain full-amount row.
+    var showsSplitContext: Bool { displayCents != tx.amountCents }
+
+    /// "part of $1,000 · Split" — the whole purchase, kept visible because
+    /// tapping the row opens that whole purchase for edit. Without it the tap is
+    /// an unexplained jump from $500 to $1,000.
+    var splitContext: String {
+        String(
+            format: NSLocalizedString("category.row.part_of_split", comment: ""),
+            Money.format(cents: tx.amountCents, currencyCode: tx.currency)
+        )
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -57,10 +86,22 @@ struct CategoryTileRow: View {
                 // to the split categories — the badge is what keeps "search
                 // shows 3,500, Analytics shows 0 for this category" legible
                 // instead of alarming.
-                if tx.isPossibleDuplicate || isSplit {
+                //
+                // On a category-scoped row the split context line replaces the
+                // SplitBadge: its own copy already ends in "· Split", and two
+                // "Split" markers on one row read as two different facts.
+                if showsSplitContext {
+                    Text(splitContext)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.bcTextMuted)
+                        .lineLimit(1)
+                        .privacySensitive(true)
+                }
+
+                if tx.isPossibleDuplicate || (isSplit && !showsSplitContext) {
                     HStack(spacing: 6) {
                         if tx.isPossibleDuplicate { DuplicateBadge() }
-                        if isSplit { SplitBadge() }
+                        if isSplit && !showsSplitContext { SplitBadge() }
                     }
                     .padding(.top, 2)
                 }
@@ -92,11 +133,14 @@ struct CategoryTileRow: View {
             + Text(", ")
             + Text(tx.isIncome ? "analytics.label.income" : "analytics.label.expense")
             + Text(", ")
-            + Text(Money.format(cents: tx.amountCents, currencyCode: tx.currency))
+            + Text(Money.format(cents: displayCents, currencyCode: tx.currency))
 
         var out = base
+        // The whole-purchase amount is spoken too — a VoiceOver user gets the
+        // same "this is a part of something bigger" context the sighted row has.
+        if showsSplitContext { out = out + Text(", ") + Text(splitContext) }
         if tx.isPossibleDuplicate { out = out + Text(", ") + Text("transactions.duplicate.badge") }
-        if isSplit { out = out + Text(", ") + Text("transactions.split.badge") }
+        if isSplit && !showsSplitContext { out = out + Text(", ") + Text("transactions.split.badge") }
         return out
     }
 
@@ -129,7 +173,7 @@ struct CategoryTileRow: View {
 
     private var signedAmount: String {
         Money.formatSigned(
-            cents: tx.amountCents,
+            cents: displayCents,
             isPositive: tx.isIncome,
             currencyCode: tx.currency
         )
