@@ -30,6 +30,13 @@ enum TransactionEditService {
         var date: Date
         var category: Category?   // optional as of V2; the editor always passes one
         var source: Source?
+        /// The series cadence, or nil for a one-time transaction. A FULL
+        /// replacement like every other field — pass the transaction's current
+        /// raw to keep an existing series, nil to end it. It rides through the
+        /// guarded save so a failed edit can't leave a half-removed series
+        /// (recurrence lives on the row; the notification and period boundary
+        /// are reconciled afterwards by `RecurrenceService`).
+        var recurrenceRaw: String?
         /// The purchase's split decomposition, in display order. Empty = not
         /// split (today's behavior). The EDITOR is responsible for the
         /// Σ splits ≤ amountCents invariant — over-sum must be impossible to
@@ -82,6 +89,7 @@ enum TransactionEditService {
             typeRaw: tx.typeRaw, amountCents: tx.amountCents, taxCents: tx.taxCents,
             currency: tx.currency, merchant: tx.merchant, note: tx.note,
             date: tx.date, category: tx.category, source: tx.source,
+            recurrenceRaw: tx.recurrenceRaw,
             splits: CategoryAttribution.orderedSplits(of: tx).map {
                 Fields.SplitInput(amountCents: $0.amountCents, category: $0.category, note: $0.note)
             }
@@ -98,6 +106,7 @@ enum TransactionEditService {
         tx.date = f.date
         tx.category = f.category
         tx.source = f.source
+        tx.recurrenceRaw = f.recurrenceRaw
         tx.updatedAt = Date()
 
         // Reconcile splits by replacement (delete old, insert new) — simpler

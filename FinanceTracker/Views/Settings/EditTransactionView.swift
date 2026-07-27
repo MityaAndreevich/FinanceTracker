@@ -32,6 +32,12 @@ struct EditTransactionView: View {
     @State private var selectedSourceUUID: UUID? = nil
     @State private var showCategoryPicker = false
 
+    // Recurring — parity with AddTransactionView (1.0.3). Prefilled in
+    // loadFromTransaction so the toggle round-trips; the picker keeps a
+    // selection even while the toggle is off.
+    @State private var isRecurring: Bool = false
+    @State private var recurrenceType: RecurrenceType = .monthly
+
     // Split-across-categories drafts (1.0.3 Item 4). Expense-only surface.
     @State private var splitDrafts: [SplitDraft] = []
     @State private var splitPickerIndex: Int? = nil
@@ -119,6 +125,7 @@ struct EditTransactionView: View {
             accountSection
             dateSection
             noteSection
+            recurringSection
         }
         .navigationTitle("edit.title")
         .navigationBarTitleDisplayMode(.inline)
@@ -408,6 +415,32 @@ struct EditTransactionView: View {
         }
     }
 
+    /// Identical to AddTransactionView.recurringSection, same keys — recurrence
+    /// was creation-only until 1.0.3, so an existing charge that turned into a
+    /// subscription had no way to say so (device QA).
+    @ViewBuilder private var recurringSection: some View {
+        Section {
+            Toggle("addtx.recurring.toggle", isOn: $isRecurring)
+                .onChange(of: isRecurring) { _, on in
+                    if on { RecurrenceService.requestAuthorizationIfNeeded() }
+                }
+
+            if isRecurring {
+                Picker("addtx.recurring.frequency", selection: $recurrenceType) {
+                    ForEach(RecurrenceType.allCases) { type in
+                        Text(LocalizedStringKey(type.labelKey)).tag(type)
+                    }
+                }
+            }
+        } header: {
+            Text("addtx.recurring.header")
+        } footer: {
+            if isRecurring {
+                Text("addtx.recurring.footer")
+            }
+        }
+    }
+
     // MARK: - Load / Save
 
     private func loadFromTransaction() {
@@ -420,6 +453,10 @@ struct EditTransactionView: View {
 
         selectedCategoryUUID = transaction.category?.uuid
         selectedSourceUUID = transaction.source?.uuid
+
+        let recurrence = RecurrenceService.editState(for: transaction)
+        isRecurring = recurrence.isRecurring
+        recurrenceType = recurrence.type
 
         splitDrafts = CategoryAttribution.orderedSplits(of: transaction).map {
             SplitDraft(
@@ -502,8 +539,13 @@ struct EditTransactionView: View {
             date: date,
             category: newCategory,
             source: selectedSource,    // Account allowed for both income and expense.
+            // Recurrence rides the SAME guarded save as every other field, so a
+            // failed edit can't leave the row half-recurring. The notification
+            // and period boundary are reconciled only after that save succeeds.
+            recurrenceRaw: isRecurring ? recurrenceType.raw : nil,
             splits: splitInputs
         )
+        let previousRecurrence = transaction.recurrence
 
         // Debounce a double-fire of THIS action. Validation stays outside the
         // gate so a validation error can't debounce away the fix-and-retap.
@@ -511,6 +553,11 @@ struct EditTransactionView: View {
             isSaving = true
             do {
                 try TransactionEditService.update(transaction, with: fields, in: modelContext)
+
+                // Persisted — now reconcile the series: schedule/reschedule on
+                // set-or-recadence, cancel + clear the boundary on removal,
+                // nothing at all if the toggle wasn't touched. No second save.
+                RecurrenceService.applyRecurrenceSideEffects(for: transaction, previous: previousRecurrence)
 
                 MerchantLearningService.record(
                     merchant: merchant.isEmpty ? nil : merchant,

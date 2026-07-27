@@ -126,6 +126,64 @@ enum RecurrenceService {
         try? modelContext.save()
     }
 
+    // MARK: - Editing an existing transaction's recurrence (1.0.3)
+
+    /// What an edit did to the series — returned so the caller (and its tests)
+    /// can see the decision without reaching into UNUserNotificationCenter.
+    enum EditOutcome: Equatable {
+        case unchanged
+        case scheduled(RecurrenceType)
+        case cleared
+    }
+
+    /// Toggle + picker state for an edit surface opened on `tx`. The picker
+    /// always needs a selection, so a one-time transaction shows the default
+    /// cadence behind an off toggle.
+    static func editState(for tx: Transaction) -> (isRecurring: Bool, type: RecurrenceType) {
+        let rec = tx.recurrence
+        return (rec != nil, rec ?? .monthly)
+    }
+
+    /// Reconcile the notification + period bookkeeping after a recurrence edit
+    /// has been PERSISTED. Deliberately does not write to the store: the
+    /// transaction's `recurrenceRaw` travels through `TransactionEditService`
+    /// with every other field, in one guarded save, so a failed save reverts it
+    /// like anything else. Call this only once that save succeeded.
+    ///
+    /// - Parameter previous: the recurrence the transaction had *before* the edit.
+    @discardableResult
+    static func applyRecurrenceSideEffects(for tx: Transaction, previous: RecurrenceType?) -> EditOutcome {
+        let current = tx.recurrence
+
+        switch (previous, current) {
+        case (nil, nil):
+            return .unchanged
+
+        case let (old?, new?) where old == new:
+            // The user never touched the toggle. Re-scheduling here would
+            // rewrite a pending notification for no reason on every save.
+            return .unchanged
+
+        case let (_, new?):
+            // Set or re-cadenced. scheduleNotification removes the old pending
+            // id first, so this reschedules off the new period. The handled
+            // boundary is deliberately KEPT — changing the cadence continues
+            // the series, it doesn't restart it. (When there is no boundary,
+            // `nextDueDate` keys off `tx.date`: the edited transaction becomes
+            // the first occurrence.)
+            scheduleNotification(for: tx)
+            return .scheduled(new)
+
+        case (_?, nil):
+            // Series ended. The boundary has to go with it, or re-enabling
+            // later would resume mid-period against a cadence the user
+            // no longer chose.
+            clearHandled(for: tx.uuid)
+            cancelNotification(for: tx.uuid)
+            return .cleared
+        }
+    }
+
     // MARK: - Notifications
 
     /// One-shot authorization request, fired the first time the user enables Recurring.
@@ -183,16 +241,19 @@ enum RecurrenceService {
         return (try? modelContext.fetch(descriptor))?.first
     }
 
-    private static func handledDate(for uuid: UUID) -> Date? {
+    // The period boundary is the one piece of series state that lives outside
+    // SwiftData, so an edit that changes or ends a series can only be verified
+    // by reading it back. Internal (not private) for exactly that.
+    static func handledDate(for uuid: UUID) -> Date? {
         let t = UserDefaults.standard.double(forKey: handledPrefix + uuid.uuidString)
         return t > 0 ? Date(timeIntervalSince1970: t) : nil
     }
 
-    private static func setHandledDate(_ date: Date, for uuid: UUID) {
+    static func setHandledDate(_ date: Date, for uuid: UUID) {
         UserDefaults.standard.set(date.timeIntervalSince1970, forKey: handledPrefix + uuid.uuidString)
     }
 
-    private static func clearHandled(for uuid: UUID) {
+    static func clearHandled(for uuid: UUID) {
         UserDefaults.standard.removeObject(forKey: handledPrefix + uuid.uuidString)
     }
 

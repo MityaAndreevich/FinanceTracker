@@ -43,7 +43,8 @@ struct TransactionEditServiceTests {
         TransactionEditService.Fields(
             typeRaw: tx.typeRaw, amountCents: amountCents, taxCents: tx.taxCents,
             currency: tx.currency, merchant: tx.merchant, note: tx.note,
-            date: tx.date, category: cat, source: tx.source
+            date: tx.date, category: cat, source: tx.source,
+            recurrenceRaw: tx.recurrenceRaw
         )
     }
 
