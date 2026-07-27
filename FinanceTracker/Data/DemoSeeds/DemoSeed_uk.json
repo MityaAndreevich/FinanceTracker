@@ -298,6 +298,22 @@
       "minor": 640000
     },
     {
+      "category": "Transport",
+      "minor": 270000
+    },
+    {
+      "category": "Housing",
+      "minor": 1900000
+    },
+    {
+      "category": "Shopping",
+      "minor": 340000
+    },
+    {
+      "category": "Entertainment",
+      "minor": 330000
+    },
+    {
       "category": "Coffee",
       "minor": 68000
     }
