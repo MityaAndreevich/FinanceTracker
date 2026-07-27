@@ -119,12 +119,9 @@ final class CSVImportServiceTests: XCTestCase {
     }
 
     func testImportCSV_ParsesCommaDecimal() throws {
-        let csv = """
-        date,type,amount,currency,category,source,tax,note,merchant
-        2026-01-20,expense,12,34,USD,Food,,,Lunch,Cafe
-        """
-
-        // NOTE: This CSV is actually ambiguous because comma is also a separator.
+        // NOTE: the unquoted form of this row is ambiguous, because the comma is
+        // also the field separator:
+        //     2026-01-20,expense,12,34,USD,Food,,,Lunch,Cafe
         // Our exporter uses dot, so we test comma-decimal safely by quoting the amount:
         let fixed = """
         date,type,amount,currency,category,source,tax,note,merchant

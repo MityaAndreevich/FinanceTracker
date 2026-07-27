@@ -14,6 +14,8 @@ private func makeContext() throws -> ModelContext {
     return ModelContext(container)
 }
 
+/// Callers often insert a category purely for its side effect on `ctx`.
+@discardableResult
 private func insertCategory(name: String, kindRaw: String, order: Int, isPrimary: Bool, ctx: ModelContext) -> FinanceTracker.Category {
     let cat = FinanceTracker.Category(name: name, kindRaw: kindRaw, order: order, isPrimary: isPrimary)
     ctx.insert(cat)

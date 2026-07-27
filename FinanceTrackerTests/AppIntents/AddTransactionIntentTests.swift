@@ -14,6 +14,8 @@ private func makeIntentContext() throws -> ModelContext {
     return ModelContext(container)
 }
 
+/// Callers often seed a category purely for its side effect on `ctx`.
+@discardableResult
 private func seedCategory(name: String, kindRaw: String = "expense", ctx: ModelContext) -> FinanceTracker.Category {
     let cat = FinanceTracker.Category(name: name, kindRaw: kindRaw, order: 0)
     ctx.insert(cat)

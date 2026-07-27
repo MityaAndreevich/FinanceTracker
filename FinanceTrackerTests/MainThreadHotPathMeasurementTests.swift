@@ -102,7 +102,7 @@ struct MainThreadHotPathMeasurementTests {
 
         // 1. The per-didSave cost: ProactiveAlertRefresher (full unfiltered fetch
         //    + aggregation). Fires TWICE per QuickAdd entry.
-        let refresher = try timeMS {
+        let refresher = timeMS {
             ProactiveAlertRefresher.refresh(
                 modelContext: ctx, isAllowed: true, defaults: defaults, center: center
             )

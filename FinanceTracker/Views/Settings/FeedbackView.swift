@@ -32,7 +32,7 @@ enum FeedbackComposer {
     static var subject: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
-        let language = LocalizedBundle.shared.languageCode
+        let language = LocalizedBundle.shared.languageCode ?? "?"
         return "Budget Crab \(version) (\(build)) · \(language) · \(deviceModelIdentifier)"
     }
 

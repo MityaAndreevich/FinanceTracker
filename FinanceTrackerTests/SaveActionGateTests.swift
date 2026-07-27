@@ -89,7 +89,7 @@ struct SaveActionGateTests {
         }
         gate.reset()   // what a caller does in its catch block
 
-        let retry = try gate.submit(now: tap.addingTimeInterval(0.05)) { runs += 1 }
+        let retry = gate.submit(now: tap.addingTimeInterval(0.05)) { runs += 1 }
 
         #expect(retry == true, "a retry after a failure must never be debounced away")
         #expect(runs == 2)
