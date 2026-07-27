@@ -21,7 +21,7 @@ Most users see only the first 2–3 thumbnails, so the privacy wedge — the sin
 | 3 | Core feature | QuickEntry | Show the "aha" — effortless capture |
 | 4 | Insight | Analytics breakdown | Proof of payoff |
 | 5 | Depth (1.0.3) | Split editor | One purchase, several categories |
-| 6 | Care (1.0.3) | Category monthly limit | Warns while money is LEFT, never after |
+| 6 | Care (1.0.3) | Category limits on the categories list | Warns while money is LEFT, never after |
 | 7 | Ownership of data | Export (CSV/PDF/Excel) | "Your data, portable" — no lock-in |
 | 8 | CTA | Lifetime / clean close | Calm close, ownership |
 
@@ -90,16 +90,19 @@ Most users see only the first 2–3 thumbnails, so the privacy wedge — the sin
   the on-screen section header agree word-for-word.
 
 ### SCREENSHOT 6 — CARE · Category monthly limit  *(new in 1.0.3, replaces Face ID lock)*
-- **Visual:** `CategoriesSourcesView` scrolled to the limited category (mint
-  "Limit: $600.00/month") with the Monthly limit sheet presented over it. The sheet's footer is
-  the proof of the caption: "a gentle heads-up while there's still money left — never after
-  it's gone."
+- **Visual:** `CategoriesSourcesView` alone, scrolled so the limited categories lead the frame —
+  Food & Drink "Limit: $600.00/month" and Coffee "Limit: $40.00/month", both in mint. The row
+  label IS the feature's proof, so the list needs no sheet over it.
 - **Route:** `--screenshot-screen categorylimit`. The seed sets limits so month-to-date spend
   lands at ~70–80% used — the gentle warn band. NEVER seed an at/over-limit state: the app
   deliberately says nothing there (`CategoryLimitPolicy`), so there'd be nothing to show.
+- **No sheet on the shelf:** the limit editor was slot 06 through 636e515 and was pulled — it
+  puts a destructive red "Remove limit" button on a shelf frame (reads as a warning, off the
+  mint palette) and its `.medium` detent leaves ~30% of the frame empty. It stays routable as
+  `--screenshot-screen categorylimitsheet` for ad-hoc captures.
 - **Notes:** There is no in-app "X left in <category>" surface — that sentence only exists as a
   local-notification body, which can't be captured under `simctl` and mustn't be faked (2.3.3).
-  The limit label + the promise footer are the honest real-UI equivalent.
+  The mint limit label is the honest real-UI equivalent; the caption carries the "gentle" promise.
 
 ### SCREENSHOT 7 — DATA OWNERSHIP · Export
 - **Visual:** Data settings export sheet — CSV / PDF / Excel options visible.

@@ -18,6 +18,9 @@
 #   DEVICE        simulator device name      (default: "iPhone 15 Pro Max")
 #   RENDER_WAIT   seconds to wait per screen (default: 6)
 #   SKIP_BUILD    "1" to reuse an installed build (default: build + install)
+#   ONLY          space/comma list of output names to re-capture, e.g.
+#                 ONLY=06_limits — every other frame's raw is left untouched, so
+#                 a one-slot redo can't perturb the frames already approved
 #   TARGET_W/H    force-resize output to W×H via sips (default: native, no resize)
 #
 # Output: AppStore/screenshots/<LOCALE>/01_dashboard.png … 08_lifetime.png
@@ -39,6 +42,10 @@ APP_PATH="$DERIVED/Build/Products/Debug-iphonesimulator/FinanceTracker.app"
 # 1.0.3 shelf: 05/06 now carry the two new features (split purchases + gentle
 # category limits), replacing 05_categories / 06_faceid. Both retired screens are
 # still routable (`--screenshot-screen categories|lock`) for ad-hoc captures.
+# Slot 06 captures the categories LIST, not the limit editor: the row already
+# shows the mint "Limit: …/month" label (the proof of the feature), while the
+# editor put a destructive red "Remove limit" button and a third of a frame of
+# empty space on the shelf. The editor stays routable as `categorylimitsheet`.
 SCREENS=(
   "dashboard:01_dashboard"
   "privacy:02_privacy"
@@ -173,6 +180,11 @@ capture_locale() {
     local name="${entry##*:}"
     local out="$out_dir/$name.png"
 
+    # ONLY=<names>: skip every frame not listed, leaving its existing raw as-is.
+    if [ -n "${ONLY:-}" ] && ! echo " ${ONLY//,/ } " | grep -q " $name "; then
+      continue
+    fi
+
     xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
     # Quick Entry (frame 03) preloads a parsed transaction so the capture shows the
     # populated parsed-preview state, not the bare idle. DEBUG-only launch flag.
@@ -196,7 +208,7 @@ capture_locale() {
   done
 
   xcrun simctl terminate "$UDID" "$BUNDLE_ID" >/dev/null 2>&1 || true
-  ok "$locale complete — 8 screenshots in $out_dir"
+  ok "$locale complete — ${ONLY:-all 8} in $out_dir"
 }
 
 # ---------------------------------------------------------------------------

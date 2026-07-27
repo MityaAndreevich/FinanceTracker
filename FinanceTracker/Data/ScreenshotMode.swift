@@ -29,13 +29,16 @@ enum ScreenshotMode {
         case quickentry     // 03 — fast capture
         case analytics      // 04 — breakdown chart (split contributes)
         case split          // 05 — one purchase across categories (1.0.3)
-        case categorylimit  // 06 — gentle monthly category limit (1.0.3)
+        case categorylimit  // 06 — gentle monthly category limit (1.0.3), list only
         case export         // 07 — data ownership / export
         case lifetime       // 08 — ownership close
         // Retired from the shelf at 1.0.3 (05_categories / 06_faceid) but kept
         // routable: AuthGateView still reads `.lock`, and both remain useful for
-        // ad-hoc captures.
+        // ad-hoc captures. `categorylimitsheet` is the limit EDITOR — off the shelf
+        // because its destructive "Remove limit" button reads as a warning, and its
+        // .medium detent leaves a third of the frame empty.
         case categories
+        case categorylimitsheet
         case lock
     }
 

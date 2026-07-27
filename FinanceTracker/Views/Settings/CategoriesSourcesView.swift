@@ -109,18 +109,24 @@ struct CategoriesSourcesView: View {
         }
         .confirmationToast($toastMessage)
         // Screenshot seam (slot 06): App Store capture routes here to show the
-        // gentle monthly-limit surface, and `simctl` can't tap a row. Present the
-        // sheet for the first limited expense category the demo seed set. Gated on
+        // gentle monthly-limit surface, and `simctl` can't tap a row. Gated on
         // `requestedScreen`, which is nil in Release — a shipped build never does this.
+        //
+        // `.categorylimit` captures the LIST alone: the row already carries the
+        // mint "Limit: …/month" label, which is the whole proof of the feature, and
+        // a list fills the frame with no destructive "Remove limit" button in it.
+        // `.categorylimitsheet` keeps the editor routable for ad-hoc captures.
         .task {
-            guard ScreenshotMode.requestedScreen == .categorylimit else { return }
+            let screen = ScreenshotMode.requestedScreen
+            guard screen == .categorylimit || screen == .categorylimitsheet else { return }
             // Let the @Query settle after the demo seed's save before reading it.
             try? await Task.sleep(for: .milliseconds(500))
             guard let limited = expenseCategories.first(where: { ($0.limitCents ?? 0) > 0 })
             else { return }
-            // Scroll the limited row to the top so the strip left visible above the
-            // sheet shows the category and its limit, not the Accounts list.
+            // Scroll the limited row to the top so the frame opens on the limited
+            // categories, not the Accounts list.
             scroll.scrollTo(limited.uuid, anchor: .top)
+            guard screen == .categorylimitsheet else { return }
             try? await Task.sleep(for: .milliseconds(400))
             editingLimitCategory = limited
         }

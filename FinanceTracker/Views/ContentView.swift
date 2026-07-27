@@ -290,7 +290,8 @@ struct ContentView: View {
         case .dashboard:  selectedTab = 0
         case .analytics:  selectedTab = 3   // AnalyticsView selects .breakdown itself
         case .quickentry: showAddSheet = true
-        case .privacy, .categories, .categorylimit, .split, .export, .lifetime:
+        case .privacy, .categories, .categorylimit, .categorylimitsheet,
+             .split, .export, .lifetime:
             screenshotCover = screen
         case .lock:
             break   // handled upstream by AuthGateView
@@ -304,9 +305,10 @@ struct ContentView: View {
         case .privacy:    PrivacySettingsView()
         case .categories: CategoriesSourcesView()
         // Slot 06 is the same Categories surface; CategoriesSourcesView reads
-        // `requestedScreen` and auto-presents the monthly-limit sheet for the
-        // seeded limited category, so the frame shows the real gentle-limit UI.
-        case .categorylimit: CategoriesSourcesView()
+        // `requestedScreen` and scrolls the seeded limited category to the top,
+        // so the frame is the real list with its mint "Limit: …/month" rows.
+        // `.categorylimitsheet` additionally opens the limit editor (off-shelf).
+        case .categorylimit, .categorylimitsheet: CategoriesSourcesView()
         // Slot 05 — the split editor on the seeded multi-category purchase.
         case .split:
             if let tx = screenshotSplitTransaction() {
