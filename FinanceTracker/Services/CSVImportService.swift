@@ -676,8 +676,11 @@ struct CSVImportService {
                 // Our own export row → dedup on the STABLE UUID.
                 //   • skipDuplicates: an existing/seen UUID is an exact re-import → skip.
                 //   • importAll: keep both copies, but the inserted row needs a FRESH
-                //     UUID because `uuid` is @Attribute(.unique) — reusing it would
-                //     upsert (replace) the existing row instead of duplicating it.
+                //     UUID because it is a genuinely distinct row and must carry a
+                //     distinct stable identity. (`uuid` was @Attribute(.unique) until
+                //     V2, where CloudKit forced the constraint off — so reusing `id`
+                //     no longer upserts, it mints a twin. Twins are exactly what
+                //     every fetch-by-uuid-then-`.first` site cannot resolve.)
                 if mode == .skipDuplicates, seenUUIDs.contains(id) {
                     result.duplicatesSkipped += 1
                     return
