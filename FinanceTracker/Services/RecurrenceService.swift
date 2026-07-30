@@ -41,11 +41,20 @@ enum RecurrenceService {
     }
 
     /// All recurring templates whose next occurrence is now due (ignores the daily throttle).
+    ///
+    /// Collapsed by `uuid` first. A series is one thing to the user but can be
+    /// two ROWS after a first-sync union (uuid lost `@Attribute(.unique)` in V2 —
+    /// CloudKit forbids it), and prompting per row asks for the same charge
+    /// twice in one sitting. This is the row-count half of the double charge;
+    /// the per-device watermark is the other half.
     static func dueRecurring(modelContext: ModelContext, now: Date = Date()) -> [RecurrencePrompt] {
         let descriptor = FetchDescriptor<Transaction>(
             predicate: #Predicate { $0.recurrenceRaw != nil }
         )
-        let templates = (try? modelContext.fetch(descriptor)) ?? []
+        let rows = (try? modelContext.fetch(descriptor)) ?? []
+        let templates = Dictionary(grouping: rows, by: \.uuid)
+            .values
+            .compactMap(canonicalTemplate(among:))
 
         return templates.compactMap { tx -> RecurrencePrompt? in
             guard let rec = tx.recurrence else { return nil }
@@ -60,7 +69,50 @@ enum RecurrenceService {
                 dueDate: due
             )
         }
-        .sorted { $0.dueDate < $1.dueDate }
+        // Total order, not just by dueDate: two series falling due the same day
+        // must be walked in the same order on both devices, or the user answers
+        // the same two questions in a different sequence per device.
+        .sorted {
+            $0.dueDate != $1.dueDate
+                ? $0.dueDate < $1.dueDate
+                : $0.id.uuidString < $1.id.uuidString
+        }
+    }
+
+    // MARK: - Choosing between twins
+
+    /// Picks the one row of a duplicated series whose values every device will
+    /// agree on, from SYNCED fields only.
+    ///
+    /// The order:
+    ///   1. later `updatedAt` — an edit is newer than a non-edit, and
+    ///      last-writer-wins is already how everything else converges
+    ///   2. then earlier `createdAt` — the original row of the series
+    ///   3. then content — amount, type, currency, date, merchant, note
+    ///
+    /// `persistentModelID` is deliberately NOT in that list. It is assigned per
+    /// device, so ordering on it is the one choice guaranteed to make two
+    /// devices disagree — which is also why `.first` of a fetch cannot be the
+    /// rule: fetch order tracks insertion order, and two devices have no reason
+    /// to have inserted the twins in the same order.
+    ///
+    /// Rows that tie on all of (3) are identical in every synced field, so
+    /// either one yields the same VALUES. The guarantee this needs is that the
+    /// OUTCOME is deterministic, not that the winning object is.
+    static func canonicalTemplate(among twins: [Transaction]) -> Transaction? {
+        twins.min(by: precedes)
+    }
+
+    /// True when `a` should win over `b`.
+    private static func precedes(_ a: Transaction, _ b: Transaction) -> Bool {
+        if a.updatedAt != b.updatedAt { return a.updatedAt > b.updatedAt }
+        if a.createdAt != b.createdAt { return a.createdAt < b.createdAt }
+        if a.amountCents != b.amountCents { return a.amountCents < b.amountCents }
+        if a.typeRaw != b.typeRaw { return a.typeRaw < b.typeRaw }
+        if a.currency != b.currency { return a.currency < b.currency }
+        if a.date != b.date { return a.date < b.date }
+        if (a.merchant ?? "") != (b.merchant ?? "") { return (a.merchant ?? "") < (b.merchant ?? "") }
+        return (a.note ?? "") < (b.note ?? "")
     }
 
     /// The next occurrence date that has not yet been handled. The saved
@@ -236,9 +288,12 @@ enum RecurrenceService {
 
     // MARK: - Internals
 
-    private static func fetchTemplate(_ uuid: UUID, modelContext: ModelContext) -> Transaction? {
+    /// Resolves a series to the one row `dueRecurring` decided is canonical.
+    /// It has to be the SAME rule, or the collapse is worthless: the user would
+    /// approve the prompt's 73.00 and get a 52.00 row out of the other twin.
+    static func fetchTemplate(_ uuid: UUID, modelContext: ModelContext) -> Transaction? {
         let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.uuid == uuid })
-        return (try? modelContext.fetch(descriptor))?.first
+        return canonicalTemplate(among: (try? modelContext.fetch(descriptor)) ?? [])
     }
 
     // The period boundary is the one piece of series state that lives outside
