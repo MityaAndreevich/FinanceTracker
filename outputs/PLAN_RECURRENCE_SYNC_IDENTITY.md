@@ -36,7 +36,7 @@ addresses B only.
 | 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceID` | **REVIEW-BLOCKED — no code** |
 | 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | **DONE** (this commit) |
 | 5 | Period label derivation (the identity key for step 3) | **DONE** (this commit) |
-| — | Jan-31 monthly drift | **FILED, not fixed** — separate task below |
+| — | Jan-31 monthly drift | **FILED, not fixed** — `BRIEF_MONTHEND_RECURRENCE_DRIFT.md` |
 
 **Freeze gate.** Step 3 changes the schema and is review-blocked. Nothing in
 steps 1/2/4/5 adds, removes, or retypes a stored property. The CloudKit
@@ -260,3 +260,9 @@ yearly series return to Feb 29 in the next leap year.
 
 Repro: monthly template anchored 2026-01-31, confirm once in February, then read
 the next due date — expect 2026-03-31, observe 2026-03-28.
+
+Filed in full as **`BRIEF_MONTHEND_RECURRENCE_DRIFT.md`**, including the yearly
+Feb-29 variant and the open question of whether already-drifted series get
+re-anchored. Note it does not interact with occurrence identity: labels key on
+the calendar period, so fixing the drift moves posting dates without re-keying
+anything — which is why identity was kept off the anchor in the first place.
