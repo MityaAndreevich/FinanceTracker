@@ -133,14 +133,28 @@ The paywall positions the yearly plan as "best value" and includes the auto-rene
 
 ```bash
 # Build for simulator
-xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
 # Unit tests
-xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 15' test
+xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
+
+# A single Swift Testing case — note the trailing `()`. Without it the filter
+# matches nothing, xcodebuild still reports ** TEST SUCCEEDED **, and the result
+# bundle contains zero test nodes. A "passing" run that ran nothing looks
+# identical to a passing run that ran everything.
+xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -resultBundlePath /tmp/rb.xcresult \
+  "-only-testing:FinanceTrackerTests/SuiteTypeName/testFunctionName()" test
+xcrun xcresulttool get test-results tests --path /tmp/rb.xcresult   # confirm it ran
 
 # Optional lint
 swiftlint
 ```
+
+`print()` inside a test is NOT forwarded to xcodebuild's stdout. To get a value
+out of a test run, assert on it, or record it via `Issue.record` and read the
+result bundle with `xcresulttool get test-results summary`.
 
 ## Conventions
 
