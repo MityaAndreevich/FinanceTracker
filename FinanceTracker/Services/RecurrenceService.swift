@@ -294,6 +294,8 @@ enum RecurrenceService {
     static func scheduleNotification(for tx: Transaction) {
         guard let rec = tx.recurrence else { return }
         let center = UNUserNotificationCenter.current()
+        // Keyed by `uuid`, which means TWINS SHARE ONE IDENTIFIER — and that is
+        // load-bearing, not an oversight. See `notificationID(for:)`.
         let identifier = notificationID(for: tx.uuid)
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
 
@@ -349,6 +351,30 @@ enum RecurrenceService {
         UserDefaults.standard.removeObject(forKey: handledPrefix + uuid.uuidString)
     }
 
+    /// The pending-notification identifier for a series.
+    ///
+    /// **Keyed by `uuid`, deliberately, and DO NOT "fix" this to be per-row.**
+    ///
+    /// This is a uuid-keyed site that the `uuid ==` audit
+    /// (AUDIT_UUID_UNIQUENESS_SYNC_1_0_4) structurally could not find, because
+    /// it is string interpolation rather than a comparison. Everywhere else,
+    /// uuid losing `@Attribute(.unique)` in V2 made uuid-keying a bug: a
+    /// first-sync union gives one series two rows carrying this same value.
+    ///
+    /// Here it is accidentally CORRECT, and it is what keeps the fix in
+    /// `dueRecurring` whole. One series shows one prompt (the twin collapse), so
+    /// it must also raise one notification. Because both twins map to this one
+    /// identifier, `removePendingNotificationRequests` above genuinely replaces
+    /// the series' pending notification instead of leaving a second one behind.
+    ///
+    /// Making this per-row — keying on `persistentModelID`, say, to match how
+    /// prompts now resolve — would reintroduce the double prompt through the
+    /// notification path: two pending notifications, two reminders, one series.
+    /// The collapse would still be correct and the user would still be asked
+    /// twice.
+    ///
+    /// When step 3 moves the period watermark onto the model, this stays keyed
+    /// on the series, not on the row.
     private static func notificationID(for uuid: UUID) -> String {
         "recurring-\(uuid.uuidString)"
     }

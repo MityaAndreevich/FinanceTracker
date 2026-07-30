@@ -31,10 +31,10 @@ addresses B only.
 
 | step | what | status |
 |---|---|---|
-| 1 | `RecurrencePrompt` carries `PersistentIdentifier`; resolution stops going through `uuid` | **DONE** `d063221` |
+| 1 | `RecurrencePrompt` carries `PersistentIdentifier`; resolution stops going through `uuid` | **DONE** `e75c413` |
 | 2 | Collapse twin templates to one prompt, deterministically | **DONE** `9b5679e` |
 | 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceID` | **REVIEW-BLOCKED — no code** |
-| 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | PENDING |
+| 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | **DONE** (this commit) |
 | 5 | Period label derivation (the identity key for step 3) | PENDING |
 | — | Jan-31 monthly drift | **FILED, not fixed** — separate task below |
 
@@ -93,9 +93,18 @@ Twins share a notification identifier. Under the step-2 collapse that is
 `removePendingNotificationRequests` on the shared id is what stops a second
 pending notification existing at all.
 
-Behavior deliberately unchanged. Comment to be added at both sites so nobody later
+Behavior deliberately unchanged. Comments added at both sites so nobody later
 "fixes" it into per-row notifications and reintroduces the double prompt through
-the notification path.
+the notification path: two pending notifications, two reminders, one series — the
+collapse would still be correct and the user would still be asked twice.
+
+No test. There is no behavior change to pin, and a test asserting "the identifier
+is still uuid-shaped" would pin the implementation rather than the reason. The
+reason is the artifact here, and it lives at the site.
+
+*Bookkeeping:* step 1's row above previously recorded `d063221`, the pre-amend
+hash. A commit cannot contain its own hash; later steps say "this commit" and let
+git history carry the reference.
 
 ## Step 5 — the period label (identity key for step 3)
 
