@@ -35,7 +35,7 @@ addresses B only.
 | 2 | Collapse twin templates to one prompt, deterministically | **DONE** `9b5679e` |
 | 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceID` | **REVIEW-BLOCKED — no code** |
 | 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | **DONE** (this commit) |
-| 5 | Period label derivation (the identity key for step 3) | PENDING |
+| 5 | Period label derivation (the identity key for step 3) | **DONE** (this commit) |
 | — | Jan-31 monthly drift | **FILED, not fixed** — separate task below |
 
 **Freeze gate.** Step 3 changes the schema and is review-blocked. Nothing in
@@ -143,9 +143,18 @@ Golden vectors to pin (the dates where week-year and calendar year disagree):
 2024-01-01 / 2024-12-30 pair as an explicit **collision witness**, so the bug
 cannot come back unnoticed.
 
+**Landed** as `RecurrencePeriod.label(for:cadence:)` in
+`FinanceTracker/Services/RecurrencePeriod.swift`, with 20 tests including the
+collision witness and both DST transitions.
+
 The label function ships **unconsumed**: step 3 wires it to `occurrenceID` via
 UUIDv5. That is deliberate — it makes the frozen part of step 3 reviewable and
-testable before the schema change is approved.
+testable before the schema change is approved. It also means the freeze gate
+holds: no stored property was added, removed, or retyped.
+
+Still owed by step 3, and not started: the UUIDv5 derivation itself, its own
+golden vector, and the exact name-string encoding
+(`"<template uuid lowercased>|<cadence>|<label>"`).
 
 ---
 
