@@ -392,11 +392,12 @@ struct DashboardView: View {
     /// "Edit" on a due prompt: mark the period handled (so it won't re-prompt),
     /// then open the Add form prefilled with the template's values for a one-off entry.
     private func handleEditRecurring(_ prompt: RecurrencePrompt) {
+        // Resolve BEFORE skipping: `skip` is what advances the boundary, and if
+        // the template turns out to be gone there is nothing to prefill anyway.
+        // Same resolver as Add and Skip, so the prefill cannot come from a
+        // different twin than the one the prompt displayed (audit site 1.2).
+        guard let template = RecurrenceService.template(for: prompt, modelContext: modelContext) else { return }
         RecurrenceService.skip(prompt, modelContext: modelContext)
-
-        let uuid = prompt.id
-        let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.uuid == uuid })
-        guard let template = try? modelContext.fetch(descriptor).first else { return }
 
         editPrefill = AddTransactionPrefill(
             typeRaw: template.typeRaw,

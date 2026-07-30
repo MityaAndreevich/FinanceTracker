@@ -31,7 +31,7 @@ addresses B only.
 
 | step | what | status |
 |---|---|---|
-| 1 | `RecurrencePrompt` carries `PersistentIdentifier`; resolution stops going through `uuid` | IN PROGRESS |
+| 1 | `RecurrencePrompt` carries `PersistentIdentifier`; resolution stops going through `uuid` | **DONE** `d063221` |
 | 2 | Collapse twin templates to one prompt, deterministically | **DONE** `9b5679e` |
 | 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceID` | **REVIEW-BLOCKED — no code** |
 | 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | PENDING |
@@ -69,7 +69,19 @@ Reported honestly, because the two are easy to conflate:
   fixed *which* twin, and it was necessary for the collapse to mean anything.
 - **Not landed, and the actual point of step 1:** it still resolved **by uuid**,
   and uuid is no longer a unique key. Choosing well among twins is not the same
-  as not needing to choose. Step 1 removes the lookup.
+  as not needing to choose. Step 1 removed the lookup.
+
+**Landed.** `fetchTemplate(_ uuid:)` is deleted; `template(for:modelContext:)` is
+the single resolver, used by `confirm`, `skip`, and `handleEditRecurring`.
+`handleEditRecurring` now resolves *before* skipping — `skip` is what advances the
+boundary, and a template that turns out to be gone has nothing to prefill.
+
+The test that separates this from step 2 is `confirmIsPinnedAcrossACanonicalFlip`:
+a replicated edit lands between the prompt and the tap and flips which twin the
+canonical rule prefers. A uuid lookup re-runs that rule against the new state and
+hands back the *other* row; the identifier stays on the row the user approved.
+Deleted-template cases are no-ops rather than crashes, which is the whole payoff
+of the Q2 measurement.
 
 ## Step 4 — `notificationID(for: uuid)` is load-bearing
 

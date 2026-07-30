@@ -17,7 +17,18 @@ import UserNotifications
 
 /// A due recurring charge awaiting the user's decision.
 struct RecurrencePrompt: Identifiable {
-    let id: UUID            // template uuid
+    /// The series identity. Still the template's `uuid` because that is what
+    /// keys the period watermark and the notification id — NOT because it
+    /// resolves a row. It no longer does: `uuid` lost `@Attribute(.unique)` in
+    /// V2 (CloudKit forbids it), so a first-sync union can give one series two
+    /// rows carrying this same value.
+    let id: UUID
+
+    /// Which row this prompt was built from. Resolution goes through this, so
+    /// that the row the user approves is the row that gets posted even if the
+    /// store changes underneath between the prompt and the tap.
+    let templateID: PersistentIdentifier
+
     let merchant: String
     let amountCents: Int
     let currency: String
@@ -62,6 +73,7 @@ enum RecurrenceService {
             guard now >= due else { return nil }
             return RecurrencePrompt(
                 id: tx.uuid,
+                templateID: tx.persistentModelID,
                 merchant: tx.merchant ?? "",
                 amountCents: tx.amountCents,
                 currency: tx.currency,
@@ -125,10 +137,38 @@ enum RecurrenceService {
 
     // MARK: - User actions on a prompt
 
+    /// The single way a prompt gets back to its row. Every action surface uses
+    /// it, so the Add button, the Skip button and the Edit prefill cannot end up
+    /// on three different twins of the same series.
+    ///
+    /// Resolution is a FETCH on `persistentModelID`, and the alternatives were
+    /// measured rather than reasoned about (`DeletedModelIdentifierTests`):
+    ///
+    /// - `model(for:)` returns a NON-optional and vends a live-looking object
+    ///   over a row that no longer exists; the first stored-property read traps
+    ///   (`EXC_BREAKPOINT` in `Transaction.amountCents.getter`). A template
+    ///   deleted on another device between the prompt and the tap would be a
+    ///   crash, not a no-op.
+    /// - `registeredModel(for:)` answers on this context's registry, so it
+    ///   returns nil for a perfectly live row a fresh context has not
+    ///   materialized yet — the normal state on a cold launch, which is exactly
+    ///   when prompts are built.
+    ///
+    /// A fetch is the only one of the three that means "does this row exist".
+    /// Returns nil if it does not; every caller treats that as "series gone".
+    static func template(for prompt: RecurrencePrompt, modelContext: ModelContext) -> Transaction? {
+        let id = prompt.templateID
+        var descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate { $0.persistentModelID == id }
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
     /// Create this period's concrete transaction (non-recurring) and advance the
     /// template's handled boundary so it won't re-prompt until next period.
     static func confirm(_ prompt: RecurrencePrompt, modelContext: ModelContext) {
-        guard let template = fetchTemplate(prompt.id, modelContext: modelContext) else { return }
+        guard let template = template(for: prompt, modelContext: modelContext) else { return }
 
         let instance = Transaction(
             typeRaw: template.typeRaw,
@@ -163,8 +203,10 @@ enum RecurrenceService {
 
     /// Dismiss this period without logging a charge; still advances the boundary.
     static func skip(_ prompt: RecurrencePrompt, modelContext: ModelContext) {
+        // The boundary advances first and unconditionally: a series whose
+        // template vanished mid-prompt must still not re-ask this period.
         setHandledDate(prompt.dueDate, for: prompt.id)
-        if let template = fetchTemplate(prompt.id, modelContext: modelContext) {
+        if let template = template(for: prompt, modelContext: modelContext) {
             scheduleNotification(for: template)
         }
     }
@@ -288,13 +330,8 @@ enum RecurrenceService {
 
     // MARK: - Internals
 
-    /// Resolves a series to the one row `dueRecurring` decided is canonical.
-    /// It has to be the SAME rule, or the collapse is worthless: the user would
-    /// approve the prompt's 73.00 and get a 52.00 row out of the other twin.
-    static func fetchTemplate(_ uuid: UUID, modelContext: ModelContext) -> Transaction? {
-        let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.uuid == uuid })
-        return canonicalTemplate(among: (try? modelContext.fetch(descriptor)) ?? [])
-    }
+    // (`fetchTemplate(_ uuid:)` was deleted here. Resolving a series by `uuid`
+    // is no longer a valid operation — see `template(for:modelContext:)`.)
 
     // The period boundary is the one piece of series state that lives outside
     // SwiftData, so an edit that changes or ends a series can only be verified
