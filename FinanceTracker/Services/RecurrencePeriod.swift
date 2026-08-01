@@ -17,7 +17,7 @@
 //  │ values so that a change fails a test instead.                           │
 //  └─────────────────────────────────────────────────────────────────────────┘
 //
-//  Two rules make it deterministic across devices:
+//  Three rules make it deterministic across devices:
 //
 //  1. **A period LABEL, never an instant.** `Date` is an absolute time; the
 //     moment it is rendered through `Calendar.current` the answer depends on the
@@ -27,7 +27,17 @@
 //     this exists to survive, two devices can disagree about which twin is
 //     canonical and therefore about the anchor.
 //
-//  2. **No `DateFormatter` anywhere on this path.** Components are read and the
+//  2. **No silent fallback.** Every derivation below traps rather than
+//     substituting a placeholder. `dateComponents(_:from:)` always populates the
+//     components it was asked for, so these branches are unreachable — but the
+//     reachable-looking alternative, `?? 0`, is the worst value in the space: it
+//     maps *every* failed derivation onto the same label ("0000-W00"), so under
+//     find-or-create all of them collapse into one row and every charge after
+//     the first silently disappears. That is precisely the failure rule 3 exists
+//     to prevent, arriving through the back door. A crash with the offending
+//     instant in the message is diagnosable; a lost charge is not.
+//
+//  3. **No `DateFormatter` anywhere on this path.** Components are read and the
 //     string is built numerically, so no locale-sensitive formatting can reach
 //     an identity key. This is not hypothetical caution: the format string this
 //     file replaced, `"yyyy-'W'ww"`, was wrong twice over — `y` is the calendar
@@ -78,15 +88,39 @@ enum RecurrencePeriod {
         switch cadence {
         case .weekly:
             let parts = isoWeek.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-            return String(format: "%04d-W%02d", parts.yearForWeekOfYear ?? 0, parts.weekOfYear ?? 0)
+            guard let weekYear = parts.yearForWeekOfYear, let week = parts.weekOfYear else {
+                preconditionFailure(underivable("yearForWeekOfYear/weekOfYear", date))
+            }
+            return String(format: "%04d-W%02d", weekYear, week)
 
         case .monthly:
             let parts = civil.dateComponents([.year, .month], from: date)
-            return String(format: "%04d-%02d", parts.year ?? 0, parts.month ?? 0)
+            guard let year = parts.year, let month = parts.month else {
+                preconditionFailure(underivable("year/month", date))
+            }
+            return String(format: "%04d-%02d", year, month)
 
         case .yearly:
             let parts = civil.dateComponents([.year], from: date)
-            return String(format: "%04d", parts.year ?? 0)
+            guard let year = parts.year else {
+                preconditionFailure(underivable("year", date))
+            }
+            return String(format: "%04d", year)
         }
+    }
+
+    /// Message for the unreachable branches above.
+    ///
+    /// The instant is reported as a raw `timeIntervalSinceReferenceDate` on
+    /// purpose: it is locale-free, it is exactly what a reproduction needs, and
+    /// no date *formatter* may run on this path even in a crash message —
+    /// the failure being reported is one where the calendar is already suspect.
+    private static func underivable(_ components: String, _ date: Date) -> String {
+        """
+        RecurrencePeriod: calendar returned no \(components) for instant \
+        \(date.timeIntervalSinceReferenceDate). Trapping rather than labelling: a \
+        placeholder label is an occurrence key collision, and a collision is a \
+        charge that silently vanishes from the ledger.
+        """
     }
 }
