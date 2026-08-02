@@ -503,6 +503,7 @@ private struct CategoryLimitSheet: View {
                         if let cents = Money.parseCents(from: amountText), cents > 0 {
                             category.limitCents = cents
                             try? modelContext.save()
+                            FeatureUsageSignals.markUsed(.categoryLimits)
                         }
                         dismiss()
                     }

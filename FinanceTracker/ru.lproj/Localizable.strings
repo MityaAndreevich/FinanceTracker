@@ -289,6 +289,25 @@
 "feedback.mail_unavailable.caption" = "Напишите напрямую — я читаю каждое письмо:";
 "feedback.copy_address" = "Скопировать адрес";
 "feedback.copied" = "Скопировано";
+
+/* Feedback — optional usage summary (1.0.4). */
+"feedback.consent.explainer" = "Budget Crab ничего не отправляет. Откроется черновик в вашей почте — вы отправите его, измените или удалите.";
+"feedback.consent.toggle" = "Добавить сводку об использовании";
+"feedback.consent.toggle_caption" = "Какими функциями вы пользовались, в приблизительных диапазонах. Никаких сумм, продавцов, категорий и дат.";
+"feedback.consent.preview_header" = "Что именно будет добавлено";
+"feedback.consent.subject_note" = "В теме письма также указаны версия приложения, язык и модель устройства — чтобы сортировать обращения. Это есть всегда.";
+"feedback.consent.continue" = "Далее";
+"feedback.usage.heading" = "Сводка об использовании (без данных об операциях)";
+"feedback.usage.yes" = "да";
+"feedback.usage.no" = "нет";
+"feedback.usage.tenure" = "Пользуется приложением (месяцев)";
+"feedback.usage.transactions" = "Операции";
+"feedback.usage.splits" = "Разделённые покупки";
+"feedback.usage.recurring" = "Повторяющиеся";
+"feedback.usage.category_limits" = "Лимиты категорий";
+"feedback.usage.voice" = "Голосовой ввод";
+"feedback.usage.import" = "Импорт CSV";
+"feedback.usage.export" = "Экспорт";
 "dashboard.spending_by_category" = "Расходы по категориям";
 "dashboard.total_spent" = "Потрачено";
 

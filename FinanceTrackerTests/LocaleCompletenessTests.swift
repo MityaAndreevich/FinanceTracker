@@ -222,7 +222,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // can exceed the share Analytics counts, and the editor note for a
         // fully-assigned split whose category therefore receives nothing.
         // All 5 locales in parity. Was 739.
-        XCTAssertEqual(enKeys.count, 742, "English baseline changed; update the expected count.")
+        // 2026-08-02 (feedback usage summary, 1.0.4): net +17. The consent
+        // screen (explainer, toggle + caption, preview header, subject note,
+        // continue) and the 11 summary lines the user reads before sending.
+        // All 5 locales in parity. Was 742.
+        XCTAssertEqual(enKeys.count, 759, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

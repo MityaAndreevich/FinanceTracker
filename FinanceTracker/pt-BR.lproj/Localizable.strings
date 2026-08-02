@@ -360,6 +360,25 @@
 "feedback.mail_unavailable.caption" = "Escreva diretamente — cada mensagem é lida:";
 "feedback.copy_address" = "Copiar endereço";
 "feedback.copied" = "Copiado";
+
+/* Feedback — optional usage summary (1.0.4). */
+"feedback.consent.explainer" = "O Budget Crab não envia nada. Isto abre um rascunho no seu app de E-mail — você envia, edita antes ou descarta.";
+"feedback.consent.toggle" = "Incluir um resumo de uso";
+"feedback.consent.toggle_caption" = "Quais recursos você usou, em faixas aproximadas. Nunca valores, estabelecimentos, categorias ou datas.";
+"feedback.consent.preview_header" = "Exatamente o que será adicionado";
+"feedback.consent.subject_note" = "O assunto também traz a versão do app, o idioma e o modelo do aparelho para organizar as mensagens. Essa parte está sempre lá.";
+"feedback.consent.continue" = "Continuar";
+"feedback.usage.heading" = "Resumo de uso (sem dados de transações)";
+"feedback.usage.yes" = "sim";
+"feedback.usage.no" = "não";
+"feedback.usage.tenure" = "Tempo usando o app (meses)";
+"feedback.usage.transactions" = "Transações";
+"feedback.usage.splits" = "Compras divididas";
+"feedback.usage.recurring" = "Recorrentes";
+"feedback.usage.category_limits" = "Limites de categoria";
+"feedback.usage.voice" = "Entrada por voz";
+"feedback.usage.import" = "Importação CSV";
+"feedback.usage.export" = "Exportação";
 "dashboard.spending_by_category" = "Gastos por categoria";
 "dashboard.total_spent" = "Gasto";
 "dashboard.day0.title" = "Estatísticas em breve";

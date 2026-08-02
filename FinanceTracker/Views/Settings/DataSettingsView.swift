@@ -288,6 +288,7 @@ struct DataSettingsView: View {
                     self.isImporting = false
                     self.importResultMessage = self.formatImportSummary(result)
                     self.showImportResult = true
+                    FeatureUsageSignals.markUsed(.csvImport)
                 }
             } catch {
                 let message = String(
@@ -317,6 +318,7 @@ struct DataSettingsView: View {
                     self.isImporting = false
                     self.importResultMessage = self.formatImportSummary(result)
                     self.showImportResult = true
+                    FeatureUsageSignals.markUsed(.csvImport)
                 }
             } catch {
                 let message = String(
@@ -373,6 +375,7 @@ struct DataSettingsView: View {
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
             exportURL = url
             exportFilename = result.filename
+            FeatureUsageSignals.markUsed(.export)
         } catch {
             exportErrorMessage = String(
                 format: NSLocalizedString("data.export.failed.format", comment: ""),
@@ -392,6 +395,7 @@ struct DataSettingsView: View {
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
             exportURL = url
             exportFilename = result.filename
+            FeatureUsageSignals.markUsed(.export)
         } catch {
             exportErrorMessage = String(
                 format: NSLocalizedString("data.export.failed.format", comment: ""),
@@ -407,6 +411,7 @@ struct DataSettingsView: View {
             let url = try TemporaryFileService.writeTemporaryFile(data: result.data, filename: result.filename)
             exportURL = url
             exportFilename = result.filename
+            FeatureUsageSignals.markUsed(.export)
         } catch {
             exportErrorMessage = String(
                 format: NSLocalizedString("data.export.failed.format", comment: ""),

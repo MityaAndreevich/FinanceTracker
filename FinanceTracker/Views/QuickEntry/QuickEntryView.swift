@@ -955,6 +955,7 @@ struct QuickEntryView: View {
             case .authorized:
                 do {
                     try await voice.start()
+                    FeatureUsageSignals.markUsed(.voiceEntry)
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 } catch {
                     showVoiceError("quick_entry.voice.fail_start", showSettings: false)

@@ -285,6 +285,25 @@
 "feedback.mail_unavailable.caption" = "Напишіть напряму — я читаю кожен лист:";
 "feedback.copy_address" = "Скопіювати адресу";
 "feedback.copied" = "Скопійовано";
+
+/* Feedback — optional usage summary (1.0.4). */
+"feedback.consent.explainer" = "Budget Crab нічого не надсилає. Відкриється чернетка у вашій пошті — ви надішлете її, зміните або видалите.";
+"feedback.consent.toggle" = "Додати зведення про використання";
+"feedback.consent.toggle_caption" = "Якими функціями ви користувалися, приблизними діапазонами. Жодних сум, продавців, категорій чи дат.";
+"feedback.consent.preview_header" = "Що саме буде додано";
+"feedback.consent.subject_note" = "У темі листа також є версія застосунку, мова та модель пристрою — щоб сортувати звернення. Це є завжди.";
+"feedback.consent.continue" = "Далі";
+"feedback.usage.heading" = "Зведення про використання (без даних про операції)";
+"feedback.usage.yes" = "так";
+"feedback.usage.no" = "ні";
+"feedback.usage.tenure" = "Користується застосунком (місяців)";
+"feedback.usage.transactions" = "Операції";
+"feedback.usage.splits" = "Розділені покупки";
+"feedback.usage.recurring" = "Повторювані";
+"feedback.usage.category_limits" = "Ліміти категорій";
+"feedback.usage.voice" = "Голосове введення";
+"feedback.usage.import" = "Імпорт CSV";
+"feedback.usage.export" = "Експорт";
 "dashboard.spending_by_category" = "Витрати за категоріями";
 "dashboard.total_spent" = "Витрачено";
 

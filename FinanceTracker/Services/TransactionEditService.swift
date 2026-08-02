@@ -125,5 +125,16 @@ enum TransactionEditService {
             context.insert(split)
             split.parent = tx
         }
+
+        // The editor is the only user-facing path that creates a split (import
+        // and recurrence copies are derivative), so this is where "ever split
+        // a purchase" gets recorded for the 1.0.3 pre-test. Local only — see
+        // FeatureUsageSignals.
+        if !f.splits.isEmpty {
+            FeatureUsageSignals.markUsed(.splits)
+        }
+        if f.recurrenceRaw != nil {
+            FeatureUsageSignals.markUsed(.recurring)
+        }
     }
 }

@@ -278,6 +278,27 @@
 "feedback.mail_unavailable.caption" = "Write to me directly — every message is read:";
 "feedback.copy_address" = "Copy address";
 "feedback.copied" = "Copied";
+
+/* Feedback — optional usage summary (1.0.4). Labels are localized because the
+   user has to understand what they are sending; the VALUES stay locale-neutral
+   numerals and the line order is fixed. See DECISION_RECEIPT_INPUT_PRETEST.md. */
+"feedback.consent.explainer" = "Budget Crab sends nothing. This opens a draft in your Mail app — you send it, edit it first, or throw it away.";
+"feedback.consent.toggle" = "Include a usage summary";
+"feedback.consent.toggle_caption" = "Which features you've used, in rough ranges. Never amounts, merchants, categories or dates.";
+"feedback.consent.preview_header" = "Exactly what gets added";
+"feedback.consent.subject_note" = "The subject line also carries the app version, language and device model so support mail can be sorted. That part is always there.";
+"feedback.consent.continue" = "Continue";
+"feedback.usage.heading" = "Usage summary (no transaction data)";
+"feedback.usage.yes" = "yes";
+"feedback.usage.no" = "no";
+"feedback.usage.tenure" = "Using the app (months)";
+"feedback.usage.transactions" = "Transactions";
+"feedback.usage.splits" = "Split purchases";
+"feedback.usage.recurring" = "Recurring";
+"feedback.usage.category_limits" = "Category limits";
+"feedback.usage.voice" = "Voice entry";
+"feedback.usage.import" = "CSV import";
+"feedback.usage.export" = "Export";
 "dashboard.spending_by_category" = "Spending by category";
 "dashboard.total_spent" = "Spent";
 
