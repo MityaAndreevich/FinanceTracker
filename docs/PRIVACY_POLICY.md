@@ -36,6 +36,17 @@ When you make an in-app purchase, Apple processes the transaction through its St
 
 If you enable iCloud sync (available as a Premium feature), Apple synchronizes your data between your own Apple devices using your private iCloud account. This data is end-to-end encrypted by Apple; neither Apple nor we can read its contents. You can disable iCloud sync at any time in Settings, after which synchronization stops and no data remains in iCloud.
 
+### Information you choose to send us
+
+The App contains no analytics and no telemetry. It does contain a "Tell me what's missing" screen, which opens a draft message in your own Mail app, addressed to our support address. Two things travel in that draft:
+
+- a subject line carrying the App version, your App language, and your device model (for example, "iPhone14,5"), so that support mail can be sorted; and
+- **only if you leave the toggle on** — a short usage summary describing which features you have used, in ranges rather than exact numbers (for example, "Transactions: 51–200", "Split purchases: yes · 1–5").
+
+That summary never contains anything from your ledger: no amounts, no merchants, no category names, no dates, and no account names. It is shown to you in full, on screen, before Mail opens, and a clearly labelled toggle removes it entirely. **The App itself transmits nothing.** Your Mail app sends the message, from your own mail account, when you press Send — and you can edit or delete any part of the draft first. If you cancel, nothing leaves your device.
+
+Once you do send us an email, we have it, in the same way that anyone has an email you send them. We read it, we may reply to it, and we delete support correspondence when it is no longer needed.
+
 ### Information processed automatically by your device
 
 When you grant the App permission to use Face ID, Touch ID, or your device passcode, your biometric template never leaves the Secure Enclave on your device. We never see, store, or transmit it.
