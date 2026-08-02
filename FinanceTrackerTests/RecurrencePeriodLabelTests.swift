@@ -2,10 +2,17 @@
 //  RecurrencePeriodLabelTests.swift
 //  FinanceTrackerTests
 //
-//  GOLDEN VECTORS. The period label is the input to `occurrenceID` (step 3), so
+//  GOLDEN VECTORS. The period label is a segment of `occurrenceKey` (step 3), so
 //  it is frozen the moment sync ships: changing it silently re-keys every
 //  occurrence and un-collapses everything already posted. These literals exist
 //  so that a change is a failing test rather than a silent re-key.
+//
+//  These are now the ONLY golden vectors the identity needs. The key is the
+//  literal string "<template uuid lowercased>|<cadence>|<label>" rather than a
+//  UUIDv5 hash of it (PLAN_RECURRENCE_SYNC_IDENTITY Q1, amendment 2026-08-02),
+//  so there is no second frozen artifact requiring a vector computed outside
+//  this codebase. The vectors below are independent of it: they come from the
+//  ISO-8601 week rules, not from what this implementation happens to return.
 //
 //  The bug they were written against — the reason `DateFormatter` is banned from
 //  this path — is that `"yyyy-'W'ww"` on a Gregorian / en_US_POSIX calendar

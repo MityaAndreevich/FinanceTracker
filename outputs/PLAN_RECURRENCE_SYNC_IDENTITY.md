@@ -20,7 +20,7 @@ once, and both end in the user being charged twice:
 |---|---|---|
 | A | `dueRecurring` fetches on `recurrenceRaw != nil`, so it counts **rows**, not series. A first-sync union gives one series two rows sharing a uuid ⇒ two prompts in one sitting. | **fixed, step 2** |
 | B | The period watermark is `UserDefaults["recurring.handled.<uuid>"]` — **per device**. Device B never learns A posted ⇒ B prompts too. | step 3 |
-| C | Even with a synced watermark: both devices compute "due" **before it replicates**, both post, `max()` converges the watermark afterwards and two rows remain. | step 3 (`occurrenceID`) |
+| C | Even with a synced watermark: both devices compute "due" **before it replicates**, both post, `max()` converges the watermark afterwards and two rows remain. | step 3 (`occurrenceKey`) |
 
 C is the one that survives the obvious fix. `lastPostedPeriod` + monotone `max()`
 addresses B only.
@@ -33,7 +33,7 @@ addresses B only.
 |---|---|---|
 | 1 | `RecurrencePrompt` carries `PersistentIdentifier`; resolution stops going through `uuid` | **DONE** `e75c413` |
 | 2 | Collapse twin templates to one prompt, deterministically | **DONE** `9b5679e` |
-| 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceID` | **REVIEW-BLOCKED — no code** |
+| 3 | V2→V3: `lastPostedPeriod` + `autoPostEnabled` + `occurrenceKey` | **REVIEW-BLOCKED — no code** |
 | 4 | `notificationID(for:)` is uuid-keyed and that is load-bearing; document it | **DONE** (this commit) |
 | 5 | Period label derivation (the identity key for step 3) | **DONE** (this commit) |
 | — | Jan-31 monthly drift | **FILED, not fixed** — `BRIEF_MONTHEND_RECURRENCE_DRIFT.md` |
@@ -41,7 +41,7 @@ addresses B only.
 **Freeze gate.** Step 3 changes the schema and is review-blocked. Nothing in
 steps 1/2/4/5 adds, removes, or retypes a stored property. The CloudKit
 production schema is additive-only forever, so step 3's three optional
-attributes must land in **one** migration — which is exactly why `occurrenceID`
+attributes must land in **one** migration — which is exactly why `occurrenceKey`
 is in it rather than deferred to a later `RecurrencePost` record type (Doc 2
 §3.4.1).
 
@@ -108,7 +108,7 @@ git history carry the reference.
 
 ## Step 5 — the period label (identity key for step 3)
 
-The normalization originally proposed for `occurrenceID` — `"yyyy-'W'ww"` on a
+The normalization originally proposed for `occurrenceKey` — `"yyyy-'W'ww"` on a
 frozen Gregorian / `en_US_POSIX` / UTC calendar — **does not produce ISO weeks**,
 and the failure mode is a lost charge, not a cosmetic wrong label.
 
@@ -147,20 +147,19 @@ cannot come back unnoticed.
 `FinanceTracker/Services/RecurrencePeriod.swift`, with 20 tests including the
 collision witness and both DST transitions.
 
-The label function ships **unconsumed**: step 3 wires it to `occurrenceID` via
-UUIDv5. That is deliberate — it makes the frozen part of step 3 reviewable and
-testable before the schema change is approved. It also means the freeze gate
-holds: no stored property was added, removed, or retyped.
+The label function ships **unconsumed**: step 3 wires it into `occurrenceKey`.
+That is deliberate — it makes the frozen part of step 3 reviewable and testable
+before the schema change is approved. It also means the freeze gate holds: no
+stored property was added, removed, or retyped.
 
-Still owed by step 3, and not started: the UUIDv5 derivation itself, its own
-golden vector, and the exact name-string encoding
-(`"<template uuid lowercased>|<cadence>|<label>"`).
+Still owed by step 3, and not started: the stored property itself, the
+construction site, and a test pinning the concatenation order and separator.
 
 ---
 
 ## Decided answers (Q1–Q3)
 
-### Q1 — `occurrenceID: UUID?` in the same migration: **yes**
+### Q1 — `occurrenceKey: String?` in the same migration: **yes**
 
 Folded into Doc 2 §3.2, §3.4. Amendments made to the proposal as put:
 
@@ -180,6 +179,63 @@ Folded into Doc 2 §3.2, §3.4. Amendments made to the proposal as put:
   local, so it closes the *sequential* case. The genuinely concurrent case is by
   definition one where the other row has not arrived — that needs the sweep.
   Shipping only find-or-create closes the case that was never the problem.
+
+#### Amendment 2026-08-02 — the key is the String, not a UUIDv5 over it
+
+The field was `occurrenceID: UUID?`, derived as a UUIDv5 (SHA-1, namespaced) over
+`"<template uuid lowercased>|<cadence>|<label>"`. It is now
+`occurrenceKey: String?` and **is** that string:
+
+```swift
+"\(template.uuid.uuidString.lowercased())|\(cadence.rawValue)|\(RecurrencePeriod.label(for: date, cadence: cadence))"
+```
+
+Renamed as well as retyped: `…ID` on a `String` reads like a leftover.
+
+Why, recorded so it is not re-litigated:
+
+1. **No consumer needs a UUID.** Four read sites were checked — find-or-create at
+   the merge site (Doc 2 §3.4.3), the convergence sweep's grouping, the `!= nil`
+   "engine-created row?" test, and the V2→V3 backfill. Every one needs equality
+   and nothing more. `String` is `Equatable`, `Hashable`, `#Predicate`-comparable.
+2. **It would have been the first crypto dependency in the codebase.** Zero
+   `CryptoKit` / `CommonCrypto` imports across 274 Swift files. A system framework
+   is free to link, not free to own — and what was pulling it in was a dedup key.
+   That is not a use that earns a crypto surface in an app that has managed
+   without one.
+3. **The String is injective; the UUID is a 122-bit truncation of SHA-1.**
+   Collision-resistant in practice, but lossy by construction. The concatenation
+   loses nothing: the segments are fixed-shape and none can contain `|`.
+   Distinct inputs give distinct keys provably, not probably.
+4. **A mis-keyed row stays diagnosable from a support dump.**
+   `"a1b2…|monthly|2026-02"` names the template, the cadence, and the period. A
+   UUID names nothing, and the only route back to the input is re-running the
+   derivation over guesses.
+
+**Scope of the change: representation only.** The derivation input is
+byte-identical to the already-reviewed Doc 2 §3.4.2 — same three segments, same
+order, same separator, same lowercasing. Nothing about *what* identifies an
+occurrence moved, which makes this the cheapest possible thing to re-review.
+
+**The outside-the-codebase golden-vector requirement is moot.** It existed because
+the hash was a *second* frozen artifact whose correctness could not be established
+by reading it: a Swift-computed expected UUID would have been the implementation
+asserting on itself, so the vector had to come from an independent SHA-1. Two
+frozen artifacts have now collapsed to one. The only frozen derivation left is the
+period label, and `RecurrencePeriodLabelTests` already pins it against ISO-8601
+vectors that are independent of this codebase. What remains owed is a test pinning
+the concatenation order and separator — a literal, readable at a glance.
+
+**Second-order consequence, now recorded at its site.** `cadence.rawValue` is a
+segment of the frozen key, so `RecurrenceType`'s raw values are frozen for a
+second and independent reason (the first being `recurrenceRaw` storage). Renaming
+a case's raw value silently re-keys every occurrence of that cadence and no
+compiler check catches it. A header note now says so in `RecurrenceType.swift`
+itself, pointing at `RecurrencePeriod.swift` — the design doc is not what someone
+has open when they decide to tidy an enum. **Adding a fourth cadence is safe:** a
+new raw value is a new key namespace and cannot alias an existing one, and
+`RecurrencePeriod.label`'s exhaustive switch forces the label decision at compile
+time. Recorded because the next person who wants `daily` will ask exactly this.
 
 Normalization: identity is a period **label**, never an instant and never an
 index from the anchor. Timezone and DST become structurally unable to affect it

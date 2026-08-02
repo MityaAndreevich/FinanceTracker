@@ -240,7 +240,7 @@ does not read it (§5). A second migration on a synced store is strictly more
 expensive than an unused optional field, and the CloudKit production schema is
 additive-only forever (Doc 1 §1.3) — the cheap moment to add a field is now.
 
-Add **`Transaction.occurrenceID: UUID?`** in that same bump as well (§3.4). It is
+Add **`Transaction.occurrenceKey: String?`** in that same bump as well (§3.4). It is
 not an optimization: `lastPostedPeriod` + `max()` fixes only the *unsynced
 watermark*, and leaves the *sync-lag* double charge completely open. The V2→V3
 migration is the moment to close both. So the migration carries three optional
@@ -296,12 +296,12 @@ CloudKit is explicitly not a real-time database, so that window is real and the
 double charge survives it by a different route. So make the duplicate
 **detectable**:
 
-> Every recurrence-created instance carries **`Transaction.occurrenceID: UUID?`**,
+> Every recurrence-created instance carries **`Transaction.occurrenceKey: String?`**,
 > derived deterministically from `(template uuid, cadence, normalized period
-> label)`. Both devices independently compute the SAME id for the same
+> label)`. Both devices independently compute the SAME key for the same
 > occurrence. `nil` on every row the recurrence engine did not create.
 
-**Two rows sharing an `occurrenceID` are provably one record**, not a content
+**Two rows sharing an `occurrenceKey` are provably one record**, not a content
 coincidence — which is what makes collapsing them legal (§3.4.3).
 
 #### 3.4.1 A separate field, not a derived `uuid`
@@ -311,11 +311,14 @@ The earlier proposal overloaded `uuid`. Rejected, for three reasons:
 - `uuid` already carries the CSV export/import identity and the "is this row
   already here" import skip. Giving it a second meaning means every future
   reader of a `uuid ==` comparison has to work out which of the two is intended
-  — and there are already 19 such sites (Doc 1 audit §0).
+  — and there are already 19 such sites (Doc 1 audit §0). Since §3.4.2's
+  revision the key is a `String`, so this separation is now enforced by the type
+  checker rather than by convention: an occurrence key cannot be assigned to,
+  compared against, or accidentally substituted for a `uuid`.
 - "Two rows share a `uuid`" would then mean two different things: *first-sync
   union twin* (Doc 1 §2.3) and *same occurrence posted twice*. They need
   different handling and must stay distinguishable.
-- It makes §3.4.3's justification unwritable. `occurrenceID == occurrenceID` is
+- It makes §3.4.3's justification unwritable. `occurrenceKey == occurrenceKey` is
   an identity claim; `amount + merchant + date` is a similarity claim. If both
   live on `uuid`, the code comment at the merge site has to explain why this
   particular uuid comparison is one and the neighbouring one is the other.
@@ -333,7 +336,7 @@ forever" is not the blocker. The real costs still point the same way:
 2. Rows posted in the interim would carry no occurrence identity at all and
    could never be retroactively collapsed — the later fix would need this exact
    derivation *plus* a backfill *plus* a repair sweep.
-3. The field is one optional UUID, additive, lightweight-migratable, riding a
+3. The field is one optional `String`, additive, lightweight-migratable, riding a
    migration that is already review-blocked.
 
 #### 3.4.2 Normalization — where determinism actually breaks
@@ -356,18 +359,47 @@ throttle.
 | monthly | civil year + month | `yyyy-MM` |
 | yearly | civil year | `yyyy` |
 
-Name string, byte-exact and frozen once shipped:
+**The key is that string.** Byte-exact and frozen once shipped:
 
-```
-"\(templateUUID.uuidString.lowercased())|\(cadence.rawValue)|\(label)"
+```swift
+"\(template.uuid.uuidString.lowercased())|\(cadence.rawValue)|\(RecurrencePeriod.label(for: date, cadence: cadence))"
 ```
 
-`occurrenceID` = UUIDv5 (SHA-1, namespaced, version/variant bits set) over that
-UTF-8 string, under a fixed app namespace UUID. CryptoKit is a system framework,
-so this adds no dependency. **Pin a golden vector in a test** — a literal
-expected UUID for a known input — so that an innocent refactor of the format
-string, which would silently re-key every occurrence and un-collapse everything,
-fails loudly instead.
+**Revised 2026-08-02: the string *is* `occurrenceKey`; it is not hashed into a
+UUID.** The previous version derived a UUIDv5 (SHA-1, namespaced, version/variant
+bits set) over this same string. The derivation input is byte-identical either
+way — this is a pure representation change, and the three segments above are
+exactly the ones already reviewed. Reasons the hash step was dropped:
+
+- **No consumer needs a UUID.** All four places the key is read — find-or-create
+  at the merge site (§3.4.3), the sweep's grouping, the `!= nil` "is this an
+  engine-created row" test, and the V2→V3 backfill — need equality and nothing
+  else. `String` is `Equatable`, `Hashable`, and `#Predicate`-comparable.
+- **It would have been the codebase's first crypto dependency.** There is no
+  `import CryptoKit` and no `CommonCrypto` anywhere in the app (verified: 0 hits
+  across 274 Swift files). CryptoKit being a system framework makes it free to
+  *link*, not free to *own* — and the thing pulling it in would have been a dedup
+  key, which is not a use that earns a crypto surface.
+- **The string is injective; the UUID is not.** UUIDv5 is a 122-bit truncation of
+  SHA-1 — collision-resistant in practice, but a lossy function of the input by
+  construction. The concatenation is lossy for nothing: the three segments are
+  fixed-shape and `|` appears in none of them (a UUID string is hex-and-hyphens,
+  `cadence.rawValue` is a lowercase ASCII word, a period label is digits with
+  `-`/`W`). Distinct inputs give distinct keys, provably rather than probably.
+- **A mis-keyed row stays diagnosable.** `"a1b2…|monthly|2026-02"` in a support
+  dump says which template, which cadence, and which period. A UUID says nothing,
+  and the only way back to the input is to re-run the derivation over guesses.
+
+**The requirement to pin a golden vector produced outside the codebase is now
+moot.** It existed because the UUIDv5 hash was a second frozen artifact whose
+correctness could not be checked by reading it — a Swift-computed "expected"
+value would have been the implementation asserting on itself, so the vector had
+to come from an independent SHA-1 implementation. Collapsing the two artifacts
+into one removes that: the only frozen derivation left is the period label, and
+`RecurrencePeriodLabelTests` already pins it against ISO-8601 vectors that are
+independent of this codebase (the week-year dates, plus the 2024-01-01 /
+2024-12-30 collision witness). What step 3 still owes is a test pinning the
+**concatenation order and separator** — cheap, and readable as a literal.
 
 Why a label and not an occurrence index `n` counted from the anchor: an index
 puts the template's own `date` into the identity, and during the very lag window
@@ -403,16 +435,27 @@ Now the four cases asked for, against that scheme:
   clamps to Feb 28 in common years and returns to **Feb 29 in 2028**, precisely
   because clamping is from the anchor and not from the previous posting.
 
+**What the middle segment freezes.** `cadence.rawValue` is `RecurrenceType`'s raw
+value, so `"weekly"` / `"monthly"` / `"yearly"` are frozen strings from the day
+sync ships — renaming a case's raw value re-keys every occurrence of that cadence,
+silently and with no compiler error. They were already de-facto frozen by
+`recurrenceRaw` storage; this is a second, independent reason, and it is recorded
+in `RecurrenceType.swift` itself because that is the file someone has open when
+they decide to tidy an enum. **Adding a fourth cadence is safe** — a new raw value
+is a new key namespace and cannot alias an existing one, and
+`RecurrencePeriod.label`'s exhaustive switch forces the new label decision at
+compile time.
+
 **Residual, stated honestly:** if the watermark has *partially* replicated so the
 two devices hold *different* watermarks, they compute different periods, derive
-different ids, and the sweep will not collapse them. `max()` converges the
+different keys, and the sweep will not collapse them. `max()` converges the
 watermark afterwards, so this narrows to a genuine window rather than a standing
 hole, but it is not closed by this mechanism and should not be described as if it
 were.
 
 #### 3.4.3 The merge site, and why this is not content dedup
 
-`confirm()` (and the auto-post path) does **find-or-create on `occurrenceID`**
+`confirm()` (and the auto-post path) does **find-or-create on `occurrenceKey`**
 rather than a bare insert, plus a convergent sweep on remote-change import.
 
 **Both are required, and the reason is worth stating because the proposal reads
@@ -435,13 +478,13 @@ amount, and the other device's untouched copy arrives, the edit survives.
 At the merge site, in a comment:
 
 > Collapsing two rows here is **identity**, not similarity: they carry the same
-> `occurrenceID`, which is a pure function of (template, cadence, period), so
+> `occurrenceKey`, which is a pure function of (template, cadence, period), so
 > they are provably two representations of one posting. This does **not** breach
 > the rule in `project_quickadd_no_content_dedup` — that rule forbids inferring
 > "duplicate" from *content* (amount | type | merchant within a window), because
 > two identical coffees are two real spends. Nothing here reads content to
 > decide; content is only ever used to break a tie between rows already proven
-> identical. A row with `occurrenceID == nil` is never a merge candidate, which
+> identical. A row with `occurrenceKey == nil` is never a merge candidate, which
 > is why a manual "Netflix 15.99" typed on the same day is never absorbed into
 > the auto-posted one.
 

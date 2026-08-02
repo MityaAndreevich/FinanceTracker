@@ -4,11 +4,22 @@
 //
 //  The calendar period a recurring charge belongs to, as a string label.
 //
-//  This is the input to `Transaction.occurrenceID` (1.0.4 auto-post / sync,
-//  PLAN_RECURRENCE_SYNC_IDENTITY step 3): two devices independently derive the
-//  same occurrence id for the same charge by deriving it from the same label.
-//  That makes a concurrent double-post *detectable* — two rows sharing an
-//  occurrence id are provably one posting rather than a content coincidence.
+//  This is the third segment of `Transaction.occurrenceKey` (1.0.4 auto-post /
+//  sync, PLAN_RECURRENCE_SYNC_IDENTITY step 3), which is the literal string
+//
+//      "<template uuid lowercased>|<cadence.rawValue>|<label>"
+//
+//  Two devices independently build the same key for the same charge because they
+//  build it from the same label. That makes a concurrent double-post *detectable*
+//  — two rows sharing an occurrence key are provably one posting rather than a
+//  content coincidence.
+//
+//  The key is the string itself, not a hash of it (the earlier design derived a
+//  UUIDv5 over these same bytes; see PLAN_RECURRENCE_SYNC_IDENTITY Q1, amendment
+//  2026-08-02). Note what that makes the middle segment: `RecurrenceType`'s raw
+//  values are frozen too, for a second reason beyond `recurrenceRaw` storage.
+//  That note lives in `RecurrenceType.swift`, where someone tidying the enum will
+//  actually see it.
 //
 //  ┌─────────────────────────────────────────────────────────────────────────┐
 //  │ FROZEN. Once sync ships, changing anything about how these strings are  │
@@ -84,6 +95,9 @@ enum RecurrencePeriod {
     /// `RecurrenceType` has exactly three cases and no `daily`, so the label set
     /// is closed. Adding a fourth cadence must be a compile error here, not a
     /// silent fallback into a wrong label — a wrong label is a lost charge.
+    /// Adding one is otherwise safe (a new cadence is a new key namespace and
+    /// cannot alias an existing one); *renaming* an existing raw value is not.
+    /// Both are spelled out in `RecurrenceType.swift`'s header.
     static func label(for date: Date, cadence: RecurrenceType) -> String {
         switch cadence {
         case .weekly:
