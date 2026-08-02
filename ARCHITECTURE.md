@@ -179,6 +179,45 @@ never before (they're the only handle we have on it).
   `AnalyticsBreakdownView` / `AnalyticsHorizonView` / `DaySpendingSheet`, and the
   Settings → Debug section that drives them.
 
+## Releases — every submission gets a tag and a branch, before anything else lands
+
+**The rule, and it is not optional:** the moment a build is uploaded to App Store Connect for review,
+that exact commit gets **an annotated tag** and **a release branch**, both pushed, *before* any
+post-submission work lands on `main`.
+
+```bash
+git tag -a v<marketing>-build<n> <commit> -m "<marketing> build <n> — submitted for review"
+git branch release/<marketing> <commit>
+git push origin v<marketing>-build<n>
+git push -u origin release/<marketing>
+```
+
+Amend the tag message to "approved and released" (`git tag -f -a`, force-push the tag) once Apple
+approves, so the tag says what actually happened to that build.
+
+**Why.** `main` keeps moving the instant a build is in review. Without the tag, the shipped commit is
+identifiable only by the text of a commit message, and a hotfix for a live user means reconstructing
+"which commit was that?" from `CURRENT_PROJECT_VERSION` archaeology under time pressure. With the tag
+and the branch, an urgent fix is `git checkout release/1.0.3` — cherry-pick the fix, bump the build,
+ship — with none of the unreleased work on `main` coming along by accident.
+
+**Naming.** Tags are `v<marketing>-build<n>` (e.g. `v1.0.3-build7`). Release branches are
+`release/<marketing>` (e.g. `release/1.0.3`).
+
+⚠️ **`release/v1`, `release/ft-lite` and `release/ft-pro` are unrelated legacy branches** from the
+pre-Budget-Crab "FinanceTracker Lite/Pro" split. They all sit at old commits, they are not part of
+this scheme, and nothing should ever be cut from or merged into them.
+
+**Shipped so far:**
+
+| Version | Build | Commit | Tag | Branch |
+|---|---:|---|---|---|
+| 1.0.3 | 7 | `a615e07` | `v1.0.3-build7` | `release/1.0.3` |
+
+(1.0.0–1.0.2 shipped before this rule existed and have no tags. Do not backfill them from memory —
+if one is ever needed, find it by `CURRENT_PROJECT_VERSION` in `project.pbxproj` history and tag it
+then, noting that it was reconstructed.)
+
 ## App Store readiness
 
 ### Done
