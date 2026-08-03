@@ -215,6 +215,26 @@ struct ContentView: View {
             if CommandLine.arguments.contains("--seed-onboarding-demo") {
                 _ = try? DemoSeeder.seedOnboardingDemoGuarded(modelContext: modelContext)
             }
+            // The three row-writing seams below run in a FIXED order, and the order
+            // is load-bearing. Both large-seed calls come first because
+            // `seedIfRequested` now RESETS the ledger rather than topping it up:
+            // run it after the duplicate seam and it would silently erase the very
+            // rows that seam just imported.
+            //
+            //   1. purge  — a launch that did NOT ask for scale drops a ledger some
+            //      earlier run left behind. On 2026-08-03 the absence of this step
+            //      meant the duplicate seam ran the REAL importer against 8 000
+            //      inherited rows: a 130-second test, and a measurement of a store
+            //      nobody had chosen.
+            //   2. seed   — establishes a known ledger when scale IS requested.
+            //   3. duplicates — imports on top of whatever (1) or (2) settled on, so
+            //      "large ledger, THEN a duplicate import" is expressible on purpose
+            //      instead of by accident.
+            LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
+            // Perf seam: fill the real store with ~8k rows across 24 months so the
+            // main-thread hang (which scales with row count) is measurable on a
+            // simulator and on the founder's device.
+            LargeDatasetDebugSeed.seedIfRequested(modelContext: modelContext)
             // QA seam: import a foreign CSV twice through the REAL importer, so the
             // possible-duplicate badge + review flow can be driven end-to-end without
             // the premium gate and the system file picker standing in the way.
@@ -225,10 +245,6 @@ struct ContentView: View {
             // otherwise inherit the accounts left by the previous run (or by a demo-mode
             // screenshot session) and meet the cap before it had added anything.
             AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
-            // Perf seam: fill the real store with ~8k rows across 24 months so the
-            // main-thread hang (which scales with row count) is measurable on a
-            // simulator and on the founder's device.
-            LargeDatasetDebugSeed.seedIfRequested(modelContext: modelContext)
             #endif
         }
         .onChange(of: scenePhase) { _, new in
