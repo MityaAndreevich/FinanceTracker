@@ -87,6 +87,10 @@ final class MainThreadStallMonitor {
         gapsMs.append(gapMs)
         if gapMs >= 250 {
             log.info("STALL gapMs=\(String(format: "%.0f", gapMs), privacy: .public)")
+            // Also to the file. App stdout and os_log are NOT captured in
+            // xcodebuild logs, so a stall recorded only there is a stall nobody
+            // can read afterwards — which cost several runs to learn.
+            append("STALL gapMs=\(String(format: "%.0f", gapMs))")
         }
     }
 
@@ -97,8 +101,22 @@ final class MainThreadStallMonitor {
     /// answer, not a broken instrument.
     func report(_ label: String) {
         guard Self.isRequested, let started = startedAt else { return }
-        let observedMs = Double(DispatchTime.now().uptimeNanoseconds - started.uptimeNanoseconds) / 1_000_000
+        let now = DispatchTime.now()
+        let observedMs = Double(now.uptimeNanoseconds - started.uptimeNanoseconds) / 1_000_000
         let nominal = intervalMs + toleranceMs
+
+        // The trailing gap, and why omitting it inverts the result.
+        //
+        // The worst case for this instrument is the main thread being blocked
+        // CONTINUOUSLY from start to report: the timer never fires even once,
+        // `gapsMs` stays empty, and a naive report says "0% blocked" about a
+        // total freeze. Closing the window at report time — treating the stretch
+        // since the last tick (or since start, if there was never a tick) as one
+        // more gap — is what makes a total freeze read as 100% instead of 0%.
+        var gapsMs = self.gapsMs
+        let sinceLastTick = Double(now.uptimeNanoseconds - (lastTick ?? started).uptimeNanoseconds) / 1_000_000
+        if sinceLastTick > nominal { gapsMs.append(sinceLastTick) }
+
         let blocked = gapsMs.filter { $0 > nominal }
         let blockedMs = blocked.reduce(0) { $0 + ($1 - intervalMs) }
         let sorted = gapsMs.sorted()
@@ -121,9 +139,12 @@ final class MainThreadStallMonitor {
         over5s=\(gapsMs.filter { $0 > 5000 }.count)
         """
         log.info("\(body, privacy: .public)")
-        print("📉 \(body)")
-        // Same /tmp channel HangProbe and MainThreadHangScaleTests already use:
-        // simulator processes share the host filesystem.
+        append(body)
+    }
+
+    /// Same /tmp channel HangProbe and MainThreadHangScaleTests already use:
+    /// simulator processes share the host filesystem.
+    private func append(_ body: String) {
         let url = URL(fileURLWithPath: "/tmp/stall-report.txt")
         let line = body + "\n"
         if let handle = try? FileHandle(forWritingTo: url) {

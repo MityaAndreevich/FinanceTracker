@@ -248,7 +248,16 @@ struct ContentView: View {
             // otherwise inherit the accounts left by the previous run (or by a demo-mode
             // screenshot session) and meet the cap before it had added anything.
             AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
-            MainThreadStallMonitor.shared.report("launch-seams")
+            // Row count and the flags go in the label because app stdout/os_log is
+            // NOT captured in xcodebuild logs — the /tmp file is the only reliable
+            // channel back, and a report that cannot say how many rows it observed
+            // is a number without an experiment attached.
+            let seededRows = (try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? -1
+            MainThreadStallMonitor.shared.report(
+                "launch-seams rows=\(seededRows)"
+                + " scale=\(LargeDatasetDebugSeed.isRequested ? 1 : 0)"
+                + " dup=\(DuplicateReviewDebugSeed.isRequested ? 1 : 0)"
+            )
             #endif
         }
         .onChange(of: scenePhase) { _, new in
