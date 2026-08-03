@@ -62,3 +62,8 @@ AppStore/screenshots/
 
 # Python bytecode from the screenshot compositor
 __pycache__/
+
+# Internal decision records (moved to budget-crab-internal 2026-08-04)
+# NOTE: already-published versions remain in this repo history. Untracking
+# stops future drafts becoming public; it does not retract what is out.
+outputs/DECISION_RECEIPT_INPUT_PRETEST.md
