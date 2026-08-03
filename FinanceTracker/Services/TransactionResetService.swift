@@ -37,7 +37,9 @@ enum TransactionResetService {
     @discardableResult
     static func reset(in context: ModelContext) -> Outcome {
         let all = (try? context.fetch(FetchDescriptor<Transaction>())) ?? []
-        for tx in all { context.delete(tx) }
+        hangProbe("TransactionReset.deleteAll", rows: all.count) {
+            for tx in all { context.delete(tx) }
+        }
         do {
             try context.save()
         } catch {

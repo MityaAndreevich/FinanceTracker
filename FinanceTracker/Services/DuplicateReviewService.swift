@@ -63,9 +63,12 @@ enum DuplicateReviewService {
     /// original it matched was already in the store and was never flagged, so
     /// this can't empty out real data.
     static func deleteAll(in modelContext: ModelContext) throws {
-        for tx in try flagged(in: modelContext) {
-            modelContext.delete(tx)
+        let rows = try flagged(in: modelContext)
+        try hangProbe("DuplicateReview.deleteAll", rows: rows.count) {
+            for tx in rows {
+                modelContext.delete(tx)
+            }
+            try modelContext.save()
         }
-        try modelContext.save()
     }
 }

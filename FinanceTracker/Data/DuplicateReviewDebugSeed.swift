@@ -31,14 +31,19 @@ enum DuplicateReviewDebugSeed {
     /// is clean; every row of the second content-matches and comes back flagged.
     static func seed(modelContext: ModelContext) {
         do {
-            for tx in try modelContext.fetch(FetchDescriptor<Transaction>()) {
-                modelContext.delete(tx)
+            let existing = try modelContext.fetch(FetchDescriptor<Transaction>())
+            try hangProbe("DuplicateSeed.wipe", rows: existing.count) {
+                for tx in existing {
+                    modelContext.delete(tx)
+                }
+                try modelContext.save()
             }
-            try modelContext.save()
 
             let data = Data(foreignCSV().utf8)
-            _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
-            _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
+            try hangProbe("DuplicateSeed.import", rows: 2) {
+                _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
+                _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
+            }
         } catch {
             print("DuplicateReviewDebugSeed failed: \(error.localizedDescription)")
         }

@@ -230,6 +230,9 @@ struct ContentView: View {
             //   3. duplicates — imports on top of whatever (1) or (2) settled on, so
             //      "large ledger, THEN a duplicate import" is expressible on purpose
             //      instead of by accident.
+            // Measurement (2026-08-04): observe the runloop across the seam work
+            // below. Opt-in via --stall-monitor, so ordinary runs pay nothing.
+            MainThreadStallMonitor.shared.startIfRequested()
             LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
             // Perf seam: fill the real store with ~8k rows across 24 months so the
             // main-thread hang (which scales with row count) is measurable on a
@@ -245,6 +248,7 @@ struct ContentView: View {
             // otherwise inherit the accounts left by the previous run (or by a demo-mode
             // screenshot session) and meet the cap before it had added anything.
             AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
+            MainThreadStallMonitor.shared.report("launch-seams")
             #endif
         }
         .onChange(of: scenePhase) { _, new in
