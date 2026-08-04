@@ -30,6 +30,13 @@ struct DuplicateReviewView: View {
 
     @State private var confirmDeleteAll = false
 
+    /// A failed review action must SAY so. The action is destructive (or, for
+    /// keep, the thing that clears the queue), and after the rollback in
+    /// DuplicateReviewService nothing changed — so a silent dismissal would be
+    /// indistinguishable from success and would leave the user believing the
+    /// queue was resolved.
+    @State private var showActionFailed = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -65,6 +72,11 @@ struct DuplicateReviewView: View {
                 Button("duplicates.review.delete_all", role: .destructive) { deleteAll() }
             } message: {
                 Text("duplicates.review.delete_all.confirm.message")
+            }
+            .alert("common.error", isPresented: $showActionFailed) {
+                Button("common.ok", role: .cancel) {}
+            } message: {
+                Text("duplicates.review.action_failed.message")
             }
             .languageReactive()
         }
@@ -147,22 +159,31 @@ struct DuplicateReviewView: View {
         perform { try DuplicateReviewService.delete(tx, in: modelContext) }
     }
 
+    // The bulk actions dismiss ONLY on success. Dismissing regardless is what
+    // made a failure invisible: the sheet closed, the banner's count read zero
+    // off the pending (unapplied) deletes, and the user was told nothing.
     private func keepAll() {
-        perform { try DuplicateReviewService.keepAll(in: modelContext) }
-        dismiss()
+        if perform({ try DuplicateReviewService.keepAll(in: modelContext) }) { dismiss() }
     }
 
     private func deleteAll() {
-        perform { try DuplicateReviewService.deleteAll(in: modelContext) }
-        dismiss()
+        if perform({ try DuplicateReviewService.deleteAll(in: modelContext) }) { dismiss() }
     }
 
-    private func perform(_ work: () throws -> Void) {
-        do { try work() }
-        catch {
+    /// Returns whether the work succeeded. The service has already rolled the
+    /// context back, so on false the ledger is exactly as it was — which is what
+    /// the alert tells the user.
+    @discardableResult
+    private func perform(_ work: () throws -> Void) -> Bool {
+        do {
+            try work()
+            return true
+        } catch {
+            showActionFailed = true
             #if DEBUG
             print("Duplicate review action failed: \(error.localizedDescription)")
             #endif
+            return false
         }
     }
 }

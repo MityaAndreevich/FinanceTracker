@@ -885,6 +885,7 @@
 "duplicates.review.delete_all.confirm.message" = "Это действие нельзя отменить. Операции, с которыми они совпали, останутся.";
 "duplicates.review.empty.title" = "Нечего проверять";
 "duplicates.review.empty.subtitle" = "Здесь появятся импортированные операции, совпавшие с уже имеющимися.";
+"duplicates.review.action_failed.message" = "Не удалось применить изменение. Ничего не изменилось — попробуйте ещё раз.";
 
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "На бесплатном плане доступно счетов: %d. Оформите Premium, чтобы добавить ещё — уже созданные счета остаются с вами.";

@@ -17,6 +17,32 @@ import SwiftData
 
 enum DuplicateReviewService {
 
+    /// Every mutation here goes through this. A thrown `save()` that is merely
+    /// propagated leaves the pending deletes/edits sitting in the long-lived
+    /// mainContext, and that is not inert: `flaggedCount` sets
+    /// `includePendingChanges = true`, so the app immediately reports zero rows
+    /// left to review while the store still holds every one of them — and the
+    /// next ordinary save the user causes (entering a transaction, minutes or
+    /// days later) commits the abandoned deletes for real, at a moment they never
+    /// asked for and cannot connect to anything they did. Both halves of that are
+    /// demonstrated in SaveFailureReachabilityProbe.
+    ///
+    /// `rollback()` is what makes a failed operation stay failed. The error is
+    /// still rethrown: the caller MUST tell the user, because a silent no-op on a
+    /// destructive action is indistinguishable from success.
+    ///
+    /// Same discipline as `TransactionResetService.reset` and
+    /// `MerchantLearningService.record`.
+    private static func saveOrRollback(_ modelContext: ModelContext, _ label: String) throws {
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            logSaveFailure(label, error)
+            throw error
+        }
+    }
+
     /// Every transaction the importer flagged as a possible duplicate, newest
     /// first — the review queue.
     static func flagged(in modelContext: ModelContext) throws -> [Transaction] {
@@ -38,14 +64,14 @@ enum DuplicateReviewService {
     static func keep(_ tx: Transaction, in modelContext: ModelContext) throws {
         tx.isPossibleDuplicate = false
         tx.updatedAt = Date()
-        try modelContext.save()
+        try saveOrRollback(modelContext, "DuplicateReviewService.keep")
     }
 
     /// "That was a re-import." An ordinary delete — same path as a swipe-delete,
     /// so no special delete-rule or permission surface.
     static func delete(_ tx: Transaction, in modelContext: ModelContext) throws {
         modelContext.delete(tx)
-        try modelContext.save()
+        try saveOrRollback(modelContext, "DuplicateReviewService.delete")
     }
 
     /// Dismiss the whole queue without deleting anything. The safe bulk action —
@@ -56,7 +82,7 @@ enum DuplicateReviewService {
             tx.isPossibleDuplicate = false
             tx.updatedAt = now
         }
-        try modelContext.save()
+        try saveOrRollback(modelContext, "DuplicateReviewService.keepAll")
     }
 
     /// Delete every flagged row. Only the flagged COPY is ever deleted — the
@@ -68,7 +94,7 @@ enum DuplicateReviewService {
             for tx in rows {
                 modelContext.delete(tx)
             }
-            try modelContext.save()
+            try saveOrRollback(modelContext, "DuplicateReviewService.deleteAll")
         }
     }
 }

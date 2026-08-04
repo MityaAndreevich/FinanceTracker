@@ -226,7 +226,7 @@ final class LocaleCompletenessTests: XCTestCase {
         // screen (explainer, toggle + caption, preview header, subject note,
         // continue) and the 11 summary lines the user reads before sending.
         // All 5 locales in parity. Was 742.
-        XCTAssertEqual(enKeys.count, 759, "English baseline changed; update the expected count.")
+        XCTAssertEqual(enKeys.count, 760, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
