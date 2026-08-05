@@ -611,9 +611,29 @@ struct DashboardView: View {
     /// path arms this — manual preview-chip saves are never shake-undoable.
     private func undoLastAutoSave() {
         guard undoWindowActive, let tx = quickAddSavedTx else { return }
+
+        // Everything below the save used to run unconditionally: the expiry task
+        // was cancelled, the window disarmed, a success haptic fired and the
+        // toast said "undone" — while the row was still in the ledger and the
+        // abandoned delete sat pending, to be committed by the user's next
+        // ordinary save. Nothing here may run before the delete is on disk.
+        do {
+            try TransactionDeleteService.delete(tx, in: modelContext)
+        } catch {
+            // The row survives, so the undo did not happen and must not claim to.
+            // The window is disarmed anyway — after a rollback the object is not
+            // safe to hand to the toast's tap-to-edit (same reasoning as the save
+            // error path above), and the expiry task is left running so the state
+            // clears on its own.
+            quickAddSavedTx = nil
+            quickAddSavedAt = nil
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            quickAddToastStyle = .error
+            quickAddToast = "quickadd.undo.failed"
+            return
+        }
+
         undoExpiryTask?.cancel()
-        modelContext.delete(tx)
-        try? modelContext.save()
         quickAddSavedTx = nil
         quickAddSavedAt = nil
         scheduleWidgetSnapshot()

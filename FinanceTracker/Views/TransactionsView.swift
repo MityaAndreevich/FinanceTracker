@@ -40,6 +40,9 @@ struct TransactionsView: View {
     // in-flight confirmation.
     @State private var pendingDeleteTx: Transaction?
 
+    /// A rolled-back delete leaves the row on screen, which is honest but mute.
+    @State private var showDeleteFailed = false
+
     var body: some View {
         // The list content is a child so its @Query can be built from the
         // selected period (hang-brief Item 1, stage 2): the old view-wide
@@ -142,6 +145,11 @@ struct TransactionsView: View {
                 pendingDeleteTx = nil
             }
         }
+        .alert("common.error", isPresented: $showDeleteFailed) {
+            Button("common.ok", role: .cancel) {}
+        } message: {
+            Text("transactions.delete.failed")
+        }
         // Drop a stale search when leaving the tab (device QA round 2 #1). Without
         // this, a search like "Футболка 550" survives a tab switch and silently
         // hides the whole list on return, reading as data loss. Keep it while
@@ -193,10 +201,14 @@ struct TransactionsView: View {
         #endif
     }
 
+    /// A failed delete used to be a DEBUG print: the row visibly returned (the
+    /// @Query re-reads), which reads as "the swipe didn't register" — and the
+    /// abandoned delete stayed pending, so it committed on the user's next
+    /// ordinary save. The service rolls back; this says so.
     private func delete(_ tx: Transaction) {
-        modelContext.delete(tx)
-        do { try modelContext.save() }
+        do { try TransactionDeleteService.delete(tx, in: modelContext) }
         catch {
+            showDeleteFailed = true
             #if DEBUG
             print("Failed to delete transaction: \(error.localizedDescription)")
             #endif

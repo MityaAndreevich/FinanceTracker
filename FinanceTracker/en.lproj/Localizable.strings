@@ -671,6 +671,8 @@
 "quickadd.preview.edit" = "Edit";
 "quickadd.saved.tap_to_edit" = "Saved — tap to edit";
 "quickadd.undo.confirmed" = "Transaction removed";
+"quickadd.undo.failed" = "Couldn’t undo — your transaction is still saved.";
+"transactions.delete.failed" = "Couldn’t delete. Nothing was changed — please try again.";
 "quickadd.preview.no_category" = "[Tap to pick]";
 "quickadd.pick_category" = "Choose category";
 "category.picker.add_new" = "Add new category";

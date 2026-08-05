@@ -679,6 +679,8 @@
 "quickadd.preview.edit" = "Изменить";
 "quickadd.saved.tap_to_edit" = "Сохранено — нажмите для изменения";
 "quickadd.undo.confirmed" = "Транзакция удалена";
+"quickadd.undo.failed" = "Не удалось отменить — транзакция осталась сохранённой.";
+"transactions.delete.failed" = "Не удалось удалить. Ничего не изменилось — попробуйте ещё раз.";
 "quickadd.preview.no_category" = "[Выбрать категорию]";
 "quickadd.pick_category" = "Выберите категорию";
 "category.picker.add_new" = "Новая категория";

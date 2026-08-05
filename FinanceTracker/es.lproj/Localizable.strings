@@ -615,6 +615,8 @@
 "quickadd.preview.edit" = "Editar";
 "quickadd.saved.tap_to_edit" = "Guardado — toca para editar";
 "quickadd.undo.confirmed" = "Transacción eliminada";
+"quickadd.undo.failed" = "No se pudo deshacer: tu transacción sigue guardada.";
+"transactions.delete.failed" = "No se pudo eliminar. No se modificó nada: inténtalo de nuevo.";
 "quickadd.preview.no_category" = "[Toca para elegir]";
 "quickadd.pick_category" = "Elegir categoría";
 "category.picker.add_new" = "Agregar nueva categoría";

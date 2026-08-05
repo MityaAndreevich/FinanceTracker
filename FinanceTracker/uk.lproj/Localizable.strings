@@ -676,6 +676,8 @@
 "quickadd.preview.edit" = "Редагувати";
 "quickadd.saved.tap_to_edit" = "Збережено — торкніться, щоб змінити";
 "quickadd.undo.confirmed" = "Транзакція видалена";
+"quickadd.undo.failed" = "Не вдалося скасувати — транзакція залишається збереженою.";
+"transactions.delete.failed" = "Не вдалося видалити. Нічого не змінилося — спробуйте ще раз.";
 "quickadd.preview.no_category" = "[Торкніться, щоб вибрати]";
 "quickadd.pick_category" = "Виберіть категорію";
 "category.picker.add_new" = "Додати нову категорію";
