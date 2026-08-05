@@ -888,6 +888,7 @@
 
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "Безкоштовний план містить рахунків: %d. Оформте Premium, щоб додати ще — уже створені рахунки залишаються з вами.";
+"cs.error.save_failed" = "Не вдалося зберегти зміну. Нічого не змінилося — спробуйте ще раз.";
 "cs.categories.cap_hint" = "Безкоштовний план містить власних категорій: %d, а також усі вбудовані. Оформте Premium, щоб додати ще — уже створені категорії залишаються з вами.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */

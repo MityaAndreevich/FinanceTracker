@@ -229,7 +229,10 @@ final class LocaleCompletenessTests: XCTestCase {
         // 2026-08-05 (guarded delete paths): net +2. A failed shake-undo and a
         // failed swipe-delete both used to be silent; each now says what did NOT
         // happen. All 5 locales in parity. Was 760.
-        XCTAssertEqual(enKeys.count, 762, "English baseline changed; update the expected count.")
+        // 2026-08-06 (guarded save at the audited view sites): net +1. One shared
+        // "nothing was changed" message for the Categories & Accounts sheets.
+        // All 5 locales in parity. Was 762.
+        XCTAssertEqual(enKeys.count, 763, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

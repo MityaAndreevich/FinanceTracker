@@ -394,13 +394,12 @@ struct CategoriesSourcesView: View {
         }
     }
 
-    private func saveContext() {
-        do { try modelContext.save() }
-        catch {
-            #if DEBUG
-            print("Save failed: \(error.localizedDescription)")
-            #endif
-        }
+    /// Category / Source deletes and reorder writes. The catch used to be a
+    /// DEBUG print with no rollback, so a failed delete stayed pending and was
+    /// committed by the user's next ordinary save.
+    @discardableResult
+    private func saveContext() -> Bool {
+        GuardedSave.commit(modelContext, "CategoriesSourcesView.saveContext")
     }
 }
 
@@ -466,6 +465,10 @@ private struct CategoryLimitSheet: View {
     let category: Category
     @State private var amountText: String = ""
 
+    /// A failed write must not dismiss. `limitCents` is an ATTRIBUTE, so
+    /// `rollback()` alone would not restore it — the revert closure does.
+    @State private var showSaveFailed = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -484,9 +487,14 @@ private struct CategoryLimitSheet: View {
 
                 if category.limitCents != nil {
                     Button(role: .destructive) {
+                        let prior = category.limitCents
                         category.limitCents = nil
-                        try? modelContext.save()
-                        dismiss()
+                        if GuardedSave.commit(modelContext, "CategoryLimitSheet.clear",
+                                              revert: { category.limitCents = prior }) {
+                            dismiss()
+                        } else {
+                            showSaveFailed = true
+                        }
                     } label: {
                         Text("limit.clear")
                     }
@@ -500,11 +508,22 @@ private struct CategoryLimitSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.save") {
-                        if let cents = Money.parseCents(from: amountText), cents > 0 {
-                            category.limitCents = cents
-                            try? modelContext.save()
-                            FeatureUsageSignals.markUsed(.categoryLimits)
+                        guard let cents = Money.parseCents(from: amountText), cents > 0 else {
+                            dismiss()
+                            return
                         }
+                        let prior = category.limitCents
+                        category.limitCents = cents
+                        guard GuardedSave.commit(modelContext, "CategoryLimitSheet.save",
+                                                 revert: { category.limitCents = prior }) else {
+                            showSaveFailed = true
+                            return
+                        }
+                        // Only after the limit exists on disk. `usage.ever.*` is the
+                        // 1.0.3 pre-test instrument with a pre-registered kill rule —
+                        // recording "used" for a feature the user did not get corrupts
+                        // the number a ship decision rests on.
+                        FeatureUsageSignals.markUsed(.categoryLimits)
                         dismiss()
                     }
                     .disabled(Money.parseCents(from: amountText) == nil)
@@ -514,6 +533,11 @@ private struct CategoryLimitSheet: View {
                 if let limit = category.limitCents {
                     amountText = Money.plainDecimalString(cents: limit)
                 }
+            }
+            .alert("common.error", isPresented: $showSaveFailed) {
+                Button("common.ok", role: .cancel) {}
+            } message: {
+                Text("cs.error.save_failed")
             }
         }
     }
@@ -527,6 +551,10 @@ private struct AddSourceSheet: View {
 
     /// Fired after a source is successfully inserted (not on cancel).
     var onAdded: (() -> Void)? = nil
+
+    /// Dismissing regardless is what made a failure invisible: the sheet closed
+    /// and the user was told nothing while no account had been created.
+    @State private var showSaveFailed = false
 
     @State private var name = ""
     @State private var note = ""
@@ -584,7 +612,10 @@ private struct AddSourceSheet: View {
         let source = Source(name: trimmed, note: noteTrimmed.isEmpty ? nil : noteTrimmed)
 
         modelContext.insert(source)
-        try? modelContext.save()
+        guard GuardedSave.commit(modelContext, "AddSourceSheet.add") else {
+            showSaveFailed = true
+            return
+        }
         onAdded?()
         dismiss()
     }

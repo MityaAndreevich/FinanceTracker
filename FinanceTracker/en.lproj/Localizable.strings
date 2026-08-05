@@ -885,6 +885,7 @@
 
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "Free plan includes %d accounts. Upgrade to add more — your existing accounts always stay.";
+"cs.error.save_failed" = "Couldn’t save that change. Nothing was changed — please try again.";
 "cs.categories.cap_hint" = "Free plan includes %d custom categories, plus all the built-in ones. Upgrade to add more — your existing categories always stay.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */

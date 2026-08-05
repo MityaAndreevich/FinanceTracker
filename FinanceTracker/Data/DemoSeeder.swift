@@ -158,7 +158,11 @@ enum DemoSeeder {
             FetchDescriptor<Transaction>(predicate: #Predicate { $0.isDemo })
         )) ?? []
         for tx in demo { modelContext.delete(tx) }
-        try? modelContext.save()
+        // No external flag to desynchronise here — `hasDemoData` derives from the
+        // store, so a failed clear self-heals on the next read. The rollback is
+        // still required: without it the abandoned deletes ride along on the
+        // user's next ordinary save.
+        GuardedSave.commit(modelContext, "DemoSeeder.clearDemoData")
     }
 
     /// True when any demo sandbox rows are present (drives the Dashboard "Demo data" banner).

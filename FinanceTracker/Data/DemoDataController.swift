@@ -24,27 +24,44 @@ enum DemoDataController {
 
     /// Seeds demo transactions into the existing store. Idempotent — no-op if
     /// sample data is already active.
-    static func seedDemoData() {
-        guard !isDemoDataActive else { return }
+    ///
+    /// The flag is written only if the rows actually landed. It lives in
+    /// UserDefaults — outside the store, beyond `rollback()`'s reach — so setting
+    /// it on a failed save desynchronises it from the ledger permanently: the app
+    /// believes demo data is present, `clearDemoData` finds nothing to remove, and
+    /// the banner cannot be dismissed by clearing.
+    @discardableResult
+    static func seedDemoData() -> Bool {
+        guard !isDemoDataActive else { return true }
         let ctx = SharedModelContainer.shared.mainContext
-        seedTransactionsIntoExistingStore(modelContext: ctx)
+        guard seedTransactionsIntoExistingStore(modelContext: ctx) else { return false }
         isDemoDataActive = true
+        return true
     }
 
     /// Atomically removes all demo-flagged transactions.
-    static func clearDemoData(modelContext: ModelContext) {
+    ///
+    /// Same rule, and the worse direction: clearing the flag after a failed save
+    /// leaves demo rows in the store while the app believes there are none — and
+    /// `seedDemoData` then re-seeds on the next request, putting a SECOND set of
+    /// sample transactions into the user's real ledger.
+    @discardableResult
+    static func clearDemoData(modelContext: ModelContext) -> Bool {
         let descriptor = FetchDescriptor<Transaction>(predicate: #Predicate { $0.isDemo == true })
-        guard let demoTxs = try? modelContext.fetch(descriptor) else { return }
+        guard let demoTxs = try? modelContext.fetch(descriptor) else { return false }
         demoTxs.forEach { modelContext.delete($0) }
-        try? modelContext.save()
+        guard GuardedSave.commit(modelContext, "DemoDataController.clearDemoData") else { return false }
         isDemoDataActive = false
+        return true
     }
 
     // MARK: - Private seeding
 
     /// Inserts demo transactions, reusing existing seeded categories and sources.
     /// Skips insertion if matching category is not found (prevents orphaned data).
-    private static func seedTransactionsIntoExistingStore(modelContext: ModelContext) {
+    /// - Returns: whether the rows reached disk. `seedDemoData` gates the
+    ///   UserDefaults flag on this.
+    private static func seedTransactionsIntoExistingStore(modelContext: ModelContext) -> Bool {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
         let usd = UserDefaults.standard.string(forKey: "defaultCurrencyCode") ?? "USD"
@@ -55,7 +72,7 @@ enum DemoDataController {
 
         guard let allCategories = try? modelContext.fetch(FetchDescriptor<Category>()),
               let allSources = try? modelContext.fetch(FetchDescriptor<Source>()) else {
-            return
+            return false
         }
 
         func cat(_ name: String) -> Category? {
@@ -114,10 +131,11 @@ enum DemoDataController {
             modelContext.insert(tx)
         }
 
-        try? modelContext.save()
+        guard GuardedSave.commit(modelContext, "DemoDataController.seed") else { return false }
 
         #if DEBUG
         print("[DemoDataController] ✓ Demo transactions seeded — \(entries.count) entries")
         #endif
+        return true
     }
 }

@@ -761,6 +761,7 @@
 
 /* v1.0.2 monetization — free-tier caps */
 "cs.sources.cap_hint" = "El plan gratuito incluye %d cuentas. Hazte Premium para añadir más: las cuentas que ya creaste se quedan contigo.";
+"cs.error.save_failed" = "No se pudo guardar el cambio. No se modificó nada: inténtalo de nuevo.";
 "cs.categories.cap_hint" = "El plan gratuito incluye %d categorías propias, además de todas las integradas. Hazte Premium para añadir más: las que ya creaste se quedan contigo.";
 
 /* v1.0.2 monetization — the real premium set + the free-forever promise */
