@@ -66,6 +66,33 @@ final class LocalizedBundle: ObservableObject {
     }
 }
 
+/// Resolves strings the way the app's own 48 code-resolved call sites do —
+/// **from inside the app module**. That distinction is the whole point.
+///
+/// `String(localized:)` takes its bundle from a `#bundle` default that resolves
+/// to the *calling module's* bundle. Called from FinanceTrackerTests.xctest that
+/// is the test bundle, which ships no `.lproj`, so a test that calls
+/// `String(localized:)` directly measures the harness rather than the app and
+/// will report the premise broken when it is not. Every premise assertion goes
+/// through here instead. See `LocalizedBundlePremiseTests`.
+enum LocalizationProbe {
+    static func stringLocalized(_ key: String) -> String {
+        String(localized: String.LocalizationValue(key))
+    }
+
+    static func nsLocalizedString(_ key: String) -> String {
+        NSLocalizedString(key, comment: "")
+    }
+
+    static func stringLocalizedExplicitBundle(_ key: String) -> String {
+        String(localized: String.LocalizationValue(key), bundle: LocalizedBundle.shared.bundle)
+    }
+
+    static func bundleMainLookup(_ key: String) -> String {
+        Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+    }
+}
+
 /// `Bundle.main`'s runtime class becomes this once `activate()` runs, so every
 /// `NSLocalizedString` / `String(localized:)` call routes through `overrideBundle`
 /// when an explicit language is set, and falls back to the system bundle for
