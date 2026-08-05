@@ -22,6 +22,10 @@ struct RecurringSettingsView: View {
     // Pending "stop recurrence" — confirmed via the alert below before mutating.
     @State private var pendingStop: Transaction?
 
+    /// The @Query re-shows the row when the stop failed, which is honest but
+    /// mute — it reads as "the swipe didn't register". Say it explicitly.
+    @State private var showStopFailed = false
+
     var body: some View {
         List {
             if recurring.isEmpty {
@@ -57,11 +61,17 @@ struct RecurringSettingsView: View {
         ) {
             Button("common.cancel", role: .cancel) { pendingStop = nil }
             Button("recurring.settings.stop", role: .destructive) {
-                if let tx = pendingStop {
-                    RecurrenceService.stopRecurrence(for: tx, modelContext: modelContext)
+                if let tx = pendingStop,
+                   !RecurrenceService.stopRecurrence(for: tx, modelContext: modelContext) {
+                    showStopFailed = true
                 }
                 pendingStop = nil
             }
+        }
+        .alert("common.error", isPresented: $showStopFailed) {
+            Button("common.ok", role: .cancel) {}
+        } message: {
+            Text("edit.error.save_failed")
         }
     }
 

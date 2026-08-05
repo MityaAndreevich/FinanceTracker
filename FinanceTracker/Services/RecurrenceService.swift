@@ -167,8 +167,23 @@ enum RecurrenceService {
 
     /// Create this period's concrete transaction (non-recurring) and advance the
     /// template's handled boundary so it won't re-prompt until next period.
-    static func confirm(_ prompt: RecurrencePrompt, modelContext: ModelContext) {
-        guard let template = template(for: prompt, modelContext: modelContext) else { return }
+    ///
+    /// ORDER IS LOAD-BEARING: the boundary is written only after the save
+    /// succeeded. It used to be written first, and that made a failed save into
+    /// a silently MISSING charge — the period was marked handled, no transaction
+    /// existed, and the user was never re-prompted. `rollback()` cannot repair
+    /// that, because the watermark lives in UserDefaults, outside the store.
+    ///
+    /// A missing charge is worse than the double charge the rest of this file
+    /// exists to prevent: a double charge is visible in the ledger and the user
+    /// can delete it; a missing one never appears at all.
+    ///
+    /// - Returns: whether the charge was actually persisted. On false nothing
+    ///   changed — not the ledger, not the boundary, not the notification — and
+    ///   the prompt will legitimately come back next launch.
+    @discardableResult
+    static func confirm(_ prompt: RecurrencePrompt, modelContext: ModelContext) -> Bool {
+        guard let template = template(for: prompt, modelContext: modelContext) else { return false }
 
         let instance = Transaction(
             typeRaw: template.typeRaw,
@@ -196,9 +211,22 @@ enum RecurrenceService {
             modelContext.insert(copy)
             copy.parent = instance
         }
+        do {
+            try modelContext.save()
+        } catch {
+            // Same discipline as DuplicateReviewService: rollback() is what makes
+            // a failed operation stay failed. Without it the insert stays pending
+            // in the long-lived mainContext and the user's next ordinary save
+            // commits this period's charge at a moment they never asked for.
+            modelContext.rollback()
+            logSaveFailure("RecurrenceService.confirm", error)
+            return false
+        }
+
+        // Only now is the period genuinely handled.
         setHandledDate(prompt.dueDate, for: prompt.id)
-        try? modelContext.save()
         scheduleNotification(for: template)
+        return true
     }
 
     /// Dismiss this period without logging a charge; still advances the boundary.
@@ -213,11 +241,38 @@ enum RecurrenceService {
 
     /// Stop a series entirely (Settings → Recurring → delete). Keeps the historical
     /// transaction but clears its recurrence flag and cancels its notification.
-    static func stopRecurrence(for tx: Transaction, modelContext: ModelContext) {
+    ///
+    /// Same ordering rule as `confirm`, mirrored. The watermark used to be cleared
+    /// before the save, so a failed save left a series that is still recurring on
+    /// disk but has lost its period boundary — and `nextDueDate` then falls back
+    /// to `tx.date`, which re-prompts for a period the user already handled. That
+    /// is the double charge, arrived at from the stop path.
+    ///
+    /// The field restore is not redundant with `rollback()`: rollback does NOT
+    /// reliably revert a mutated attribute on a live object (verified in
+    /// TransactionEditServiceTests), so a bare rollback would leave
+    /// `recurrenceRaw == nil` in memory to be flushed by the next save — the
+    /// series would stop anyway, minutes later, silently.
+    ///
+    /// - Returns: whether the series was actually stopped. On false nothing
+    ///   changed and the row stays in the list, which is the user's cue.
+    @discardableResult
+    static func stopRecurrence(for tx: Transaction, modelContext: ModelContext) -> Bool {
+        let previous = tx.recurrenceRaw
         tx.recurrence = nil
+
+        do {
+            try modelContext.save()
+        } catch {
+            tx.recurrenceRaw = previous
+            modelContext.rollback()
+            logSaveFailure("RecurrenceService.stopRecurrence", error)
+            return false
+        }
+
         clearHandled(for: tx.uuid)
         cancelNotification(for: tx.uuid)
-        try? modelContext.save()
+        return true
     }
 
     // MARK: - Editing an existing transaction's recurrence (1.0.3)

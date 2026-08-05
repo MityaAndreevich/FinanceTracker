@@ -13,6 +13,14 @@ struct RecurringPromptSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var queue: [RecurrencePrompt]
+
+    /// A failed confirm is otherwise indistinguishable from a successful one:
+    /// the sheet advances, the prompt is gone for this sitting, and no charge
+    /// was written. Now that `confirm` leaves the boundary untouched on failure
+    /// the prompt does come back next launch — but the user has to be told, or
+    /// they will believe this period was already logged.
+    @State private var showAddFailed = false
+
     let onEdit: (RecurrencePrompt) -> Void
 
     init(prompts: [RecurrencePrompt], onEdit: @escaping (RecurrencePrompt) -> Void) {
@@ -46,8 +54,13 @@ struct RecurringPromptSheet: View {
 
                 VStack(spacing: 10) {
                     Button {
-                        RecurrenceService.confirm(prompt, modelContext: modelContext)
-                        advance()
+                        // Advance only on success — an unadvanced queue is what
+                        // lets the user retry the same period straight away.
+                        if RecurrenceService.confirm(prompt, modelContext: modelContext) {
+                            advance()
+                        } else {
+                            showAddFailed = true
+                        }
                     } label: {
                         Text("recurring.prompt.add_button")
                             .frame(maxWidth: .infinity)
@@ -83,6 +96,11 @@ struct RecurringPromptSheet: View {
         }
         .padding(.top, 24)
         .presentationDetents([.medium])
+        .alert("common.error", isPresented: $showAddFailed) {
+            Button("common.ok", role: .cancel) {}
+        } message: {
+            Text("add.error.save_failed")
+        }
     }
 
     private func advance() {
