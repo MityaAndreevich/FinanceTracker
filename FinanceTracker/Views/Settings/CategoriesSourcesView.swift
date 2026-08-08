@@ -487,10 +487,7 @@ private struct CategoryLimitSheet: View {
 
                 if category.limitCents != nil {
                     Button(role: .destructive) {
-                        let prior = category.limitCents
-                        category.limitCents = nil
-                        if GuardedSave.commit(modelContext, "CategoryLimitSheet.clear",
-                                              revert: { category.limitCents = prior }) {
+                        if CategoryLimitService.clearLimit(on: category, in: modelContext) {
                             dismiss()
                         } else {
                             showSaveFailed = true
@@ -512,18 +509,12 @@ private struct CategoryLimitSheet: View {
                             dismiss()
                             return
                         }
-                        let prior = category.limitCents
-                        category.limitCents = cents
-                        guard GuardedSave.commit(modelContext, "CategoryLimitSheet.save",
-                                                 revert: { category.limitCents = prior }) else {
+                        // The guarded write AND the usage mark live in the service
+                        // so both are testable (F3) — see CategoryLimitService.
+                        guard CategoryLimitService.setLimit(cents, on: category, in: modelContext) else {
                             showSaveFailed = true
                             return
                         }
-                        // Only after the limit exists on disk. `usage.ever.*` is the
-                        // 1.0.3 pre-test instrument with a pre-registered kill rule —
-                        // recording "used" for a feature the user did not get corrupts
-                        // the number a ship decision rests on.
-                        FeatureUsageSignals.markUsed(.categoryLimits)
                         dismiss()
                     }
                     .disabled(Money.parseCents(from: amountText) == nil)
@@ -605,14 +596,11 @@ private struct AddSourceSheet: View {
     }
 
     private func add() {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        let noteTrimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
-        let source = Source(name: trimmed, note: noteTrimmed.isEmpty ? nil : noteTrimmed)
-
-        modelContext.insert(source)
-        guard GuardedSave.commit(modelContext, "AddSourceSheet.add") else {
+        // Trimming, insert and the guarded save live in the service so the
+        // failure path is testable (F3) — see SourceCreateService.
+        guard SourceCreateService.add(name: name, note: note, in: modelContext) != nil else {
+            // Blank name is already impossible here (the Add button is disabled),
+            // so a nil return means the save threw.
             showSaveFailed = true
             return
         }
