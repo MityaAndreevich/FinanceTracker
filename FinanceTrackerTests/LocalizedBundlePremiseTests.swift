@@ -18,14 +18,27 @@
 //    NSLocalizedString            → Russian  ✅ routes through Bundle.main
 //    String(localized:)           → English  ❌ STALE — the launch language
 //  and that holds under the FULL production sequence (bundle override +
-//  appLanguageCode + AppleLanguages), called from inside the app module. 35 live
-//  `String(localized:)` sites in 11 files are affected. NOT FIXED — reported.
+//  appLanguageCode + AppleLanguages), called from inside the app module.
+//
+//  STATUS 2026-08-08: the 35 affected CALL SITES are fixed; the DEFECT is not.
+//  Read that distinction carefully, because it is why these pins stay as they
+//  are. Nothing was done to make the bare `String(localized:)` spelling honor
+//  the override — it still cannot, and Foundation is not ours to change. What
+//  changed is that every shipping site now routes AROUND it by passing an
+//  explicit `bundle:`. So:
+//
+//    * every `KNOWN DEFECT PIN` below still asserts `!=`, and still holds;
+//    * `LocalizedCallSiteGuardTests` is what stops a new bare site appearing;
+//    * `FrozenArtifactLanguageTests` covers the three producers whose output
+//      OUTLIVES the session (notification bodies, exported PDFs).
 //
 //  These tests are PINS, not aspirations: the broken path is asserted BROKEN, the
 //  same way LanguageSwitchTests records the first-tap race instead of asserting a
 //  contract the app does not yet keep. A red suite documenting a known-open defect
-//  is worse than a green one that fails the moment the defect is fixed. When it is
-//  fixed, every `KNOWN DEFECT PIN` below flips from `!=` to `==`.
+//  is worse than a green one that fails the moment the defect is fixed. If a
+//  future OS or language version makes the bare spelling honor the override,
+//  every pin below flips from `!=` to `==` — and that is a real signal, not a
+//  nuisance: it would mean the explicit-bundle rule could be relaxed.
 //
 //  Until now this was a comment. `LanguageSwitchTests` (UITests) does not test
 //  it: it asserts the picker opens in ≤1 tap, dismisses cleanly, the Settings

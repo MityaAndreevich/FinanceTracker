@@ -358,16 +358,45 @@ enum RecurrenceService {
         guard let fireDate = Calendar.current.date(byAdding: .day, value: -1, to: due),
               fireDate > Date() else { return }
 
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "recurring.notif.title")
-        let merchant = (tx.merchant?.isEmpty == false) ? tx.merchant! : String(localized: "recurring.notif.fallback_merchant")
-        let amount = Money.format(cents: tx.amountCents, currencyCode: tx.currency)
-        content.body = String(format: String(localized: "recurring.notif.body"), merchant, amount)
-        content.sound = .default
+        let content = notificationContent(
+            merchant: tx.merchant,
+            amountCents: tx.amountCents,
+            currencyCode: tx.currency
+        )
 
         let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
         center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+    }
+
+    /// Composes the reminder copy. Split out of `scheduleNotification` so the
+    /// **language** of a body that is frozen at schedule time can be tested
+    /// without a notification centre or a `Transaction` — the rest of that
+    /// function is `UNUserNotificationCenter.current()`, which a unit test
+    /// cannot drive.
+    static func notificationContent(
+        merchant: String?,
+        amountCents: Int,
+        currencyCode: String
+    ) -> UNMutableNotificationContent {
+        // Explicit bundle, not the `#bundle` default: `String(localized:)` does NOT
+        // honor the in-app language override (LocalizedBundlePremiseTests), and this
+        // body is frozen at schedule time — it would arrive in the launch language
+        // days after the user switched. See FrozenArtifactLanguageTests.
+        let bundle = LocalizedBundle.shared.bundle
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "recurring.notif.title", bundle: bundle)
+        let name = (merchant?.isEmpty == false)
+            ? merchant!
+            : String(localized: "recurring.notif.fallback_merchant", bundle: bundle)
+        let amount = Money.format(cents: amountCents, currencyCode: currencyCode)
+        content.body = String(
+            format: String(localized: "recurring.notif.body", bundle: bundle),
+            name,
+            amount
+        )
+        content.sound = .default
+        return content
     }
 
     static func cancelNotification(for uuid: UUID) {

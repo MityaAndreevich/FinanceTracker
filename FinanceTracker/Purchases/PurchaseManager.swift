@@ -141,7 +141,7 @@ final class PurchaseManager: ObservableObject {
 
             case .pending:
                 // Family approval / SCA / etc. — let user know it's awaiting approval.
-                lastErrorMessage = String(localized: "purchase.pending_approval")
+                lastErrorMessage = String(localized: "purchase.pending_approval", bundle: LocalizedBundle.shared.bundle)
 
             @unknown default:
                 break
@@ -166,8 +166,8 @@ final class PurchaseManager: ObservableObject {
             try await AppStore.sync()
             await refreshPremiumStatus()
             lastErrorMessage = hasPaidEntitlement
-                ? String(localized: "purchase.restored")
-                : String(localized: "purchase.no_previous_purchases")
+                ? String(localized: "purchase.restored", bundle: LocalizedBundle.shared.bundle)
+                : String(localized: "purchase.no_previous_purchases", bundle: LocalizedBundle.shared.bundle)
         } catch {
             lastErrorMessage = "Restore failed: \(error.localizedDescription)"
         }

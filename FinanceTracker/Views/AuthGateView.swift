@@ -144,7 +144,7 @@ struct AuthGateView: View {
             return
         }
 
-        let reason = String(localized: "auth.required.message")
+        let reason = String(localized: "auth.required.message", bundle: LocalizedBundle.shared.bundle)
         do {
             let ok = try await ctx.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
             if ok {

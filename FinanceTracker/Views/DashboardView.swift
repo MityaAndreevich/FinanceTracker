@@ -225,7 +225,7 @@ struct DashboardView: View {
             // share the Breakdown fold's label ("Other"/"Другое"), never
             // `category.other` (device QA 2026-07-23 #3: three buckets rendered
             // as "Без категории" and nobody could tell them apart).
-            name: String(localized: "analytics.breakdown.other"),
+            name: String(localized: "analytics.breakdown.other", bundle: LocalizedBundle.shared.bundle),
             cents: tail,
             color: CategoryTheme.map["other"]?.color ?? .gray
         ))
@@ -472,7 +472,7 @@ struct DashboardView: View {
                 // B5: show the LOCALIZED display name of the category that will
                 // actually be saved (resolvedCategory), not the raw English
                 // suggestion name ("Food & Drink") which leaked under RU/UK/ES/PT.
-                Text(resolvedCategory?.displayName() ?? String(localized: "quickadd.preview.no_category"))
+                Text(resolvedCategory?.displayName() ?? String(localized: "quickadd.preview.no_category", bundle: LocalizedBundle.shared.bundle))
                     .font(.subheadline)
                     .foregroundStyle(resolvedCategory == nil ? .secondary : .primary)
 
@@ -799,7 +799,7 @@ struct DashboardView: View {
         }
         .frame(width: 64, height: 64)
         .accessibilityLabel(Text(String(
-            format: String(localized: "dashboard.budget_used.a11y"), a.percentUsed
+            format: String(localized: "dashboard.budget_used.a11y", bundle: LocalizedBundle.shared.bundle), a.percentUsed
         )))
     }
 
@@ -873,17 +873,17 @@ struct DashboardView: View {
                 // money figure in the healthy hero (Item 2 — one number is
                 // "gist", the ring is "status").
                 return String(
-                    format: String(localized: "dashboard.days_left"),
+                    format: String(localized: "dashboard.days_left", bundle: LocalizedBundle.shared.bundle),
                     allowance.daysLeft
                 )
             }
             return String(
-                format: String(localized: "dashboard.over_budget"),
+                format: String(localized: "dashboard.over_budget", bundle: LocalizedBundle.shared.bundle),
                 Money.format(cents: -remainingCents, currencyCode: defaultCurrencyCode)
             )
         }
         return String(
-            format: String(localized: "dashboard.spent_earned_caption"),
+            format: String(localized: "dashboard.spent_earned_caption", bundle: LocalizedBundle.shared.bundle),
             Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
             Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
         )

@@ -4,6 +4,14 @@
 //
 //  Created by Dmitry Logachev (USA) on 25.01.2026.
 //
+//  EVERY code-resolved string here passes an EXPLICIT `bundle:`. That is not
+//  style — `String(localized:)`'s `#bundle` default does not honor the in-app
+//  language override (LocalizedBundlePremiseTests), and a PDF is the longest-lived
+//  artifact this app produces: the user keeps it, or forwards it to someone else.
+//  A report exported right after switching to Russian would have Russian rows
+//  (those go through NSLocalizedString) and English chrome. Pinned by
+//  FrozenArtifactLanguageTests.
+//
 
 import Foundation
 import SwiftData
@@ -47,10 +55,10 @@ enum PDFExportService {
             var y: CGFloat = topMargin
 
             // Title block (only on first page)
-            y = drawTitle(String(localized: "pdf.report.title"), y: y)
+            y = drawTitle(String(localized: "pdf.report.title", bundle: LocalizedBundle.shared.bundle), y: y)
             let rangeText = (scope == .month)
-                ? String(localized: "pdf.range.month")
-                : String(localized: "pdf.range.all")
+                ? String(localized: "pdf.range.month", bundle: LocalizedBundle.shared.bundle)
+                : String(localized: "pdf.range.all", bundle: LocalizedBundle.shared.bundle)
             y = drawSubTitle(rangeText, y: y)
 
             y += 12
@@ -164,13 +172,13 @@ enum PDFExportService {
         }
 
         var yy = y
-        yy = line(String(localized: "pdf.label.income"),
+        yy = line(String(localized: "pdf.label.income", bundle: LocalizedBundle.shared.bundle),
                   Money.format(amount: s.income, currencyCode: currencyCode),
                   y: yy)
-        yy = line(String(localized: "pdf.label.expenses"),
+        yy = line(String(localized: "pdf.label.expenses", bundle: LocalizedBundle.shared.bundle),
                   Money.format(amount: s.expense, currencyCode: currencyCode),
                   y: yy)
-        yy = line(String(localized: "pdf.label.net"),
+        yy = line(String(localized: "pdf.label.net", bundle: LocalizedBundle.shared.bundle),
                   Money.format(amount: s.net, currencyCode: currencyCode),
                   y: yy)
         return yy
@@ -183,13 +191,13 @@ enum PDFExportService {
             .foregroundColor: UIColor.secondaryLabel
         ]
 
-        String(localized: "pdf.header.date")
+        String(localized: "pdf.header.date", bundle: LocalizedBundle.shared.bundle)
             .draw(in: CGRect(x: 36, y: y, width: 90, height: 16), withAttributes: attrs)
-        String(localized: "pdf.header.title")
+        String(localized: "pdf.header.title", bundle: LocalizedBundle.shared.bundle)
             .draw(in: CGRect(x: 130, y: y, width: 260, height: 16), withAttributes: attrs)
-        String(localized: "pdf.header.category")
+        String(localized: "pdf.header.category", bundle: LocalizedBundle.shared.bundle)
             .draw(in: CGRect(x: 395, y: y, width: 120, height: 16), withAttributes: attrs)
-        String(localized: "pdf.header.amount")
+        String(localized: "pdf.header.amount", bundle: LocalizedBundle.shared.bundle)
             .draw(in: CGRect(x: 520, y: y, width: 56, height: 16), withAttributes: attrs)
 
         let path = UIBezierPath()

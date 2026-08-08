@@ -345,7 +345,7 @@ struct AddTransactionView: View {
             Image(systemName: "sparkles")
                 .foregroundStyle(Color.accentColor)
 
-            Text(String(format: String(localized: "addtx.suggestion.pill"), name))
+            Text(String(format: String(localized: "addtx.suggestion.pill", bundle: LocalizedBundle.shared.bundle), name))
                 .font(.footnote)
                 .foregroundStyle(.primary)
 
@@ -371,7 +371,7 @@ struct AddTransactionView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(Color.accentColor)
 
-            Text(String(format: String(localized: "category.auto_detected"), name))
+            Text(String(format: String(localized: "category.auto_detected", bundle: LocalizedBundle.shared.bundle), name))
                 .font(.footnote)
                 .foregroundStyle(.primary)
 

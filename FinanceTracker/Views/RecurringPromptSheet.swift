@@ -110,9 +110,9 @@ struct RecurringPromptSheet: View {
 
     private func promptMessage(_ prompt: RecurrencePrompt) -> String {
         let merchant = prompt.merchant.isEmpty
-            ? String(localized: "recurring.notif.fallback_merchant")
+            ? String(localized: "recurring.notif.fallback_merchant", bundle: LocalizedBundle.shared.bundle)
             : prompt.merchant
         let amount = Money.format(cents: prompt.amountCents, currencyCode: prompt.currency)
-        return String(format: String(localized: "recurring.prompt.add"), merchant, amount)
+        return String(format: String(localized: "recurring.prompt.add", bundle: LocalizedBundle.shared.bundle), merchant, amount)
     }
 }

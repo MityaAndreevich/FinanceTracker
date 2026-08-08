@@ -4,16 +4,61 @@
 //
 //  Makes an in-app language override apply *live*, without a relaunch.
 //
-//  SwiftUI `Text("key")` already refreshes from `environment(\.locale)`. The gap
-//  is code-resolved strings — `String(localized:)` and `NSLocalizedString` —
-//  which bottom out in `Bundle.main.localizedString(forKey:value:table:)` and
-//  otherwise honor only the launch language (the `AppleLanguages` default).
+//  ────────────────────────────────────────────────────────────────────────────
+//  CORRECTED 2026-08-08. The previous header claimed that `String(localized:)`
+//  and `NSLocalizedString` BOTH "bottom out in
+//  `Bundle.main.localizedString(forKey:value:table:)`". That is HALF FALSE, and
+//  believing it cost a full review round. Measured from inside the app module
+//  under the full production sequence (bundle override + `AppleLanguages`):
 //
-//  We close that gap by swapping `Bundle.main`'s class (once) to `LanguageBundle`,
-//  whose override forwards string lookups to the chosen language's `.lproj`. The
-//  shared `LocalizedBundle` exposes the active code as an `@Published` value so a
-//  view tree can re-render on change without the fragile `.id()` recreation that
-//  previously bounced the language picker.
+//      Bundle.main.localizedString  →  honors the override   ✅
+//      NSLocalizedString            →  honors the override   ✅
+//      String(localized:)           →  STALE, launch language ❌
+//
+//  See `LocalizedBundlePremiseTests`, which pins each of those three as an
+//  assertion rather than a comment. Do not restore the old claim.
+//  ────────────────────────────────────────────────────────────────────────────
+//
+//  THREE resolution mechanisms exist, and they are independent. A screen can be
+//  half-translated after a switch precisely because of that:
+//
+//   1. SwiftUI `Text("key")` — resolves from `environment(\.locale)` during the
+//      render pass. Refreshes when the subtree rebuilds. Not our business here;
+//      that is what `.languageReactive()` is for.
+//
+//   2. `NSLocalizedString` — routes through `Bundle.main`, so the
+//      `object_setClass(Bundle.main, LanguageBundle.self)` swap below DOES
+//      redirect it. This is the mechanism that works as originally designed.
+//
+//   3. `String(localized:)` — takes its bundle from a `#bundle` default that the
+//      class swap never reaches, so it keeps returning the LAUNCH language for
+//      the rest of the process. The class swap does not help it, and neither
+//      does rebuilding the view: re-resolving a stale lookup yields the same
+//      stale value.
+//
+//      MECHANISM NOT DISTINGUISHED (and deliberately so): the evidence cannot
+//      separate "`#bundle` resolves to something the swap never touches" from
+//      "Foundation cached the main bundle's localization on first use". Both
+//      produce this outcome and in the app the first resolution always happens
+//      at launch, before any switch, so the user-visible result is identical.
+//      The OUTCOME is verified; the mechanism is not.
+//
+//  THE RULE THAT FOLLOWS, and it is enforced by a test:
+//
+//      Every `String(localized:)` in shipping code passes an explicit
+//      `bundle:` — `LocalizedBundle.shared.bundle`, or `localizedBundle.bundle`
+//      in a view that already observes it.
+//
+//  `LocalizedCallSiteGuardTests` fails the build's test run if a new bare call
+//  site appears. `FrozenArtifactLanguageTests` covers the three producers where
+//  the staleness would outlive the session rather than merely look wrong until
+//  the next cold launch: notification bodies (frozen at schedule time) and
+//  exported PDFs (kept, or forwarded to someone else).
+//
+//  The shared `LocalizedBundle` also exposes the active code as an `@Published`
+//  value so a view tree can re-render on change without the fragile `.id()`
+//  recreation that previously bounced the language picker. Re-rendering is
+//  mechanism 1; it is orthogonal to which bundle mechanisms 2 and 3 read from.
 //
 
 import Foundation
@@ -33,10 +78,14 @@ final class LocalizedBundle: ObservableObject {
     /// language. When an explicit override is set this is the chosen language's
     /// `.lproj` bundle; otherwise it's `Bundle.main` (system launch language).
     ///
-    /// Use this for `bundle.localizedString(forKey:value:table:)` at call-sites
-    /// where SwiftUI's `Text(LocalizedStringKey:)` isn't available and a plain
-    /// `NSLocalizedString` would otherwise read only the launch language — e.g.
-    /// the Quick Entry preview chip's category name (Bug 1).
+    /// Pass this as the `bundle:` argument of EVERY `String(localized:)` in
+    /// shipping code — that is a rule, not a suggestion, and
+    /// `LocalizedCallSiteGuardTests` enforces it. Also use it for
+    /// `bundle.localizedString(forKey:value:table:)` at call sites where
+    /// SwiftUI's `Text(LocalizedStringKey:)` isn't available.
+    ///
+    /// Falls back to `Bundle.main` when no override is set, which is correct:
+    /// with no override the launch language IS the chosen language.
     var bundle: Bundle { LanguageBundle.overrideBundle ?? .main }
 
     /// Points code-resolved string lookups at `code`'s `.lproj`. Pass "system"

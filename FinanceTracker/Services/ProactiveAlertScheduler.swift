@@ -50,7 +50,8 @@ enum ProactiveAlertScheduler {
         guard let plan else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "alerts.notif.title")
+        // Explicit bundle, not the `#bundle` default — see `body(for:currencyCode:)`.
+        content.title = String(localized: "alerts.notif.title", bundle: LocalizedBundle.shared.bundle)
         content.body = body(for: plan.body, currencyCode: currencyCode)
         content.sound = .default
 
@@ -73,23 +74,30 @@ enum ProactiveAlertScheduler {
 
     /// Gain-framed, month-scoped. The amount is the whole month's remainder, so the copy
     /// says so — calling it a week figure would overstate what is safe to spend.
+    ///
+    /// Every lookup passes an EXPLICIT bundle. `String(localized:)`'s `#bundle` default
+    /// does not honor the in-app language override (LocalizedBundlePremiseTests), and a
+    /// local notification's body is FROZEN at schedule time: a user who switches to
+    /// Russian would keep receiving English reminders for days, with the app not even
+    /// running to correct them. Pinned by FrozenArtifactLanguageTests.
     private static func body(for body: ProactiveAlertPolicy.Body, currencyCode: String) -> String {
+        let bundle = LocalizedBundle.shared.bundle
         switch body {
         case .safeToSpend(let cents):
             return String(
-                format: String(localized: "alerts.notif.body.safe.format"),
+                format: String(localized: "alerts.notif.body.safe.format", bundle: bundle),
                 Money.format(cents: cents, currencyCode: currencyCode)
             )
         case .pace(let cents):
             return String(
-                format: String(localized: "alerts.notif.body.pace.format"),
+                format: String(localized: "alerts.notif.body.pace.format", bundle: bundle),
                 Money.format(cents: cents, currencyCode: currencyCode)
             )
         case .categoryLimit(_, let name, let remainingCents):
             // Gain-framed by construction: the policy only emits this while
             // remaining > 0 ("X left in Dining"), never an exceeded message.
             return String(
-                format: String(localized: "alerts.notif.body.limit.format"),
+                format: String(localized: "alerts.notif.body.limit.format", bundle: bundle),
                 Money.format(cents: remainingCents, currencyCode: currencyCode),
                 name
             )

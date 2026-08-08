@@ -81,7 +81,7 @@ struct RecurringSettingsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(tx.merchant?.isEmpty == false
                      ? tx.merchant!
-                     : String(localized: "recurring.notif.fallback_merchant"))
+                     : String(localized: "recurring.notif.fallback_merchant", bundle: LocalizedBundle.shared.bundle))
                     .font(.body)
 
                 if let rec = tx.recurrence {

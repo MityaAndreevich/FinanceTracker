@@ -118,7 +118,7 @@ struct AnalyticsBreakdownView: View {
     private var displayCategories: [CategoryTotal] {
         Self.displaySlices(
             from: sortedCategories,
-            otherName: String(localized: "analytics.breakdown.other"),
+            otherName: String(localized: "analytics.breakdown.other", bundle: localizedBundle.bundle),
             otherColor: .bcTextMuted
         )
     }

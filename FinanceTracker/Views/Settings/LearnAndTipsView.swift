@@ -55,8 +55,8 @@ struct LearnAndTipsView: View {
     /// content. Once everything is unlocked, it says so instead of a count.
     private var unlockedProgress: String {
         tips.isComplete
-            ? String(localized: "learn.collection_complete")
-            : String(format: String(localized: "learn.unlocked_count"),
+            ? String(localized: "learn.collection_complete", bundle: LocalizedBundle.shared.bundle)
+            : String(format: String(localized: "learn.unlocked_count", bundle: LocalizedBundle.shared.bundle),
                      tips.unlockedCount, tips.totalCount)
     }
 
