@@ -30,10 +30,14 @@
 //       string. The lookup was guarded by `if` and the final wait discarded with
 //       `_ =`, so fixing (1) alone would have produced a test that tapped the
 //       row, never confirmed, and PASSED while performing no reset at all.
-//    3. `--seed-large-dataset` had been throwing since the V2 schema landed
-//       (`delete(model:)` cannot resolve an entity in a multi-configuration
-//       container), the throw was caught, and the report went to `print` — which
-//       xcodebuild does not capture. The ledger was EMPTY on every run.
+//    3. `--seed-large-dataset` had been throwing since 2026-08-04 (3ba801a, NOT
+//       since V2 — the multi-config container predates it by two weeks but the
+//       seam did not use the bulk API until then). `delete(model:)` cannot
+//       resolve an entity in a multi-configuration container; the throw was
+//       caught and reported via `print`, which xcodebuild does not capture.
+//       The seam could no longer establish or reset the ledger, so the store was
+//       whatever history had left in it — a real 8k ledger on a simulator
+//       carrying pre-08-04 leftovers, and EMPTY on a freshly erased one.
 //
 //  All three are fixed, and each now has an assertion standing where the silence
 //  used to be. First real numbers, iPhone 17 Pro simulator, 8 000 rows:
@@ -67,11 +71,12 @@ final class BulkDeleteStallMeasurementTests: XCTestCase {
     }
 
     /// THE GUARD THAT WAS MISSING. Both tests here depend on
-    /// `--seed-large-dataset`, and that seam had been throwing on every call
-    /// since the V2 schema landed — `delete(model:)` cannot resolve an entity in
-    /// a multi-configuration container, the throw was caught, and the only report
-    /// of it was a `print` that xcodebuild does not capture. So the vehicle ran
-    /// against an EMPTY ledger and passed.
+    /// `--seed-large-dataset`, and that seam threw on every call from 2026-08-04
+    /// to 2026-08-08 — `delete(model:)` cannot resolve an entity in a
+    /// multi-configuration container, the throw was caught, and the only report of
+    /// it was a `print` that xcodebuild does not capture. The vehicle then ran
+    /// against whatever the store happened to hold: an empty ledger on a clean
+    /// simulator, stale leftovers on a dirty one. Both pass silently.
     ///
     /// A measurement vehicle must fail when it measures nothing. It now asserts
     /// the seam's own outcome line, read back out of the shared /tmp channel.

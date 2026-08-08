@@ -91,7 +91,8 @@ enum LargeDatasetDebugSeed {
     /// order costs nothing and removes the question.
     ///
     /// NOT `delete(model:)`, and this cost a silent failure worth recording.
-    /// The bulk API threw on every call since the V2 split:
+    /// The bulk API threw on every call from 2026-08-04 (3ba801a, the commit that
+    /// introduced this function) until 2026-08-08:
     ///
     ///     NSCocoaErrorDomain 134060 — "Entity named:TransactionSplit not found
     ///     for relationship named:category"
@@ -99,11 +100,23 @@ enum LargeDatasetDebugSeed {
     /// The production container is MULTI-CONFIGURATION (`syncedConfig` +
     /// `localConfig`, `SharedModelContainer.openContainer`), and `delete(model:)`
     /// takes no configuration, so it cannot resolve an entity that lives in one
-    /// of two stores. Both callers caught the throw and `print`ed it — to a
-    /// channel xcodebuild does not capture — so `--seed-large-dataset` had been
-    /// seeding ZERO rows while `BulkDeleteStallMeasurementTests` reported success.
-    /// That is the answer to "has this vehicle ever produced a real measurement":
-    /// not since the V2 schema landed.
+    /// of two stores. (The multi-config container landed earlier, 2026-07-21 in
+    /// fa1bf77; the seam was unaffected until it started using the bulk API.)
+    ///
+    /// Both callers caught the throw and `print`ed it — to a channel xcodebuild
+    /// does not capture. The consequence is NOT "zero rows": it is that the seam
+    /// lost the ability to ESTABLISH OR RESET the ledger, so whatever the store
+    /// already held survived untouched. Since the pre-3ba801a top-up path left
+    /// 8 000 rows behind forever (the flaw 3ba801a set out to fix), the outcome
+    /// forked on simulator history:
+    ///
+    ///   * carrying pre-08-04 leftovers → a real 8 000-row store, real numbers
+    ///     (this is what /tmp/hang-scale-measure.txt recorded on 2026-08-06);
+    ///   * freshly erased → empty store, and the measurement means nothing.
+    ///
+    /// So 3ba801a achieved the exact inverse of its stated goal ("two consecutive
+    /// runs of the same test see the same store"): it made the result depend
+    /// entirely on simulator history, silently.
     ///
     /// A fetch-and-delete loop has no such restriction. It is slower, which does
     /// not matter here: this runs before the measurement window opens, and the
