@@ -459,6 +459,19 @@ struct GeneralSettingsView: View {
     }
 
     private func resetTransactions() {
+        // Measurement seam (F1, 2026-08-08). `BulkDeleteStallMeasurementTests`
+        // drives this path to answer "for how much of a bulk delete is the UI
+        // dead?", and until now it could not: the only `report` call in the app
+        // covers the LAUNCH seams, so the reset's stall existed in the trace as
+        // raw `STALL gapMs=` lines with no distribution and no label. A vehicle
+        // that performs the operation but never summarises it is only half fixed.
+        // No-ops entirely without `--stall-monitor`.
+        #if DEBUG
+        let rowsBefore = (try? modelContext.fetchCount(FetchDescriptor<Transaction>())) ?? -1
+        MainThreadStallMonitor.shared.beginWindow()
+        defer { MainThreadStallMonitor.shared.report("settings-reset rows=\(rowsBefore)") }
+        #endif
+
         // Bug 20: decide by what's actually left in the store, not by whether
         // save() threw. SwiftData can emit non-fatal aggregated validation noise on
         // a bulk delete even when every row is gone — surfacing that as an error was

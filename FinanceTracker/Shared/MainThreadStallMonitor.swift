@@ -79,6 +79,23 @@ final class MainThreadStallMonitor {
         log.info("StallMonitor started interval=\(self.intervalMs, privacy: .public)ms")
     }
 
+    /// Starts a FRESH measurement window on an already-running monitor.
+    ///
+    /// Without this, `report` always describes everything since launch, so a
+    /// report taken after a Settings→Reset is dominated by launch and seeding and
+    /// cannot answer "how long was the UI dead for THE RESET". Call immediately
+    /// before the stretch of interest, `report` immediately after.
+    ///
+    /// Deliberately does not stop or restart the timer: tearing the timer down
+    /// and re-adding it would itself turn the runloop, which is the one thing an
+    /// instrument that measures runloop turns must not do.
+    func beginWindow() {
+        guard Self.isRequested, timer != nil else { return }
+        gapsMs.removeAll()
+        startedAt = DispatchTime.now()
+        lastTick = DispatchTime.now()
+    }
+
     private func tick() {
         let now = DispatchTime.now()
         defer { lastTick = now }
@@ -144,7 +161,20 @@ final class MainThreadStallMonitor {
 
     /// Same /tmp channel HangProbe and MainThreadHangScaleTests already use:
     /// simulator processes share the host filesystem.
-    private func append(_ body: String) {
+    /// The same /tmp channel, for seams that need to report an OUTCOME rather
+    /// than a stall distribution. Exists because `print` from the app is not
+    /// captured in xcodebuild logs — a seam that reports its failure only to
+    /// stdout reports it to nobody, which is how `--seed-large-dataset` came to
+    /// be silently seeding zero rows under a UI test that passed.
+    ///
+    /// Unconditional: unlike the stall lines this does not require
+    /// `--stall-monitor`, because the thing being reported is whether a seam
+    /// worked, and that matters most on the runs where nothing else is on.
+    static func note(_ body: String) {
+        MainThreadStallMonitor.shared.append("NOTE \(body)")
+    }
+
+    fileprivate func append(_ body: String) {
         let url = URL(fileURLWithPath: "/tmp/stall-report.txt")
         let line = body + "\n"
         if let handle = try? FileHandle(forWritingTo: url) {

@@ -89,10 +89,33 @@ enum LargeDatasetDebugSeed {
     /// deleting a related row and letting an unenforced rule decide the rest
     /// (`.nullify` with no inverse → persistent `EXC_BREAKPOINT`). Explicit
     /// order costs nothing and removes the question.
+    ///
+    /// NOT `delete(model:)`, and this cost a silent failure worth recording.
+    /// The bulk API threw on every call since the V2 split:
+    ///
+    ///     NSCocoaErrorDomain 134060 — "Entity named:TransactionSplit not found
+    ///     for relationship named:category"
+    ///
+    /// The production container is MULTI-CONFIGURATION (`syncedConfig` +
+    /// `localConfig`, `SharedModelContainer.openContainer`), and `delete(model:)`
+    /// takes no configuration, so it cannot resolve an entity that lives in one
+    /// of two stores. Both callers caught the throw and `print`ed it — to a
+    /// channel xcodebuild does not capture — so `--seed-large-dataset` had been
+    /// seeding ZERO rows while `BulkDeleteStallMeasurementTests` reported success.
+    /// That is the answer to "has this vehicle ever produced a real measurement":
+    /// not since the V2 schema landed.
+    ///
+    /// A fetch-and-delete loop has no such restriction. It is slower, which does
+    /// not matter here: this runs before the measurement window opens, and the
+    /// seam exists to build an 8 000-row ledger in the first place.
     @MainActor
     private static func wipeLedger(modelContext: ModelContext) throws {
-        try modelContext.delete(model: TransactionSplit.self)
-        try modelContext.delete(model: Transaction.self)
+        for split in try modelContext.fetch(FetchDescriptor<TransactionSplit>()) {
+            modelContext.delete(split)
+        }
+        for tx in try modelContext.fetch(FetchDescriptor<Transaction>()) {
+            modelContext.delete(tx)
+        }
         try modelContext.save()
     }
 
@@ -161,9 +184,15 @@ enum LargeDatasetDebugSeed {
             }
             try modelContext.save()
             UserDefaults.standard.set(true, forKey: markerKey)
-            print("LargeDatasetDebugSeed: store now holds \(try modelContext.fetchCount(FetchDescriptor<Transaction>())) transactions")
+            let landed = try modelContext.fetchCount(FetchDescriptor<Transaction>())
+            print("LargeDatasetDebugSeed: store now holds \(landed) transactions")
+            MainThreadStallMonitor.note("seed-large-dataset target=\(targetCount) landed=\(landed)")
         } catch {
+            // `print` alone is not a channel: app stdout is not captured in
+            // xcodebuild logs, so a throw here was invisible to the very UI test
+            // that depends on this seam. It passed while measuring an empty ledger.
             print("LargeDatasetDebugSeed failed: \(error.localizedDescription)")
+            MainThreadStallMonitor.note("seed-large-dataset FAILED \(error)")
         }
     }
 }
