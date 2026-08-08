@@ -82,6 +82,28 @@ enum TransactionEditService {
                                                // churn) → stays saveable
             throw error
         }
+
+        // AFTER the save, and only on the success path. These two flags are NOT
+        // telemetry — `usage.ever.splits` is the numerator of a pre-registered
+        // kill rule (DECISION_RECEIPT_INPUT_PRETEST.md), and over-counting pushes
+        // it toward BUILD, the expensive direction.
+        //
+        // They used to live at the end of `apply(...)`, which is wrong twice over
+        // and both were reproduced before this moved (UsageSignalOrderingTests):
+        //   1. `apply` runs BEFORE the save, so a split the user never got was
+        //      still counted;
+        //   2. the catch above calls `apply(prior, ...)` to revert, so an edit
+        //      REMOVING splits from a transaction that had them re-marked the
+        //      flag on its way to failing.
+        //
+        // Read from `fields`, never from `tx`: after a successful save they agree,
+        // and `fields` is the thing the user actually asked for.
+        if !fields.splits.isEmpty {
+            FeatureUsageSignals.markUsed(.splits)
+        }
+        if fields.recurrenceRaw != nil {
+            FeatureUsageSignals.markUsed(.recurring)
+        }
     }
 
     private static func snapshot(of tx: Transaction) -> Fields {
@@ -126,15 +148,9 @@ enum TransactionEditService {
             split.parent = tx
         }
 
-        // The editor is the only user-facing path that creates a split (import
-        // and recurrence copies are derivative), so this is where "ever split
-        // a purchase" gets recorded for the 1.0.3 pre-test. Local only — see
-        // FeatureUsageSignals.
-        if !f.splits.isEmpty {
-            FeatureUsageSignals.markUsed(.splits)
-        }
-        if f.recurrenceRaw != nil {
-            FeatureUsageSignals.markUsed(.recurring)
-        }
+        // NOTE: `usage.ever.*` is deliberately NOT recorded here. `apply` runs
+        // before the save AND again on the revert path, so a mark placed here is
+        // wrong in both directions. It lives in `update(_:with:in:)`, past the
+        // save. Do not move it back.
     }
 }
