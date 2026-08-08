@@ -44,6 +44,10 @@ enum ReverseTrial {
         start.addingTimeInterval(duration)
     }
 
+    /// THE GATE. `AccessLogic.isPremium` is this, ORed with a paid entitlement.
+    ///
+    /// **There is no clock clamp here, and that is a real gap — see the note on
+    /// `daysRemaining` below.** Raw `now` against raw expiry.
     static func isActive(start: Date?, now: Date) -> Bool {
         guard let start else { return false }
         return now < expiryDate(start: start)
@@ -51,10 +55,50 @@ enum ReverseTrial {
 
     /// Whole days left, rounded up, clamped to 0...durationDays.
     ///
-    /// The clamp is the clock guard. If the device clock runs backwards past the
-    /// start date the raw remainder exceeds the trial length; we clamp rather
-    /// than trust it, so the worst a rewound clock buys is the trial the user
-    /// already had. A forward jump simply expires them, which is correct.
+    /// ────────────────────────────────────────────────────────────────────────
+    /// CORRECTED 2026-08-08. This comment previously read: *"the worst a rewound
+    /// clock buys is the trial the user already had."* **That is true of the
+    /// number on this screen and FALSE of the entitlement**, and stating it here
+    /// without that distinction described a protection the product does not have.
+    ///
+    /// WHERE THE CLAMP LIVES:      `daysRemaining` — the DISPLAYED day count.
+    /// WHERE IT DOES NOT:          `isActive` — the gate, and therefore
+    ///                             `AccessLogic.isPremium`, which is what every
+    ///                             paid capability actually consults.
+    ///
+    /// So: set the device clock back and premium is restored for as long as the
+    /// clock stays back. Unbounded — not one extra fortnight. Meanwhile the badge
+    /// keeps reporting at most 14 days, because that is the clamped path. The two
+    /// disagree, and the entitlement is the one that matters.
+    ///
+    /// AND THE CLAMP WOULD NOT HAVE HELPED ANYWAY. Worth stating, because the
+    /// obvious repair is wrong and was tried: adding `max(now, start)` to
+    /// `isActive` changes nothing. It only forbids `now` PRECEDING the start; a
+    /// clock rewound to a date *inside* the window still reports active.
+    /// (Demonstrated 2026-08-08 — the pin in `AccessManagerTests` passes with the
+    /// clamp applied.) The same is true of the clamp here: it caps the DISPLAYED
+    /// number at 14, it does not stop the window being re-entered.
+    ///
+    /// A real fix needs a persisted monotonic high-water mark of observed time —
+    /// "the latest date this install has ever seen" — and expiry compared against
+    /// `max(now, watermark)`. That is a stored value with its own migration,
+    /// sync and reinstall semantics, not a one-liner.
+    ///
+    /// NOT FIXED, and that is a decision rather than an oversight: rolling a
+    /// device clock back is self-punishing (it breaks every other app, and iOS
+    /// re-syncs time), and every locally-stored trial has this property. The
+    /// reason it is written down now instead of later is that 1.0.4 hangs iCloud
+    /// sync on this same gate — a bad free/premium answer stops being a local
+    /// display question the moment it decides whether data leaves the device.
+    ///
+    /// Recorded rather than silently corrected because this project has now been
+    /// misled three times by a comment that outlived the code beneath it (the
+    /// `.deny` delete rule, the `@Attribute(.unique)` claim in CSV import, and
+    /// the "Vela" privacy policy). A comment claiming a guarantee is worse than
+    /// no comment at all.
+    /// ────────────────────────────────────────────────────────────────────────
+    ///
+    /// A forward jump simply expires the trial, which is correct on both paths.
     static func daysRemaining(start: Date?, now: Date) -> Int {
         guard let start else { return 0 }
 

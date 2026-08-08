@@ -123,6 +123,49 @@ struct ReverseTrialMathTests {
         #expect(ReverseTrial.daysRemaining(start: start, now: now) == ReverseTrial.durationDays)
     }
 
+    /// KNOWN GAP PIN (F2, 2026-08-05) — asserts what the gate DOES, not what it
+    /// should do. The test above does not discriminate: at `start - 30d` a clamped
+    /// `isActive` would report active too, so it passes either way.
+    ///
+    /// This one does. The trial has genuinely EXPIRED, and rewinding the clock
+    /// revives the ENTITLEMENT — unbounded, for as long as the clock stays back —
+    /// while `daysRemaining` keeps reporting a clamped, plausible-looking number.
+    /// The clamp lives only on the displayed count; `isActive` has none.
+    ///
+    /// The production change that would flip this test is NOT the obvious clamp.
+    /// Checked empirically 2026-08-08 rather than asserted: adding
+    /// `max(now, start)` to `ReverseTrial.isActive` leaves this test PASSING,
+    /// because that clamp only forbids `now` preceding the start — a clock
+    /// rewound to a date inside the window is unaffected. What would flip it is a
+    /// persisted monotonic high-water mark of observed time compared as
+    /// `max(now, watermark)`, which is a stored value with migration, sync and
+    /// reinstall semantics of its own.
+    ///
+    /// That fix is deliberately NOT made: a rewound device clock is
+    /// self-punishing, and every locally-stored trial has this property.
+    /// Recorded because 1.0.4 hangs iCloud sync on this same gate. If the
+    /// watermark is ever added, this test fails — which is the signal to delete
+    /// it, not to weaken it.
+    @Test("KNOWN GAP: rewinding the clock revives an EXPIRED trial's entitlement")
+    func rewoundClockRevivesAnExpiredEntitlement() {
+        let start = t0
+        let genuinelyExpired = t0.addingTimeInterval(100 * day)
+        #expect(ReverseTrial.isActive(start: start, now: genuinelyExpired) == false)
+
+        // Same install, same start date, clock rolled back to inside the window.
+        let rewound = t0.addingTimeInterval(1 * day)
+        #expect(
+            ReverseTrial.isActive(start: start, now: rewound),
+            "the entitlement is back — isActive has no clamp"
+        )
+        #expect(
+            AccessLogic.isPremium(hasPaidEntitlement: false, trialStart: start, now: rewound),
+            "and the gate every paid capability consults follows it"
+        )
+        // The badge, meanwhile, stays inside 0...14 and looks entirely normal.
+        #expect(ReverseTrial.daysRemaining(start: start, now: rewound) == 13)
+    }
+
     @Test("Days remaining counts down and clamps to zero")
     func daysRemainingCountsDown() {
         #expect(ReverseTrial.daysRemaining(start: t0, now: t0) == 14)
