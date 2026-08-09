@@ -349,9 +349,9 @@ enum RecurrenceService {
     static func scheduleNotification(for tx: Transaction) {
         guard let rec = tx.recurrence else { return }
         let center = UNUserNotificationCenter.current()
-        // Keyed by `uuid`, which means TWINS SHARE ONE IDENTIFIER — and that is
-        // load-bearing, not an oversight. See `notificationID(for:)`.
-        let identifier = notificationID(for: tx.uuid)
+        // Twins share one identifier — load-bearing, not an oversight. Pinned by
+        // `RecurrenceNotificationIdentityTests`, not by the comment below it.
+        let identifier = notificationID(for: tx)
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
 
         let due = nextDueDate(for: tx, recurrence: rec)
@@ -459,8 +459,27 @@ enum RecurrenceService {
     ///
     /// When step 3 moves the period watermark onto the model, this stays keyed
     /// on the series, not on the row.
-    private static func notificationID(for uuid: UUID) -> String {
+    static func notificationID(for uuid: UUID) -> String {
         "recurring-\(uuid.uuidString)"
+    }
+
+    /// The pending-notification identifier for the series a given ROW belongs to.
+    ///
+    /// This overload exists so the property the comment above asserts is
+    /// *reachable by a test*. `scheduleNotification` is otherwise
+    /// `UNUserNotificationCenter.current()` all the way down, which a unit test
+    /// cannot drive — the same problem `notificationContent` was split out to
+    /// solve, and the same solution.
+    ///
+    /// It takes the row rather than the uuid deliberately. "Two twins yield one
+    /// identifier" is only falsifiable if the test can hand this function two
+    /// distinct `Transaction` objects; given a `UUID` it would be asserting that
+    /// a value equals itself. A future change that keys notifications per row —
+    /// `persistentModelID`, to match how prompts resolve — still satisfies this
+    /// signature, still compiles, and turns
+    /// `RecurrenceNotificationIdentityTests` RED. That is the point.
+    static func notificationID(for tx: Transaction) -> String {
+        notificationID(for: tx.uuid)
     }
 
     private static func todayKey() -> String {
