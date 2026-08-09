@@ -28,9 +28,23 @@ enum AccessLogic {
     /// Note what this does NOT do: it never says anything about the items that
     /// already exist. A free user holding 6 accounts is simply told "no" on the
     /// 7th. Nothing anywhere reads this to decide what to show, delete or lock.
+    /// Only counted caps may be asked. "May I add one more?" is a malformed
+    /// question about an uncapped capability — `isAllowed` is that gate.
+    ///
+    /// This used to answer the malformed question with `!requiresPremium`. That
+    /// branch was unreachable (every call site, direct or via `CapGate`, passes
+    /// `.addAccountBeyondFreeCap` or `.addCustomCategoryBeyondFreeCap`, both of
+    /// which have a `freeLimit`) and untested — it could be flipped to `true`
+    /// with 72 tests still green (AUDIT_TEST_DISCRIMINATION_2026-08-08, G3).
+    /// Deleting a defensive branch nothing reaches is more honest than adding a
+    /// test that pins a policy no user can ever hit; the policy answer is now
+    /// replaced with a loud programmer error.
     static func canAdd(_ capability: AppCapability, isPremium: Bool, currentCount: Int) -> Bool {
         if isPremium { return true }
-        guard let limit = capability.freeLimit else { return !capability.requiresPremium }
+        guard let limit = capability.freeLimit else {
+            assertionFailure("canAdd(\(capability)) is not a counted cap — use isAllowed(_:).")
+            return false
+        }
         return currentCount < limit
     }
 }
