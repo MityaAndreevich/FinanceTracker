@@ -135,22 +135,45 @@ The paywall positions the yearly plan as "best value" and includes the auto-rene
 # Build for simulator
 xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
-# Unit tests
-xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
-
-# A single Swift Testing case — note the trailing `()`. Without it the filter
-# matches nothing, xcodebuild still reports ** TEST SUCCEEDED **, and the result
-# bundle contains zero test nodes. A "passing" run that ran nothing looks
-# identical to a passing run that ran everything.
-xcodebuild -project FinanceTracker.xcodeproj -scheme FinanceTracker \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -resultBundlePath /tmp/rb.xcresult \
-  "-only-testing:FinanceTrackerTests/SuiteTypeName/testFunctionName()" test
-xcrun xcresulttool get test-results tests --path /tmp/rb.xcresult   # confirm it ran
+# Unit tests — ALWAYS through the wrapper, never bare xcodebuild.
+scripts/run-tests.sh                                          # whole suite
+scripts/run-tests.sh -only-testing:FinanceTrackerTests/SomeSuite
+scripts/run-tests.sh "-only-testing:FinanceTrackerTests/SomeSuite/testName()"
 
 # Optional lint
 swiftlint
 ```
+
+### Why the wrapper is not optional
+
+`xcodebuild -only-testing:X` prints `** TEST SUCCEEDED **` when `X` matches **zero**
+tests. No warning, no non-zero exit. **A green run that ran nothing is byte-identical
+to a green run that ran everything.** This has already produced two wrong findings in
+this project (`AUDIT_TEST_DISCRIMINATION_2026-08-08` §4: G5/G7 reported GREEN because
+the filter omitted the suite that would have failed).
+
+That hazard used to be documented here with a manual `xcresulttool` check appended.
+**It was documented, and it still happened twice.** A manual step is a comment, and a
+comment guards nothing. `scripts/run-tests.sh` makes the check unskippable:
+
+| Exit | Meaning |
+|---|---|
+| `0` | tests ran **and** passed |
+| `1` | tests ran, at least one failed — a real RED, failing tests named |
+| `2` | **zero tests executed** — never reported as a pass |
+| `3` | the **build** failed — explicitly *not* a test result |
+
+Exit `3` exists because `xcodebuild` also prints `** TEST FAILED **` for a compile
+error, so a mutation-testing driver can otherwise score "it didn't compile" as "the
+tests caught it" (that is exactly what happened to G8).
+
+Two traps the wrapper's exit-2 message will remind you about:
+
+- **A Swift Testing case needs its trailing `()`** in the filter. Without it, zero match.
+- **`-only-testing` takes `@Suite` TYPE names, not file names.** They frequently differ:
+  `AccessManagerTests.swift` contains **8** suites, none of them named
+  `AccessManagerTests`, so filtering on the file name runs nothing. Derive the list
+  from the file: `grep -nE '@Suite|^struct ' <file>`.
 
 `print()` inside a test is NOT forwarded to xcodebuild's stdout. To get a value
 out of a test run, assert on it, or record it via `Issue.record` and read the
