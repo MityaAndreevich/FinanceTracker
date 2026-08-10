@@ -451,6 +451,7 @@
 "premium.redeem_code" = "Активировать код";
 "premium.restore" = "Восстановить покупки";
 "premium.redeem_hint" = "Используйте код, если у вас есть промокод.";
+"premium.redeem.failed" = "Не удалось активировать код. Проверьте код и подключение к интернету, затем попробуйте снова.";
 "premium.redeem.debug_hint" = "Debug-сборка: ввод кода работает только в сборке TestFlight или App Store — локальный StoreKit не поддерживает коды (ограничение Apple).";
 
 /* Paywall */

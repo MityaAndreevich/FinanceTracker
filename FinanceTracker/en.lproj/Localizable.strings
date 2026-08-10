@@ -448,6 +448,7 @@
 "premium.redeem_code" = "Redeem Code";
 "premium.restore" = "Restore Purchases";
 "premium.redeem_hint" = "Use Redeem Code if you have a promo code for Premium.";
+"premium.redeem.failed" = "That code couldn't be redeemed. Check the code and your internet connection, then try again.";
 "premium.redeem.debug_hint" = "Debug build: code redemption only works in a TestFlight or App Store build — local StoreKit testing can't redeem codes (Apple limitation).";
 
 "paywall.title" = "Own your money, on your iPhone forever";

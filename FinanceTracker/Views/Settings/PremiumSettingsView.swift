@@ -14,6 +14,8 @@ struct PremiumSettingsView: View {
     @StateObject private var access = AccessManager.shared
     @State private var showPaywall = false
     @State private var showRedeem = false
+    @State private var showRedeemFailed = false
+    @State private var redeemFailureDetail: String?
 
     var body: some View {
         List {
@@ -93,9 +95,31 @@ struct PremiumSettingsView: View {
             case .success:
                 Task { await pm.refreshStatus() }
             case .failure(let error):
-                #if DEBUG
-                print("Offer code redemption failed: \(error.localizedDescription)")
-                #endif
+                // Dismissing the sheet without redeeming arrives here too. That
+                // is not a failure and must not raise an alert.
+                if case StoreKitError.userCancelled = error { return }
+
+                // This used to be a DEBUG-only print, i.e. nothing at all in the
+                // build where offer codes actually work — Release/TestFlight is
+                // the only environment that CAN redeem them. The user entered a
+                // code, saw nothing happen, got no error, and had no way to
+                // describe the problem in a support mail. Both halves are fixed:
+                // the alert tells them, and the log makes it root-causable from a
+                // device sysdiagnose.
+                storeKitLog.error(
+                    "offer code redemption failed: \(String(describing: error as NSError), privacy: .public)"
+                )
+                redeemFailureDetail = error.localizedDescription
+                showRedeemFailed = true
+            }
+        }
+        .alert("common.error", isPresented: $showRedeemFailed) {
+            Button("common.ok", role: .cancel) {}
+        } message: {
+            if let detail = redeemFailureDetail, !detail.isEmpty {
+                Text("premium.redeem.failed") + Text("\n\n") + Text(detail)
+            } else {
+                Text("premium.redeem.failed")
             }
         }
         .task {

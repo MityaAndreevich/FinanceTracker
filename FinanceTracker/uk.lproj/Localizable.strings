@@ -453,6 +453,7 @@
 "premium.redeem_code" = "Активувати код";
 "premium.restore" = "Відновити покупки";
 "premium.redeem_hint" = "Скористайтеся активацією коду, якщо у вас є промокод на Premium.";
+"premium.redeem.failed" = "Не вдалося активувати код. Перевірте код і підключення до інтернету, а потім спробуйте ще раз.";
 "premium.redeem.debug_hint" = "Debug-збірка: введення коду працює лише у збірці TestFlight або App Store — локальний StoreKit не підтримує коди (обмеження Apple).";
 
 "paywall.title" = "Володійте грошима, назавжди на вашому iPhone";

@@ -21,6 +21,16 @@ import os
 
 let persistenceLog = Logger(subsystem: "com.dmitrylogachev.budgetcrab", category: "Persistence")
 
+/// Purchase / entitlement failures, on the same always-compiled terms and for the
+/// same reason: the environments where StoreKit actually works (TestFlight, App
+/// Store) are exactly the ones a `#if DEBUG print` is compiled out of, so the
+/// failures that reach real users were the only ones we could never see.
+///
+/// Privacy: StoreKit errors describe transaction and entitlement state, not the
+/// user's payment details, so fields are logged `.public`. Never log a redemption
+/// code — it is a bearer credential.
+let storeKitLog = Logger(subsystem: "com.dmitrylogachev.budgetcrab", category: "StoreKit")
+
 /// Logs a SwiftData `save()` failure with the full NSError shape. `context`
 /// names the call site (e.g. "AddTransactionView.add") so overlapping failures
 /// can be told apart in the log.

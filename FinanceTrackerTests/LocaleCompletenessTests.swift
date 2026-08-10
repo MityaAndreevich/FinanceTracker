@@ -236,7 +236,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // screen now names splitting under the category row; the detail-view
         // entry point reuses the four split.* keys that already existed.
         // All 5 locales in parity. Was 763.
-        XCTAssertEqual(enKeys.count, 764, "English baseline changed; update the expected count.")
+        // 2026-08-10 (silent-failure sweep, Tier 1): net +1. Offer-code
+        // redemption failure now says so instead of a DEBUG-only print that was
+        // compiled out of the only builds where redemption works. The account
+        // sheet's failure reuses the existing shared cs.error.save_failed.
+        // All 5 locales in parity. Was 764.
+        XCTAssertEqual(enKeys.count, 765, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

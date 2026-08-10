@@ -698,6 +698,12 @@ private struct AddSourceSheet: View {
     @State private var name: String = ""
     @State private var note: String = ""
 
+    /// This sheet used to insert, `try? save()`, and dismiss on the failure path
+    /// too — so a failed account creation looked exactly like a successful one:
+    /// the sheet closed, nothing was selected, and the user's action vanished
+    /// with no error. Same defect the Settings copy of this sheet already fixed.
+    @State private var showSaveFailed = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -720,31 +726,26 @@ private struct AddSourceSheet: View {
                         .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .alert("common.error", isPresented: $showSaveFailed) {
+                Button("common.ok", role: .cancel) {}
+            } message: {
+                Text("cs.error.save_failed")
+            }
         }
     }
 
     private func create() {
-        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanName.isEmpty else { return }
-
-        let cleanNote = note.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        let source = Source(
-            name: cleanName,
-            note: cleanNote.isEmpty ? nil : cleanNote
-        )
-
-        modelContext.insert(source)
-
-        do {
-            try modelContext.save()
-            onCreated(source)
-            dismiss()
-        } catch {
-            #if DEBUG
-            print("Failed to create source: \(error.localizedDescription)")
-            #endif
+        // Trimming, insert and the guarded save live in the service, which is
+        // where the Settings copy of this sheet already routes. This one had its
+        // own duplicate of the same three steps and its own swallowed catch.
+        guard let source = SourceCreateService.add(name: name, note: note, in: modelContext) else {
+            // Blank name is already impossible here (the Add button is disabled),
+            // so a nil return means the save threw.
+            showSaveFailed = true
+            return
         }
+        onCreated(source)
+        dismiss()
     }
 }
 
