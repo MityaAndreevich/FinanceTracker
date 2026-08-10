@@ -55,6 +55,26 @@ asked for and never got:
 > This is the same defect class as a test that passes having scanned no files: the instrument
 > reports success while measuring nothing.
 
+> ### RULE — supply-side evidence is not demand evidence.
+>
+> **"Competitors advertise X" tells you what they can build, what differentiates them from each
+> other, and what justifies their price. It says nothing about whether our users want X.**
+>
+> The companion to the zero-row rule above, and the more common failure of the two. A competitor's
+> feature list is evidence *about a competitor*. Reading it as demand imports their roadmap, their
+> cost structure and their segment — and for a local-first app whose whole thesis is that the
+> market's assumptions are wrong, that is exactly the wrong instrument.
+>
+> This is not a ban on listing reads. A listing is a sound primary source for "what does this app
+> advertise" (that is why the MoneyWatch citations survive above). It is unsound as an answer to
+> "do our users want this". State which question you are answering.
+>
+> **Live instance:** signal #9 of `DEMAND_RESEARCH_AND_ROADMAP_2026-07.md` scored iCloud sync as
+> **Medium-strong demand** on the sole evidence that two competitors advertise it — while
+> `sync_breakage` sits at **66 of 1,804** here, 4%, the second-lowest theme of eleven, and Finding
+> #1 above says in as many words that sync pain was overstated. It is struck through there, with a
+> supply-side sweep of the whole table beside it.
+
 **Where each zero-row app is cited downstream, and whether the claim survives** (checked 2026-08-10):
 
 - **Empower — no downstream claim anywhere.** It is named only in this section and in §5. Nothing

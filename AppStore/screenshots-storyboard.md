@@ -3,8 +3,15 @@
 **App:** Budget Crab — privacy-first iOS personal finance tracker
 **Positioning:** Quiet Premium (Sage + Ruler archetype) — calm, composed, in control. No hype, no loud claims.
 **Pricing (not shown in captions — Apple disallows prices in screenshots):** $4.99/mo · $34.99/yr · $99.99 lifetime
-**Locales:** EN · RU · ES · PT-BR
-**Devices:** iPhone 6.7" required (1290 × 2796) · iPhone 5.5" optional (1242 × 2208)
+**Locales:** EN · RU · ES · PT-BR · **UK**
+**Devices:** iPhone **6.9" required (1320 × 2868)** — this is what the shipped set actually is.
+
+> **Corrected 2026-08-10.** This line previously said `6.7" required (1290 × 2796) · 5.5" optional
+> (1242 × 2208)`, and the Locales line omitted UK. Both were wrong about assets that already
+> existed: all **40** composed frames and all **40** raw captures are 1320 × 2868, across **five**
+> locales including UK. No 5.5" asset exists in this repo. A doc describing assets that are not
+> the assets is how a release nearly ships the wrong screenshot size — measured, not assumed:
+> dimensions read from the PNG headers in `AppStore/composed/` and `AppStore/screenshots/`.
 
 > **Banned-claim guardrails (do NOT use in any locale):** encrypted · AI-powered · free forever · bank-grade · made with love · best · #1 · "free". Also: no prices, no version numbers, no competitor names. "Stays on your iPhone" / "on-device" is the safe way to say the privacy benefit without "encrypted."
 

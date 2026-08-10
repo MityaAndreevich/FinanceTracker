@@ -24,11 +24,84 @@ Themes ordered by how consistently they appeared across independent + affiliate 
 | 6 | **Recurring / subscription tracking** — bill tracking, recurring detection, "know what's coming" | Strong | NerdWallet, useorigin, App Store (Budget Flow requests) | ✅ Doable manually (user-defined recurring + reminders). |
 | 7 | **"How much is safe to spend" / cash-flow left** — the dominant *hook* across Rocket Money, Quicken, Albert ads | Strong | competitor ads (§3), NerdWallet | ✅ Computable from income − spent − upcoming recurring. |
 | 8 | **Couples / shared household** — huge competitor category (Monarch, useorigin, WalletHub couples lists) | Strong | multiple couples-focused sources | ❌ **Hard for local-first** — conflicts with no-server. Strategic flag (§5). |
-| 9 | **iCloud sync / multi-device backup** — MoneyWatch, Budget app cite iCloud sync as a selling point | Medium-strong | App Store listings | ✅ Already committed v1.0.1. |
+| 9 | ~~**iCloud sync / multi-device backup** — MoneyWatch, Budget app cite iCloud sync as a selling point~~ | ~~Medium-strong~~ **WITHDRAWN** | ~~App Store listings~~ | ~~✅ Already committed v1.0.1.~~ **See §1.1 below.** |
 | 10 | **Widgets (home + lock screen) & Apple Watch** — MoneyWatch, MOZE, Daily Budget ship these; users explicitly request "large widgets with upcoming/planned transactions" | Medium | App Store listings + user requests | ✅ Native iOS, no backend. |
 | 11 | **CSV import / migration** — bulk import to move history in (Mint export, bank CSV) | Medium | App Store (MoneyWatch, Budget Flow, Beyond Budget) | ✅ Already premium feature. Position as migration. |
 | 12 | **Envelope / zero-based budgeting** — YNAB's method is the single most-recommended *approach* on Reddit | Medium | finny, NerdWallet | ✅ Per-category budget goals (local). |
 | 13 | **Forecasting** — Monarch Plus, Origin "Forecast" tab; increasingly AI-layered | Medium | NerdWallet, useorigin, ads | ⚠️ Basic version doable; AI = v1.1 roadmap (already noted). |
+
+### 1.1 Signal #9 is withdrawn — struck through, not deleted (2026-08-10)
+
+It is left visible on purpose. A deleted wrong conclusion teaches nothing, and this was **the only
+surviving written argument for sync demand in either repo** — left standing unmarked, in six months
+it reads as independent support for a decision that was actually made against it.
+
+**Three defects, each sufficient on its own:**
+
+1. **Demand rated from supply.** The entire evidence is "MoneyWatch and Budget app advertise iCloud
+   sync". That was scored **Medium-strong demand**. See the rule below.
+2. **Contradicted by its own corpus.** This roadmap's companion pass
+   (`RESEARCH_SYNTHESIS_2026-07-02.md`) measured `sync_breakage` at **66 of 1,804** 1-2★ mentions —
+   **4%, the second-lowest theme of eleven** — and its Finding #1 states in as many words that
+   *"sync breakage = #1 pain was OVERSTATED"*. Signal #9 scored Medium-strong against a corpus
+   sitting in the same research pass that says 4%.
+3. **A status cell asserting a release that never happened.** "✅ Already committed v1.0.1" — sync
+   was not in 1.0.1, 1.0.2, 1.0.3, or 1.0.4. It is 1.0.5. The cell was never true on any date.
+
+Superseded by the 2026-08 demand review, which found no sync signal in either readable channel and
+put competitor device-sync demand at 0.28% after excluding bank aggregation. Nothing in this table
+is re-scored by this note — see the sweep below for which other rows share defect (1), and treat
+re-scoring as a separate decision.
+
+> ### RULE — supply-side evidence is not demand evidence.
+>
+> **"Competitors advertise X" tells you what they can build, what differentiates them from each
+> other, and what justifies their price. It says nothing about whether our users want X.**
+>
+> A competitor's feature list is evidence about a competitor. Reading it as demand imports their
+> roadmap, their cost structure, and their segment — and for a local-first app whose whole thesis
+> is that the market's assumptions are wrong, that is precisely the wrong instrument. Where a
+> signal's only source is competitor behaviour, say so in the Sources cell and score it
+> accordingly, or find a demand-side source: user reviews, search volume, support mail, in-app
+> usage.
+>
+> Companion to the zero-row rule in `RESEARCH_SYNTHESIS_2026-07-02.md` §1.1. Both are the same
+> failure: an instrument reporting confidently about something it does not measure.
+
+### 1.2 Supply-side sweep of this table (2026-08-10) — reported, NOT re-scored
+
+Classified by what is actually in each row's Sources cell. **Re-scoring is a decision and is
+deliberately not made here.**
+
+| # | Signal | Evidence underneath | Verdict |
+|---|---|---|---|
+| 1 | Bank-sync unreliability | budgetpeer, vento — user-pain write-ups. Corroborated in-corpus: `sync_breakage` is real but small (66). | **Demand-side.** Direction sound, magnitude overstated by its own corpus. |
+| 2 | Subscription fatigue / price | Four independent review sites **plus** `price_subscription` **484 of 1,804** — the top theme by 3×. | **Demand-side, strongest row in the table.** |
+| 3 | Privacy before features | vento, budgetpeer thread analysis + `privacy_data` 169. | **Demand-side.** |
+| 4 | Cloud-shutdown fear (Mint) | Engadget, finny, vento — reporting on a real event users reacted to. | **Demand-side.** |
+| 5 | Logging friction | vento, finny + `logging_friction` 108. | **Demand-side.** |
+| 6 | Recurring / subscription tracking | NerdWallet, useorigin — **plus "App Store (Budget Flow requests)"**, i.e. partly what a competitor ships. | **Mixed.** Demand-side sources exist; the competitor half adds nothing. |
+| 7 | "Safe to spend" / cash-flow left | **"the dominant *hook* across Rocket Money, Quicken, Albert ads"** — competitor advertising. NerdWallet is the only non-supply source. | **⚠️ Predominantly supply-side.** Scored Strong. This one is load-bearing: it is the app's hero number and its positioning. |
+| 8 | Couples / shared household | "huge competitor category (Monarch, useorigin, WalletHub couples lists)" — competitor category size + listicles. Corpus: `couples_shared` 68, 4%. | **⚠️ Predominantly supply-side.** Scored Strong against a 4% corpus theme. Already flagged ❌ for local-first, so nothing was built on it. |
+| 9 | iCloud sync | Competitor listings only. | **WITHDRAWN — see §1.1.** |
+| 10 | Widgets & Apple Watch | "MoneyWatch, MOZE, Daily Budget ship these" **plus** an explicit user request quote. Corpus: `widgets_watch` **12**, the lowest theme of eleven. | **⚠️ Mixed, leaning supply.** Scored Medium; the demand half is one quote and 12 mentions. Built anyway in 1.0.1. |
+| 11 | CSV import / migration | "App Store (MoneyWatch, Budget Flow, Beyond Budget)" — competitor listings. Corpus: `export_import` 51. | **Mixed.** Supply-sourced in the cell, but 51 in-corpus mentions back it independently. |
+| 12 | Envelope / zero-based budgeting | finny, NerdWallet — "most-recommended *approach* on Reddit", i.e. what users say they use. | **Demand-side.** |
+| 13 | Forecasting | "Monarch Plus, Origin 'Forecast' tab" + ads. | **⚠️ Predominantly supply-side.** Scored Medium. Nothing built on it. |
+
+**Count: 4 rows are predominantly supply-side (#7, #8, #9, #13), 3 are mixed (#6, #10, #11), 6 are
+demand-side (#1–#5, #12).**
+
+Two of those deserve naming, and neither is actioned here:
+
+- **#7 is the uncomfortable one.** "Safe to spend" is the app's hero number, its widget, its
+  proactive alerts, and half its positioning — and its evidence cell is *competitor advertising*.
+  It may well be right; ads are expensive and rarely lead with a hook that does not convert. But
+  it has never been checked against a demand-side source, and it is the single most load-bearing
+  row in this table.
+- **#8 was scored Strong on competitor category size** against a 4% corpus theme. It was rejected
+  on architecture grounds anyway, so nothing rests on it — but the scoring shows the same reflex
+  that produced #9.
 
 **One-line takeaway:** the market's biggest frustrations (sync breaks, price spikes, data vanishing, privacy) are *exactly* what a private, local-first, cheap, manual app fixes — **but** our single biggest risk is logging friction, which we must attack with quick-entry surfaces or the free tier churns.
 
