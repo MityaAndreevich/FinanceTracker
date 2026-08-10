@@ -13,7 +13,7 @@
 
 **Golden filter (our moat):** every feature must work **on-device, no servers, no bank connection**. That's what makes us different AND keeps us out of Apple 3.2.1(viii). Features that need a backend are flagged.
 
-**Evidence sources:** review mining (4,972 reviews, `review_mining_output/`), NotebookLM (73afc9a4 domain, ff5e0abc UX, 04c87827 ASO), competitor teardown (`RESEARCH_SYNTHESIS_2026-07-02.md`), roadmap (`budget_crab_demand_research_roadmap`).
+**Evidence sources:** review mining (**4,904 usable reviews / 15 apps**, `review_mining_output/` — corrected 2026-08-10; the former "4,972" included 68 rows from a wrongly-resolved remittance app), NotebookLM (73afc9a4 domain, ff5e0abc UX, 04c87827 ASO), competitor teardown (`RESEARCH_SYNTHESIS_2026-07-02.md`), roadmap (`budget_crab_demand_research_roadmap`).
 
 ---
 
@@ -78,7 +78,7 @@ It hits the intersection of: (a) top demanded feature for privacy/manual apps, (
 
 ## Dashboard / screen customization (CEO idea 2026-07-02) — v1.1+, DATA-GATED, light-first
 **What:** let users choose what shows + order/hide modules ("like iPhone" home-screen/Control-Center customization) — not just categories.
-**Honest placement:** NOT pre-launch. Real system (layout model + edit mode + persistence + modular sections) = solo-dev effort; would delay launch. NO demand evidence yet (absent from our 4,972-review mining + Stage-1 search). Risk vs our "simple/fast/calm" wedge (more knobs ≠ calmer; 70% feel anxious). Apple hides customization in edit-mode, never front-and-center.
+**Honest placement:** NOT pre-launch. Real system (layout model + edit mode + persistence + modular sections) = solo-dev effort; would delay launch. NO demand evidence yet (absent from our 4,904-review mining + Stage-1 search). Risk vs our "simple/fast/calm" wedge (more knobs ≠ calmer; 70% feel anxious). Apple hides customization in edit-mode, never front-and-center.
 **Fit:** the redesign already made the dashboard MODULAR (hero/donut/tiles = components) → foundation exists. Strong **Crab Kit** candidate (build a customizable modular dashboard once → reuse across all studio apps = portfolio value).
 **Scope when scheduled:** START LIGHT — dashboard "edit mode": reorder + show/hide the dashboard cards, persisted in AppStorage (no SwiftData). Full tab/screen customization = later. **Gate:** only build if post-launch reviews/retention show demand.
 **Model:** Opus (layout/persistence architecture) → Sonnet. **Skill:** /ui-ux-pro-max.

@@ -1,6 +1,6 @@
 # Budget Crab — ASO Copy Pack (search-optimized, Path A)
 
-**Date:** 2026-07-02 · Optimized to Stage-1 searched terms (`STAGE1_SEARCH_DEMAND.md`) + billing-transparency wedge (486 review-rage) + Path A pricing.
+**Date:** 2026-07-02 · Optimized to Stage-1 searched terms (`STAGE1_SEARCH_DEMAND.md`) + billing-transparency wedge (484 review-rage — corrected 2026-08-10 from 486, which included a wrongly-resolved remittance app; 27% of the 1-2★ band either way) + Path A pricing.
 **Ranking fields (iOS indexes these):** App Name + Subtitle + Keyword field. Description does NOT affect ranking on iOS — it's for conversion.
 **Honesty guardrail:** advertise only shipped features. Receipt scan / AI entry = HELD until v1.1, then add "receipt,scan,ai" to keywords + a line to description. Widgets only if shipped pre-launch. No banned claims (no "best/#1/free forever/encrypted/AI-powered").
 

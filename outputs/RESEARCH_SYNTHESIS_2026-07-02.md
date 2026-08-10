@@ -1,6 +1,15 @@
 # Research Synthesis & Decisions — 2026-07-02
 
-**Inputs:** real App Store review mining (4,972 reviews / 17 apps, Apple RSS, US, most-recent ~500/app) + 6 NotebookLM queries (primary sources). **Decisions locked by user this session** (see §4). Supersedes parts of prior `budget_crab_decision`.
+**Inputs:** real App Store review mining (**4,904 usable reviews / 15 apps**, Apple RSS, US, most-recent ~500/app) + 6 NotebookLM queries (primary sources). **Decisions locked by user this session** (see §4). Supersedes parts of prior `budget_crab_decision`.
+
+> **Corrected 2026-08-10.** The original header said "4,972 reviews / 17 apps"; neither figure was
+> right. 18 apps were targeted, 16 returned rows, and one of those 16 was the **wrong app** — the
+> Vento lookup resolved to "Barri Send Money & Remittances", a remittance app, whose 68 rows were
+> flagged as a data gap below but never removed from the totals. They are removed now. Every count
+> in §1 has been recomputed from `review_mining_output/reviews_20260702_135538.csv` with those rows
+> excluded; the originals are shown in parentheses. **No conclusion in this document changed** —
+> the largest single shift is 486 → 484, which is 27% either way. See §1.1 for the two apps that
+> returned zero rows and the rule that follows from them.
 
 ---
 
@@ -8,20 +17,65 @@
 
 Source: `review_mining_output/summary_20260702_135538.md` + `reviews_*.csv`.
 
-**1-2★ (rage / churn drivers), n=1,821:**
-`price_subscription 486 (27%)` ≫ `privacy_data 169` · `bug_crash 155` · `feature_request 139` · `logging_friction 109` · `categorization 108` · `couples 69` · `sync_breakage 67` · `export_import 51` · `widgets_watch 12`
+**1-2★ (rage / churn drivers), n=1,804** *(was 1,821)***:**
+`price_subscription 484 (27%)` ≫ `privacy_data 169` · `bug_crash 152` · `feature_request 139` · `logging_friction 108` · `categorization 108` · `couples 68` · `sync_breakage 66` · `export_import 51` · `widgets_watch 12`
 
-**3★ "gold", n=432:** `feature_request 81` · `price 65` · `logging_friction 47` · `privacy 41` · `categorization 41`
+*(originals, incl. the wrong app: 486 · 169 · 155 · 139 · 109 · 108 · 69 · 67 · 51 · 12)*
+
+**3★ "gold", n=431** *(was 432)***:** `feature_request 81` · `price 65` · `logging_friction 47` · `privacy 41` · `categorization 41` — every one of these five is unchanged by the exclusion.
 
 ### Findings that overturn earlier web-tier assumptions
-1. **"Sync breakage = #1 pain" was OVERSTATED.** Real sync mentions are ~4-6% even at aggregators, not the top theme. The web-tier claim came largely from affiliate blogs (esp. vento.money, which sells a manual app — motivated to amplify sync pain). Validated the Tier-2 skepticism. (Caveat: the sync regex is conservative and undercounts; treat 67 as a lower bound — but price still dwarfs it.)
-2. **The real #1 rage is BILLING DARK PATTERNS, not price level.** Verbatim 1★: *"continued charging after I cancelled"*, *"you have to go into settings to completely cancel… beware!!!"*, *"False advertising"*, *"too many ads, my whole family uninstalled"*. → This is Budget Crab's strongest **data-backed wedge**: no ads, no dark patterns, one-tap cancel, no bank-data honeypot, cheap. 486 rage-reviews point straight at it.
+1. **"Sync breakage = #1 pain" was OVERSTATED.** Real sync mentions are ~4-6% even at aggregators, not the top theme. The web-tier claim came largely from affiliate blogs (esp. vento.money, which sells a manual app — motivated to amplify sync pain). Validated the Tier-2 skepticism. (Caveat: the sync regex is conservative and undercounts; treat 66 as a lower bound — but price still dwarfs it.)
+2. **The real #1 rage is BILLING DARK PATTERNS, not price level.** Verbatim 1★: *"continued charging after I cancelled"*, *"you have to go into settings to completely cancel… beware!!!"*, *"False advertising"*, *"too many ads, my whole family uninstalled"*. → This is Budget Crab's strongest **data-backed wedge**: no ads, no dark patterns, one-tap cancel, no bank-data honeypot, cheap. 484 rage-reviews point straight at it.
 3. **Categorization pain is specific & actionable:** *"STOP forcing default categories"*, *"let me start from a clean slate"*, and Mint's one-tap *"change all instances of this vendor"* vs competitors' clunky rule flows. → concrete feature spec (below).
 4. **Logging-friction complaints at aggregators are about failed auto-sync forcing manual entry** (a betrayal for a bank app). For us, manual is the honest promise — our friction risk is pure entry *speed*, addressed by quick-add. Confirms P0.
 
-### Data gaps to fix (not invented)
-- **Empower (504672168)** and **MoneyWatch (1593524945)** returned 0 reviews — wrong ID or RSS block. Re-verify IDs.
-- **Vento resolved to the wrong app** ("Barri Send Money & Remittances"). Our direct manual/privacy lane is thin (only Goodbudget captured well). Need correct IDs for Vento, and add **Actual Budget, Zeroed, Buckets** if on iOS.
+### 1.1 Which apps contributed nothing — and the rule that follows
+
+**Two of the 18 targeted apps returned ZERO rows: Empower (Personal Capital) and MoneyWatch.**
+They appear in the miner's own summary table as `0 | 0 | 0 | 0`. They contributed nothing to any
+count in §1, and they never did.
+
+IDs re-verified 2026-08-10 against the iTunes lookup API, which the original "Re-verify IDs" note
+asked for and never got:
+
+| App | ID as used | Resolves today | So the zero means |
+|---|---|---|---|
+| Empower (Personal Capital) | `504672168` | **nothing — dead ID** | the app was never read, by any instrument |
+| MoneyWatch | `1593524945` | ✅ "MoneyWatch: Budget & Finance" (Finance) | correct app; the RSS feed returned no US reviews |
+
+> **RULE — a zero-row app is not evidence, and must never be cited as though it were.**
+> A row count of zero is indistinguishable between "we pointed at the wrong app", "the feed was
+> blocked" and "this app genuinely has no US reviews". All three produce the same silent, confident
+> nothing, and a table cell reading `0` looks exactly like a measurement. Before naming a competitor
+> as evidence, check it has rows in the corpus. If it does not, either cite a *different* instrument
+> for it **and say which** (a listing read is a valid primary source for "what does this app
+> advertise" — it is not evidence of user demand), or do not name it.
+>
+> This is the same defect class as a test that passes having scanned no files: the instrument
+> reports success while measuring nothing.
+
+**Where each zero-row app is cited downstream, and whether the claim survives** (checked 2026-08-10):
+
+- **Empower — no downstream claim anywhere.** It is named only in this section and in §5. Nothing
+  rests on it. The only cost is that the aggregator picture is one app thinner than "18 apps"
+  implied.
+- **MoneyWatch — four downstream citations, all survive.** `DEMAND_RESEARCH_AND_ROADMAP_2026-07.md`
+  signals #9, #10, #11 and its source list (:131), plus `FEATURE_PREP_BACKLOG.md:28`. Every one of
+  them cites MoneyWatch's **App Store listing** (what the app advertises), not its reviews — a
+  different instrument, which the zero-row result says nothing about. The ID is confirmed correct,
+  so the listing reads were pointed at the right app. They stand as listing evidence.
+  **⚠️ But see the separate note on signal #9 — it survives as a citation and fails as a
+  conclusion, for an unrelated reason.**
+
+### Other data gaps (not invented)
+- **Vento resolved to the wrong app** ("Barri Send Money & Remittances"). Its 68 rows were left in
+  the totals until the 2026-08-10 correction; they are now excluded. Our direct manual/privacy lane
+  is thin (only Goodbudget captured well). Need correct IDs for Vento, and add **Actual Budget,
+  Zeroed, Buckets** if on iOS.
+- **"Beyond Budget" and "Budget app"** are named as listing evidence in signals #9 and #11 but are
+  not in the 18-app corpus under any name. Listing-sourced, so not invalidated — but unverifiable
+  from anything in this repo.
 - Small samples (Monarch 50, Copilot 50, MOZE 23) → their % are noisy; weight low.
 
 ---
@@ -68,7 +122,7 @@ Source: `review_mining_output/summary_20260702_135538.md` + `reviews_*.csv`.
 - Per-territory tables: rescale to Path A base (use pricing playbook 02).
 
 **Roadmap updates (data-backed):**
-- P0 add: **billing transparency as product + copy** — one-tap cancel, no ads, no dark patterns, no hidden charges. This is the #1 wedge (486 rage-reviews).
+- P0 add: **billing transparency as product + copy** — one-tap cancel, no ads, no dark patterns, no hidden charges. This is the #1 wedge (484 rage-reviews).
 - P0 add: **categorization = clean-slate custom categories + one-tap "recategorize all from this merchant" + simple rules** (direct from 3★/1★ quotes).
 - P0 keep: quick-add (widgets/Watch/Siri), "safe to spend", iCloud sync.
 - P1: recurring+reminders, envelope goals, CSV/Mint importer, multi-currency.
@@ -84,7 +138,10 @@ Source: `review_mining_output/summary_20260702_135538.md` + `reviews_*.csv`.
 - ⚠️ **Verify §5.1.1** does NOT catch Budget Crab (offline tracker, no bank connection, no money movement, individual dev). Likely exempt (utility, not financial service) and our no-bank design helps — but confirm against guideline wording before submit. If risk, consider a simple legal-entity/DBA.
 
 **Research follow-ups:**
-- Fix Vento/Empower/MoneyWatch IDs (+ Actual/Zeroed/Buckets) and re-run miner for the direct-lane picture.
+- Fix the Vento ID (+ add Actual/Zeroed/Buckets) and re-run the miner for the direct-lane picture.
+  **IDs re-verified 2026-08-10 — see §1.1:** MoneyWatch's ID was correct all along (its feed simply
+  returned no US reviews); Empower's `504672168` is a dead ID and needs a new one before Empower can
+  be re-mined at all.
 - Optional: re-run with `--country us gb ca au` for launch English markets.
 
 ---
