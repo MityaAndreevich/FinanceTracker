@@ -29,6 +29,9 @@ enum DuplicateReviewDebugSeed {
 
     /// Wipes transactions, then imports the same foreign CSV twice. The first pass
     /// is clean; every row of the second content-matches and comes back flagged.
+    /// `@MainActor` to match the sibling seams (and the ModelContext it is handed,
+    /// which is the main context) — the report channel is main-isolated.
+    @MainActor
     static func seed(modelContext: ModelContext) {
         do {
             let existing = try modelContext.fetch(FetchDescriptor<Transaction>())
@@ -44,7 +47,22 @@ enum DuplicateReviewDebugSeed {
                 _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
                 _ = try CSVImportService.importCSV(modelContext: modelContext, data: data)
             }
+
+            // Report the shape the test actually depends on, not just "no throw":
+            // rows landed AND some came back flagged. A wipe that succeeded and an
+            // import that silently matched nothing would otherwise read the same.
+            let landed = try modelContext.fetchCount(FetchDescriptor<Transaction>())
+            let flagged = try modelContext.fetchCount(
+                FetchDescriptor<Transaction>(predicate: #Predicate { $0.isPossibleDuplicate })
+            )
+            MainThreadStallMonitor.note("seed-possible-duplicates OK landed=\(landed) flagged=\(flagged)")
         } catch {
+            // `print` alone is not a channel: app stdout is not captured in
+            // xcodebuild logs, so a throw here was invisible to the very UI test
+            // that depends on this seam — it would then look for a duplicate badge
+            // in an empty ledger and blame the badge. Same fix
+            // LargeDatasetDebugSeed already carries.
+            MainThreadStallMonitor.note("seed-possible-duplicates FAILED \(error)")
             print("DuplicateReviewDebugSeed failed: \(error.localizedDescription)")
         }
     }

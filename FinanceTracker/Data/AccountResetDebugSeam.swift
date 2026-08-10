@@ -55,7 +55,16 @@ enum AccountResetDebugSeam {
             }
 
             try modelContext.save()
+            let remaining = try modelContext.fetchCount(FetchDescriptor<Source>())
+            MainThreadStallMonitor.note("reset-accounts OK remaining=\(remaining)")
         } catch {
+            // `print` alone is not a channel: app stdout is not captured in
+            // xcodebuild logs, so a throw here was invisible to the very UI test
+            // that depends on this seam. It would run against whatever accounts
+            // the previous launch left behind — which is the exact non-hermetic
+            // failure this seam was written to remove — and then report on the
+            // wrong precondition. Same fix LargeDatasetDebugSeed already carries.
+            MainThreadStallMonitor.note("reset-accounts FAILED \(error)")
             print("AccountResetDebugSeam failed: \(error.localizedDescription)")
         }
     }

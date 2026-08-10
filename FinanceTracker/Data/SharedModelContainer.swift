@@ -324,14 +324,19 @@ enum SharedModelContainer {
                 }
             }
             markChecked()
-            #if DEBUG
-            print("[SharedModelContainer] Legacy store migrated → App Group.")
-            #endif
+            // Always compiled, both branches. Whether the store moved is the fact
+            // that explains a whole class of later symptoms — "my data vanished",
+            // a widget reading a different store, a migration re-running — and it
+            // is unrecoverable after the fact: the flag and the file layout look
+            // the same however this went. A DEBUG-only print made exactly the
+            // builds users run the ones that recorded nothing.
+            persistenceLog.notice("legacy store migrated to App Group")
         } catch {
             // Leave the flag unset so the next launch retries the migration.
-            #if DEBUG
-            print("[SharedModelContainer] ⚠️ Migration failed: \(error.localizedDescription)")
-            #endif
+            let ns = error as NSError
+            persistenceLog.error(
+                "legacy store migration to App Group FAILED (will retry next launch) domain=\(ns.domain, privacy: .public) code=\(ns.code, privacy: .public) userInfo=\(String(describing: ns.userInfo), privacy: .public)"
+            )
         }
     }
 
