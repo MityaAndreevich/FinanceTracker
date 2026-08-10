@@ -412,6 +412,7 @@
 "add.title.placeholder" = "p. ej., Starbucks, Renta, Sueldo";
 "add.section.category" = "Categoría";
 "add.category.add" = "Agregar categoría";
+"add.category.split_hint" = "¿Compraste varias cosas? Guárdalo y luego ábrelo para dividirlo entre categorías.";
 "add.category.empty_income" = "Aún no hay categorías de ingresos.";
 "add.category.empty_expense" = "Aún no hay categorías de gastos.";
 "add.section.source" = "Cuenta";

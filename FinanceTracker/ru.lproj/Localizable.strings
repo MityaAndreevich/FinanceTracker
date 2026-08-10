@@ -362,6 +362,7 @@
 
 "add.section.category" = "Категория";
 "add.category.add" = "Добавить категорию";
+"add.category.split_hint" = "Купили несколько вещей? Сохраните, затем откройте и разделите по категориям.";
 "add.category.empty_income" = "Категории доходов отсутствуют.";
 "add.category.empty_expense" = "Категории расходов отсутствуют.";
 

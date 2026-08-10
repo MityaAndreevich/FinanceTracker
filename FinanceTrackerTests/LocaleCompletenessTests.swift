@@ -232,7 +232,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // 2026-08-06 (guarded save at the audited view sites): net +1. One shared
         // "nothing was changed" message for the Categories & Accounts sheets.
         // All 5 locales in parity. Was 762.
-        XCTAssertEqual(enKeys.count, 763, "English baseline changed; update the expected count.")
+        // 2026-08-10 (split discoverability, 1.0.4 gate 1): net +1. The Add
+        // screen now names splitting under the category row; the detail-view
+        // entry point reuses the four split.* keys that already existed.
+        // All 5 locales in parity. Was 763.
+        XCTAssertEqual(enKeys.count, 764, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

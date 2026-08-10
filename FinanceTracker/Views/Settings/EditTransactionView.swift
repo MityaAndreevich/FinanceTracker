@@ -17,6 +17,17 @@ struct EditTransactionView: View {
 
     let transaction: Transaction
 
+    /// Open with one empty part already in the Split section, so a user who
+    /// asked to split lands on a populated section instead of having to find
+    /// "Add a part" one screen later. Default false — every existing call site
+    /// (the toolbar Edit button, the transactions list) opens unchanged.
+    ///
+    /// The seeded row makes Save briefly invalid with `split.incomplete_row`.
+    /// That is the correct feedback for someone who asked to split and has not
+    /// filled the part in yet, but it IS a state the editor does not otherwise
+    /// open in — hence the explicit opt-in rather than always seeding.
+    var startSplitting: Bool = false
+
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
     @Query(sort: \Source.name, order: .forward) private var sources: [Source]
 
@@ -463,6 +474,14 @@ struct EditTransactionView: View {
                 amountText: Money.plainDecimalString(cents: $0.amountCents),
                 categoryUUID: $0.category?.uuid
             )
+        }
+
+        // Seed one empty part when opened from the detail view's split entry
+        // point. Only when there are none already — an existing split loads its
+        // real rows above and must not gain a phantom blank one — and only for
+        // an expense, since `splitSection` isn't rendered otherwise.
+        if startSplitting && splitDrafts.isEmpty && typeRaw == TransactionType.expense.raw {
+            splitDrafts = [SplitDraft()]
         }
 
         // If category doesn't match the type (legacy data), pick the first matching one.

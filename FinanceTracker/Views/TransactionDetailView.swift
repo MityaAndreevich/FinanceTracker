@@ -11,6 +11,10 @@ import SwiftData
 struct TransactionDetailView: View {
     @Environment(\.locale) private var locale
     @State private var showEdit = false
+    /// Set only by the split entry point below, so the editor opens with one
+    /// empty part already there. Reset on dismiss — the toolbar's plain "Edit"
+    /// must never inherit it.
+    @State private var startSplitting = false
     let tx: Transaction
 
     var body: some View {
@@ -46,6 +50,28 @@ struct TransactionDetailView: View {
                         .privacySensitive()
                     }
                 }
+            } else if !tx.isIncome {
+                // The split affordance used to appear ONLY on already-split
+                // transactions — i.e. only to users who had already found the
+                // feature. Everyone else met no evidence anywhere that splitting
+                // exists. This row is the entry point for them; it opens the same
+                // editor, which still owns the whole split UI and its validation.
+                //
+                // Expense-only, matching EditTransactionView's own gate
+                // (`typeRaw == expense` guards `splitSection`) — offering it on an
+                // income row would open a sheet with nothing to split.
+                Section {
+                    Button {
+                        startSplitting = true
+                        showEdit = true
+                    } label: {
+                        Label("split.add_part", systemImage: "square.split.2x1")
+                    }
+                } header: {
+                    Text("split.section")
+                } footer: {
+                    Text("split.hint")
+                }
             }
 
             Section("tx_detail.section.source") {
@@ -60,11 +86,14 @@ struct TransactionDetailView: View {
         .navigationTitle("tx_detail.title")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("common.edit") { showEdit = true }
+                Button("common.edit") {
+                    startSplitting = false
+                    showEdit = true
+                }
             }
         }
-        .sheet(isPresented: $showEdit) {
-            EditTransactionView(transaction: tx)
+        .sheet(isPresented: $showEdit, onDismiss: { startSplitting = false }) {
+            EditTransactionView(transaction: tx, startSplitting: startSplitting)
         }
     }
 

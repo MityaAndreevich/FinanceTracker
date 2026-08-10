@@ -298,6 +298,15 @@ struct AddTransactionView: View {
             }
         } header: {
             Text("add.section.category")
+        } footer: {
+            // A pointer, deliberately not a control. Splitting lives in the
+            // editor because the amount is still being typed here and can change
+            // under the parts; naming it at the moment the user is categorising a
+            // multi-category purchase is the cheap half of discoverability.
+            // Expense-only, matching where splitting actually exists.
+            if typeRaw == TransactionType.expense.raw {
+                Text("add.category.split_hint")
+            }
         }
     }
 

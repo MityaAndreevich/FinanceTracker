@@ -363,6 +363,7 @@
 
 "add.section.category" = "Категорія";
 "add.category.add" = "Додати категорію";
+"add.category.split_hint" = "Купили кілька речей? Збережіть, потім відкрийте й розподіліть за категоріями.";
 "add.category.empty_income" = "Поки немає категорій доходу.";
 "add.category.empty_expense" = "Поки немає категорій витрат.";
 

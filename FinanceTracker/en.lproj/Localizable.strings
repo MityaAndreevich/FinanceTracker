@@ -358,6 +358,7 @@
 
 "add.section.category" = "Category";
 "add.category.add" = "Add Category";
+"add.category.split_hint" = "Bought several things? Save it, then open it to split across categories.";
 "add.category.empty_income" = "No income categories yet.";
 "add.category.empty_expense" = "No expense categories yet.";
 
