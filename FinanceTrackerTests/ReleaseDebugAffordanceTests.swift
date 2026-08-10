@@ -50,8 +50,22 @@ struct ReleaseDebugAffordanceTests {
     }
 
     /// (path, lines annotated with whether each is inside an `#if DEBUG` region).
+    ///
+    /// The walk guards itself. `FileManager.enumerator(at:)` returns a NON-nil
+    /// enumerator for a directory that does not exist and simply yields nothing,
+    /// so a moved or renamed source root produces an empty scan, and an empty
+    /// scan makes every `#expect` in every caller pass having examined nothing.
+    /// Mirrors `LocalizedCallSiteGuardTests`, which pins the same two facts.
     private static func annotatedSources() throws -> [(path: String, lines: [(text: String, inDebug: Bool)])] {
         let appDir = repoRoot.appendingPathComponent("FinanceTracker")
+
+        var isDirectory: ObjCBool = false
+        #expect(
+            FileManager.default.fileExists(atPath: appDir.path, isDirectory: &isDirectory)
+                && isDirectory.boolValue,
+            "app source root \(appDir.path) is missing — the sources moved and this guard is scanning nothing"
+        )
+
         let enumerator = FileManager.default.enumerator(at: appDir, includingPropertiesForKeys: nil)
         var results: [(String, [(String, Bool)])] = []
         while let url = enumerator?.nextObject() as? URL {
@@ -59,6 +73,12 @@ struct ReleaseDebugAffordanceTests {
             let source = try String(contentsOf: url, encoding: .utf8)
             results.append((url.path, annotate(source)))
         }
+
+        // 100 is far below the real count and far above anything a broken walk
+        // would produce. Lives here, not in one test, so a future third scan
+        // cannot be added without inheriting the check.
+        #expect(results.count > 100, "only \(results.count) .swift files scanned — the walk is broken")
+
         return results
     }
 
@@ -92,14 +112,24 @@ struct ReleaseDebugAffordanceTests {
 
     @Test("Release ignores every launch argument — several of them wipe data")
     func launchArgumentReadsAreDebugOnly() throws {
+        var readsExamined = 0
         for (path, lines) in try Self.annotatedSources() {
             for (line, inDebug) in lines
             where (line.contains("CommandLine.arguments") || line.contains("processInfo.arguments"))
                 && !Self.isComment(line) {
+                readsExamined += 1
                 #expect(inDebug,
                         "\(path): launch-argument read outside #if DEBUG — a Release build must not process launch arguments: \(line.trimmingCharacters(in: .whitespaces))")
             }
         }
+
+        // Second way this can pass having checked nothing, independent of the
+        // file count: the two match strings go stale (a seam starts reading its
+        // arguments through some other spelling) and the inner loop never runs.
+        // The app does read launch arguments — inside DEBUG — so zero matches
+        // means the matcher stopped finding them, not that they stopped existing.
+        #expect(readsExamined > 0,
+                "no launch-argument read found anywhere — the match strings are stale and this guard checked nothing")
     }
 
     @Test("Every reference to a debug-only symbol is wrapped in #if DEBUG")
