@@ -231,6 +231,35 @@ never before (they're the only handle we have on it).
   `AnalyticsBreakdownView` / `AnalyticsHorizonView` / `DaySpendingSheet`, and the
   Settings → Debug section that drives them.
 
+### Deferred BEHIND #22 — the chart scrub affordance (do not lose this)
+
+Not scaffolding; a **queued fix**, filed here because closing #22 is its trigger and
+this is the one place #22's closure is already checked.
+
+**The defect.** `AnalyticsPulseView` and `AnalyticsHorizonView` both support
+drag-to-scrub, and **neither shows any visual cue** that they do. Tap-to-drill on
+Breakdown slices and Horizon months is equally unadvertised. The interaction is
+documented only in `help.analytics.body`.
+
+**Why it is a design defect and not a discoverability gap.** A chart that responds to
+a gesture it does not advertise reads as **broken or static**, not as hiding a
+feature. Users do not fail to discover it — they conclude there is nothing there. No
+hint fixes that, because a hint fires once and the missing affordance is permanent.
+
+**The fix.** A resting selection indicator: a faint vertical rule at the most recent
+point with its value in the annotation slot, present on first render, disappearing
+into the design the moment the user drags. Same on Horizon. It says "this axis is
+addressable" permanently and silently.
+
+**Why it is deferred out of 1.0.5** (founder decision, 2026-08-12, with the reasoning
+above accepted): a resting indicator is a *rendered mark* on the two charts with an
+open `EXC_BREAKPOINT` (#22), so it is the only item in the 1.0.5 polish set that can
+crash. 1.0.5 exists to make the app feel finished, and a crash in the polish release
+costs more than one more release of a chart that looks inert.
+
+**When #22 closes, this is unblocked.** It must route through `ChartGuards` — the
+degenerate-domain and degenerate-frame histories are on exactly these two charts.
+
 ## Releases — every submission gets a tag and a branch, before anything else lands
 
 **The rule, and it is not optional:** the moment a build is uploaded to App Store Connect for review,
