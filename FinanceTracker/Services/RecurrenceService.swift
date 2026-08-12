@@ -130,9 +130,21 @@ enum RecurrenceService {
     /// The next occurrence date that has not yet been handled. The saved
     /// transaction's own date is the first occurrence, so the first *prompt*
     /// lands one full period after it (or after the last handled period).
+    ///
+    /// `tx.date` is the series ANCHOR and is passed through so the month-end clamp
+    /// is taken from it rather than from the previous (already-clamped) result —
+    /// without that, Jan 31 → Feb 28 → Mar 28 and the series never returns to
+    /// month-end. See `RecurrenceType.nextDate(after:anchor:)`, which also documents
+    /// why an already-drifted series is deliberately NOT re-anchored.
+    ///
+    /// Under sync a series can have twin rows disagreeing on `tx.date`, and the
+    /// anchor should then come from `canonicalTemplate(among:)` rather than an
+    /// arbitrary row. Not routed that way here because this function is handed one
+    /// transaction, and twins are unreachable without sync (verified 7/7,
+    /// 2026-08-10). Revisit with the sync work, not before.
     static func nextDueDate(for tx: Transaction, recurrence: RecurrenceType) -> Date {
         let lastBoundary = handledDate(for: tx.uuid) ?? tx.date
-        return recurrence.nextDate(after: lastBoundary)
+        return recurrence.nextDate(after: lastBoundary, anchor: tx.date)
     }
 
     // MARK: - User actions on a prompt

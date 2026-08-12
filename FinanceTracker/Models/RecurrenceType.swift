@@ -81,7 +81,69 @@ enum RecurrenceType: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Advance a date by exactly one period of this recurrence.
+    ///
+    /// ⚠️ **Anchor-blind, and that is a month-end bug** — prefer
+    /// `nextDate(after:anchor:)`. `Calendar.date(byAdding: .month, value: 1)` CLAMPS
+    /// into short months, and because this function's only input is the previous
+    /// result, the clamp compounds: Jan 31 → Feb 28 → **Mar 28** → Apr 28, forever.
+    /// One February permanently moves a month-end subscription to the 28th.
+    ///
+    /// Kept for `.weekly`, where there is nothing to clamp, and for callers that
+    /// genuinely have no anchor.
     func nextDate(after date: Date, calendar: Calendar = .current) -> Date {
         calendar.date(byAdding: dateComponent, value: 1, to: date) ?? date
+    }
+
+    /// Advance one period, clamping the **series anchor's** day-of-month into the
+    /// target month instead of the previous result's. Jan 31 → Feb 28 → **Mar 31**.
+    /// A yearly series anchored Feb 29 2024 clamps to Feb 28 in 2025/26/27 and
+    /// returns to **Feb 29 in 2028**.
+    ///
+    /// ## Forward-only, deliberately (founder decision, 2026-08-12)
+    ///
+    /// A series that has ALREADY drifted under the old math keeps the day it drifted
+    /// to. It is not re-anchored. Re-anchoring would move posting dates on live
+    /// series that users may already have reconciled against a bank statement, and
+    /// **we cannot know which dates were already acted on** — so a stable wrong date
+    /// beats a date that changes underneath someone.
+    ///
+    /// **Do not "improve" this later by back-filling drifted series.** That is the
+    /// change this rule exists to prevent, not an oversight.
+    ///
+    /// The drift test is the `expected != lastDay` branch below: if `last` is exactly
+    /// what clamping the anchor into `last`'s own month produces, the series is still
+    /// on-anchor and gets the corrected math; if it is not, the old code already
+    /// moved it and we preserve where it landed. This is what makes Jan 31 → Feb 28
+    /// recoverable — Feb 28 IS the correct clamp for February, so the series is still
+    /// on-anchor there and the very next step is the fixed Mar 31.
+    func nextDate(after last: Date, anchor: Date, calendar: Calendar = .current) -> Date {
+        // Weeks have no short-month problem: every step is exactly 7 days.
+        guard self != .weekly else { return nextDate(after: last, calendar: calendar) }
+
+        let anchorDay = calendar.component(.day, from: anchor)
+        let lastDay = calendar.component(.day, from: last)
+
+        // Was `last` produced by clamping the anchor into its own month?
+        let expected = min(anchorDay, Self.daysInMonth(of: last, calendar: calendar))
+        let effectiveDay = (lastDay == expected) ? anchorDay : lastDay
+
+        guard let target = calendar.date(byAdding: dateComponent, value: 1, to: last) else {
+            return last
+        }
+        let day = min(effectiveDay, Self.daysInMonth(of: target, calendar: calendar))
+
+        // Rebuild from the target's month, preserving `last`'s time of day so a
+        // prompt does not wander across the day as the series advances.
+        var comps = calendar.dateComponents([.year, .month], from: target)
+        comps.day = day
+        let time = calendar.dateComponents([.hour, .minute, .second], from: last)
+        comps.hour = time.hour
+        comps.minute = time.minute
+        comps.second = time.second
+        return calendar.date(from: comps) ?? target
+    }
+
+    private static func daysInMonth(of date: Date, calendar: Calendar) -> Int {
+        calendar.range(of: .day, in: .month, for: date)?.count ?? 28
     }
 }
