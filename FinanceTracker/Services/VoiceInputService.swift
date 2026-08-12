@@ -4,10 +4,16 @@
 //
 //  On-device speech-to-text wrapper for Quick Entry voice dictation.
 //
-//  Privacy-critical: `requiresOnDeviceRecognition = true` is enforced and the
-//  service hides itself entirely (`isAvailable == false`) when on-device
-//  recognition is unavailable for the user's locale. Audio never leaves the
-//  device — see APP_PRIVACY_ANSWERS.md §3.7 / §6 (voice entry re-audit trigger).
+//  Privacy-critical: `requiresOnDeviceRecognition = true` is enforced. Audio never
+//  leaves the device — see APP_PRIVACY_ANSWERS.md §3.7 / §6 (voice re-audit trigger).
+//
+//  This header USED to claim the service "hides itself entirely (`isAvailable ==
+//  false`) when on-device recognition is unavailable". That has been false since
+//  Bug 7. `QuickEntryView` renders the mic UNCONDITIONALLY and reports
+//  `quick_entry.voice.unavailable` on tap; nothing gates the control on
+//  `isAvailable`. The stale claim survived long enough to produce a wrong audit
+//  finding in 2026-08 — see the runtime-behaviour comment rule in ARCHITECTURE.md.
+//  `isAvailable` remains a correct PREDICATE; it is simply not a visibility gate.
 //
 
 import Foundation
@@ -120,7 +126,9 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
         }
 
         #if DEBUG
-        print("[VoiceInputService] ❌ No on-device recognizer for appLanguageCode=\(stored). Mic will be hidden.")
+        // NOT "mic will be hidden" — the mic is always rendered (Bug 7); tapping it
+        // reports `quick_entry.voice.unavailable`. See the header note.
+        print("[VoiceInputService] ❌ No on-device recognizer for appLanguageCode=\(stored). Mic stays visible; tap reports unavailable.")
         #endif
         return Locale(identifier: candidates.first ?? Locale.current.identifier)
     }

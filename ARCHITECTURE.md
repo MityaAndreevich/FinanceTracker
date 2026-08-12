@@ -189,6 +189,35 @@ result bundle with `xcresulttool get test-results summary`.
 - Prefer `@Observable` over `@ObservedObject` for any new view models
 - Any class touching `ModelContext` is `@MainActor`; SwiftData is not background-thread-safe without a `ModelActor`
 
+### A comment asserting RUNTIME BEHAVIOUR must be pinned by a test, or deleted
+
+**The rule.** If a comment states what the code *does at runtime* — "the mic is hidden
+when…", "this rule is `.deny`", "`uuid` is `.unique`", "the sheet dismisses on save" —
+it must be **backed by a test that fails when the claim stops being true**. If you are
+not willing to write that test, **delete the sentence**. An unpinned behavioural claim
+is not documentation; it is a second, unversioned source of truth that drifts silently
+and is trusted precisely because it reads authoritative.
+
+**Why this rule exists: four wrong conclusions, four stale comments.**
+
+| Stale claim | What it cost |
+|---|---|
+| `Transaction.category` delete rule is `.deny` | Rule had been `.nullify` for releases; the comment sent a save-failure hunt in the wrong direction |
+| `@Attribute(.unique)` on the CSV-import `uuid` | Removed in V2; dedup reasoning was built on a constraint that no longer existed |
+| `docs/PRIVACY_POLICY.md` describing "Vela" + Receipt-OCR | A publicly-readable policy asserted three things untrue of the shipped app for 40 days |
+| `VoiceInputService` "Mic will be hidden" | Fixed by Bug 7; the comment produced a **false finding in the 2026-08 backlog audit** — a discoverability gap that did not exist |
+
+**What "pinned" looks like.** `RecurrenceNotificationIdentityTests` is the reference:
+`RecurrenceService.notificationID(for:)` carried a long doc comment asserting an identity
+property, so a test file exists whose only job is to fail if that property stops holding.
+Do that, or say less.
+
+**Corollary — comments describing the UI are the highest-risk kind**, because the UI is
+the part that changes without the file changing. A comment in a *model* or a *service*
+that describes what a *view* does can be falsified by an edit in a different file, which
+no reviewer of that file will ever see. Prefer stating the local contract (`isAvailable`
+is a predicate) over the remote consequence ("so the mic is hidden").
+
 ## Debug scaffolding to remove (don't let it rot)
 
 Instruments added to bisect a specific bug, to be deleted once that bug is closed —
