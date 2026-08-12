@@ -8,7 +8,13 @@
 import SwiftUI
 
 struct RootView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    // NOTE: RootView deliberately does NOT read `hasCompletedOnboarding`. It used to
+    // hold an @AppStorage for it plus an `.animation(value:)` keyed to it, both left
+    // over from a first-run gate that was deleted in Brief 28 Part E. Nothing here
+    // branched on the flag any more, which is what let Settings' "Restart onboarding"
+    // button write it and appear to do nothing. Onboarding is owned entirely by
+    // OnboardingCoordinator inside ContentView.
+    //
     // Fresh installs follow the device setting (System). Users can pin Light / Dark
     // in Settings → General → Appearance. The paywall forces dark for a premium look.
     @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
@@ -66,7 +72,6 @@ struct RootView: View {
             // in-app coach-mark flow driven by OnboardingCoordinator inside ContentView.
             AuthGateView()
         }
-        .animation(.easeInOut(duration: 0.25), value: hasCompletedOnboarding)
         // T-8: cover screen before iOS takes the app-switcher snapshot.
         // .inactive fires before the snapshot; .background keeps it covered.
         .overlay {

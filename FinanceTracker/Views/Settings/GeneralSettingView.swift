@@ -14,8 +14,6 @@ struct GeneralSettingsView: View {
     @AppStorage("defaultCurrencyCode") private var defaultCurrencyCode: String = "USD"
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
-
     @AppStorage("hasSeenFeatureTour") private var hasSeenFeatureTour = false
 
     // Q1=C confidence-gated auto-save (commit cb79b57) is user-tunable here.
@@ -43,7 +41,6 @@ struct GeneralSettingsView: View {
     @State private var pendingLanguage: String?
 
     @State private var showResetTransactionsAlert = false
-    @State private var showRestartOnboardingAlert = false
 
     // Demo data is opt-in and reversible, but both adding (inserts ~25 sample
     // transactions) and clearing it are bulk operations, so each is gated behind
@@ -146,14 +143,6 @@ struct GeneralSettingsView: View {
             Button("general.alert.reset", role: .destructive) { resetTransactions() }
         } message: {
             Text("general.alert.reset_tx.message")
-        }
-
-        // Restart onboarding confirm
-        .alert("general.alert.restart_onboarding.title", isPresented: $showRestartOnboardingAlert) {
-            Button("general.alert.cancel", role: .cancel) {}
-            Button("general.alert.restart", role: .destructive) { restartOnboarding() }
-        } message: {
-            Text("general.alert.restart_onboarding.message")
         }
 
         // Add sample data confirm
@@ -430,14 +419,17 @@ struct GeneralSettingsView: View {
         }
     }
 
+    // REMOVED 2026-08: "Restart onboarding". It set `hasCompletedOnboarding = false`
+    // and nothing else. RootView does not branch on that flag (it always shows
+    // AuthGateView), and ContentView's `.task` — the only caller of
+    // `startIfNeeded()` — has already run by the time Settings is on screen. So the
+    // destructive confirmation was accepted and NOTHING happened until the next cold
+    // launch. Its alert also promised "you'll see the language & currency setup
+    // again", a screen deleted in Brief 28 Part E, so "make it work" had no defined
+    // target. "Replay tutorial" (above, in the Tutorial & Sample Data section) is the
+    // working affordance and does this immediately. Do not reintroduce a second one.
     private var maintenanceSection: some View {
         Section("general.section.maintenance") {
-
-            Button {
-                showRestartOnboardingAlert = true
-            } label: {
-                Label("general.restart_onboarding", systemImage: "arrow.counterclockwise")
-            }
 
             Button(role: .destructive) {
                 showResetTransactionsAlert = true
@@ -452,11 +444,6 @@ struct GeneralSettingsView: View {
     }
 
     // MARK: - Actions
-
-    private func restartOnboarding() {
-        // Данные не трогаем. Просто возвращаем онбординг.
-        hasCompletedOnboarding = false
-    }
 
     private func resetTransactions() {
         // Measurement seam (F1, 2026-08-08). `BulkDeleteStallMeasurementTests`

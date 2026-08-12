@@ -89,9 +89,11 @@ final class OnboardingCoordinator: ObservableObject {
     /// demo sandbox. Ends the flow.
     func finishFirstWin() { complete() }
 
-    /// Queue a re-run of the tutorial (Settings → Replay). Takes effect on the next
-    /// `startIfNeeded()` even though onboarding is already complete.
-    func requestReplay() { defaults.set(true, forKey: Self.replayKey) }
+    // REMOVED 2026-08: `requestReplay()`. Settings → "Replay tutorial" arms the flag
+    // by writing `replayKey` directly, so this method had no production caller — and
+    // its only test exercised a path the app never took. Two ways to arm one flag is
+    // how a dead path gets "fixed" instead of the live one. `replayKey` above stays
+    // the single named home for the key.
 
     private func complete() {
         defaults.set(true, forKey: Self.completedKey)

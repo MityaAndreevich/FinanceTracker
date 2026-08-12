@@ -71,11 +71,15 @@ struct OnboardingCoordinatorTests {
         #expect(d.bool(forKey: OnboardingCoordinator.completedKey))
     }
 
+    /// Arms the flag EXACTLY as Settings → "Replay tutorial" does — a direct write to
+    /// `replayKey` (`GeneralSettingView`). This used to call `requestReplay()`, an API
+    /// with no production caller, so the test passed while covering a path the app
+    /// never took. Now it covers the real one.
     @Test func replay_restartsEvenWhenCompleted() {
         let d = makeDefaults()
         d.set(true, forKey: OnboardingCoordinator.completedKey)
         let c = OnboardingCoordinator(defaults: d)
-        c.requestReplay()
+        d.set(true, forKey: OnboardingCoordinator.replayKey)
         c.startIfNeeded()
         #expect(c.phase == .greeting)
         // The one-shot replay flag is consumed so a later start won't re-trigger.
