@@ -25,9 +25,9 @@ enum SeedService {
                 addMissingDefaultCategoriesIfNeeded(refreshed, modelContext: modelContext)
             }
         } catch {
-            #if DEBUG
-            print("SeedService failed: \(error.localizedDescription)")
-            #endif
+            // Always compiled. A DEBUG-only print made exactly the builds users run
+            // the ones that recorded nothing (silent-success audit §3.3, B7).
+            logSaveFailure("SeedService.seedIfNeeded", error)
         }
     }
 
@@ -88,9 +88,7 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
-            #if DEBUG
-            print("Seed failed: \(error.localizedDescription)")
-            #endif
+            logSaveFailure("SeedService.seedFreshDatabase", error)
         }
     }
 
@@ -210,9 +208,10 @@ enum SeedService {
         do {
             try modelContext.save()
         } catch {
-            #if DEBUG
-            print("Category migration failed: \(error.localizedDescription)")
-            #endif
+            // The one in this file that most needed a channel: a failed CATEGORY
+            // MIGRATION leaves the user's categories half-converted, and in Release
+            // it reported nowhere at all.
+            logSaveFailure("SeedService.migrateLegacyCategories", error)
         }
     }
 
