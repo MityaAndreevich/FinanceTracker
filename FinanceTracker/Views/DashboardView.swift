@@ -308,11 +308,25 @@ struct DashboardView: View {
         // 5.0s (was 3.5s): industry-standard toast window; RU/UK copy is ~40%
         // longer than EN and needs the extra reading time (Apple HIG guidance on
         // time-boxed elements / accessibility).
-        .confirmationToast($quickAddToast, duration: 5.0, style: quickAddToastStyle) {
-            quickAddEditingTx = quickAddSavedTx
-        }
-        // Shake-to-undo the last auto-save, only while the 30s window is open so
-        // the detector doesn't hold first responder during normal Quick Add use.
+        .confirmationToast(
+            $quickAddToast,
+            duration: 5.0,
+            style: quickAddToastStyle,
+            onTap: { quickAddEditingTx = quickAddSavedTx },
+            // 1.0.5 discoverability: undo had NO affordance — it existed only as a
+            // shake, which cannot be found, only taught. A visible control needs no
+            // teaching at all, so the "don't turn the app into a tutorial" cost is
+            // zero: it is not a message about mistakes, just a control that is there.
+            //
+            // Offered only while the 30s window is genuinely open, so the button can
+            // never appear on a toast whose undo would no-op. `undoLastAutoSave`
+            // clears `quickAddSavedTx` on every path, which is also what keeps the
+            // button off the "undone" and "couldn't undo" toasts that follow it.
+            onUndo: undoWindowActive ? { undoLastAutoSave() } : nil
+        )
+        // Shake-to-undo the same action. Kept as an undocumented power-user shortcut:
+        // it costs nothing, delights whoever tries it, and is taught to nobody — the
+        // visible control above is the discoverable path.
         .background {
             if undoWindowActive {
                 Color.clear.onShake { undoLastAutoSave() }

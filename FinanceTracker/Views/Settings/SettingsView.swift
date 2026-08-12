@@ -65,6 +65,19 @@ struct SettingsView: View {
                     Label("settings.learn_tips", systemImage: "lightbulb")
                 }
 
+                // Discoverability (1.0.5): the widget and the Siri intents are
+                // finished, shipped surfaces that the app never mentioned. Both
+                // are set up OUTSIDE the app — on the Home Screen, in Shortcuts —
+                // so no coach-mark or in-context hint can point at them; what they
+                // needed was a signpost. The articles already existed (help.widget,
+                // help.siri) four taps deep inside Learn & Tips, which is itself an
+                // undiscovered screen. Promoted here: no new copy but the row label.
+                NavigationLink {
+                    SetupGuideView()
+                } label: {
+                    Label("settings.setup_guide", systemImage: "wand.and.stars")
+                }
+
                 // 1.0.3 Item 5: the only feedback channel a no-analytics app
                 // can have. A Button (not a NavigationLink): the composer is a
                 // modal mail sheet, not a settings screen.

@@ -87,6 +87,45 @@ struct HelpArticleView: View {
     }
 }
 
+// MARK: - Setup guide (Settings → "Set up Widget & Siri")
+
+/// The two capabilities that are configured OUTSIDE the app — the Home Screen
+/// widget and the Siri / Shortcuts intents — given one findable home.
+///
+/// Both shipped and were never mentioned anywhere in the product: the widget has
+/// been redesigned twice and the intents are auto-surfaced to Siri, the Action
+/// Button and Shortcuts, yet the only place either was described was an article
+/// four taps inside Learn & Tips. Because the setup steps happen on another
+/// screen entirely, no coach-mark or in-context hint can reach them — a signpost
+/// is the whole available fix, and this is it.
+///
+/// Deliberately no new article copy: `help.widget.body` already gives the exact
+/// Home Screen procedure and `help.siri.body` the exact phrasing to say.
+struct SetupGuideView: View {
+    var body: some View {
+        List {
+            Section {
+                NavigationLink {
+                    HelpArticleView(article: .widget)
+                } label: {
+                    Label("help.widget", systemImage: "rectangle.on.rectangle")
+                }
+
+                NavigationLink {
+                    HelpArticleView(article: .siri)
+                } label: {
+                    Label("help.siri", systemImage: "waveform")
+                }
+            } footer: {
+                Text("settings.setup_guide.footer")
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("settings.setup_guide")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 #Preview {
     NavigationStack { HelpArticleView(article: .quickAdd) }
 }

@@ -989,3 +989,8 @@
 
 "edit.category.fully_split_note" = "Частини займають усю суму, тому ця категорія не отримує нічого. Вона застосується, якщо категорію частини видалять.";
 
+/* Discoverability (1.0.5) — surfaces that shipped with no way to find them */
+"common.undo" = "Скасувати";
+"settings.setup_guide" = "Налаштувати віджет і Siri";
+"settings.setup_guide.footer" = "І те й інше налаштовується поза Budget Crab — на екрані «Дім» і в програмі «Швидкі команди».";
+"cs.category.limit_hint" = "Торкніться категорії витрат, щоб задати місячний ліміт і бачити, скільки з нього лишилося.";

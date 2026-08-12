@@ -55,6 +55,18 @@ struct ConfirmationToastModifier: ViewModifier {
     /// Optional tap handler. When set, the toast becomes a button (e.g. "Saved —
     /// tap to edit", Bug 12 Q1-C) and dismisses itself after the action runs.
     var onTap: (() -> Void)? = nil
+    /// Optional trailing "Undo" action (1.0.5 discoverability). When set, the toast
+    /// grows a SECOND, separately-tappable control instead of becoming one big
+    /// button — nesting a Button inside a Button does not work in SwiftUI, and the
+    /// message area must keep its own tap-to-edit meaning.
+    ///
+    /// Why this exists: undo-the-last-auto-save was implemented only as a SHAKE
+    /// gesture, which has no affordance and therefore cannot be discovered — only
+    /// taught. A visible control converts a permanent per-user teaching cost into
+    /// zero teaching: it needs no lesson, and it is not a message about mistakes,
+    /// it is simply a control that is there. The shake still works for whoever
+    /// finds it; it is deliberately documented nowhere.
+    var onUndo: (() -> Void)? = nil
 
     @State private var dismissTask: Task<Void, Never>? = nil
 
@@ -82,7 +94,37 @@ struct ConfirmationToastModifier: ViewModifier {
 
     @ViewBuilder
     private func toastContainer(_ message: LocalizedStringKey) -> some View {
-        if let onTap {
+        if let onUndo {
+            // Two independent controls sharing one capsule. The capsule's padding
+            // and background move OUT here so neither button paints its own.
+            HStack(spacing: 0) {
+                tappableLabel(message)
+
+                Divider()
+                    .frame(width: 1, height: 22)
+                    .overlay(Color.white.opacity(0.4))
+                    .padding(.horizontal, 10)
+
+                Button {
+                    onUndo()
+                    self.message = nil
+                } label: {
+                    Text("common.undo")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                        // 44pt minimum tap target (HIG), without inflating the
+                        // capsule: the height is already ~44 with the padding below.
+                        .frame(minWidth: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("common.undo"))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(style.background, in: Capsule())
+            .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+        } else if let onTap {
             Button {
                 onTap()
                 self.message = nil
@@ -96,7 +138,25 @@ struct ConfirmationToastModifier: ViewModifier {
         }
     }
 
-    private func toast(_ message: LocalizedStringKey) -> some View {
+    /// The message half, tappable when `onTap` is set. Carries no background — the
+    /// undo container owns the capsule.
+    @ViewBuilder
+    private func tappableLabel(_ message: LocalizedStringKey) -> some View {
+        if let onTap {
+            Button {
+                onTap()
+                self.message = nil
+            } label: {
+                messageRow(message).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+        } else {
+            messageRow(message)
+        }
+    }
+
+    private func messageRow(_ message: LocalizedStringKey) -> some View {
         HStack(spacing: 8) {
             Image(systemName: style.iconName)
                 .foregroundStyle(.white)
@@ -104,11 +164,15 @@ struct ConfirmationToastModifier: ViewModifier {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(style.background, in: Capsule())
-        .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
         .accessibilityElement(children: .combine)
+    }
+
+    private func toast(_ message: LocalizedStringKey) -> some View {
+        messageRow(message)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(style.background, in: Capsule())
+            .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
     }
 }
 
@@ -120,8 +184,11 @@ extension View {
         _ message: Binding<LocalizedStringKey?>,
         duration: TimeInterval = 2.0,
         style: ToastStyle = .success,
-        onTap: (() -> Void)? = nil
+        onTap: (() -> Void)? = nil,
+        onUndo: (() -> Void)? = nil
     ) -> some View {
-        modifier(ConfirmationToastModifier(message: message, duration: duration, style: style, onTap: onTap))
+        modifier(ConfirmationToastModifier(
+            message: message, duration: duration, style: style, onTap: onTap, onUndo: onUndo
+        ))
     }
 }

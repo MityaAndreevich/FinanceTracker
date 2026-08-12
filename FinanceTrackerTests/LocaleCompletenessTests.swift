@@ -254,7 +254,16 @@ final class LocaleCompletenessTests: XCTestCase {
         // no servers") was cited in DESIGN_ICLOUD_SYNC §2.1 as shipped copy that
         // sync would falsify, when in fact nothing rendered it.
         // All 5 locales in parity. Was 765.
-        XCTAssertEqual(enKeys.count, 750, "English baseline changed; update the expected count.")
+        // 2026-08-12 (discoverability set, 1.0.5): net +4. `common.undo` for the
+        // visible Undo now on the Quick Add toast (undo previously existed ONLY as
+        // an undiscoverable shake gesture); `settings.setup_guide` + its footer for
+        // the Settings row that finally names the widget and the Siri intents —
+        // both configured outside the app, so no in-app hint can reach them; and
+        // `cs.category.limit_hint`, naming monthly category limits where the user is
+        // already looking at their categories. No new ARTICLE copy: the setup guide
+        // reuses help.widget.* and help.siri.*, which already existed.
+        // All 5 locales in parity. Was 750.
+        XCTAssertEqual(enKeys.count, 754, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

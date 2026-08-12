@@ -991,3 +991,8 @@
 
 "edit.category.fully_split_note" = "The parts use the whole amount, so this category receives nothing. It still applies if a part's category is removed.";
 
+/* Discoverability (1.0.5) — surfaces that shipped with no way to find them */
+"common.undo" = "Undo";
+"settings.setup_guide" = "Set up Widget & Siri";
+"settings.setup_guide.footer" = "Both are set up outside Budget Crab — on your Home Screen and in the Shortcuts app.";
+"cs.category.limit_hint" = "Tap any expense category to set a monthly limit and see how much of it is left.";

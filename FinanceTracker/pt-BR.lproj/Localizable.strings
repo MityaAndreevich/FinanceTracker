@@ -863,3 +863,8 @@
 
 "edit.category.fully_split_note" = "As partes usam o valor inteiro, então esta categoria não recebe nada. Ela continua valendo se a categoria de uma parte for removida.";
 
+/* Discoverability (1.0.5) — surfaces that shipped with no way to find them */
+"common.undo" = "Desfazer";
+"settings.setup_guide" = "Configurar widget e Siri";
+"settings.setup_guide.footer" = "Ambos são configurados fora do Budget Crab — na Tela de Início e no app Atalhos.";
+"cs.category.limit_hint" = "Toque em uma categoria de despesa para definir um limite mensal e ver quanto ainda resta.";

@@ -226,6 +226,14 @@ struct CategoriesSourcesView: View {
             }
         } header: {
             Text("cs.section.expense_categories")
+        } footer: {
+            // Discoverability (1.0.5): monthly category limits shipped in 1.0.3 and
+            // nothing named them anywhere — the only way to find one was to tap a
+            // category row and notice the sheet. This footer sits where the user is
+            // already looking AT the categories, which is when the thought occurs.
+            // A footer, not a hint: it costs no attention when ignored and does not
+            // fire, so it stays true for every user on every visit.
+            Text("cs.category.limit_hint")
         }
     }
 
