@@ -53,8 +53,10 @@ struct AboutView: View {
         .listStyle(.insetGrouped)
     }
 
-    /// App Store URL — replace `idTBD` with the real App ID once Apple assigns it post-submission.
-    private static let appStoreURL = URL(string: "https://apps.apple.com/app/budget-crab/idTBD")!
+    /// App Store URL. `6784424678` is Budget Crab's real App ID, assigned by Apple.
+    /// NOT `6758524287` — that is a COMPETITOR's ID that has appeared in our research
+    /// notes, and the two are easy to confuse. Drives "Rate the app" and "Tell a friend".
+    private static let appStoreURL = URL(string: "https://apps.apple.com/app/budget-crab/id6784424678")!
 
     private var appVersionString: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
