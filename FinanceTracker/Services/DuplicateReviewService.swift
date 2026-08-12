@@ -91,6 +91,11 @@ enum DuplicateReviewService {
     static func deleteAll(in modelContext: ModelContext) throws {
         let rows = try flagged(in: modelContext)
         try hangProbe("DuplicateReview.deleteAll", rows: rows.count) {
+            // The WORST case for the quadratic: unlike a full reset, most rows
+            // SURVIVE here, so the inverse collections stay large for the whole
+            // loop. That asymmetry is what the 2×2 isolated — deleting half as
+            // many rows cost MORE when half survived. See detachForBulkDelete.
+            TransactionDeleteService.detachForBulkDelete(rows)
             for tx in rows {
                 modelContext.delete(tx)
             }

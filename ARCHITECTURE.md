@@ -189,6 +189,37 @@ result bundle with `xcresulttool get test-results summary`.
 - Prefer `@Observable` over `@ObservedObject` for any new view models
 - Any class touching `ModelContext` is `@MainActor`; SwiftData is not background-thread-safe without a `ModelActor`
 
+### ⛔️ `delete(model:)` / `delete(model:where:)` THROWS on this container
+
+**Do not reach for SwiftData's batch delete. It does not work here, and it fails
+loudly only if you are looking.**
+
+```
+NSCocoaErrorDomain 134060 — "Entity named:TransactionSplit not found
+                             for relationship named:category"
+```
+
+**Why.** The production container is **multi-configuration** — `syncedConfig` +
+`localConfig` in `SharedModelContainer.openContainer` — and the bulk API takes no
+configuration, so it cannot resolve an entity that spans two stores.
+
+**What it already cost.** It threw on *every* call from 2026-08-04 to 2026-08-08 in
+`LargeDatasetDebugSeed`. Both call sites caught it and `print`ed, to a channel
+xcodebuild does not capture. The seam silently lost the ability to establish or reset
+the ledger, so measurements ran against whatever the simulator happened to hold — and
+one recorded run measured an 8,000-row store nobody had chosen.
+
+**Use fetch-and-delete instead**, and for BULK deletes call
+`TransactionDeleteService.detachForBulkDelete` first — that is the measured fix for
+the quadratic `save()`, and it is where the full reasoning lives.
+
+**Two further reasons batch delete is wrong here even if Apple fixes the above**, so
+this is not re-litigated: whether a store-level delete honours the `.cascade` on
+`Transaction.splits` is **unknown**, and orphaned splits are invisible to aggregation
+(`CategoryAttribution` derives from the parent) — a silently growing set of
+unreachable rows; and a store-level delete does not update the in-memory graph that
+`DuplicateReviewView`'s `@Query` is holding.
+
 ### A comment asserting RUNTIME BEHAVIOUR must be pinned by a test, or deleted
 
 **The rule.** If a comment states what the code *does at runtime* — "the mic is hidden

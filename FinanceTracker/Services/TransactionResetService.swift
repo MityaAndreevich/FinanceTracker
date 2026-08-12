@@ -38,6 +38,11 @@ enum TransactionResetService {
     static func reset(in context: ModelContext) -> Outcome {
         let all = (try? context.fetch(FetchDescriptor<Transaction>())) ?? []
         hangProbe("TransactionReset.deleteAll", rows: all.count) {
+            // Rebuild each affected to-many ONCE instead of letting save() do an
+            // identity-removal per deleted row. See detachForBulkDelete — the cost
+            // being removed here is the save's relationship maintenance, which
+            // measured 62× the floor, not the delete loop (0.08%).
+            TransactionDeleteService.detachForBulkDelete(all)
             for tx in all { context.delete(tx) }
         }
         do {
