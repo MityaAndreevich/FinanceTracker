@@ -241,7 +241,20 @@ final class LocaleCompletenessTests: XCTestCase {
         // compiled out of the only builds where redemption works. The account
         // sheet's failure reuses the existing shared cs.error.save_failed.
         // All 5 locales in parity. Was 764.
-        XCTAssertEqual(enKeys.count, 765, "English baseline changed; update the expected count.")
+        // 2026-08-12 (orphan sweep, 1.0.5): net -15, the first NEGATIVE movement of
+        // this baseline. Eleven `tutorial.*` keys for the retired 3-page carousel —
+        // no view has rendered them since Brief 28 Part E replaced it with the
+        // coach-mark flow — and four `general.*restart_onboarding*` keys for a
+        // Settings button that was removed because it silently did nothing and its
+        // alert described a language/currency screen that had also been deleted.
+        // `tutorial.page3.demo_offer` is DELIBERATELY KEPT: it is the one survivor
+        // of the carousel and still renders in GeneralSettingView.
+        // Orphaned strings describing a deleted screen are the raw material of the
+        // next false finding — `tutorial.page3.bullet1` ("100% on-device — no cloud,
+        // no servers") was cited in DESIGN_ICLOUD_SYNC §2.1 as shipped copy that
+        // sync would falsify, when in fact nothing rendered it.
+        // All 5 locales in parity. Was 765.
+        XCTAssertEqual(enKeys.count, 750, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

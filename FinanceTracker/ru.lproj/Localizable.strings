@@ -216,7 +216,6 @@
 "settings.language.restart_required.cta" = "OK";
 "settings.language.restart_required.message" = "Некоторые надписи обновятся после повторного открытия приложения.";
 
-"general.restart_onboarding" = "Перезапустить онбординг";
 "general.reset_transactions" = "Сбросить транзакции";
 "general.reset_hint" = "Транзакции будут удалены, категории и счета сохранятся.";
 "general.reset_success.message" = "Все транзакции удалены.";
@@ -232,9 +231,6 @@
 "general.alert.reset_tx.message" = "Все транзакции на этом устройстве будут удалены.";
 "general.alert.reset" = "Сбросить";
 
-"general.alert.restart_onboarding.title" = "Перезапустить онбординг?";
-"general.alert.restart_onboarding.message" = "Вы снова увидите настройку языка и валюты. Транзакции сохранятся.";
-"general.alert.restart" = "Перезапустить";
 
 /* ======================================================
    Transactions
@@ -726,17 +722,6 @@
 /* ======================================================
    Tutorial & empty states (Brief 25)
    ====================================================== */
-"tutorial.skip" = "Пропустить";
-"tutorial.cta.next" = "Далее";
-"tutorial.cta.get_started" = "Начать";
-"tutorial.page1.headline" = "Печатайте или диктуйте — Budget Crab всё поймёт";
-"tutorial.page1.caption" = "Нажмите + или просто говорите. Категорию мы определим сами.";
-"tutorial.page2.headline" = "Учится с каждой транзакцией";
-"tutorial.page2.caption" = "Budget Crab запоминает ваш выбор. Без облака — всё на вашем iPhone.";
-"tutorial.page3.headline" = "Ваши данные — только ваши";
-"tutorial.page3.bullet1" = "100% на устройстве — без облака и серверов";
-"tutorial.page3.bullet2" = "Никаких аккаунтов, рекламы и слежки";
-"tutorial.page3.bullet3" = "Голос обрабатывается локально с помощью Apple";
 "tutorial.page3.demo_offer" = "Добавить пример данных для знакомства";
 "dashboard.empty.title" = "Добавьте первую трату, чтобы увидеть куда уходят деньги";
 "dashboard.empty.caption" = "Напишите или скажите выше, чтобы добавить операцию";

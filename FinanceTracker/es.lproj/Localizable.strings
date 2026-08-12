@@ -161,7 +161,6 @@
 "settings.language.restart_required.message" = "Algunas etiquetas se actualizarán cuando vuelvas a abrir la app.";
 
 
-"general.restart_onboarding" = "Reiniciar onboarding";
 "general.reset_transactions" = "Restablecer transacciones";
 "general.reset_hint" = "Se eliminarán las transacciones, pero se mantendrán categorías y cuentas.";
 "general.reset_success.message" = "Se eliminaron todas las transacciones.";
@@ -173,8 +172,6 @@
 "general.alert.info.title" = "Información";
 "general.alert.reset_tx.title" = "¿Restablecer transacciones?";
 "general.alert.reset_tx.message" = "Esto eliminará permanentemente todas las transacciones.";
-"general.alert.restart_onboarding.title" = "¿Reiniciar onboarding?";
-"general.alert.restart_onboarding.message" = "Verás de nuevo la configuración inicial.";
 
 /* Transactions */
 "transactions.search.prompt" = "Buscar";
@@ -253,17 +250,6 @@
 /* ======================================================
    Tutorial & empty states (Brief 25)
    ====================================================== */
-"tutorial.skip" = "Omitir";
-"tutorial.cta.next" = "Siguiente";
-"tutorial.cta.get_started" = "Comenzar";
-"tutorial.page1.headline" = "Escribe o habla — Budget Crab hace el resto";
-"tutorial.page1.caption" = "Toca + o simplemente habla. Determinamos la categoría automáticamente.";
-"tutorial.page2.headline" = "Mejora con cada transacción";
-"tutorial.page2.caption" = "Budget Crab recuerda tus elecciones. Sin nube — todo en tu iPhone.";
-"tutorial.page3.headline" = "Tus datos son solo tuyos";
-"tutorial.page3.bullet1" = "100% en el dispositivo — sin nube ni servidores";
-"tutorial.page3.bullet2" = "Sin cuentas, sin anuncios, sin rastreo";
-"tutorial.page3.bullet3" = "Voz procesada localmente con el framework de Apple";
 "tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
 "dashboard.empty.title" = "Añade tu primer gasto para ver a dónde va tu dinero";
 "dashboard.empty.caption" = "Escribe o habla arriba — Budget Crab hace el resto";
@@ -315,7 +301,6 @@
 "general.alert.ok" = "OK";
 "general.alert.cancel" = "Cancelar";
 "general.alert.reset" = "Restablecer";
-"general.alert.restart" = "Reiniciar";
 "transactions.filter.all" = "Todas";
 "transactions.filter.income" = "Ingresos";
 "transactions.filter.expense" = "Gastos";
