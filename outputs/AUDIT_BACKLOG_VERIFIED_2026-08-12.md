@@ -414,6 +414,22 @@ unclear label) · **③** only via Help/Settings archaeology · **④ no discove
 
 #### The **④** list — capabilities with no discovery path at all
 
+> **⚠️ CORRECTED 2026-08-12, same day** (`PROPOSAL_1_0_5_SCOPE.md` §0). Verifying two of these in
+> order to propose a fix showed the fix already exists. **The list is SIX, not eight.**
+>
+> - **~~Voice unavailability~~ — WRONG. The mic never vanishes.** `QuickEntryView.swift:769–773`
+>   renders `micButton` unconditionally and shows `quick_entry.voice.unavailable` ("Voice not
+>   available for this language") on tap. Fixed by Bug 7. I drew the finding from
+>   `VoiceInputService.swift:8` and `:123` — a doc comment and a DEBUG print that both still say
+>   *"Mic will be hidden"* and describe pre-Bug-7 behaviour. **A stale comment produced a false
+>   audit finding — the fourth instance of that pattern in this project.**
+> - **~~Alerts' budget precondition~~ — WRONG, and not a design defect either.**
+>   `AlertsSettingsView.swift:104–113` renders a title ("Set a budget first"), a reason, **and a CTA
+>   that opens `BudgetSetterSheet` in place** (`:50`). It is already a correctly-built guided
+>   precondition.
+>
+> The remaining six stand as written.
+
 **This is the specification for the tutorial and the hints. Nothing else should be written until
 this list is agreed.**
 

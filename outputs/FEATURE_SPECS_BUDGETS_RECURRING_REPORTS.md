@@ -26,10 +26,52 @@
 ---
 
 ## C. Reports  (v1.0.1 / v1.1)
+
+> ### ⚠️ SCOPE CORRECTED 2026-08-12 — READ THIS BEFORE THE MVP SCOPE BELOW
+>
+> Verified against HEAD `4e6a8db` (`AUDIT_BACKLOG_VERIFIED_2026-08-12.md` §C.1).
+> **Four of this spec's five MVP bullets already shipped**, as the three Analytics
+> screens. Building the MVP as written below would substantially **rebuild
+> Analytics**, and would be judged against the version that already exists.
+>
+> **Already shipped — do not rebuild:**
+>
+> | Spec bullet | Where it already lives |
+> |---|---|
+> | spend trend line | `AnalyticsPulseView` (day-by-day, drag-to-scrub) + `AnalyticsHorizonView` (12-month net) |
+> | top categories, multi-colour | `AnalyticsBreakdownView` (donut + rows, top-5 + Other, drill-through) |
+> | income vs expense, net | `AnalyticsPulseView`; `PDFExportService.computeSummary` (`:105–117`) |
+> | export PDF / CSV / Excel | `PDFExportService`, `CSVExportService`, `TSVExportService`; all wired at `DataSettingsView:111–167`, month **and** all-time |
+>
+> **The verified delta is exactly THREE things. Build these, not a Reports tab.**
+>
+> 1. **Annual / custom period scope.** Analytics is hard-scoped: Pulse = this
+>    month, Breakdown = this month, Horizon = trailing 12 months. There is **no
+>    year view and no arbitrary range anywhere**, and `CSVExportScope` offers only
+>    `.month` and `.all`. *This is the actual feature.*
+> 2. **A PDF that carries the analysis.** Today the "report" is a title, a range
+>    line, a three-number summary, then a paginated **transaction table** — a
+>    statement, not a report. A user who wants to hand an accountant a category
+>    breakdown gets 400 rows. The insertion point is `PDFExportService.swift:65`,
+>    right after `drawSummary`.
+>    ⚠️ **Cost warning:** `PDFExportService` is hand-rolled `UIGraphicsPDFRenderer`
+>    drawing with manual pagination (`countPages`, per-row `y` arithmetic). Charts
+>    mean rendering SwiftUI `Chart`s via `ImageRenderer` into that manual layout,
+>    and `ImageRenderer` has limits this project has already hit — it will not
+>    composite `.thinMaterial` / `.secondary`, and it reports blank inside a
+>    `ScrollView`. This bullet is the expensive one; size it separately.
+> 3. **Period-over-period comparison.** "This month vs last", "this year vs last".
+>    **Nothing in the codebase computes a delta between two periods.** This is the
+>    one thing users mean by "reports" that has no partial implementation at all.
+>
+> **Reframe the feature as "Annual & comparative reporting + a real PDF."** Scoped
+> that way it reuses `AnalyticsSeries`, `CategoryAttribution` and `Money`, and
+> needs **no schema change**. NOT in 1.0.5.
+
 **What:** richer monthly/annual reports — spend trend over time, category breakdowns, income vs expense, net; export the report to CSV/PDF/Excel (extends existing export).
 **Demand:** review mining (export_import theme); competitors Origin "Reports" tab, Copilot cash-flow, Rocket. Also an ASO term ("spending report").
 **Local-first:** 100% on-device; extends the existing CSV/PDF/Excel export.
-**MVP scope:** a Reports view — period selector (month/year), spend **trend line**, top categories (multi-color), income vs expense, net; "Export report" (PDF summary + CSV data). Reuse the redesign donut + Money.swift formatting.
+**MVP scope:** ~~a Reports view — period selector (month/year), spend **trend line**, top categories (multi-color), income vs expense, net; "Export report" (PDF summary + CSV data)~~ — **superseded by the three-item delta above.** Reuse the redesign donut + Money.swift formatting.
 **Model:** **Sonnet.** **Skill:** none (uses redesign components).
 **Acceptance:** view report for a period; export produces correct PDF/CSV; offline; localized; charts use theme tokens (no monochrome red).
 
