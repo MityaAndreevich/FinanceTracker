@@ -17,10 +17,16 @@ import Foundation
 /// the whole state machine is testable without StoreKit, a clock, or a UI.
 enum AccessLogic {
 
-    static func isPremium(hasPaidEntitlement: Bool, trialStart: Date?, now: Date) -> Bool {
+    /// `watermark` is the monotonic high-water mark of observed time. Passing it is
+    /// what closes the clock-rewind hole — see `ReverseTrial.isActive`. Optional so
+    /// existing pure-logic tests that predate it keep compiling; production always
+    /// passes it, via `AccessManager.refresh`.
+    static func isPremium(
+        hasPaidEntitlement: Bool, trialStart: Date?, now: Date, watermark: Date? = nil
+    ) -> Bool {
         // A real entitlement always wins: subscribing mid-trial, or long after it
         // lapsed, is premium either way.
-        hasPaidEntitlement || ReverseTrial.isActive(start: trialStart, now: now)
+        hasPaidEntitlement || ReverseTrial.isActive(start: trialStart, now: now, watermark: watermark)
     }
 
     /// May the user create one more of a capped thing?
@@ -124,14 +130,34 @@ final class AccessManager: ObservableObject {
         store.reverseTrialStartDate = now
     }
 
+    /// Advance the monotonic observed-time watermark. **Call from launch and
+    /// foreground ONLY** — those are the two moments the app genuinely re-observes
+    /// the wall clock, and adding more callers would only widen the surface without
+    /// making the mark any more monotonic.
+    ///
+    /// Strictly forward: a backward `now` (time zone, NTP correction) leaves the
+    /// mark alone. No tolerance window — see `ReverseTrial.effectiveNow`.
+    func advanceObservedTime(now: Date = .now) {
+        guard let mark = store.observedTimeWatermark else {
+            store.observedTimeWatermark = now
+            return
+        }
+        if now > mark { store.observedTimeWatermark = now }
+    }
+
     func refresh(now: Date = .now) {
         let start = store.reverseTrialStartDate
         let paid = purchases?.hasPaidEntitlement ?? false
+        // Read, never write, here: refresh() is called from StoreKit changes and gate
+        // taps too, and only launch/foreground may ADVANCE the mark.
+        let watermark = store.observedTimeWatermark
 
         hasPaidEntitlement = paid
-        isReverseTrialActive = ReverseTrial.isActive(start: start, now: now)
-        trialDaysRemaining = ReverseTrial.daysRemaining(start: start, now: now)
-        isPremium = AccessLogic.isPremium(hasPaidEntitlement: paid, trialStart: start, now: now)
+        isReverseTrialActive = ReverseTrial.isActive(start: start, now: now, watermark: watermark)
+        trialDaysRemaining = ReverseTrial.daysRemaining(start: start, now: now, watermark: watermark)
+        isPremium = AccessLogic.isPremium(
+            hasPaidEntitlement: paid, trialStart: start, now: now, watermark: watermark
+        )
     }
 
     /// Re-reads StoreKit before answering. Use at tap time on a gate, so an
@@ -153,7 +179,11 @@ final class AccessManager: ObservableObject {
     func shouldShowTrialEndPaywall(now: Date = .now) -> Bool {
         guard let start = store.reverseTrialStartDate else { return false }
         guard !(purchases?.hasPaidEntitlement ?? false) else { return false }
-        guard !ReverseTrial.isActive(start: start, now: now) else { return false }
+        // Same watermark as the gate: a rewound clock must not un-lapse the trial
+        // and re-arm this prompt.
+        guard !ReverseTrial.isActive(
+            start: start, now: now, watermark: store.observedTimeWatermark
+        ) else { return false }
         guard !store.hasShownTrialEndPaywall else { return false }
 
         store.hasShownTrialEndPaywall = true

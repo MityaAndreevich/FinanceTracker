@@ -25,6 +25,17 @@ import Foundation
 protocol ReverseTrialStore: AnyObject {
     var reverseTrialStartDate: Date? { get set }
 
+    /// The latest date this install has ever observed — a monotonic high-water mark
+    /// of time. Advanced on launch and foreground only; never moves backwards.
+    /// `nil` before the first observation.
+    ///
+    /// Lives in the SAME store as `reverseTrialStartDate` (App Group defaults), not
+    /// in the Keychain. Two mechanisms that can disagree about the same fact are
+    /// worse than one imperfect mechanism: a Keychain watermark would survive a
+    /// delete that clears the start date, and the pair would then describe a trial
+    /// that never began. Consistency beats marginal robustness here.
+    var observedTimeWatermark: Date? { get set }
+
     /// Set once, when we've shown the "your trial ended" paywall. We ask exactly
     /// one time. Re-raising it on every launch would be nagware, and the gates
     /// already make the case whenever the user actually reaches for something.
@@ -44,65 +55,67 @@ enum ReverseTrial {
         start.addingTimeInterval(duration)
     }
 
+    /// The time this install is willing to believe it is: never earlier than the
+    /// latest date it has ever seen.
+    ///
+    /// STRICT `max`, with no tolerance window, and that is deliberate. A device
+    /// crossing a time zone or taking a backward NTP correction of a few seconds
+    /// simply fails to advance the watermark, which is harmless. A tolerance window
+    /// would be a second parameter to get wrong, guarding against nothing.
+    static func effectiveNow(now: Date, watermark: Date?) -> Date {
+        guard let watermark else { return now }
+        return max(now, watermark)
+    }
+
     /// THE GATE. `AccessLogic.isPremium` is this, ORed with a paid entitlement.
     ///
-    /// **There is no clock clamp here, and that is a real gap — see the note on
-    /// `daysRemaining` below.** Raw `now` against raw expiry.
-    static func isActive(start: Date?, now: Date) -> Bool {
+    /// ## The clock-rewind hole, and what actually closed it
+    ///
+    /// This used to compare RAW `now` against expiry, so setting the device clock
+    /// back restored premium for as long as the clock stayed back — unbounded, not
+    /// one extra fortnight. Meanwhile the badge kept reporting at most 14 days,
+    /// because `daysRemaining` clamped and this did not. The two disagreed, and the
+    /// entitlement was the one that mattered.
+    ///
+    /// **The obvious repair does not work and was tried.** Adding `max(now, start)`
+    /// only forbids `now` PRECEDING the start; a clock rewound to a date *inside*
+    /// the window still reports active. Demonstrated 2026-08-08 — the pin in
+    /// `AccessManagerTests` passed with that clamp applied.
+    ///
+    /// What closes it is a persisted monotonic high-water mark of observed time,
+    /// which is what `watermark` is. Expiry is compared against `max(now,
+    /// watermark)`, so winding the clock back to any point the install has already
+    /// seen past changes nothing.
+    ///
+    /// **A reinstall still resets everything**, and that is unchanged and accepted:
+    /// the abuse ceiling stays one extra fortnight, exactly as it was for
+    /// `reverseTrialStartDate`. The alternative (Keychain, which survives deletion)
+    /// would silently deny the trial to a legitimate user restoring a device, which
+    /// is the worse failure.
+    ///
+    /// Fixed before sync rather than after, because `AppCapability.iCloudSync` is
+    /// `requiresPremium` — the moment sync ships, a wrong free/premium answer stops
+    /// being a local display question and starts deciding whether data leaves the
+    /// device.
+    static func isActive(start: Date?, now: Date, watermark: Date? = nil) -> Bool {
         guard let start else { return false }
-        return now < expiryDate(start: start)
+        return effectiveNow(now: now, watermark: watermark) < expiryDate(start: start)
     }
 
     /// Whole days left, rounded up, clamped to 0...durationDays.
     ///
-    /// ────────────────────────────────────────────────────────────────────────
-    /// CORRECTED 2026-08-08. This comment previously read: *"the worst a rewound
-    /// clock buys is the trial the user already had."* **That is true of the
-    /// number on this screen and FALSE of the entitlement**, and stating it here
-    /// without that distinction described a protection the product does not have.
-    ///
-    /// WHERE THE CLAMP LIVES:      `daysRemaining` — the DISPLAYED day count.
-    /// WHERE IT DOES NOT:          `isActive` — the gate, and therefore
-    ///                             `AccessLogic.isPremium`, which is what every
-    ///                             paid capability actually consults.
-    ///
-    /// So: set the device clock back and premium is restored for as long as the
-    /// clock stays back. Unbounded — not one extra fortnight. Meanwhile the badge
-    /// keeps reporting at most 14 days, because that is the clamped path. The two
-    /// disagree, and the entitlement is the one that matters.
-    ///
-    /// AND THE CLAMP WOULD NOT HAVE HELPED ANYWAY. Worth stating, because the
-    /// obvious repair is wrong and was tried: adding `max(now, start)` to
-    /// `isActive` changes nothing. It only forbids `now` PRECEDING the start; a
-    /// clock rewound to a date *inside* the window still reports active.
-    /// (Demonstrated 2026-08-08 — the pin in `AccessManagerTests` passes with the
-    /// clamp applied.) The same is true of the clamp here: it caps the DISPLAYED
-    /// number at 14, it does not stop the window being re-entered.
-    ///
-    /// A real fix needs a persisted monotonic high-water mark of observed time —
-    /// "the latest date this install has ever seen" — and expiry compared against
-    /// `max(now, watermark)`. That is a stored value with its own migration,
-    /// sync and reinstall semantics, not a one-liner.
-    ///
-    /// NOT FIXED, and that is a decision rather than an oversight: rolling a
-    /// device clock back is self-punishing (it breaks every other app, and iOS
-    /// re-syncs time), and every locally-stored trial has this property. The
-    /// reason it is written down now instead of later is that 1.0.4 hangs iCloud
-    /// sync on this same gate — a bad free/premium answer stops being a local
-    /// display question the moment it decides whether data leaves the device.
-    ///
-    /// Recorded rather than silently corrected because this project has now been
-    /// misled three times by a comment that outlived the code beneath it (the
-    /// `.deny` delete rule, the `@Attribute(.unique)` claim in CSV import, and
-    /// the "Vela" privacy policy). A comment claiming a guarantee is worse than
-    /// no comment at all.
-    /// ────────────────────────────────────────────────────────────────────────
+    /// Takes the SAME `watermark` as `isActive`, and that is the point. Between
+    /// 2026-08-08 and 2026-08-13 the clamp lived only here — on the DISPLAYED day
+    /// count — while the gate compared raw `now`. The badge said at most 14 days
+    /// while the entitlement was unbounded, and the entitlement is the one that
+    /// matters. Both now read time through `effectiveNow`, so they cannot disagree.
     ///
     /// A forward jump simply expires the trial, which is correct on both paths.
-    static func daysRemaining(start: Date?, now: Date) -> Int {
+    static func daysRemaining(start: Date?, now: Date, watermark: Date? = nil) -> Int {
         guard let start else { return 0 }
 
-        let remaining = expiryDate(start: start).timeIntervalSince(now)
+        let remaining = expiryDate(start: start)
+            .timeIntervalSince(effectiveNow(now: now, watermark: watermark))
         guard remaining.isFinite else { return 0 }
 
         let clamped = min(max(remaining, 0), duration)
@@ -121,6 +134,7 @@ final class AppGroupReverseTrialStore: ReverseTrialStore {
 
     private let startKey = "reverseTrialStartDate"
     private let shownKey = "reverseTrialEndPaywallShown"
+    private let watermarkKey = "observedTimeWatermark"
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .appGroup) {
@@ -141,5 +155,17 @@ final class AppGroupReverseTrialStore: ReverseTrialStore {
     var hasShownTrialEndPaywall: Bool {
         get { defaults.bool(forKey: shownKey) }
         set { defaults.set(newValue, forKey: shownKey) }
+    }
+
+    /// Same App Group defaults as the start date, deliberately — see the protocol.
+    var observedTimeWatermark: Date? {
+        get { defaults.object(forKey: watermarkKey) as? Date }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: watermarkKey)
+            } else {
+                defaults.removeObject(forKey: watermarkKey)
+            }
+        }
     }
 }

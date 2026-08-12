@@ -37,9 +37,11 @@ private final class FakePurchases: PaidEntitlementProviding {
 private final class InMemoryTrialStore: ReverseTrialStore {
     var reverseTrialStartDate: Date?
     var hasShownTrialEndPaywall: Bool
-    init(start: Date? = nil, shownTrialEndPaywall: Bool = false) {
+    var observedTimeWatermark: Date?
+    init(start: Date? = nil, shownTrialEndPaywall: Bool = false, watermark: Date? = nil) {
         reverseTrialStartDate = start
         hasShownTrialEndPaywall = shownTrialEndPaywall
+        observedTimeWatermark = watermark
     }
 }
 
@@ -123,47 +125,106 @@ struct ReverseTrialMathTests {
         #expect(ReverseTrial.daysRemaining(start: start, now: now) == ReverseTrial.durationDays)
     }
 
-    /// KNOWN GAP PIN (F2, 2026-08-05) — asserts what the gate DOES, not what it
-    /// should do. The test above does not discriminate: at `start - 30d` a clamped
-    /// `isActive` would report active too, so it passes either way.
+    /// GAP CLOSED, 2026-08-13. This replaces the KNOWN-GAP pin (F2, 2026-08-05),
+    /// whose own instructions said: *"If the watermark is ever added, this test
+    /// fails — which is the signal to delete it, not to weaken it."* It was deleted
+    /// rather than weakened, and this is the test that took its place.
     ///
-    /// This one does. The trial has genuinely EXPIRED, and rewinding the clock
-    /// revives the ENTITLEMENT — unbounded, for as long as the clock stays back —
-    /// while `daysRemaining` keeps reporting a clamped, plausible-looking number.
-    /// The clamp lives only on the displayed count; `isActive` has none.
+    /// The gap: the trial genuinely EXPIRED, and rewinding the device clock revived
+    /// the ENTITLEMENT — unbounded, for as long as the clock stayed back — while
+    /// `daysRemaining` reported a clamped, plausible-looking number. The two
+    /// disagreed and the entitlement was the one that mattered.
     ///
-    /// The production change that would flip this test is NOT the obvious clamp.
-    /// Checked empirically 2026-08-08 rather than asserted: adding
-    /// `max(now, start)` to `ReverseTrial.isActive` leaves this test PASSING,
-    /// because that clamp only forbids `now` preceding the start — a clock
-    /// rewound to a date inside the window is unaffected. What would flip it is a
-    /// persisted monotonic high-water mark of observed time compared as
-    /// `max(now, watermark)`, which is a stored value with migration, sync and
-    /// reinstall semantics of its own.
-    ///
-    /// That fix is deliberately NOT made: a rewound device clock is
-    /// self-punishing, and every locally-stored trial has this property.
-    /// Recorded because 1.0.4 hangs iCloud sync on this same gate. If the
-    /// watermark is ever added, this test fails — which is the signal to delete
-    /// it, not to weaken it.
-    @Test("KNOWN GAP: rewinding the clock revives an EXPIRED trial's entitlement")
-    func rewoundClockRevivesAnExpiredEntitlement() {
+    /// **The obvious repair was checked empirically and does not work**: adding
+    /// `max(now, start)` to `isActive` left the old test passing, because it only
+    /// forbids `now` PRECEDING the start — a clock rewound to a date inside the
+    /// window is unaffected. What closes it is a persisted monotonic high-water mark
+    /// of observed time, compared as `max(now, watermark)`.
+    @Test("A rewound clock can no longer revive an expired trial")
+    func rewoundClockCannotReviveAnExpiredEntitlement() {
         let start = t0
         let genuinelyExpired = t0.addingTimeInterval(100 * day)
         #expect(ReverseTrial.isActive(start: start, now: genuinelyExpired) == false)
 
+        // The install has SEEN that date, so the watermark stands there.
+        let watermark = genuinelyExpired
         // Same install, same start date, clock rolled back to inside the window.
         let rewound = t0.addingTimeInterval(1 * day)
+
         #expect(
-            ReverseTrial.isActive(start: start, now: rewound),
-            "the entitlement is back — isActive has no clamp"
+            ReverseTrial.isActive(start: start, now: rewound, watermark: watermark) == false,
+            "the watermark outranks the rewound clock"
         )
         #expect(
-            AccessLogic.isPremium(hasPaidEntitlement: false, trialStart: start, now: rewound),
+            AccessLogic.isPremium(
+                hasPaidEntitlement: false, trialStart: start, now: rewound, watermark: watermark
+            ) == false,
             "and the gate every paid capability consults follows it"
         )
-        // The badge, meanwhile, stays inside 0...14 and looks entirely normal.
-        #expect(ReverseTrial.daysRemaining(start: start, now: rewound) == 13)
+        // The badge must agree with the gate — them disagreeing was half the defect.
+        #expect(ReverseTrial.daysRemaining(start: start, now: rewound, watermark: watermark) == 0)
+    }
+
+    /// The rewind must not be recoverable by winding forward again to any point the
+    /// install has already passed — otherwise the mark is decorative.
+    @Test("The watermark holds across repeated rewinds")
+    func watermarkHoldsAcrossRepeatedRewinds() {
+        let start = t0
+        let watermark = t0.addingTimeInterval(100 * day)
+        for offset in [-500.0, -30.0, 0.0, 1.0, 13.0, 13.9] {
+            #expect(
+                ReverseTrial.isActive(
+                    start: start, now: t0.addingTimeInterval(offset * day), watermark: watermark
+                ) == false,
+                "rewinding to \(offset)d must not revive the trial"
+            )
+        }
+    }
+
+    /// A STRICT max, with no tolerance window: a backward `now` simply does not
+    /// advance the mark. A tolerance would be a second parameter to get wrong.
+    @Test("effectiveNow is a strict max with no tolerance window")
+    func effectiveNowIsStrictMax() {
+        let mark = t0.addingTimeInterval(10 * day)
+        // A few seconds backwards — an NTP correction or a time-zone move.
+        #expect(ReverseTrial.effectiveNow(now: mark.addingTimeInterval(-5), watermark: mark) == mark)
+        // Forward wins.
+        let ahead = mark.addingTimeInterval(day)
+        #expect(ReverseTrial.effectiveNow(now: ahead, watermark: mark) == ahead)
+        // No mark yet: `now` is all we have.
+        #expect(ReverseTrial.effectiveNow(now: t0, watermark: nil) == t0)
+    }
+
+    /// The mark advances forward only, and a fresh install seeds it from `now`.
+    @MainActor
+    @Test("advanceObservedTime moves forward only")
+    func advanceObservedTimeMovesForwardOnly() {
+        let store = InMemoryTrialStore(start: t0)
+        let manager = AccessManager(purchases: nil, store: store)
+
+        manager.advanceObservedTime(now: t0)
+        #expect(store.observedTimeWatermark == t0, "first observation seeds the mark")
+
+        manager.advanceObservedTime(now: t0.addingTimeInterval(5 * day))
+        #expect(store.observedTimeWatermark == t0.addingTimeInterval(5 * day))
+
+        manager.advanceObservedTime(now: t0)   // clock rewound
+        #expect(store.observedTimeWatermark == t0.addingTimeInterval(5 * day),
+                "a backward clock must never move the mark")
+    }
+
+    /// Reinstall semantics are UNCHANGED and accepted: clearing the store clears the
+    /// mark along with the start date, so the abuse ceiling stays one extra
+    /// fortnight — exactly what it already was for `reverseTrialStartDate`. Pinned
+    /// so nobody "hardens" it into the Keychain, where a surviving mark plus a
+    /// cleared start date would describe a trial that never began.
+    @Test("A reinstall clears the watermark with the start date")
+    func reinstallClearsBothTogether() {
+        let store = InMemoryTrialStore(start: t0, watermark: t0.addingTimeInterval(100 * day))
+        store.reverseTrialStartDate = nil
+        store.observedTimeWatermark = nil
+        #expect(ReverseTrial.isActive(start: store.reverseTrialStartDate, now: t0,
+                                      watermark: store.observedTimeWatermark) == false)
     }
 
     @Test("Days remaining counts down and clamps to zero")

@@ -100,6 +100,11 @@ struct RootView: View {
     /// Paywall` consumes the trigger, so this can never become a nag on every
     /// launch. From here on the contextual gates do the asking.
     private func raiseTrialEndPaywallIfNeeded() {
+        // The ONLY two callers of advanceObservedTime, by design: `.task` (launch)
+        // and the `.active` scene phase (foreground). Those are the moments the app
+        // genuinely re-observes the wall clock, and the mark that closes the
+        // clock-rewind hole on the premium gate is advanced from nowhere else.
+        access.advanceObservedTime()
         access.refresh()
         if access.shouldShowTrialEndPaywall() {
             showTrialEndPaywall = true
