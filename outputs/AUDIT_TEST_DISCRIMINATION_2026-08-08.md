@@ -132,3 +132,48 @@ Stated so the coverage of this audit is not overclaimed:
   behaviour, `AccessManager`'s Combine wiring.
 
 Each is a candidate for a second sweep. The method costs roughly 3 minutes per mutation.
+
+---
+
+## 6. The dimension this sweep was missing — added 2026-08-13
+
+This audit asked, of every test: **"does it discriminate a wrong implementation?"** That is a
+necessary question and it is not a sufficient one. It never asked:
+
+> **"Does any live call site reach the code this test covers?"**
+
+A test can pass the discrimination bar perfectly and still be worthless, because it is a test of
+something that is not the product. `requestReplay()` was the worked example: a **passing**,
+**discriminating** test on a path the app never took.
+
+The follow-up sweep is `AUDIT_TEST_REACHABILITY_2026-08-13.md` — 6 real findings, the worst being
+that **the shipping column-mapped CSV import orchestration has no test that reaches it.**
+
+### 6.1 The blind spot in the reachability rule itself — read this before automating it
+
+The obvious implementation of the new dimension is *"flag production symbols with zero production
+callers."* **That rule silently passes the second-worst finding in the report.**
+
+`CSVImportService.importCSV` **has** production callers, so a zero-callers rule clears it. Its only
+callers are `DuplicateReviewDebugSeed.swift:47,48` — **a DEBUG-only QA seam.** The path a user's build
+executes is `CSVImportActor.importData`. It was found by hand, not by the sweep.
+
+> **A reachability rule that counts debug-only callers as reachable will keep missing exactly this
+> shape** — and this shape is worse than a dead function, because the symbol looks alive, has real
+> callers, has real tests, and none of it ships.
+
+**The question is not "is it called?" It is "is it called on a path a user's build can execute?"**
+Any automation of this dimension must treat callers inside `#if DEBUG`, test targets, QA seams and
+`--launch-argument`-gated code as **non-callers**, and must resolve that recursively: a release caller
+that is itself only reachable from DEBUG code is also not a caller.
+
+**Two further traps, both paid for once already:**
+
+- **Trailing-closure calls are invisible to a `name(` pattern.** `SaveActionGate.submit` came back as
+  a candidate because all five real call sites are `saveGate.submit { … }`. An unverified run of the
+  script would have reported a **live double-submit guard** as dead code — the sweep would have
+  argued for deleting money-protecting logic. Hand-verify every candidate.
+- **Some symbols are unreachable from the app on purpose and are correct.**
+  `LocalizationProbe.*` exists inside the app module precisely so tests measure the app's bundle
+  rather than the test bundle's missing `.lproj`. A sweep that "fixes" those breaks the localization
+  premise tests. See §4 of the reachability audit for the full keep-list.
