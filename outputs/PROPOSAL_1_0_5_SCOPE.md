@@ -563,3 +563,51 @@ Steps 1–3 need no decision from you and can start immediately.
   three-item delta (annual/custom period scope · period-over-period comparison · a PDF that carries
   the analysis), with the four already-shipped bullets mapped to the screens that ship them and the
   `ImageRenderer` cost warning attached.
+
+---
+
+## FIRST ITEM AFTER 1.0.5 SHIPS — collapse the CSV import orchestration onto the actor
+
+**Decided 2026-08-13. Explicitly out of 1.0.5, explicitly first after it.** Recorded here with its
+reason attached, because an item deferred without one drifts until somebody re-derives it from
+scratch — and the last person to look at this code will not be the next one.
+
+**The change.** Delete `CSVImportService.importMappedCSV` and `importCSV`; retarget their tests at
+`CSVImportActor.importMappedData` / `importData`.
+
+**Why it is not in 1.0.5.** The user-facing harm is already gone: partial-state disclosure shipped in
+this release (`PartialImportFailure` → `data.import.partial.format`), so an import that stops
+mid-file now says how many rows landed and that re-importing is safe. What remains is correctness
+hygiene with a real migration cost — **13 tests become `async` and must construct a `@ModelActor` off
+the MainActor** (`CSVImportActor.swift:10–15`: it adopts the executor of whatever builds it, so a test
+that builds it on the main actor silently tests the wrong path and proves nothing). A polish release
+is the wrong place to absorb that.
+
+**Why it must not drift, stated as the standing cost of leaving it:**
+
+> **While two orchestrations exist, the next person edits the wrong one, and every future CSV test
+> exercises the copy the app never runs.**
+
+That is not a prediction. It is the current state: `CSVImportActor` has **zero** test references
+today, and the 13 tests that look like import coverage all sit on the unshipped half. The duplication
+is faithful *today* only because someone has been maintaining both by hand; the one place that
+discipline already lapsed is the batched save, and that lapse inverted the failure semantics of the
+whole import.
+
+**Sequencing constraint.** This must land **before** any further import work. Tier-3 (PDF/OCR
+statement import) is sketched against the same service, and adding a third caller on the
+untested-orchestration side would set the duplication in concrete.
+
+**Commission the migration, do not just perform it.** Before trusting the retargeted tests, construct
+the actor on the MainActor **deliberately** and confirm the new tests can tell the difference — the
+same negative control used to commission `run-tests.sh` exit-1 and exit-3 as a pair. A migration that
+moves 13 tests onto a path where they silently measure nothing would convert real coverage into
+theatre, which is worse than the duplication it removes.
+
+**What to assert once collapsed, in priority order:**
+1. A save failure mid-import: what is committed, what the user is told, and what a retry does.
+2. Batch-boundary correctness at exactly 99, 100 and 101 rows.
+3. `Task.isCancelled` behaviour — neither loop honours it today, so a cancelled import runs to
+   completion. Fix and assert together.
+
+Full working: `AUDIT_CSV_IMPORT_DUPLICATION_2026-08-13.md`.
