@@ -24,6 +24,51 @@ Source: `review_mining_output/summary_20260702_135538.md` + `reviews_*.csv`.
 
 **3★ "gold", n=431** *(was 432)***:** `feature_request 81` · `price 65` · `logging_friction 47` · `privacy 41` · `categorization 41` — every one of these five is unchanged by the exclusion.
 
+> ### ⚠️ STANDING CAVEAT ON THIS CORPUS — read before using any percentage on this page (added 2026-08-13)
+>
+> **Every percentage in this document, and every demand percentage derived from it anywhere in this
+> programme, is a share of a population whose first choice we refuse to serve.**
+>
+> This corpus is competitor reviews, and the competitors are overwhelmingly bank-linked aggregators.
+> Asked cleanly what manual-tracker users most want, the sources answer with the one thing we have
+> decided never to build:
+>
+> > *"The most common request we get is, 'When will you add Plaid for automatic bank sync?' Our
+> > answer is always the same: we won't."*
+>
+> Refusing it is the product, and the refusal is well defended. But it means the people who would
+> most want a manual, local-first, privacy-first tracker — **our** users — are the people **least
+> likely to appear in this corpus at all**, because they never installed the apps it samples.
+>
+> **Both halves of this matter, and the caveat is useless if only the first is remembered:**
+>
+> **VALID — comparisons between features measured the same way.** Sync at 0.28% versus shared access
+> at 0.04–0.14% is a sound comparison: same corpus, same denominator, same instrument, so the bias
+> applies equally to both. *"Below a threshold we already declined to build against"* remains a real
+> argument, and the falsifications built on this corpus (the "69 rage" idiom artefact, the
+> remittance-app exclusion) **stand without qualification** — they are mechanical properties of the
+> data, not inferences from it.
+>
+> **INVALID — reading any single number as an absolute statement about our market.** "0.28% mention
+> sync, therefore our users don't want sync" does not follow. The number is a fact about aggregator
+> users. It may mean *"low demand for X"*; it may equally mean *"this is not our population."* From
+> this corpus alone the two are indistinguishable, and no amount of extra rows from the same source
+> can separate them — a bigger sample of the wrong population is still the wrong population.
+>
+> **The consequence, stated plainly, because it is the operative one:**
+>
+> > **One forwarded inbox from our own users outweighs another 4,904 competitor reviews.**
+>
+> Not because the mailbox is large — it is almost certainly tiny — but because it is the only channel
+> that samples **our** users rather than a competitor's, and it is therefore the only evidence here
+> not drawn from a population defined by preferring the thing we refuse to build. `n` is not the
+> binding constraint on this programme; **population validity is**, and every additional competitor
+> review improves the wrong one. That is the argument for reading `support@budgetcrab.app`, and it is
+> considerably stronger than *"we haven't looked."*
+>
+> **This does not retract anything.** No finding above is withdrawn. It fixes what the findings are
+> evidence *of*.
+
 ### Findings that overturn earlier web-tier assumptions
 1. **"Sync breakage = #1 pain" was OVERSTATED.** Real sync mentions are ~4-6% even at aggregators, not the top theme. The web-tier claim came largely from affiliate blogs (esp. vento.money, which sells a manual app — motivated to amplify sync pain). Validated the Tier-2 skepticism. (Caveat: the sync regex is conservative and undercounts; treat 66 as a lower bound — but price still dwarfs it.)
 2. **The real #1 rage is BILLING DARK PATTERNS, not price level.** Verbatim 1★: *"continued charging after I cancelled"*, *"you have to go into settings to completely cancel… beware!!!"*, *"False advertising"*, *"too many ads, my whole family uninstalled"*. → This is Budget Crab's strongest **data-backed wedge**: no ads, no dark patterns, one-tap cancel, no bank-data honeypot, cheap. 484 rage-reviews point straight at it.
@@ -75,6 +120,37 @@ asked for and never got:
 > #1 above says in as many words that sync pain was overstated. It is struck through there, with a
 > supply-side sweep of the whole table beside it.
 
+> ### RULE — never infer willingness-to-pay from how small a feature felt to build. (added 2026-08-13)
+>
+> **Build effort is an engineering fact about us. Willingness to pay is a market fact about them.
+> They are not correlated, and substituting one for the other is silent because both come out as a
+> confident sentence about a feature.**
+>
+> The third member of this set, and the hardest to catch. The zero-row and supply-side rules both
+> concern using the *wrong source*; this one is worse, because there is **no source at all** — an
+> internal intuition acquires the grammar of a finding on the way to the page, and thereafter reads
+> exactly like research.
+>
+> Effort tells you what a feature costs. It cannot tell you what it is worth to someone who will
+> never know how long it took. A feature can be a weekend's work and a decisive purchase trigger; it
+> can be a quarter's work and worth nothing. The two questions do not share evidence, so an answer
+> to one is never an answer to the other.
+>
+> **Live instance — and it is inverted, not merely unsourced.**
+> `MONETIZATION_FREE_PAID_SPEC.md` keeps the home-screen widget free because *"widgets ranked LOW
+> paid-WTP (**aesthetic delight, not killer feature**)"*. That parenthetical is an effort intuition —
+> it describes how the feature felt to build. Asked cleanly, `0e5f6bb9` calls home-screen widgets
+> highly requested native features and a *"**differentiator for retention and willingness to pay**"*.
+> The phrase "aesthetic delight, not killer feature" is in no source.
+>
+> **The tell to look for:** a rationale that fuses *"does this drive retention?"* with *"would
+> someone pay for it?"* into a single verdict. Those have different answers and different evidence.
+> The sources scored the widget positively on **both**; our spec collapsed them and got the second
+> one backwards. **Separate the two questions and the substitution becomes visible.**
+>
+> Full working: `AUDIT_FREE_PAID_LINE_PREMISES_2026-08-13.md`. The shipped free widget is **not**
+> clawed back — the conclusion may still be right on brand grounds; the reasoning is discarded.
+
 **Where each zero-row app is cited downstream, and whether the claim survives** (checked 2026-08-10):
 
 - **Empower — no downstream claim anywhere.** It is named only in this section and in §5. Nothing
@@ -101,6 +177,14 @@ asked for and never got:
 ---
 
 ## 2. NotebookLM primary findings (key numbers + citations)
+
+> ⚠️ **This section was re-asked claim by claim on 2026-08-13 with conversation history excluded.
+> 21 of 64 claims across the programme did not survive; several of them are below.** Content is left
+> exactly as written — see `AUDIT_NOTEBOOKLM_CITATIONS_2026-08-13.md` for the per-claim verdicts
+> before citing anything on this page. In particular the couples "decisive driver" line **is not in
+> the sources** — it was generated in an earlier session and cited back to us as literature, and it
+> is the basis of §3's couples reconciliation and §4's Decision 3. **The pricing figures in the
+> `0e5f6bb9` paragraph are confirmed and Path A stands.**
 
 **0e5f6bb9 Pricing —** premium + hard paywall beats freemium+low-price: **D35 conversion 10.7% vs 2.1% (5×)**; **RPI by D60 ~$3.09 vs $0.38 (8-9×)**; **install→trial 9.8% (high price) vs 4.3% (low)**; **payer LTV $62.19 vs $10.69 (~7×)**. Low price retains better (36% vs 23% Y1) but doesn't offset revenue; access model is conversion-not-loyalty (27% vs 28% retention). Price-war fails: **Brainerr $9.99 lifetime → "revenue cliff"**; low anchor makes raises hard. *Caveat I add: premium verdict assumes reinvestment into paid UA — we have none, so rating protection matters more.*
 
