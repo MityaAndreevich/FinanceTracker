@@ -205,3 +205,20 @@ xcodebuild test -scheme FinanceTracker \
 
 ~8 minutes. Prints both curves with a growth exponent `k` per point, so linear (k≈1) vs quadratic
 (k≈2) is readable off the output rather than eyeballed. Sizes are `BulkDeleteCostMeasurementTests.sizes`.
+
+---
+
+## 7. Post-fix standing number — RECORD, do not chase (2026-08-13)
+
+After the quadratic `save()` fix (`a487658`), end-to-end bulk delete is **2.87 s**, and the shape has
+changed: **detach is now 1,506 ms — the larger half.** The thing that dominated is no longer the
+thing that dominates.
+
+**This is recorded, not scheduled.** It is the next target *if anyone returns to this*, and nothing
+in 1.0.5 requires that they do.
+
+**Do not round it to "about a second".** 1,506 ms is over the threshold where a main-thread block
+reads as a freeze rather than a pause, and 2.87 s end-to-end is not "instant" — it is "the app
+stopped". A number that gets rounded down in conversation is a number that stops being fixed. The
+precision is the point: it is the difference between a defect with a measurement and a defect with a
+vibe.
