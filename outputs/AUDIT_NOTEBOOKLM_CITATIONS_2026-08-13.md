@@ -298,3 +298,26 @@ propositions cited, do not exist.
 - `MONETIZATION_FREE_PAID_SPEC.md` — claims 0e5f6bb9/#10–19, a16f8bf7/#1–8.
 - `RESEARCH_FAMILY_ACCESS_2026-08-12.md` — the first history-excluded re-probe, which caught this.
 - `outputs/AUDIT_BACKLOG_VERIFIED_2026-08-12.md §C.2` — the architectural veto on sharing.
+
+---
+
+## 6. The procedure (mirrored here on purpose)
+
+Written into `CLAUDE.md` per the brief — **but `CLAUDE.md` is gitignored (`.gitignore:32`), so it
+exists only on one machine and in no clone.** The rule that prevents this class of failure must not
+itself be the least durable artefact in the repo, so it is duplicated here, where it is committed.
+
+1. **Ask with conversation history EXCLUDED** — `notebooklm ask --new`. `ask` *continues* the prior
+   conversation by default, and that default is the bug. Archive first (`notebooklm history --json
+   --show-all`): `--new` is destructive, and the history may be the evidence.
+2. **Treat any answer carrying `[History]` as unusable until re-asked clean.** It is the notebook
+   citing your own earlier turn, inline among real citation numbers (`[History, 44, 46]`). Not a weak
+   citation — the absence of one.
+3. **Record the citation, not the paraphrase.** Every drift in §2 was invisible without the quote:
+   adoption→retention, 6×→"7×", 5×→"5.5×", outcome-based→"gain-framed", 3-day→30-day,
+   and one outright inversion. If you cannot paste a sentence, you do not have a citation.
+4. **Do not ask leading questions.** The fabrication began with *"How decisive is …, quantify …"*.
+5. **A superlative is a separate claim from the thing.** Verify the ranking, not just the feature —
+   the ranking is what sets roadmap order.
+6. **Negative-control anything load-bearing.** If the notebook confirms a claim you invented, every
+   other verdict in that batch is worthless.
