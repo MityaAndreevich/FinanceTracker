@@ -143,3 +143,119 @@ would set this in concrete.
 1. A save failure mid-import — what is committed, what the user is told, and what a retry does.
 2. Batch-boundary correctness at exactly 100, 101 and 99 rows.
 3. `Task.isCancelled` behaviour, once the loop actually honours it.
+
+---
+
+# ADDENDUM — the retry path, established before choosing a fix (2026-08-13)
+
+The severity in §2 was asserted without the fact that decides it. Answering it changes the verdict in
+**both** directions: the data outcome is better than I implied, and the honesty outcome is worse.
+
+## A1. Which mode does the retry use? — `.skipDuplicates`, always, and it is the only one reachable
+
+`DataSettingsView` never passes `mode`. Both `startAsyncImport:282` and `startMappedImport:316` take
+the default, so **every import a user can perform runs `.skipDuplicates`.**
+
+**`.importAll` is unreachable from the shipping app.** Nothing in the app, widget or shared target
+ever *sets* it — only the enum case (`:17`) and the branch that reads it (`:688`) exist. There is no
+UI to choose "keep both". Three test files exercise it. **This is another instance of the reachability
+class, found inside this investigation:** a mode parameter with one reachable value, whose second
+value has tests.
+
+So the `.importAll` half of the question is moot for shipped behaviour — **but not in the reassuring
+direction**, as A2 shows.
+
+## A2. What `.skipDuplicates` actually does on the mapped path — it does NOT skip
+
+**This is the correction that matters, and it applies to both branches of the framing.** Both assume
+the row carries a UUID. On the mapped path no row does.
+
+**Generic path (our own export, has an `id` column)** — the framing is exactly right:
+
+```swift
+if mode == .skipDuplicates, seenUUIDs.contains(id) {   // :684
+    result.duplicatesSkipped += 1; return              // a real skip
+}
+```
+
+`seenUUIDs` is seeded from disk, so a retry genuinely skips what landed. Unpleasant, not dangerous.
+
+**Mapped path (Mint / YNAB / Monarch — foreign CSV, no `id` column)** — there is no UUID to match:
+
+```swift
+let isPossibleDuplicate = (mode == .skipDuplicates) && seenHeuristics.contains(heuristic)  // :329
+let uuid = UUID()          // :334  fresh, EVERY row, BOTH modes
+modelContext.insert(tx)    // :348  ALWAYS inserts
+```
+
+**On the mapped path the row is always inserted, in both modes.** `.skipDuplicates` does not decide
+*whether* the row lands — only whether it is **flagged**. So:
+
+> **A retry after a partial mapped import double-imports in both modes.** The mode only decides
+> whether the duplicates are flagged or silent.
+
+The "unpleasant, not dangerous" branch does not exist here — **and this is the acquisition path**, the
+Mint-migration wedge. This is not an oversight in the code; `:318–320` states the contract
+deliberately: *"flag on content match, never drop"*, because identical content is not proof of an
+accidental duplicate. That reasoning is correct and is the same principle that governs the QuickAdd
+save path. **It just means UUID-based retry safety is structurally unavailable to foreign rows.**
+
+## A3. Does the user know the import was partial? — No, and they are told the opposite
+
+**This is the real defect.** On a throw, `startMappedImport:323–332`:
+
+- **discards `result` entirely** — the `imported` count of rows that *did* land dies with the error;
+- shows `"data.import.failed.format"` = **`"Import failed: %@"`**;
+- offers **one button, `common.ok`** — no undo, no retry, no "review what landed".
+
+**The app says the import *failed* when it partially *succeeded*.** A user who imported 8,000 rows and
+saw 4,400 land is told nothing happened. Their reasonable next action — re-pick the file and try
+again — is the exact action that doubles the 4,400.
+
+This is the silent-success class inverted: not reporting success while doing nothing, but **reporting
+failure while having done half.** Same root, same cost — the app's account of itself is false.
+
+## A4. Revised severity — and where I overstated
+
+**Correcting my own §2:** I wrote that a retry *"turns a half-import into a double-import with
+thousands of rows in the duplicate-review queue"* and framed the queue as the damage. It is the
+**mitigation, working as designed.** Because the retry is forced into `.skipDuplicates` and
+`existingHeuristics` is seeded from disk, every re-imported row matching a landed row is flagged
+`isPossibleDuplicate`, **persisted on the row**, badged, and surfaced in the review sheet built for
+exactly this in 1.0.2. Nothing is lost, corrupted, or silently wrong.
+
+| Axis | Verdict |
+|---|---|
+| **Data safety** | **MEDIUM**, not HIGH. Duplicates are flagged, reviewable and reversible. The 1.0.2 review queue is the designed catch and it catches this. |
+| **Honesty / trust** | **HIGH.** "Import failed" after a partial commit is a false statement to the user, on the acquisition path, at the moment of highest abandonment risk. |
+| **Silent-duplicate risk** | **LOW** — *conditional on the retry staying in `.skipDuplicates`.* If a "keep both" toggle is ever exposed, the flagging disappears and this becomes genuinely dangerous. **`.importAll` must not reach the UI without solving partial-state disclosure first.** |
+
+So: **"bad", not "thousands of duplicate rows on a new user's first day"** — the rows are there, but
+they arrive labelled, in a queue designed to resolve them.
+
+## A5. What to fix — the retry, not the transaction size
+
+**Batch size stays at 100.** Batching bounds peak memory, gives a real progress boundary and avoids
+one enormous transaction on a 10k-row file. It is the right call for large imports and reverting to a
+single save would trade a disclosure bug for a memory-and-watchdog bug on precisely the files that
+matter most.
+
+**Fix, in priority order:**
+
+1. **Tell the truth about partial state.** The actor must carry the partial `CSVImportResult` out with
+   the error rather than discarding it — a typed error holding the result, or returning
+   `(result, error?)`. Then the alert can say what actually happened: *N rows imported before the
+   error*, and what to do next. **Smallest change, removes the false statement, and makes the retry
+   informed rather than blind.** This is the fix.
+2. **Then make the retry's consequence visible** — if a partial import is followed by a re-import,
+   the result summary should surface the flagged count and offer the review queue directly, instead
+   of leaving the user to find a badge later.
+3. **Do NOT make foreign-row dedup skip instead of flag.** It would make the retry idempotent and it
+   is the wrong trade: it silently drops rows a user may genuinely have twice, which is the mistake
+   already made and reverted on the QuickAdd save path. The flag is correct.
+
+**Sequencing note:** (1) is independent of the collapse and worth landing on its own — it is a
+user-facing honesty fix on the acquisition path, and it does not require the 13 tests to move first.
+The collapse onto the actor remains the destination, with the migration itself commissioned against a
+negative control (build the `@ModelActor` on the MainActor deliberately and confirm the new tests can
+tell the difference), the way exit-1 and exit-3 were commissioned as a pair.
