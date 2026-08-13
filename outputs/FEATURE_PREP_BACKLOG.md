@@ -29,8 +29,72 @@
 | 6 | **Natural-language quick add** ("взял пивка на 4 бакса") | NotebookLM: NL parsing demanded; v1.1 AI roadmap | (emerging; Cleo/AI apps) | ✅ Apple **Foundation Models** on-device | Fable/Opus (new framework) | — |
 | 7 | **iCloud Sync (private)** — now **1.0.4, designed, unbuilt** | ~~committed v1.0.1~~; reviews: cloud-shutdown fear → "your iCloud" | Monarch/others (but on THEIR servers) | ✅ CloudKit = user's own iCloud, not our servers | Fable/Opus (arch) → Sonnet | /security-review |
 | 8 | **CSV import + Mint migration flow** | reviews: Mint refugees; already premium | (aggregators) | ✅ Local parse | Sonnet | — |
-| 9 | **Couples (CloudKit Shared DB)** | NotebookLM: decisive at premium price; reviews 69 rage | Monarch, YNAB Together, Honeydue | ⚠️ Needs CloudKit sharing (still private, no our-server) — P2 | Fable/Opus (sync arch) | /security-review |
+| 9 | ~~**Couples (CloudKit Shared DB)**~~ **STRUCK 2026-08-13** — see note below | ~~NotebookLM: decisive at premium price; reviews 69 rage~~ **Both citations failed.** See `RESEARCH_FAMILY_ACCESS_2026-08-12.md` | Monarch, YNAB Together, Honeydue | ⚠️ Needs CloudKit sharing (still private, no our-server) — P2 | Fable/Opus (sync arch) | /security-review |
 | 10 | **Forecasting** (cash-flow projection) | NotebookLM; roadmap P2 | Origin "Forecast", Monarch Plus | ✅ Compute local; AI layer via #6 | Sonnet (Opus if logic complex) | — |
+
+### Note on row 9 — struck 2026-08-13. RECORD, do not build.
+
+Row 9 is struck because **both** of its demand citations failed verification. Not weakened — failed.
+Full working: `RESEARCH_FAMILY_ACCESS_2026-08-12.md`.
+
+**Why each citation failed.**
+
+- *"reviews 69 rage"* — an artefact of a substring match. The theme tagger matched the word
+  **couple**, and **50 of the 69 rows are the English idiom** *"a couple of years / weeks / seconds"*
+  (*"I came over here a couple of years ago because Mint dissolved"* — Rocket Money, 1★). Of the ~19
+  survivors, roughly 9 are genuinely about sharing, and those are **complaints about broken
+  implementations, not requests for one**. The number never measured what it was cited for.
+- *"NotebookLM: decisive at premium price"* — this is the fabricated citation. It is not in the
+  sources; it was generated in an earlier session and cited back to us as literature. It is the
+  subject of the citation sweep, and row 9 is the clearest case of what that costs: **a manufactured
+  sentence set a feature's priority in this table for six weeks.**
+
+**Measured demand: 0.04 % – 0.14 %** of 4,904 competitor reviews (bucket A, true unmet demand).
+Against the same denominator, device sync measured **0.28 %** and this project ruled that *"no
+signal"*. Shared access is **below the bar we already declined to build against.**
+
+**The architectural veto — recorded separately because it does not move with demand.**
+Even if demand arrived tomorrow, these are structural, not effort:
+
+- **SwiftData's CloudKit integration targets the private database only.** There is no supported
+  SwiftData path to a shared zone.
+- **Apple DTS points at `NSPersistentCloudKitContainer` for sharing.** That is a different
+  persistence stack from the one this app is built on — a rewrite of the storage layer, not a
+  feature.
+- **`CKShare` permissions are per-participant on a hierarchy, not per-record.** So
+  **per-transaction hiding is not expressible at all.** This kills the obvious product shape ("share
+  the budget, keep some rows private") outright — it is not hard, it is unrepresentable. Note that
+  the sharing-granularity product decision has never been taken (`AUDIT_BACKLOG_VERIFIED §C.2`);
+  this veto removes one of the answers before it can be chosen.
+
+**The distinction worth keeping — this is the usable part of the whole investigation.**
+
+> **A shared LEDGER is nearly conflict-free. A shared BUDGET is conflict-dense.**
+>
+> - **Shared ledger** = two people *appending* transactions. Inserts union. There is almost nothing
+>   to reconcile, because nobody is overwriting anybody.
+> - **Shared budget** = two people *editing the same limits*. Under last-writer-wins, the loser's
+>   entry changes silently, **with no event** — nothing fires, so nothing can notify them. Our
+>   conflict model is designed for one user on N devices (`DESIGN_ICLOUD_SYNC §3`); two humans is a
+>   different problem.
+>
+> These have been treated as one feature. They are not, and they differ by an order of magnitude in
+> difficulty. **Goodbudget's happy users describe the first one.**
+
+**Logged as SATISFACTION, not demand — and named as the strongest reason to revisit.**
+Goodbudget carries **10.8 % sharing salience (54/500), the highest in the corpus** — ~1.8× the next
+app, ~13× Rocket Money — and it is **the only manual-entry envelope app in the corpus**, i.e. the
+closest analogue to Budget Crab. **48 of those 54 mentions are praise, not requests.** That is people
+enjoying a feature they already have, which is not evidence anyone will ask us for it — it does not
+move 0.04–0.14 % anywhere near a build threshold. It is filed here because it is the single fact most
+likely to be *right* when the demand numbers are wrong, and because it points specifically at the
+**ledger** half.
+
+**Standing caveat.** Every demand number above rests on one channel: competitor reviews.
+`support@budgetcrab.app` has still never been read, so "no demand" and "we have not looked" remain
+indistinguishable for this row as for every other.
+
+---
 
 ## ~~Sequencing~~ — STALE, written pre-launch. Superseded by the table below.
 
