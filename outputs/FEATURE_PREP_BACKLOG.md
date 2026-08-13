@@ -21,16 +21,57 @@
 
 | # | Feature | Demand evidence (ours) | Competitors doing it | Local-first fit | Build model | Skill |
 |---|---|---|---|---|---|---|
-| 1 | **Photo / receipt input (on-device OCR)** — 🚦**GATED, council-killed pending the pre-test: `DECISION_RECEIPT_INPUT_PRETEST.md`** | NotebookLM 73afc9a4: "AI-assisted entry — screenshot/receipt import + NL parsing (LOCAL)" = TOP manual-app request; friction = our #1 churn risk (ff5e0abc). **Council 2026-07-19: this is `n=1` observed demand, not counted demand.** | (aggregators auto-sync instead; few privacy apps do local OCR = our gap) | ✅ Perfect — Apple **Vision** `VNRecognizeText` runs fully on-device | Opus (arch) → Sonnet | /ui-ux-pro-max |
+| 1 | **Photo / receipt input (on-device OCR)** — 🚦**GATED, council-killed pending the pre-test: `DECISION_RECEIPT_INPUT_PRETEST.md`** · ~~rank~~ **RANK STRUCK 2026-08-13** | ~~NotebookLM 73afc9a4: "AI-assisted entry …" = TOP manual-app request; friction = our #1 churn risk (ff5e0abc)~~ **Both citations failed.** The feature keeps genuine qualitative support: users of manual trackers **do** ask for receipt/screenshot import (CONFIRMED), and on-device OCR **is** valued specifically for privacy (CONFIRMED). What is not in the sources is the **superlative** — and the corpus's one explicit "most common request" statement names **AUTOMATIC BANK SYNC, a feature we have deliberately chosen never to build** (*"The most common request we get is, 'When will you add Plaid for automatic bank sync?' Our answer is always the same: we won't."*). "friction = #1 churn risk" is likewise NOT IN SOURCES. **Council 2026-07-19: this is `n=1` observed demand, not counted demand.** | (aggregators auto-sync instead; few privacy apps do local OCR = our gap) | ✅ Perfect — Apple **Vision** `VNRecognizeText` runs fully on-device | Opus (arch) → Sonnet | /ui-ux-pro-max |
 | 2 | **Reports** (monthly/annual, trends, export) | reviews: export_import theme; "reports" requests | Origin "Reports" tab, Copilot cash-flow, Rocket | ✅ All on-device; extends existing CSV/PDF export | Sonnet | — |
 | 3 | **Recurring + bill reminders** | reviews: bill tracking; roadmap P1 | Rocket (subscriptions), Origin "Recurring" | ✅ Local notifications, no backend | Sonnet | — |
-| 4 | **Budgets / envelopes + safe-to-spend** | NotebookLM: YNAB envelope method most-recommended; feeds redesign hero | Copilot budget rings, YNAB, Rocket "safe to spend" | ✅ Local | Sonnet (Opus if data-model change) | /ui-ux-pro-max |
-| 5 | **Widgets + Apple Watch + Siri quick-add** | ff5e0abc: quick-entry = top retention lever; friction #1 risk | MoneyWatch, MOZE, Daily Budget | ✅ Native, no backend | Sonnet | /ui-ux-pro-max |
+| 4 | **Budgets / envelopes + safe-to-spend** — **SHIPPED**; ~~rank~~ **RANK STRUCK 2026-08-13** | ~~NotebookLM: YNAB envelope method most-recommended~~ **NOT IN SOURCES** (`73afc9a4`, clean re-ask). "feeds redesign hero" stands — that was a design argument, never a citation. Feature is built and working; **only its evidentiary rank is struck.** | Copilot budget rings, YNAB, Rocket "safe to spend" | ✅ Local | Sonnet (Opus if data-model change) | /ui-ux-pro-max |
+| 5 | **Widgets + Apple Watch + Siri quick-add** — widget/Siri **SHIPPED**; ~~rank~~ **RANK STRUCK 2026-08-13** | ~~ff5e0abc: quick-entry = top retention lever; friction #1 risk~~ **Both NOT IN SOURCES.** Also struck: *"widgets = contextual triggers"*. ⚠️ The sources say the **opposite** of the WTP reading used to price this class — widgets are a *"differentiator for retention and willingness to pay"*. See `AUDIT_FREE_PAID_LINE_PREMISES_2026-08-13.md`; **the free widget is NOT clawed back**, but the next native surface (Watch, Live Activity) must not inherit "native surfaces are free". | MoneyWatch, MOZE, Daily Budget | ✅ Native, no backend | Sonnet | /ui-ux-pro-max |
 | 6 | **Natural-language quick add** ("взял пивка на 4 бакса") | NotebookLM: NL parsing demanded; v1.1 AI roadmap | (emerging; Cleo/AI apps) | ✅ Apple **Foundation Models** on-device | Fable/Opus (new framework) | — |
 | 7 | **iCloud Sync (private)** — now **1.0.4, designed, unbuilt** | ~~committed v1.0.1~~; reviews: cloud-shutdown fear → "your iCloud" | Monarch/others (but on THEIR servers) | ✅ CloudKit = user's own iCloud, not our servers | Fable/Opus (arch) → Sonnet | /security-review |
 | 8 | **CSV import + Mint migration flow** | reviews: Mint refugees; already premium | (aggregators) | ✅ Local parse | Sonnet | — |
 | 9 | ~~**Couples (CloudKit Shared DB)**~~ **STRUCK 2026-08-13** — see note below | ~~NotebookLM: decisive at premium price; reviews 69 rage~~ **Both citations failed.** See `RESEARCH_FAMILY_ACCESS_2026-08-12.md` | Monarch, YNAB Together, Honeydue | ⚠️ Needs CloudKit sharing (still private, no our-server) — P2 | Fable/Opus (sync arch) | /security-review |
 | 10 | **Forecasting** (cash-flow projection) | NotebookLM; roadmap P2 | Origin "Forecast", Monarch Plus | ✅ Compute local; AI layer via #6 | Sonnet (Opus if logic complex) | — |
+
+### Note on rows 1, 4, 5 — ranks struck 2026-08-13
+
+**What is struck is the RANK, not the features.** Rows 4 and 5 are shipped and working; row 1 was
+already gated behind a pre-test. Nothing here says any of them was the wrong thing to build. It says
+**they were not chosen from evidence**, and the table presented them as though they had been.
+
+Full working: `AUDIT_NOTEBOOKLM_CITATIONS_2026-08-13.md` (64 claims re-asked with conversation
+history excluded; 21 not in sources).
+
+**The denominator problem — the single most clarifying fact in the whole demand programme.**
+
+Row 1's superlative failed in an unusually informative way. Asked cleanly which feature manual-tracker
+users request most, the corpus does not name receipt scanning. It names **automatic bank sync**:
+
+> *"The most common request we get is, 'When will you add Plaid for automatic bank sync?' Our answer
+> is always the same: we won't."*
+
+**The loudest request in this category is one we refuse on purpose.** That is a deliberate,
+well-defended position — it is the product. But it has a consequence nobody has written down until
+now, and it reaches every number in this programme:
+
+> **Every demand percentage we have measured is measured against a population whose first choice we
+> do not serve.**
+
+Sync at 0.28%, shared access at 0.04–0.14%, the 27% price-rage wedge — all of these are shares of a
+review corpus dominated by people using bank-linked aggregators. We read low percentages as *"no
+demand for X."* They may equally mean *"this population is not our population."* The people who would
+most want a manual, local-first, privacy-first tracker are the ones **least likely to be in a corpus
+of aggregator reviews at all**, because they never installed one.
+
+This does not invalidate the numbers — the falsifications stand, and *"below a threshold we already
+declined to build against"* remains a sound comparison **between** features measured the same way.
+What it invalidates is reading any of them as an absolute statement about our market.
+
+**It also makes the support mailbox the highest-value unresolved input we have**, by a wide margin.
+It is the only channel that samples *our* users rather than a competitor's. One forwarded inbox is
+worth more than another 4,904 competitor reviews, because it is the only evidence not drawn from a
+population defined by preferring the thing we refuse to build.
+
+---
 
 ### Note on row 9 — struck 2026-08-13. RECORD, do not build.
 
