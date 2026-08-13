@@ -1,6 +1,13 @@
 # The CSV import orchestration exists twice — what differs, and which way to collapse
 
-**Date:** 2026-08-13 · **Mode:** read-only. **Nothing fixed.** Report first, per the brief.
+**Date:** 2026-08-13 · **Mode:** read-only when written. Report first, per the brief.
+
+> **STATUS UPDATE — the disclosure half is BUILT (1.0.5).** §A5's fix (1) shipped: `PartialImportFailure`
+> carries the committed snapshot out with the error, and the alert now states how many rows landed and
+> that re-importing is safe. Batch size stayed at 100 and foreign dedup still FLAGS rather than skips,
+> both deliberately. `.importAll` is pinned unreachable by `ImportModeReachabilityGuardTests`.
+> **Still open:** the collapse onto the actor — deferred to the first item after 1.0.5 ships, with its
+> reason recorded in `PROPOSAL_1_0_5_SCOPE.md`.
 
 ---
 
