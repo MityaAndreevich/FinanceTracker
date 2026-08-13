@@ -204,7 +204,6 @@
 "category.utilities" = "Servicios";
 
 /* Selector con divulgación progresiva */
-"category.show_all" = "Ver todas";
 "category.show_fewer" = "Ver menos";
 "category.auto_detected" = "Detectado: %@";
 "category.tip_pick_other" = "Elige una categoría para mejor análisis";
@@ -568,7 +567,7 @@
 "cs.category_sheet.icon_hint" = "Consejo: elige un icono para identificar las categorías más fácil.";
 "cs.category.shown_by_default" = "Mostrada por defecto";
 "cs.category.primary_label" = "Mostrada por defecto";
-"cs.category.secondary_label" = "En “Mostrar todas”";
+"cs.category.secondary_label" = "No mostrada por defecto";
 "settings.recurring" = "Recurrentes";
 "addtx.recurring.header" = "RECURRENTE";
 "addtx.recurring.toggle" = "Repetir esta transacción";

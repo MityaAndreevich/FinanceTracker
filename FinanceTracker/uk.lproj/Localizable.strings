@@ -620,7 +620,6 @@
 "category.utilities" = "Комунальні послуги";
 
 /* Progressive disclosure picker */
-"category.show_all" = "Показати всі";
 "category.show_fewer" = "Показати менше";
 "category.auto_detected" = "Визначено автоматично: %@";
 "category.tip_pick_other" = "Виберіть категорію для кращих інсайтів";
@@ -628,7 +627,7 @@
 /* CategoriesSourcesView — isPrimary toggle */
 "cs.category.shown_by_default" = "Показано за замовчуванням";
 "cs.category.primary_label" = "Показано за замовчуванням";
-"cs.category.secondary_label" = "У розділі «Показати всі»";
+"cs.category.secondary_label" = "Не показано за замовчуванням";
 
 /* ======================================================
    Recurring transactions

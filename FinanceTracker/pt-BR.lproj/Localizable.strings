@@ -204,7 +204,6 @@
 "category.utilities" = "Contas";
 
 /* Seletor com divulgação progressiva */
-"category.show_all" = "Mostrar todas";
 "category.show_fewer" = "Mostrar menos";
 "category.auto_detected" = "Detectado: %@";
 "category.tip_pick_other" = "Escolha uma categoria para melhores análises";
@@ -212,7 +211,7 @@
 /* Configurações — alternância isPrimary */
 "cs.category.shown_by_default" = "Mostrar por padrão";
 "cs.category.primary_label" = "Mostrado por padrão";
-"cs.category.secondary_label" = "Em \"Mostrar todas\"";
+"cs.category.secondary_label" = "Não mostrado por padrão";
 
 /* Dashboard — cartão de primeiro dia */
 "dashboard.day0.message.singular" = "Continue registrando — as análises aparecerão com mais dados";

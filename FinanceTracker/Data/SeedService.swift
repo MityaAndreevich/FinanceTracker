@@ -62,7 +62,8 @@ enum SeedService {
         CategorySpec(name: "Other",         nameKey: "category.other",         kindRaw: "expense", icon: uncategorizedIcon, order: 6,   isPrimary: true),
         // PRIMARY — income (1)
         CategorySpec(name: "Income",        nameKey: "category.income",        kindRaw: "income",  icon: "dollarsign.circle",  order: 100, isPrimary: true),
-        // SECONDARY — expense (6); parser still matches these; picker hides behind "Show all"
+        // SECONDARY — expense (6); parser still matches these, and the picker lists them
+        // like any other. isPrimary:false only keeps them out of the Quick Entry chip row.
         CategorySpec(name: "Health",        nameKey: "category.health",        kindRaw: "expense", icon: "heart",              order: 10,  isPrimary: false),
         CategorySpec(name: "Subscriptions", nameKey: "category.subscriptions", kindRaw: "expense", icon: "rectangle.stack",   order: 11,  isPrimary: false),
         CategorySpec(name: "Coffee",        nameKey: "category.coffee",        kindRaw: "expense", icon: "cup.and.saucer",    order: 12,  isPrimary: false),

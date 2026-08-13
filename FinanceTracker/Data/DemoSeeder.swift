@@ -304,7 +304,8 @@ enum DemoSeeder {
             ("Other",         "category.other",         "expense", "square.grid.2x2",  6,   true),
             // PRIMARY income
             ("Income",        "category.income",        "income",  "dollarsign.circle", 100, true),
-            // SECONDARY expense — visible in Settings, hidden behind "Show all" in pickers
+            // SECONDARY expense — visible in Settings AND in the picker; isPrimary:false
+            // only keeps them out of the Quick Entry chip row.
             ("Health",        "category.health",        "expense", "heart",             10,  false),
             ("Subscriptions", "category.subscriptions", "expense", "rectangle.stack",   11,  false),
             ("Coffee",        "category.coffee",        "expense", "cup.and.saucer",    12,  false),

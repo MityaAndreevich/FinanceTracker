@@ -35,8 +35,20 @@ final class Category {
     /// Sort order
     var order: Int = 0
 
-    /// False = shown only when user taps "Show all" in pickers. True = always visible.
-    /// Default true so existing user categories stay visible after migration.
+    /// Ranking flag, NOT a visibility flag. False does not hide a category anywhere:
+    /// `CategoryPickerSheet` — the single shared picker for both entry surfaces —
+    /// filters on kind and search text only (CategoryPickerSheet.swift:35–38).
+    ///
+    /// What it actually decides, and the only things that read it:
+    ///   • `QuickEntryView.swift:387–388` — which categories win the ≤6 quick chips
+    ///   • `CategoryEntity.swift:63` — the Siri/Shortcuts default category
+    ///   • `CategoryEntity.swift:75` — primary-first ordering in Siri disambiguation
+    ///   • `CategoriesSourcesView.swift:458` — a live user-writable toggle
+    ///
+    /// The original doc here read "shown only when user taps 'Show all' in pickers".
+    /// That two-step picker was removed; the sentence outlived it and seeded a
+    /// matching false user-facing string (see LocaleCompletenessTests, 2026-08-13).
+    /// Default true so existing user categories keep their ranking after migration.
     var isPrimary: Bool = true
 
     /// Optional monthly spend limit in cents (1.0.3 Item 3). nil = no limit —

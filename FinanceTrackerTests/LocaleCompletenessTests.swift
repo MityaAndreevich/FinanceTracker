@@ -263,7 +263,23 @@ final class LocaleCompletenessTests: XCTestCase {
         // already looking at their categories. No new ARTICLE copy: the setup guide
         // reuses help.widget.* and help.siri.*, which already existed.
         // All 5 locales in parity. Was 750.
-        XCTAssertEqual(enKeys.count, 754, "English baseline changed; update the expected count.")
+        // 2026-08-13 (Brief 36 item 1, 1.0.5): net -1. `category.show_all` deleted as
+        // an orphan — the two-step "Show all" picker it named was removed when
+        // CategoryPickerSheet became the single shared picker for both entry
+        // surfaces, and no Swift file has referenced the key since.
+        // This is the case §252 above predicted, one step worse: the orphan had a
+        // LIVE twin. `cs.category.secondary_label` ("Under “Show all”") was not
+        // merely unrendered — it shipped to users in all 5 locales at
+        // CategoriesSourcesView.swift:445, naming a control they could hunt for and
+        // never find. It now reads "Not shown by default", the exact complement of
+        // its `cs.category.primary_label` twin and of the toggle beside it.
+        // NOTE for whoever edits this pair next: `isPrimary` false does NOT hide a
+        // category. CategoryPickerSheet filters on kind + search only (:35–38), so
+        // every category stays reachable there; the flag only decides the Quick
+        // Entry chip row (QuickEntryView.swift:387–388) and the Siri default
+        // (CategoryEntity.swift:63). Copy implying reduced availability is wrong.
+        // All 5 locales in parity. Was 754.
+        XCTAssertEqual(enKeys.count, 753, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

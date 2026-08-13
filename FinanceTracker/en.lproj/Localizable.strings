@@ -615,7 +615,6 @@
 "category.utilities" = "Utilities";
 
 /* Progressive disclosure picker */
-"category.show_all" = "Show all";
 "category.show_fewer" = "Show fewer";
 "category.auto_detected" = "Auto-detected: %@";
 "category.tip_pick_other" = "Pick a category for better insights";
@@ -623,7 +622,7 @@
 /* CategoriesSourcesView — isPrimary toggle */
 "cs.category.shown_by_default" = "Shown by default";
 "cs.category.primary_label" = "Shown by default";
-"cs.category.secondary_label" = "Under “Show all”";
+"cs.category.secondary_label" = "Not shown by default";
 
 /* ======================================================
    Recurring transactions
