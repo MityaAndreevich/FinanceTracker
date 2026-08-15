@@ -191,6 +191,23 @@ struct ContentView: View {
             NavigationStack { screenshotDestination(for: screen) }
         }
         .task {
+            #if DEBUG
+            // MOVED HERE 2026-08-14. This purge drops a large seeded ledger a
+            // previous run left behind, and `wipeLedger` deletes EVERY
+            // Transaction unconditionally — so it must run before anything that
+            // WRITES rows, not after.
+            //
+            // It used to sit ~40 lines below, downstream of the demo seed. On the
+            // first non-scale launch after any scale-seeding UI class, that order
+            // seeded the demo rows and then deleted them, and the test that asked
+            // for them failed with "no rows (demo seed missing)". The comment
+            // beside the three DEBUG seams reasoned carefully about THEIR order;
+            // the demo seed sits above that block and was never in the analysis.
+            //
+            // The property to preserve: nothing that writes rows may precede the
+            // purge in this task. If a new seeding path is added, it goes BELOW.
+            LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
+            #endif
             if DemoSeeder.isDemoMode {
                 DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
             } else {
@@ -226,6 +243,10 @@ struct ContentView: View {
             //      meant the duplicate seam ran the REAL importer against 8 000
             //      inherited rows: a 130-second test, and a measurement of a store
             //      nobody had chosen.
+            //      ⚠️ MOVED 2026-08-14 to the TOP of this task — see the comment
+            //      there. It stays first in this ordering; it is now first in the
+            //      whole task, because the demo seed above also writes rows and the
+            //      purge was silently deleting them.
             //   2. seed   — establishes a known ledger when scale IS requested.
             //   3. duplicates — imports on top of whatever (1) or (2) settled on, so
             //      "large ledger, THEN a duplicate import" is expressible on purpose
@@ -233,7 +254,7 @@ struct ContentView: View {
             // Measurement (2026-08-04): observe the runloop across the seam work
             // below. Opt-in via --stall-monitor, so ordinary runs pay nothing.
             MainThreadStallMonitor.shared.startIfRequested()
-            LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
+            // (purge ran at the top of this task — see the note above)
             // Perf seam: fill the real store with ~8k rows across 24 months so the
             // main-thread hang (which scales with row count) is measurable on a
             // simulator and on the founder's device.
