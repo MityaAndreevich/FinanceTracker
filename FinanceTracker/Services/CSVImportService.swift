@@ -13,7 +13,35 @@ import SwiftData
 enum CSVImportMode {
     /// Non-destructive default: rows that already exist are counted and skipped.
     case skipDuplicates
+
     /// "Keep both": insert every row even if an identical one already exists.
+    ///
+    /// ⚠️ **NOT REACHABLE FROM THE UI, AND THERE IS A CONDITION ON CHANGING THAT.**
+    ///
+    /// No production code sets this. `DataSettingsView` passes no `mode`, so every
+    /// import a user can perform runs `.skipDuplicates`. Tests exercise this case;
+    /// users cannot reach it.
+    ///
+    /// **Before shipping any "keep both" toggle, partial-state disclosure must
+    /// already be live** (`PartialImportFailure` → the alert that names how many
+    /// rows landed). The two interact, and the interaction is the dangerous part:
+    ///
+    /// On the mapped (foreign-CSV) path there is no UUID to dedup against, so a
+    /// row is ALWAYS inserted. `.skipDuplicates` does not decide whether it lands
+    /// — only whether it is **flagged** (`processMappedRow`, the
+    /// `isPossibleDuplicate` line). Flagging is what makes a re-import after a
+    /// partial failure recoverable: the repeats are badged and land in the
+    /// duplicate-review queue.
+    ///
+    /// **`.importAll` turns that flagging off.** Combine it with an import that
+    /// half-succeeded while reporting "failed", and the user's retry silently
+    /// doubles thousands of rows with nothing marking them. Today only the
+    /// disclosure half is missing; wiring this case up without it supplies the
+    /// other half.
+    ///
+    /// Pinned by `ImportModeReachabilityGuardTests`, which fails if a production
+    /// file starts setting this. If you are here because that test failed: read
+    /// the paragraph above, then delete the guard deliberately — not reflexively.
     case importAll
 }
 
@@ -43,6 +71,38 @@ struct CSVImportResult {
     /// a wall of failures.
     var separatorFailedRows: Int = 0
     var firstError: String? = nil
+}
+
+/// Thrown when an import fails **after rows are already committed**, carrying the
+/// snapshot of what actually landed so the UI can say so.
+///
+/// WHY THIS TYPE EXISTS — it is the silent-success class, inverted.
+///
+/// Everything caught in this codebase this month reported SUCCESS while doing
+/// nothing: a test that scanned no files, a seed throwing into an uncaptured
+/// channel, a `-only-testing` filter matching zero tests, a stall detector
+/// reading a total freeze as 0%. This is the same disease with the opposite
+/// sign — the importer reported **FAILURE while having partly succeeded.**
+///
+/// `CSVImportActor` saves in batches of 100, so a throw mid-import leaves every
+/// earlier batch committed. The catch block then discarded the result entirely
+/// and showed `"Import failed: …"`, which is false: thousands of rows may be in
+/// the ledger. And it is not a harmless falsehood — the user's reasonable next
+/// action is to import the file again, and on the mapped (foreign-CSV) path
+/// there is no UUID to dedup against, so every re-imported row is inserted and
+/// flagged rather than skipped. **Saying "failed" is what makes the next action
+/// double the data.**
+///
+/// The rule this encodes: *a report that does not match what happened is a
+/// defect, in whichever direction it is wrong.*
+struct PartialImportFailure: LocalizedError {
+    /// What was committed by the last successful `save()` — NOT what was inserted
+    /// into the context. Rows inserted after that save were never persisted, so
+    /// counting them would repeat the original sin in a smaller way.
+    let committed: CSVImportResult
+    let underlying: Error
+
+    var errorDescription: String? { underlying.localizedDescription }
 }
 
 /// Parsed preamble shared by the synchronous import (tests) and the async

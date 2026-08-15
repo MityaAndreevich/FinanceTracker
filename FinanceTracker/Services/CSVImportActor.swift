@@ -23,7 +23,28 @@ actor CSVImportActor {
 
     /// Number of rows inserted before each intermediate `save()`. Bounds peak
     /// memory and gives a natural cooperative-yield boundary on large imports.
+    ///
+    /// This stays at 100 deliberately. Batching is the right call for the files
+    /// this feature exists for (up to `MAX_ROWS` = 10k): it bounds peak memory,
+    /// avoids one enormous transaction, and gives progress somewhere to hang.
+    /// Reverting to a single save would make failures atomic, but would trade a
+    /// disclosure bug for a watchdog bug on exactly the large imports that matter
+    /// most. **The thing that had to be made safe was the retry, not the
+    /// transaction size** — see `PartialImportFailure`.
     private static let batchSize = 100
+
+    /// Runs an intermediate batch save, converting a failure into a
+    /// `PartialImportFailure` that carries what was actually committed.
+    ///
+    /// `committed` is the snapshot taken after the last SUCCESSFUL save, so it
+    /// never counts rows that were inserted into the context but never persisted.
+    private func saveBatch(committed: CSVImportResult) throws {
+        do {
+            try modelContext.save()
+        } catch {
+            throw PartialImportFailure(committed: committed, underlying: error)
+        }
+    }
 
     func importData(
         data: Data,
@@ -39,6 +60,8 @@ actor CSVImportActor {
         var seenUUIDs = preamble.existingUUIDs
         var seenHeuristics = preamble.existingHeuristics
         var processed = 0
+        /// Snapshot of what is actually ON DISK, updated only after a save succeeds.
+        var committed = CSVImportResult()
 
         for i in preamble.startIndex..<preamble.rows.count {
             CSVImportService.processRow(
@@ -58,12 +81,13 @@ actor CSVImportActor {
             // Batch save + yield: flush every 100 rows and hand the executor back
             // so other work (and cancellation) can interleave on huge imports.
             if processed % Self.batchSize == 0 {
-                try modelContext.save()
+                try saveBatch(committed: committed)
+                committed = result          // value type — snapshot AFTER success
                 await Task.yield()
             }
         }
 
-        try modelContext.save()
+        try saveBatch(committed: committed)
         return result
     }
 
@@ -90,6 +114,10 @@ actor CSVImportActor {
         let activeMapping = try CSVImportService.resolveAutoConventions(mapping, rows: preamble.rows, startIndex: start)
         let total = max(0, preamble.rows.count - start)
         var processed = 0
+        /// Snapshot of what is actually ON DISK, updated only after a save succeeds.
+        /// This path is the one that most needs it: foreign rows carry no UUID, so a
+        /// blind retry re-inserts rather than skips (see `PartialImportFailure`).
+        var committed = CSVImportResult()
 
         var i = start
         while i < preamble.rows.count {
@@ -110,13 +138,14 @@ actor CSVImportActor {
             progress(processed, total)
 
             if processed % Self.batchSize == 0 {
-                try modelContext.save()
+                try saveBatch(committed: committed)
+                committed = result          // value type — snapshot AFTER success
                 await Task.yield()
             }
             i += 1
         }
 
-        try modelContext.save()
+        try saveBatch(committed: committed)
         return result
     }
 }

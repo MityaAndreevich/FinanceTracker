@@ -291,10 +291,7 @@ struct DataSettingsView: View {
                     FeatureUsageSignals.markUsed(.csvImport)
                 }
             } catch {
-                let message = String(
-                    format: NSLocalizedString("data.import.failed.format", comment: ""),
-                    error.localizedDescription
-                )
+                let message = Self.formatImportFailure(error)
                 await MainActor.run {
                     self.isImporting = false
                     self.importResultMessage = message
@@ -302,6 +299,34 @@ struct DataSettingsView: View {
                 }
             }
         }
+    }
+
+    /// Build the failure text, telling the truth about a PARTIAL import.
+    ///
+    /// Previously this always said `"Import failed: …"`. When the actor throws
+    /// after a batch save, that is false — rows are already in the ledger — and
+    /// the falsehood is the harmful part, not the failure: a user told "failed"
+    /// re-imports the file, and on the mapped path every repeat is re-inserted
+    /// (flagged, not skipped, because foreign rows carry no UUID). The message is
+    /// what turns a recoverable stop into doubled data.
+    ///
+    /// So a partial failure states what landed, that it is already saved, and that
+    /// importing again is safe — which converts the dangerous next action into an
+    /// informed one. See `PartialImportFailure`.
+    static func formatImportFailure(_ error: Error) -> String {
+        if let partial = error as? PartialImportFailure, partial.committed.imported > 0 {
+            return String(
+                format: NSLocalizedString("data.import.partial.format", comment: ""),
+                partial.underlying.localizedDescription,
+                partial.committed.imported
+            )
+        }
+        // Nothing was committed — "failed" is accurate here, and only here.
+        let underlying = (error as? PartialImportFailure)?.underlying ?? error
+        return String(
+            format: NSLocalizedString("data.import.failed.format", comment: ""),
+            underlying.localizedDescription
+        )
     }
 
     /// Tier-2 mapped import. Same background-actor discipline as `startAsyncImport`
@@ -321,10 +346,9 @@ struct DataSettingsView: View {
                     FeatureUsageSignals.markUsed(.csvImport)
                 }
             } catch {
-                let message = String(
-                    format: NSLocalizedString("data.import.failed.format", comment: ""),
-                    error.localizedDescription
-                )
+                // Mapped import is the path that most needs the honest message:
+                // foreign rows have no UUID, so a blind retry re-inserts.
+                let message = Self.formatImportFailure(error)
                 await MainActor.run {
                     self.isImporting = false
                     self.importResultMessage = message
