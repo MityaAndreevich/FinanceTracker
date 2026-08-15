@@ -778,6 +778,7 @@
 "data.export.share_last.format" = "Share %@";
 "data.export.failed.format" = "Export failed: %@";
 "data.import.failed.format" = "Import failed: %@";
+"data.import.partial.format" = "Import stopped before it finished: %1$@\n\nAlready saved: %2$lld. Those rows are in your list now. You can import the same file again — repeats are flagged for review, never lost.";
 "data.import.result.imported.format" = "Imported: %d";
 "data.import.result.skipped.format" = "Skipped: %d";
 "data.import.result.duplicates_skipped.format" = "Duplicates skipped: %d";
@@ -960,6 +961,8 @@
 "floor.caption" = "We couldn't finish updating its storage format. Everything you entered is intact — export a copy, and write to us so we can fix this quickly.";
 "floor.export" = "Export my data";
 "floor.contact" = "Contact support";
+"floor.delete_warning" = "Don't delete the app — that erases this data from your device. Export a copy first.";
+"floor.export_failed" = "The export didn't work. Your data is still on this device and intact — contact support and we'll get it out for you. Don't delete the app.";
 "restore.title" = "We restored your data from a backup";
 "restore.caption.format" = "The update hit a problem, so we brought everything back from the backup made a moment ago. Everything is here: %d transactions.";
 "restore.ack" = "OK";

@@ -342,10 +342,26 @@ private struct MigrationFloorView: View {
                 .foregroundStyle(Color.bcTextSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // §10.4 gap, closed 2026-08-14. "Your data is safe" is TRUE — the
+            // backup was restored and the store is intact — and that is exactly
+            // what makes it dangerous here: it reads as "nothing to worry about"
+            // to someone whose next move is to delete and reinstall, which is
+            // the one action that destroys the ledger. The field reporter did
+            // precisely that. Say the quiet part in the UI.
+            Label("floor.delete_warning", systemImage: "exclamationmark.triangle")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(Color.bcWarningInk)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 4)
+
             if exportFailed {
-                Text("premigration.export_failed")
+                Text("floor.export_failed")
                     .font(.footnote)
                     .foregroundStyle(Color.bcTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
 
@@ -382,14 +398,46 @@ private struct MigrationFloorView: View {
             .frame(maxWidth: .infinity, minHeight: 48)
     }
 
+    /// The stranded user's only data-out route — so it gets a second attempt
+    /// that the pre-migration screen deliberately does NOT get.
+    ///
+    /// `makeCSVFromV1Store()` opens read-only at the DECLARED V1 shape, which a
+    /// store older than that (1.0.0) does not match — so on the floor, the first
+    /// attempt throws for the very same reason the user is standing here. The
+    /// retry lifts the store to declared V1 first (a lightweight migration the
+    /// engine performs itself) and exports again.
+    ///
+    /// Why the write is safe HERE and not on the pre-migration screen: reaching
+    /// the floor means bootstrap already wrote the §9.2 backup and restored from
+    /// it. We re-check `backupExists()` anyway rather than trusting the path,
+    /// because "a migration without its safety net never starts" is the rule the
+    /// whole ladder is built on, and a retry is still a migration.
     private func prepareExport() {
         do {
             let result = try CSVExportService.makeCSVFromV1Store()
             exportURL = try TemporaryFileService.writeTemporaryFile(
                 data: result.data, filename: result.filename)
             exportFailed = false
+            return
         } catch {
             logSaveFailure("MigrationFloorView.export", error)
+        }
+
+        guard StoreBackup.backupExists(),
+              let groupURL = SharedModelContainer.groupURL() else {
+            exportFailed = true
+            return
+        }
+        SharedModelContainer.liftToDeclaredV1IfNeeded(
+            storeURL: SharedModelContainer.storeURL(groupURL: groupURL))
+        do {
+            let result = try CSVExportService.makeCSVFromV1Store()
+            exportURL = try TemporaryFileService.writeTemporaryFile(
+                data: result.data, filename: result.filename)
+            exportFailed = false
+            persistenceLog.notice("floor export: succeeded on the post-lift retry")
+        } catch {
+            logSaveFailure("MigrationFloorView.export(after lift)", error)
             exportFailed = true
         }
     }

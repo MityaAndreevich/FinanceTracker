@@ -252,6 +252,7 @@ enum SharedModelContainer {
     ) throws -> ModelContainer {
         if preflightRepair {
             try StorePreflightRepair.repairDanglingReferences(storeURL: store)
+            liftToDeclaredV1IfNeeded(storeURL: store)
         }
         let syncedConfig = ModelConfiguration(
             "synced", schema: syncedSchema, url: store, cloudKitDatabase: .none
@@ -266,10 +267,73 @@ enum SharedModelContainer {
         )
     }
 
+    /// Lift a store OLDER than the declared V1 up to the declared V1 shape.
+    ///
+    /// WHY THIS EXISTS — the field bug of 2026-08-14.
+    ///   `FinanceTrackerSchemaV1` is the **1.0.2** shape, not the 1.0.0 shape: it
+    ///   declares `isPossibleDuplicate`, which was added on 2026-07-11, the day
+    ///   AFTER 1.0.0 shipped. A store last written by 1.0.0 therefore matches
+    ///   NEITHER version the plan knows, so `ModelContainer(for:migrationPlan:)`
+    ///   throws `SwiftDataError` 1 — and the §10 ladder, working exactly as
+    ///   designed, ran attempt→restore→retry→restore→floor in 188 ms and parked
+    ///   the user on a terminal screen. Measured, not inferred: see
+    ///   `outputs/BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md`.
+    ///
+    /// WHY IT IS AN OPEN AND NOT A NEW SCHEMA VERSION
+    ///   1.0.1 opened that same store successfully, because a PLANLESS open lets
+    ///   SwiftData lightweight-migrate: it added the missing column itself
+    ///   (measured, 0 → 1). The engine can do this; only the stage machinery
+    ///   cannot, because it asserts a version match before it will start. So the
+    ///   fix is one extra open, not a V0 stage — and a new stage would itself be
+    ///   a migration that has to be right.
+    ///
+    /// SAFETY
+    ///   • Guarded path ONLY (`preflightRepair == true`), which means strictly
+    ///     after the §9.2 backup exists. This function WRITES (a lightweight
+    ///     migration is a write), so it must never run before the safety net.
+    ///   • Failure is swallowed on purpose: if the lift cannot help, behaviour is
+    ///     byte-identical to before this function existed — the ladder runs and
+    ///     the floor still catches it. It can only convert a failure into a
+    ///     success, never the reverse.
+    ///   • A no-op for stores already at V1 or later: measured at 86–99 ms
+    ///     against 1.0.1 and 1.0.2-era stores, which then migrate as before.
+    static func liftToDeclaredV1IfNeeded(storeURL store: URL) {
+        let schema = Schema(versionedSchema: FinanceTrackerSchemaV1.self)
+        let config = ModelConfiguration("v1-lift", schema: schema, url: store, cloudKitDatabase: .none)
+        do {
+            let container = try ModelContainer(for: schema, configurations: [config])
+            // Force the open to complete before the container goes out of scope.
+            // A fresh `ModelContext` rather than `mainContext`: this runs inside
+            // the nonisolated `openContainer`, which the hermetic tests call
+            // directly, and `mainContext` is main-actor isolated.
+            let rows = try ModelContext(container).fetchCount(
+                FetchDescriptor<FinanceTrackerSchemaV1.Transaction>())
+            persistenceLog.notice("v1 lift: store opened at declared V1, \(rows, privacy: .public) row(s)")
+        } catch {
+            // Not a failure path — the ladder below is still the authority.
+            let ns = error as NSError
+            persistenceLog.notice(
+                "v1 lift: skipped (\(ns.domain, privacy: .public)/\(ns.code, privacy: .public)) — continuing to the plan open"
+            )
+        }
+    }
+
     /// The pre-migration export path (§9.4): open the UNMIGRATED store with
-    /// the explicit V1 schema, read-only. The schema matches the disk exactly,
-    /// so this open can never trigger a migration; `allowsSave: false` means
-    /// it cannot mutate anything either. Also the degraded floor's export path.
+    /// the explicit V1 schema, read-only. `allowsSave: false` means it cannot
+    /// mutate anything. Also the degraded floor's export path.
+    ///
+    /// ⚠️ CORRECTED 2026-08-14. This comment used to claim *"the schema matches
+    /// the disk exactly, so this open can never trigger a migration"*. **That is
+    /// false for any store older than the declared V1** — e.g. one last written
+    /// by 1.0.0, which lacks `isPossibleDuplicate`. Such a store does not match,
+    /// the read-only open THROWS, and the export fails.
+    ///
+    /// That made the failure worse than it looked: the degraded floor offers
+    /// "Export my data" as the stranded user's only data-out route, and it was
+    /// broken for exactly the population that reaches the floor. Callers on the
+    /// floor must therefore handle the throw by lifting first — see
+    /// `MigrationFloorView.prepareExport()`. Callers BEFORE the backup exists
+    /// (the pre-migration screen) must not: no write may precede the safety net.
     static func openV1ReadOnly() throws -> ModelContainer {
         guard let groupURL = groupURL() else {
             throw StoreBackup.BackupError.appGroupUnavailable

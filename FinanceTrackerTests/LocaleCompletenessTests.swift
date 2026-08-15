@@ -279,7 +279,25 @@ final class LocaleCompletenessTests: XCTestCase {
         // Entry chip row (QuickEntryView.swift:387–388) and the Siri default
         // (CategoryEntity.swift:63). Copy implying reduced availability is wrong.
         // All 5 locales in parity. Was 754.
-        XCTAssertEqual(enKeys.count, 753, "English baseline changed; update the expected count.")
+        // 2026-08-13 (partial-import disclosure, 1.0.5): +1 `data.import.partial.format`.
+        // The importer saves in batches of 100, so a mid-import failure leaves earlier
+        // batches committed — and the catch block said "Import failed", which is false
+        // and is the harmful part: on the mapped path foreign rows carry no UUID, so a
+        // user who believes nothing happened re-imports and every repeat is re-inserted.
+        // The new string names how many rows landed and that re-importing is safe.
+        // Phrased as "Already saved: %lld." on purpose — a count-noun sentence would
+        // need a .stringsdict for RU/UK plural categories; this needs none.
+        // All 5 locales in parity. Was 753.
+        // 2026-08-14 (migration-floor escape hatch): +2 — `floor.delete_warning`
+        // and `floor.export_failed`. The floor is a TERMINAL screen whose only
+        // data-out route was broken for exactly the users who reach it, and whose
+        // "Your data is safe" reads as "nothing to worry about" to someone whose
+        // next action is to delete and reinstall — which is the one action that
+        // destroys the ledger. `floor.export_failed` replaces the borrowed
+        // `premigration.export_failed` there: that string ends "you can still
+        // continue safely", and on the floor there is nothing to continue to.
+        // Was 754.
+        XCTAssertEqual(enKeys.count, 756, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

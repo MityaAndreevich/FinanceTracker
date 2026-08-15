@@ -37,6 +37,14 @@ struct FinanceTrackerApp: App {
         os_signpost(.event, log: coldStartLog, name: "app_init_start")
         _ = appLaunchClock   // prime the launch clock as early as possible
 
+        #if DEBUG
+        // Must precede migrateLegacyStoreIfNeeded and the launch gate: it
+        // REPLACES the App Group store with a pre-V1 one and clears the
+        // migration sentinels, so `needsGuardedMigration` must not have been
+        // read yet. Inert without `--seed-pre-v1-store`.
+        PreV1StoreDebugSeed.seedIfRequested()
+        #endif
+
         // Must run before SharedModelContainer.shared is first accessed so the
         // lazily-created App Group store is seeded with existing user data.
         SharedModelContainer.migrateLegacyStoreIfNeeded()

@@ -657,6 +657,7 @@
 "data.export.share_last.format" = "Compartilhar %@";
 "data.export.failed.format" = "Falha ao exportar: %@";
 "data.import.failed.format" = "Falha ao importar: %@";
+"data.import.partial.format" = "A importação parou antes de terminar: %1$@\n\nJá salvo: %2$lld. Essas linhas já estão na sua lista. Você pode importar o mesmo arquivo novamente — as repetições são marcadas para revisão e nunca se perdem.";
 "data.import.result.imported.format" = "Importadas: %d";
 "data.import.result.skipped.format" = "Ignoradas: %d";
 "data.import.result.duplicates_skipped.format" = "Duplicadas ignoradas: %d";
@@ -832,6 +833,8 @@
 "floor.caption" = "Não conseguimos concluir a atualização do formato de armazenamento. Tudo o que você registrou está intacto — exporte uma cópia e escreva para nós para corrigirmos rápido.";
 "floor.export" = "Exportar meus dados";
 "floor.contact" = "Falar com o suporte";
+"floor.delete_warning" = "Não exclua o app — isso apaga estes dados do seu dispositivo. Exporte uma cópia primeiro.";
+"floor.export_failed" = "A exportação não funcionou. Seus dados continuam intactos neste dispositivo — fale com o suporte e vamos recuperá-los para você. Não exclua o app.";
 "restore.title" = "Restauramos seus dados de um backup";
 "restore.caption.format" = "A atualização encontrou um problema, então trouxemos tudo de volta do backup feito há instantes. Está tudo aqui: %d transações.";
 "restore.ack" = "OK";
