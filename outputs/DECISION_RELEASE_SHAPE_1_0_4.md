@@ -133,3 +133,29 @@ Before submitting 1.0.4, do two things that are cheap now and impossible later:
 (I have none, and did not look for it — it is checkable in reviews and support mail), or the
 rollback ladder turning out to be days rather than weeks. If sync were within two weeks of done,
 (a)'s single-migration argument would start to outweigh the verification argument in §2.
+
+---
+
+## 6. Instrument verified in the field — 2026-08-14
+
+**Recorded separately from the bug it arrived with, because it is a separate fact.**
+
+The 1.0.4 feedback instrument has now completed a full round trip from a real device, unaided:
+
+- Subject line rendered as designed — **`Budget Crab 1.0.4 (8) · ru · iPhone17,2`** — version,
+  build, in-app language and device model all correct.
+- The usage summary rendered **in Russian**, with every flag present.
+
+That is the **first end-to-end field verification** of this instrument, and it retires a real risk:
+until now the channel had been exercised only by us, and a silent failure (mail composed but never
+sent, summary empty, wrong locale, flags missing) would have been indistinguishable from *"nobody
+wrote in"* — the same absence-vs-instrument-failure confusion that the empty mailbox already forced
+us to reason about (`RESEARCH_SYNTHESIS_2026-07-02 §1`). It is not that any more. When this channel
+is silent from here on, the silence is about users, not about the instrument.
+
+Two limits on what this verifies, so it is not over-claimed:
+- It verifies the **transport and the rendering**, not the *sampling*. One message from a known
+  tester is not evidence that organic users will write.
+- The message was a **bug report**, which is the one thing a broken app reliably produces. It does
+  not exercise the `usage.ever.*` flags' correctness as a demand signal — that still rests on the
+  §1.1 ordering fix, which this release carries.

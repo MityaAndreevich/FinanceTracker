@@ -69,6 +69,73 @@ Source: `review_mining_output/summary_20260702_135538.md` + `reviews_*.csv`.
 > **This does not retract anything.** No finding above is withdrawn. It fixes what the findings are
 > evidence *of*.
 
+> ### 📭 THE MAILBOX HAS BEEN READ. IT IS EMPTY. (recorded 2026-08-13)
+>
+> The caveat above ends by naming the one thing that could correct it: *"that is the argument for
+> reading `support@budgetcrab.app`."* It has now been read. **Founder checked 2026-08-13: zero
+> messages since the address shipped 2026-07-29.** Fifteen days, no mail.
+>
+> **This is recorded as a finding, not as the absence of one.** Every prior version of this
+> programme's demand story carried an open item — *"the mailbox is unread, so 'no demand' and 'we
+> have not looked' are indistinguishable"* (`FEATURE_PREP_BACKLOG` row-9 standing caveat,
+> `RESEARCH_FAMILY_ACCESS_2026-08-12 §"support@budgetcrab.app: still unread"`). That item is closed.
+> It did not close the way it was expected to.
+>
+> **What it establishes, stated plainly, because it changes the standing of everything else on this
+> page:**
+>
+> > **We hold ZERO demand data from our own users.**
+>
+> Every percentage in this programme — sync **0.28%**, shared access **0.04–0.14%**, the **27%**
+> price-rage wedge — comes from the competitor corpus, whose population caveat is recorded
+> immediately above. There is now no second channel. The empty mailbox **does not weaken those
+> numbers**; nothing about them has changed. What it does is **remove the only channel that could
+> have corrected them.** The caveat above is therefore not a temporary condition awaiting a better
+> source — it is the standing state of the evidence base, and it will remain so until an instrument
+> we build samples our own users.
+>
+> **Consequence — the 1.0.4 feedback instrument is no longer one source among several.**
+> It is the *only* channel that will ever sample **our** users. Two things follow, and both are
+> operative now:
+>
+> 1. **It raises the cost of the §1.1 bias fix riding in the same release.** ⚠️ *That is
+>    `DECISION_RECEIPT_INPUT_PRETEST.md` §1.1 — the `usage.ever.splits` mark-before-save bias
+>    (fixed `15b646b`), **not** §1.1 of this document, which is about the two zero-row apps.* The fix
+>    was already load-bearing because the instrument had never shipped and so no data was
+>    contaminated. It is more load-bearing now: a biased instrument was previously one flawed source
+>    among several, and is now the sole source. There is no corroborating channel to catch it, and
+>    no second instrument that would disagree with it. **1.0.4 must carry that fix**, and that
+>    conclusion no longer depends on the pre-test alone.
+>
+> 2. **It makes `DECISION_RECEIPT_INPUT_PRETEST.md`'s `N ≥ 25` a harder bar than it looked.**
+>    That threshold was fixed before any measurement of the install base, and
+>    `DECISION_RELEASE_SHAPE_1_0_4 §4` already sized it as an explicit guess needing **~5 000–25 000
+>    MAU**, flagged as *"needs validating against App Store Connect before it is relied on."* The
+>    empty mailbox is the first real datum bearing on that sizing, and it points the wrong way: at
+>    ~3 ratings and zero support mail in fifteen days, the install base is not plausibly near that
+>    range. **This strengthens the time-limited "free move" in that document's §4** — amend §4.3
+>    clause 2 *before 1.0.4 ships* so a low-N result reads *"no data, no verdict"* rather than KILL.
+>    It is legitimate today precisely because no data exists; the receipt forbids that edit once
+>    mail starts arriving. A `KILL` returned by an `N` that was never reachable is not a finding
+>    about splitting — it is this same empty mailbox, arriving a second time wearing a verdict.
+>
+> **FOOTNOTE, 2026-08-14 — the mailbox is no longer empty, and the finding stands.**
+> One message has arrived: a **known tester** (Anton Kyriachok) reporting a launch bug, not organic
+> demand. So the sentence *"zero messages since it shipped"* is now false as of 2026-08-14 and is
+> retained above as the state on 2026-08-13; **every consequence drawn from it is unchanged**,
+> because a solicited bug report from someone we know is not a sample of user demand. The count of
+> organic, unsolicited messages from users we did not recruit is **still zero**. What did change is
+> that the channel is now demonstrated to work end-to-end — see
+> `DECISION_RELEASE_SHAPE_1_0_4 §"instrument verified in the field"`.
+>
+> **What it does NOT mean — read this before anyone cites it as reassurance.**
+> An empty mailbox at **~3 ratings** is consistent with **a small install base**. It is *not*
+> evidence that users have nothing to say, and it is **not satisfaction**. Zero complaints and zero
+> requests are what a near-zero denominator produces regardless of what those users think. Reading
+> silence as approval here would repeat, on our own data, exactly the inference the caveat above
+> forbids on the competitor corpus: mistaking a fact about the population for a fact about the
+> product.
+
 ### Findings that overturn earlier web-tier assumptions
 1. **"Sync breakage = #1 pain" was OVERSTATED.** Real sync mentions are ~4-6% even at aggregators, not the top theme. The web-tier claim came largely from affiliate blogs (esp. vento.money, which sells a manual app — motivated to amplify sync pain). Validated the Tier-2 skepticism. (Caveat: the sync regex is conservative and undercounts; treat 66 as a lower bound — but price still dwarfs it.)
 2. **The real #1 rage is BILLING DARK PATTERNS, not price level.** Verbatim 1★: *"continued charging after I cancelled"*, *"you have to go into settings to completely cancel… beware!!!"*, *"False advertising"*, *"too many ads, my whole family uninstalled"*. → This is Budget Crab's strongest **data-backed wedge**: no ads, no dark patterns, one-tap cancel, no bank-data honeypot, cheap. 484 rage-reviews point straight at it.

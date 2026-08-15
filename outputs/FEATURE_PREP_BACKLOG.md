@@ -66,10 +66,18 @@ This does not invalidate the numbers — the falsifications stand, and *"below a
 declined to build against"* remains a sound comparison **between** features measured the same way.
 What it invalidates is reading any of them as an absolute statement about our market.
 
-**It also makes the support mailbox the highest-value unresolved input we have**, by a wide margin.
+**It also made the support mailbox the highest-value unresolved input we had**, by a wide margin.
 It is the only channel that samples *our* users rather than a competitor's. One forwarded inbox is
 worth more than another 4,904 competitor reviews, because it is the only evidence not drawn from a
 population defined by preferring the thing we refuse to build.
+
+> **RESOLVED 2026-08-13 — and it changes the standing of every number above.** The founder checked
+> `support@budgetcrab.app`: **zero messages** since it shipped 2026-07-29. So **we hold no demand
+> data from our own users at all.** The empty mailbox does not weaken the percentages above; it
+> removes the only channel that could have corrected them. The 1.0.4 feedback instrument is
+> therefore not one source among several — it is the only channel that will ever sample our users.
+> Full finding, including what it does *not* mean (an empty mailbox at ~3 ratings is a small install
+> base, **not** satisfaction): `RESEARCH_SYNTHESIS_2026-07-02 §1`.
 
 ---
 
@@ -132,8 +140,10 @@ likely to be *right* when the demand numbers are wrong, and because it points sp
 **ledger** half.
 
 **Standing caveat.** Every demand number above rests on one channel: competitor reviews.
-`support@budgetcrab.app` has still never been read, so "no demand" and "we have not looked" remain
-indistinguishable for this row as for every other.
+~~`support@budgetcrab.app` has still never been read~~ — **read 2026-08-13, zero messages since it
+shipped 2026-07-29.** "No demand" and "we have not looked" remain indistinguishable for this row as
+for every other, and now permanently rather than pending: the second channel exists, was checked,
+and returned nothing.
 
 ---
 

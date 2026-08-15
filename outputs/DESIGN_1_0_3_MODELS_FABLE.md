@@ -1363,6 +1363,19 @@ very end before submission, not per-task.
 protocol. It is founder-executed, costs no tokens, and is the only gate
 that has historically caught what the test suite missed.
 
+> **⚠️ 2026-08-14 — and here is what it did NOT catch, structurally.**
+> The §11 drill ran against `store-rehearsal/`, whose three copies are all **1.0.2-era**. A store
+> last written by **1.0.0** cannot be migrated at all — declared `SchemaV1` carries
+> `isPossibleDuplicate`, added the day *after* 1.0.0 shipped — and those users land on the terminal
+> floor screen. It shipped in 1.0.3, survived this gate, and was found in the field
+> (`BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md`).
+>
+> The gate is still the strongest one we have. The limit is its **fixture**, not its protocol: a
+> real-store drill sourced from a version that already works validates *one path through* the
+> migration, never the migration. "Real store" and "representative store" are different claims, and
+> only the first was ever true here. See `PROPOSAL_STORE_FIXTURE_CORPUS_2026-08-14.md` and the
+> expanded note in `AUDIT_V3_ROLLBACK_READINESS §6`.
+
 ---
 
 ## 13. Implementation order for Sonnet (one paragraph)

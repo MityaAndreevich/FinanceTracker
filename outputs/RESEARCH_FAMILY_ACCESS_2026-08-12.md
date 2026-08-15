@@ -159,13 +159,18 @@ bank-linked wants, we gain the manual-entry segment where salience is highest. I
 - **App Store reviews: 2, both ours.** Zero mentions of sharing, couples, partner or family. Two
   written reviews cannot measure anything; they are recorded so the count is not mistaken for
   silence-as-evidence.
-- **support@budgetcrab.app: still unread.** Unchanged since the last demand review. **I cannot
-  read it** — no credentials in this environment, and the founder must.
+- **support@budgetcrab.app: ~~still unread~~ READ 2026-08-13 — EMPTY.** Founder checked: **zero
+  messages** since the address shipped 2026-07-29. Recorded as a finding, with its consequences, in
+  `RESEARCH_SYNTHESIS_2026-07-02 §1` beside the corpus caveat.
 
 > **Therefore, as instructed: the demand finding rests on ONE channel — a competitor review corpus
 > for a product category we are not in.** No first-party demand evidence exists for this feature,
-> in either direction. Until the mailbox is read, "no demand" and "we have not looked" are not
-> distinguishable from our side.
+> in either direction. ~~Until the mailbox is read,~~ **UPDATED 2026-08-13: the mailbox has been
+> read and is empty, so this is no longer a pending question — it is the settled state.** "No
+> demand" and "we have not looked" are still not distinguishable from our side, because the channel
+> that would have distinguished them returned nothing. An empty mailbox at ~3 ratings is consistent
+> with a small install base, **not** with users having nothing to say; do not read it as
+> satisfaction.
 
 ### 1.7 What the domain literature says couples fail at (notebook `73afc9a4`)
 
@@ -424,8 +429,11 @@ demand no matter how much we like it.
 
 ### 5.3 Would build — cheap, evidence-backed, independent of this feature
 
-**Read the support mailbox.** The demand finding rests on one channel because the other is unread
-(§1.6). This is the highest-value action in the document and it needs no engineering.
+**~~Read the support mailbox.~~ DONE 2026-08-13 — it is empty (§1.6).** It was the highest-value
+action in this document; it returned zero messages, so the demand finding still rests on one
+channel, permanently rather than pending. The successor action is the 1.0.4 feedback instrument,
+which is now the *only* channel that will ever sample our users — see
+`RESEARCH_SYNTHESIS_2026-07-02 §1`.
 
 **Correct `FEATURE_PREP_BACKLOG.md` row #9.** Both demand citations fail (§0). Leaving them
 standing means the next planning pass re-derives the same conclusion from the same bad inputs — the
