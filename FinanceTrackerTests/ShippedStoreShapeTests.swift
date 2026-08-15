@@ -43,7 +43,7 @@ final class ShippedStoreShapeTests: XCTestCase {
     /// versions that remain — the silent-success class this project keeps
     /// getting caught by (`AUDIT_SILENT_SUCCESS_CLASS_2026-08-09`). A missing
     /// fixture must FAIL, loudly, in `test_everyShippedVersionHasAFixture`.
-    private static let shippedVersions = ["V1_0_0", "V1_0_1", "V1_0_2", "V1_0_3", "V1_0_4"]
+    private static let shippedVersions = ["V1_0_0", "V1_0_1", "V1_0_2", "V1_0_3", "V1_0_4", "V1_0_5"]
 
     /// Rows written by `--demo-mode` at capture time. Identical across versions
     /// because the demo seed is deterministic — which is exactly why it is the
@@ -119,6 +119,7 @@ final class ShippedStoreShapeTests: XCTestCase {
     func test_v1_0_2_storeOpens() throws { try assertOpens("V1_0_2") }
     func test_v1_0_3_storeOpens() throws { try assertOpens("V1_0_3") }
     func test_v1_0_4_storeOpens() throws { try assertOpens("V1_0_4") }
+    func test_v1_0_5_storeOpens() throws { try assertOpens("V1_0_5") }
 
     // MARK: - The corpus actually spans distinct shapes
 
