@@ -23,6 +23,20 @@ Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (�
 ## 3. Build & submit
 - [ ] Xcode: Version **1.0**, increment **build number**, `ITSAppUsesNonExemptEncryption = NO` present, Release scheme, all icon sizes.
 - [ ] **Archive → Distribute → App Store Connect (upload).**
+- [ ] **Tag the submitted commit** — `git tag vX.Y.Z-buildN && git push --tags`. Without it, "which
+      commit shipped as X.Y.Z" becomes a judgment call within weeks: the 1.0.1 and 1.0.2 fixtures had
+      to be inferred from version-bump boundaries, and the first attempt at 1.0.2 picked a commit
+      that still said `MARKETING_VERSION = 1.0.2` but already contained the V2 schema — i.e. 1.0.3
+      development. Caught by inspecting the captured shape, not by the version string.
+- [ ] **Capture the store fixture for this version** — `scripts/capture-store-fixture.sh <tag> VX_Y_Z`,
+      then add its case to `ShippedStoreShapeTests` and commit both. Do it HERE, not later: this is
+      the one moment the binary that writes that store definitely exists and definitely builds.
+      Skipping it is how `SchemaV1` came to describe 1.0.2 rather than 1.0.0, which stranded
+      1.0.0 users on a dead-end screen for two releases
+      (`BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md`).
+- [ ] **Run the migration repro against a RELEASE build** — every migration measurement to date has
+      been made on Debug. The path has no `#if DEBUG` branch, so they should not differ; "should not"
+      is the phrasing that has cost this project a week at a time.
 - [ ] On the version page: **select the uploaded build**.
 - [ ] **Add for Review** → status "Waiting for Review."
 
