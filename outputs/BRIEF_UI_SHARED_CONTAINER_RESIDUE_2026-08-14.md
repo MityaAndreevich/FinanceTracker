@@ -204,3 +204,40 @@ where no marker exists, so no purge runs and this brief's mechanism cannot apply
 the controlled experiment and every other run. Recorded rather than absorbed: it is one observation,
 it is not explained by anything here, and calling it "the same flake" would be exactly the
 absorb-into-a-known-cause move this brief exists to argue against.
+
+---
+
+## 8. Correction (2026-08-16): the ordering fix removed one CAUSE, not the SYMPTOM
+
+The pre-submission full-suite run for 1.0.5 failed `test_editAfterQuickAddInsert_stillOpensEditor`
+again, with the identical message — *"no rows (demo seed missing)"*. §7 said that failure was fixed.
+That claim was true of the runs it was based on and **too strong as stated**, so it is corrected here
+rather than left standing.
+
+**The symptom has two causes, and only one was fixed.**
+
+- **Cause A — deletion (FIXED).** The purge ran after the demo seed and deleted it. Removed by moving
+  the purge above every seeding path, and the controlled comparison showed exactly that: the failure
+  went from 3/3 on both trees to passing on both.
+- **Cause B — starvation (NOT fixed, and now the live one).** The purge is 45 764 ms. It now runs
+  FIRST, so the demo seed executes *after* it. A test that waits 15 s for rows finds none — not
+  because they were deleted, but because a 46-second delete is standing in front of them.
+
+So the reordering changed *why* the rows are missing without changing *whether* the test can see
+them, whenever the purge fires on that launch. **The cost remedy is not only what makes the suite
+trustworthy — it is the remaining cause of this specific failure.**
+
+Same one-shot signature as always, in the 1.0.5 run: `EditAtScaleReproTests` (5/5 passed, leaving
+8 000 rows and the marker set) → `EditPresentationInterleavedTests` **first test failed, both
+siblings passed**, the marker having been consumed by that launch.
+
+Why it passed twice after the fix and failed here: those runs were UI-target-only on a freshly erased
+simulator; this one ran the full suite on a different device that carried state from the 1.0.5
+fixture capture. Which launch pays the purge depends on which class last set the marker and which
+non-scale launch consumes it first — i.e. on exactly the shared-container state this brief is about.
+Recorded as observed, not resolved.
+
+**Not a release blocker, and here is the basis rather than the assertion:** `LargeDatasetDebugSeed`
+is `#if DEBUG`, both call sites are inside `#if DEBUG`, and `--seed-large-dataset` is **absent from
+the Release binary's symbols**. No user can reach this path. The unit target was 1036/1036 in the
+same run.
