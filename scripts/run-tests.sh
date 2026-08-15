@@ -39,6 +39,32 @@
 #   scripts/run-tests.sh -only-testing:FinanceTrackerTests/CapabilityMatrixTests
 #   scripts/run-tests.sh "-only-testing:FinanceTrackerTests/Suite/testName()"
 #
+# ⚠️ HOW YOU CALL IT — DO NOT PIPE THIS SCRIPT
+#
+#   scripts/run-tests.sh | tail -60          # ✗ $? is TAIL's status, not ours
+#   scripts/run-tests.sh > out.txt 2>&1      # ✓ $? is ours
+#   scripts/run-tests.sh 2>&1 | tee out.txt  # ✗ unless the CALLER sets pipefail
+#
+#   Every exit code above is worthless if the caller throws it away, and a pipe
+#   throws it away by default: in a pipeline the shell reports only the LAST
+#   command's status. `tail` succeeds at tailing a failed run, so a red suite
+#   reports 0.
+#
+#   OBSERVED 2026-08-13, not hypothesised. A full-suite run with 2 failing UI
+#   tests was invoked as `run-tests.sh 2>&1 | tail -60` and came back "exit 0"
+#   while the very output being read said `✗ 2 test(s) failed`. The status and
+#   the text disagreed, and the status is the half that automation reads.
+#
+#   `set -o pipefail` INSIDE this script cannot help: it governs pipelines this
+#   script runs, never the pipeline this script is placed in. The fix has to
+#   live in the caller, which is why it lives in this comment. The wrapper
+#   cannot defend against how it is called — so the documentation has to.
+#
+#   This is the same composition blind spot the exit-2/exit-3 pair was built
+#   for: each part is correct in isolation and the COMPOSITION drops the signal.
+#   Guarding the script and then reading it through a pipe rebuilds the exact
+#   defect the script exists to prevent, one layer up.
+#
 # COMMISSIONING — 2026-08-13, iPhone 17 Pro / iOS 26.5, Xcode result bundles v3
 #   Every code was PROVOKED and OBSERVED. A guard nobody has seen fire is a
 #   guess, which is how the exit-2/exit-3 defect survived from the day it was
@@ -69,6 +95,32 @@ BUNDLE="$(mktemp -d)/result.xcresult"
 LOG="$(mktemp)"
 
 echo "▶ xcodebuild test ${*:-（full suite）}"
+
+# ── Multiple filters mask each other ──────────────────────────────────────────
+# THE GUARD BELOW IS A TOTAL, NOT A PER-FILTER CHECK. With two -only-testing
+# arguments where one matches nothing, the other's tests keep EXECUTED > 0 and
+# the zero-match passes silently — the exact failure this script exists to catch,
+# reintroduced by the arithmetic.
+#
+# Found the honest way, 2026-08-13: a newly added suite was run alongside an
+# existing one, reported "6 passed", and had in fact contributed nothing (the
+# file was written outside the target's directory). Run alone it correctly
+# returned exit 2.
+#
+# Attributing per filter would need one xcodebuild invocation per filter, which
+# costs a full build each. So this warns instead of refusing — but it warns
+# LOUDLY, because "6 passed" is exactly as reassuring as it is wrong.
+FILTER_COUNT=0
+for arg in "$@"; do
+    case "$arg" in -only-testing:*|-only-testing) FILTER_COUNT=$((FILTER_COUNT + 1)) ;; esac
+done
+if [ "$FILTER_COUNT" -gt 1 ]; then
+    echo ""
+    echo "⚠  $FILTER_COUNT -only-testing filters. The zero-tests guard is a TOTAL:"
+    echo "   if ONE of these matches nothing, the others hide it and this run"
+    echo "   still reports a pass. Verify a NEW or RENAMED suite on its own first."
+    echo ""
+fi
 xcodebuild -project "$PROJECT" -scheme "$SCHEME" \
     -destination "$DESTINATION" \
     -parallel-testing-enabled NO \
