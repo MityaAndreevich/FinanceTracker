@@ -206,6 +206,28 @@ struct ContentView: View {
             //
             // The property to preserve: nothing that writes rows may precede the
             // purge in this task. If a new seeding path is added, it goes BELOW.
+            //
+            // ⚠️ DO NOT TRY A THIRD ARRANGEMENT. This move traded one failure for
+            // another, and the reason is arithmetic, not sequencing:
+            //
+            //   BEFORE  seed then purge  -> demo rows written, then DELETED
+            //   AFTER   purge then seed  -> demo rows not written YET, because a
+            //                               45 764 ms delete is in front of them
+            //
+            // `wipeLedger` over 8 000 categorised rows measures 45.8 s
+            // (PurgeCostMeasurementTests). Every waiting assertion in the suite
+            // times out at 8-20 s. No ordering of two operations can help when
+            // one of them costs 46 seconds — whichever runs first, the launch is
+            // already over budget. This order is still the correct one (it is the
+            // only one that does not DELETE data someone just seeded), but it is
+            // not a fix for the timeouts and was never going to be.
+            //
+            // The remedy is making the wipe cheap, and the number to beat is
+            // already measured on the structurally identical path: 44.7 s -> 0.72 s
+            // by dropping the `Category.transactions` inverse during the delete
+            // (BRIEF_BULK_DELETE_P1_P2_P3). Deleting the store FILE instead of
+            // walking the object graph is the other candidate. Either is its own
+            // change with its own verification.
             LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
             #endif
             if DemoSeeder.isDemoMode {

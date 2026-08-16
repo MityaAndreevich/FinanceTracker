@@ -26,6 +26,26 @@
 #   archaeology later. That is the one moment the binary that writes this store
 #   definitely exists and definitely builds.
 #
+# ⚠️ THIS SCRIPT IS A NEW WRITER INTO THE SHARED-CONTAINER PROBLEM
+#
+#   It is not hermetic and cannot be: capturing what a binary writes means running
+#   that binary on a real simulator. Two consequences, both of which have already
+#   confused one run (see BRIEF_UI_SHARED_CONTAINER_RESIDUE §9):
+#
+#     1. It ERASES the device it targets, chosen BY NAME, without asking. If
+#        another run is using that simulator — a staged repro, a suite in flight —
+#        this destroys it silently.
+#     2. It LEAVES the device non-pristine: the old app version installed, an
+#        App Group store holding the demo seed, and whatever UserDefaults that
+#        launch wrote. A test run started afterwards inherits all of it.
+#
+#   That is the same class of defect the UI suite has been chasing all month, and
+#   this script is now one of its sources. The rule that follows:
+#
+#     ERASE THE SIMULATOR BEFORE A TEST RUN THAT FOLLOWS A CAPTURE.
+#     A green run on an erased device and a red run on a captured-on device are
+#     not the same experiment, and the difference is invisible in the output.
+#
 # USAGE
 #   scripts/capture-store-fixture.sh <commit-ish> <label> [device-name]
 #   scripts/capture-store-fixture.sh 1e9b20b V1_0_0

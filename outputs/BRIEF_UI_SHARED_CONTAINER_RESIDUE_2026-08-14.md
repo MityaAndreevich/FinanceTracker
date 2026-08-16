@@ -241,3 +241,35 @@ Recorded as observed, not resolved.
 is `#if DEBUG`, both call sites are inside `#if DEBUG`, and `--seed-large-dataset` is **absent from
 the Release binary's symbols**. No user can reach this path. The unit target was 1036/1036 in the
 same run.
+
+---
+
+## 9. The fixture corpus is now a source of the same problem
+
+Recorded 2026-08-16, because the next confusing run should not be diagnosed from scratch.
+
+`scripts/capture-store-fixture.sh` cannot be hermetic — capturing what a binary writes means running
+that binary on a real simulator. It therefore does two things this brief has spent a month tracking:
+
+1. **It erases a device chosen by NAME, without asking.** Anything else using that simulator — a
+   staged repro, a run in flight — is destroyed silently.
+2. **It leaves the device non-pristine**: the old app version installed, an App Group store holding
+   the demo seed, and whatever UserDefaults that launch wrote. Any run started afterwards inherits
+   all of it.
+
+**This is what separated the two green post-fix UI runs from the red 1.0.5 full-suite run.** The
+green ones erased the simulator first, by protocol. The red one ran on the device the 1.0.5 fixture
+capture had just left behind, and did not erase.
+
+⚠️ **One correction to how this was described to me, because the difference matters for diagnosis:**
+the capture does **not** leave 8 000 rows behind. It leaves a **33-row demo store** plus an installed
+app and its defaults; the 8 000 rows in the failing run came from the suite's own scale classes
+(`EditAtScaleRepro` and friends), as they always have. The capture's contribution is that the device
+was **not pristine and not erased**, which is enough — the marker/store state that decides *which*
+launch pays the 46-second purge is exactly what "not pristine" perturbs. Attributing the rows to the
+capture would send the next investigator looking for an 8k seed in a script that has none.
+
+**The rule that follows:** erase the simulator before any test run that follows a capture. A green
+run on an erased device and a red run on a captured-on device are not the same experiment, and the
+difference does not appear anywhere in the output. The same warning is now in the script's header,
+where someone about to run it will actually meet it.
