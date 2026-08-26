@@ -110,6 +110,15 @@
 #     constant 1100 → adjusted 1099 vs 1099 known → observed 1 ✓  (count in range;
 #                                                    verdict falls to the tests)
 #
+#   THE REPORTER'S SELF-CHECK — COMMISSIONED 2026-08-26, both arms:
+#     count mismatch : observed by accident and then kept. The first version of
+#       collect_failures was defined AFTER its call site, so bash produced
+#       "collect_failures: command not found" and an empty list while the summary
+#       said 3 failed. The check printed "summary says 3, tree yields 0" and the
+#       bug was visible immediately instead of shipping as a silently empty list.
+#     duplicates     : provoked by making the collector emit each name twice
+#       → "6 entries, 3 distinct tests" ✓, alongside the mismatch warning.
+#
 #   Three separate full runs were NOT used, deliberately: they would have differed
 #   in flakiness and timing as well as in the constant, which is worse evidence and
 #   an hour more expensive. The comparison arithmetic was separately unit-checked
@@ -132,7 +141,7 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 # three tests this suite skips, TWO are CONDITIONAL:
 #     PaywallClarityRenderTests.test_render_clarity_en/ru
 #         XCTSkipUnless(env["RENDER_ARTIFACTS"] == "1")   ← PaywallClarityRenderTests.swift:33
-#     "…deleted row traps"  .disabled(…)                  ← DeletedModelIdentifierTests.swift:183
+#     "Resolving a PersistentIdentifier whose row is deleted / reading a stored\n#      property off model(for:) of a deleted row traps"\n#         .disabled("Crashes the test process by design…")  ← DeletedModelIdentifierTests.swift:183
 # So `executed` alone is NOT deterministic — running with RENDER_ARTIFACTS=1
 # executes two more tests and would fire the upper bound on a run where nothing
 # grew. A guard that cries wolf on a legitimate invocation gets bypassed, which
@@ -201,6 +210,32 @@ LOG="$(mktemp)"
 # whatever bundle it is handed, so handing it a stale one produces a stale
 # answer — the run banner below says CHECK_BUNDLE loudly for exactly that reason.
 # Nothing in CI should ever set it.
+
+# ── ONE collection for the count AND the list ────────────────────────────────
+# These used to be two independent paths: the printed number came from the
+# summary's failedTests, the printed list from a walk of the test tree. Two paths
+# can disagree — a retried or repeated test appears once per RUN in the tree and
+# once per TEST in the summary — and a number that disagrees with its own
+# evidence is the 563 defect in miniature. So the list is collected once, its
+# length is what gets printed, and any divergence from the summary is stated out
+# loud instead of quietly resolved.
+collect_failures() {
+    xcrun xcresulttool get test-results tests --path "$BUNDLE" 2>/dev/null \
+      | python3 -c '
+import json, sys
+def walk(n):
+    if n.get("result") == "Failed" and n.get("nodeType") in ("Test Case", "Test Method"):
+        print(n.get("name"))
+    for c in n.get("children", []) or []:
+        walk(c)
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    raise SystemExit
+for n in d.get("testNodes", []) or []:
+    walk(n)
+'
+}
 
 echo "▶ xcodebuild test ${*:-（full suite）}"
 
@@ -345,6 +380,34 @@ fi
 
 EXECUTED=$(( PASSED + FAILED + EXPECTED ))
 
+FAILURE_LIST="$(collect_failures)"
+if [ -z "$FAILURE_LIST" ]; then
+    FAILURE_COUNT=0
+    FAILURE_UNIQUE=0
+else
+    FAILURE_COUNT=$(printf '%s\n' "$FAILURE_LIST" | grep -c '^')
+    FAILURE_UNIQUE=$(printf '%s\n' "$FAILURE_LIST" | sort -u | grep -c '^')
+fi
+
+# Says nothing when the two agree, which is the normal case.
+reconcile_failures() {
+    if [ "$FAILURE_COUNT" -ne "$FAILED" ]; then
+        echo ""
+        echo "⚠  REPORTER DISAGREES WITH ITSELF: the result bundle's summary says"
+        echo "   $FAILED failed, the test tree yields $FAILURE_COUNT entry(ies)."
+        echo "   Do not trust either number until this is explained — a retried or"
+        echo "   repeated test is reported once per RUN in the tree and once per"
+        echo "   TEST in the summary."
+    fi
+    if [ "$FAILURE_UNIQUE" -ne "$FAILURE_COUNT" ]; then
+        echo ""
+        echo "⚠  $(( FAILURE_COUNT - FAILURE_UNIQUE )) duplicate entry(ies) above"
+        echo "   ($FAILURE_COUNT entries, $FAILURE_UNIQUE distinct tests). Listed as-is"
+        echo "   rather than deduplicated: silently collapsing them is how a count"
+        echo "   stops matching its evidence."
+    fi
+}
+
 echo "── executed=$EXECUTED  passed=$PASSED  failed=$FAILED  skipped=$SKIPPED"
 
 # ── THE GUARD ─────────────────────────────────────────────────────────────────
@@ -365,23 +428,6 @@ if [ "$EXECUTED" -eq 0 ]; then
     exit 2
 fi
 
-print_failures() {
-    xcrun xcresulttool get test-results tests --path "$BUNDLE" 2>/dev/null \
-      | python3 -c '
-import json, sys
-def walk(n):
-    if n.get("result") == "Failed" and n.get("nodeType") in ("Test Case", "Test Method"):
-        print("   -", n.get("name"))
-    for c in n.get("children", []) or []:
-        walk(c)
-try:
-    d = json.load(sys.stdin)
-except Exception:
-    raise SystemExit
-for n in d.get("testNodes", []) or []:
-    walk(n)
-'
-}
 
 # ── THE COUNT CHECK ───────────────────────────────────────────────────────────
 # Two-sided, on purpose. A one-sided floor degrades on its own: the suite grows,
@@ -467,7 +513,8 @@ if [ "$COUNT_CHECK" -eq 1 ] && [ "$TOTAL_KNOWN" -lt $(( ADJUSTED - COUNT_TOLERAN
     echo ""
     if [ "$FAILED" -gt 0 ]; then
         echo "   For reference, what DID fail in this partial run:"
-        print_failures
+        printf '%s\n' "$FAILURE_LIST" | sed 's/^/   - /'
+        reconcile_failures
         echo ""
     fi
     echo "   bundle: $BUNDLE  log: $LOG"
@@ -489,16 +536,18 @@ if [ "$COUNT_CHECK" -eq 1 ] && [ "$TOTAL_KNOWN" -gt $(( ADJUSTED + COUNT_TOLERAN
     echo ""
     if [ "$FAILED" -gt 0 ]; then
         echo "   The tests themselves also had failures:"
-        print_failures
+        printf '%s\n' "$FAILURE_LIST" | sed 's/^/   - /'
+        reconcile_failures
         echo ""
     fi
     echo "   bundle: $BUNDLE  log: $LOG"
     exit 5
 fi
 
-if [ "$FAILED" -gt 0 ]; then
-    echo "✗ $FAILED test(s) failed:"
-    print_failures
+if [ "$FAILED" -gt 0 ] || [ -n "$FAILURE_LIST" ]; then
+    echo "✗ $FAILURE_COUNT test(s) failed:"
+    printf '%s\n' "$FAILURE_LIST" | sed 's/^/   - /'
+    reconcile_failures
     exit 1
 fi
 
