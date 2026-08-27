@@ -86,7 +86,45 @@ if tx.isIncome { income += amount } else { expense += amount }
 which is why export survives values that crash the dashboard. Export is the safe consumer here; it
 is not the defect.
 
-## 4. What is NOT claimed
+---
+
+## 6. END-TO-END: the chain completes, and it bricks the app
+
+Measured 2026-08-27 by `FinanceTrackerTests/ImportOverflowChainTests.swift`. Reasoning is not
+what establishes any of this; each line below is an observation.
+
+**The file.** Not a hostile one. The app ships flexible column mapping with Mint/YNAB/Monarch
+presets, so the user chooses which column is the amount, and bank exports routinely carry 16–18
+digit reference or account numbers. Mapping "Reference" onto "Amount" is an ordinary mistake with
+an ordinary file, and it yields a 17-digit integer — the widest that stores rather than trapping
+inside the parser.
+
+| # | question | measured answer |
+|---|---|---|
+| 1 | plausible file shape | two rows, amount `92233720368547758` (mis-mapped reference column) |
+| 2 | does the real import path store it | **yes** — `imported=2 skipped=0`, each row stored as `amountCents = 9223372036854775800`, six orders of magnitude above the UI's 10^13 cap. No error, no warning, no flag |
+| 3 | does the dashboard's own sum overflow | **yes** — overflow at row index 1; running total `9223372036854775800` + the second row exceeds `Int.max`. The real call crashes: `Crash: FinanceTracker at …testProbe_realMonthTotalsTraps()`, last output `PROBE: about to call MonthTotals.expenseCents on 2 rows` |
+| 4 | does it survive a relaunch | **yes** — after closing the container and reopening the same store file: `rows still present: 2`, `sum still overflows: true` |
+| 5 | any in-app route to delete the row | **no.** `ContentView.swift:28` declares `@State private var selectedTab: Int = 0` — not persisted, so every launch starts on tab 0, `DashboardView`. `expenseCents` is a computed property evaluated in the dashboard's body (`DashboardView.swift:129-130`), so the trap fires during the first render of the first screen. No other tab is ever reached |
+| 6 | what does a 22-digit amount store | **zero.** `imported=1 skipped=0`, `stored amountCents: 0`, no error. A row the user believes they imported is a zero in their ledger |
+
+### The one qualifier, and it matters
+
+The dashboard sums `currentMonthTransactions`. The lock-out therefore lasts **as long as the
+offending rows are in the current month** — at month roll-over the dashboard recovers on its own.
+That makes it "unlaunchable for the rest of the month" rather than "unlaunchable forever", which
+is not much comfort: it is still an app the user cannot open, for weeks, with no message and no
+way to act on it. And `AnalyticsSeries.swift:92,94` accumulates across ALL months in `Int`, so the
+Analytics screen keeps trapping after the dashboard recovers.
+
+### Silent corruption, in those words
+
+A ≥20-digit amount is not rejected and does not crash. `Int(intDigits) ?? 0` at
+`AmountParsing.swift:63` **silently yields zero**, and the row is imported as a zero-value
+transaction. The user is told the import succeeded. Their ledger is wrong and nothing in the app
+will ever tell them.
+
+## 7. What is NOT claimed
 
 - Not claimed that any user has hit this. It requires a hand-made or malformed CSV; there is no
   field evidence either way.
@@ -96,7 +134,7 @@ is not the defect.
 - Not claimed the trap is reachable without the silent-zero path also being reachable; they are
   adjacent regimes of the same expression.
 
-## 5. Relationship to the PDF work
+## 8. Relationship to the PDF work
 
 The PDF export fix sizes the amount column from the content and shrinks the font before it will
 truncate, so it renders these values correctly rather than silently clipping them — verified at
