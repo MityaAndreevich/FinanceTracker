@@ -61,7 +61,7 @@ final class ImportOverflowChainTests: XCTestCase {
 
     // MARK: - (1)(2) Does a real import store what the UI would refuse?
 
-    func testImportStoresAmountsTheUIWouldRefuse() throws {
+    func testImportREJECTSAmountsTheUIWouldRefuse() throws {
         let (container, context) = try makeStore()
         defer { _ = container }
 
@@ -84,105 +84,24 @@ final class ImportOverflowChainTests: XCTestCase {
         report.append(String(repeating: "═", count: 88))
         print(report.joined(separator: "\n"))
 
-        XCTAssertEqual(txs.count, 2, "the import did not store both rows")
-        for tx in txs {
-            XCTAssertGreaterThan(tx.amountCents, uiCap,
-                "row stored as \(tx.amountCents), which the UI cap would have allowed — "
-                + "the fixture no longer exercises the asymmetry")
-        }
-    }
-
-    // MARK: - (3) Would the dashboard's own sum overflow?
-
-    /// Proves the trap WITHOUT taking it: `addingReportingOverflow` is the same
-    /// addition `MonthTotals.expenseCents` performs via `reduce(0, +)`, minus the
-    /// trap. A crashing test cannot report its own findings, so the finding is
-    /// made here and the crash is observed separately (see the probe below).
-    func testTheSumTheDashboardComputesOverflows() throws {
-        let (container, context) = try makeStore()
-        defer { _ = container }
-
-        _ = try CSVImportService.importCSV(
-            modelContext: context,
-            data: csv(amounts: [Self.seventeenDigits, Self.seventeenDigits])
-        )
-        let txs = try context.fetch(FetchDescriptor<Transaction>())
-        let expenses = txs.filter { !$0.isIncome }
-
-        var acc = 0
-        var overflowedAt: Int?
-        for (i, tx) in expenses.enumerated() {
-            let (sum, overflow) = acc.addingReportingOverflow(tx.amountCents)
-            if overflow { overflowedAt = i; break }
-            acc = sum
-        }
-
-        print("""
-
-        THE DASHBOARD'S SUM — MonthTotals.expenseCents, DashboardView.swift:130
-        \(String(repeating: "═", count: 88))
-          expense rows            : \(expenses.count)
-          running total before it : \(acc)
-          overflow at row index   : \(overflowedAt.map(String.init) ?? "none")
-          Int.max                 : \(Int.max)
-        \(String(repeating: "═", count: 88))
-        """)
-
-        XCTAssertNotNil(overflowedAt,
-            "the sum did NOT overflow — the chain does not complete with this fixture, "
-            + "and the bricking hypothesis is not established")
-    }
-
-    // MARK: - (4) Does it survive a relaunch?
-
-    /// A relaunch is a new container over the SAME file. If the rows are there and
-    /// the sum still overflows, every launch recomputes the same trap.
-    func testTheRowsSurviveAReopenOfTheStore() throws {
-        let url = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("overflow-chain-\(UUID().uuidString).store")
-        let schema = Schema([Transaction.self, Category.self, Source.self, TransactionSplit.self])
-
-        do {   // "first launch": import, then let the container go
-            let config = ModelConfiguration(schema: schema, url: url)
-            let container = try ModelContainer(for: schema, configurations: [config])
-            let context = ModelContext(container)
-            _ = try CSVImportService.importCSV(
-                modelContext: context,
-                data: csv(amounts: [Self.seventeenDigits, Self.seventeenDigits])
-            )
-            try context.save()
-        }
-
-        do {   // "relaunch": a fresh container over the same file
-            let config = ModelConfiguration(schema: schema, url: url)
-            let container = try ModelContainer(for: schema, configurations: [config])
-            let context = ModelContext(container)
-            let txs = try context.fetch(FetchDescriptor<Transaction>())
-
-            var acc = 0
-            var overflowed = false
-            for tx in txs where !tx.isIncome {
-                let (sum, o) = acc.addingReportingOverflow(tx.amountCents)
-                if o { overflowed = true; break }
-                acc = sum
-            }
-            print("""
-
-            AFTER A REOPEN OF THE SAME STORE FILE
-            \(String(repeating: "═", count: 88))
-              rows still present : \(txs.count)
-              sum still overflows: \(overflowed)
-            \(String(repeating: "═", count: 88))
-            """)
-            XCTAssertEqual(txs.count, 2, "the rows did not persist across the reopen")
-            XCTAssertTrue(overflowed, "the overflow did not survive the reopen")
-            _ = container
-        }
+        // BEFORE: imported=2, each stored as 9223372036854775800 — six orders of
+        // magnitude above the UI's cap, no error, no flag. That is what bricked
+        // the app. Now the rows are rejected with a reason and nothing is stored.
+        XCTAssertEqual(txs.count, 0,
+            "an amount above the app's ceiling was STORED (\(txs.map(\.amountCents))). "
+            + "Rejection is the rule: never clamped, never zeroed.")
+        XCTAssertEqual(result.imported, 0, "an out-of-range row was counted as imported")
+        XCTAssertEqual(result.skipped, 2, "both out-of-range rows should be skipped")
+        XCTAssertNotNil(result.firstError,
+            "the row was rejected silently — the user must be told which line and why")
+        XCTAssertEqual(uiCap, AmountParsing.maxAmountCents,
+            "the import ceiling and the editor's ceiling have drifted apart, which is "
+            + "how import came to accept a row the editor could not save")
     }
 
     // MARK: - (6) What does a 22-digit amount store?
 
-    func testTwentyTwoDigitAmountImportsAsZero() throws {
+    func testTwentyTwoDigitAmountIsRejectedRatherThanZeroed() throws {
         let (container, context) = try makeStore()
         defer { _ = container }
 
@@ -202,36 +121,114 @@ final class ImportOverflowChainTests: XCTestCase {
         \(String(repeating: "═", count: 88))
         """)
 
-        XCTAssertEqual(txs.count, 1, "the row was not stored at all")
-        XCTAssertEqual(txs.first?.amountCents, 0,
-            "expected the documented silent zero; got \(txs.first?.amountCents ?? -1)")
+        // BEFORE: imported=1 with amountCents = 0 — `Int(intDigits) ?? 0`. The user
+        // was told the import succeeded and their ledger silently held a zero.
+        XCTAssertEqual(txs.count, 0,
+            "a 22-digit amount was stored as \(txs.first?.amountCents ?? -1). A value we "
+            + "cannot read is not zero.")
+        XCTAssertEqual(result.imported, 0, "an unreadable amount was counted as imported")
+        XCTAssertNotNil(result.firstError, "the unreadable row was rejected silently")
     }
 
-    // MARK: - (3, definitively) The trap itself
+    // MARK: - RECOVERY — the six launch-path sums, on a store that is ALREADY poisoned
+    //
+    // Prevention stops new rows. It does nothing for a user who already has one:
+    // the app has been in the store since 10 July. These rows are inserted
+    // DIRECTLY, bypassing import, because that is exactly the state such a user
+    // is in — a store written by a build that had no ceiling.
+    //
+    // Each site must REPORT rather than trap. A trap here crashes the process, so
+    // if any of these regress the failure is a crashed test run, not a red
+    // assertion — which is itself the reason the enumeration of these sites had to
+    // be exhaustive.
 
-    /// Takes the real trap by calling the real `MonthTotals.expenseCents`. It
-    /// CRASHES THE PROCESS when the chain completes — which is the finding, and
-    /// also why it is opt-in: an aborting test takes its whole phase down with it
-    /// (that is how 415 tests vanished from a run on 2026-08-26).
-    ///
-    ///     OVERFLOW_TRAP_PROBE=1 xcodebuild … \
-    ///       -only-testing:FinanceTrackerTests/ImportOverflowChainTests/testProbe_realMonthTotalsTraps
-    func testProbe_realMonthTotalsTraps() throws {
-        try XCTSkipUnless(
-            ProcessInfo.processInfo.environment["OVERFLOW_TRAP_PROBE"] == "1",
-            "Opt-in: this test is expected to abort the process. Run it ALONE."
-        )
+    private func poisonedStore() throws -> (ModelContainer, ModelContext, [Transaction]) {
         let (container, context) = try makeStore()
+        let category = Category(name: "Food", kindRaw: "expense", icon: nil, order: 1)
+        context.insert(category)
+        // Two rows that individually fit Int and together do not.
+        for i in 0..<2 {
+            context.insert(
+                Transaction(
+                    typeRaw: "expense",
+                    amountCents: Int.max - 8,
+                    currency: "USD",
+                    date: Date(),
+                    category: category,
+                    merchant: "poisoned \(i)"
+                )
+            )
+        }
+        let txs = try context.fetch(FetchDescriptor<Transaction>())
+        return (container, context, txs)
+    }
+
+    /// Sites 1 and 2 — the dashboard's hero.
+    func testMonthTotalsReportsOverflowInsteadOfTrapping() throws {
+        let (container, _, txs) = try poisonedStore()
+        defer { _ = container }
+        XCTAssertNil(MonthTotals.expenseCents(txs),
+                     "expenseCents returned a number for a sum that cannot be represented")
+        // Income is empty here, so it must still produce a real total: the guard
+        // must not turn every total into nil.
+        XCTAssertEqual(MonthTotals.incomeCents(txs), 0,
+                       "incomeCents must still compute when ITS own rows are in range")
+    }
+
+    /// Site 3 — the category accumulator that no grep found.
+    func testCategorySpendBucketsReportsOverflowInsteadOfTrapping() throws {
+        let (container, _, txs) = try poisonedStore()
+        defer { _ = container }
+        XCTAssertNil(MonthTotals.categorySpendBuckets(txs),
+                     "categorySpendBuckets returned buckets for a sum that cannot be represented")
+    }
+
+    /// Sites 4 and 5 — the alert path, which runs on every .active transition.
+    func testSafeToSpendAndCategoryLimitsBailInsteadOfTrapping() throws {
+        let (container, _, txs) = try poisonedStore()
         defer { _ = container }
 
-        _ = try CSVImportService.importCSV(
-            modelContext: context,
-            data: csv(amounts: [Self.seventeenDigits, Self.seventeenDigits])
-        )
+        let now = Date()
+        XCTAssertNil(SafeToSpend.aggregate(entries: SafeToSpend.entries(from: txs), now: now),
+                     "SafeToSpend.aggregate returned a total it could not compute")
+
+        let cal = Calendar.current
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: now))!
+        let rows = txs.flatMap { CategoryAttribution.rows(for: $0) }
+        XCTAssertNil(
+            CategoryLimitPolicy.spentByCategory(rows: rows, monthStart: monthStart,
+                                                today: cal.startOfDay(for: now), calendar: cal),
+            "spentByCategory returned a spend map it could not compute")
+    }
+
+    /// Site 6 — the composition the refresher actually calls. Bailing here is what
+    /// stops the launch-time crash, and "no alert" is the entire correct
+    /// behaviour: no screen, no state, no string.
+    func testLedgerAggregateBailsSoNoAlertIsScheduled() throws {
+        let (container, _, txs) = try poisonedStore()
+        defer { _ = container }
+        XCTAssertNil(
+            SafeToSpend.makeAggregate(transactions: txs, limitedCategories: [], now: Date()),
+            "makeAggregate returned an aggregate built from a total it could not compute")
+    }
+
+    /// The guard must not fire on ordinary data — a recovery that made every
+    /// total unavailable would be its own outage.
+    func testOrdinaryLedgerStillComputesEveryTotal() throws {
+        let (container, context) = try makeStore()
+        defer { _ = container }
+        let category = Category(name: "Food", kindRaw: "expense", icon: nil, order: 1)
+        context.insert(category)
+        context.insert(Transaction(typeRaw: "expense", amountCents: 12_345, currency: "USD",
+                                   date: Date(), category: category, merchant: "Lunch"))
+        context.insert(Transaction(typeRaw: "income", amountCents: 500_000, currency: "USD",
+                                   date: Date(), category: category, merchant: "Salary"))
         let txs = try context.fetch(FetchDescriptor<Transaction>())
-        print("PROBE: about to call MonthTotals.expenseCents on \(txs.count) rows")
-        let total = MonthTotals.expenseCents(txs)
-        XCTFail("MonthTotals returned \(total) instead of trapping — the chain is broken "
-                + "somewhere, and the bricking hypothesis needs re-deriving")
+
+        XCTAssertEqual(MonthTotals.expenseCents(txs), 12_345)
+        XCTAssertEqual(MonthTotals.incomeCents(txs), 500_000)
+        XCTAssertNotNil(MonthTotals.categorySpendBuckets(txs))
+        XCTAssertNotNil(SafeToSpend.aggregate(entries: SafeToSpend.entries(from: txs), now: Date()))
+        XCTAssertNotNil(SafeToSpend.makeAggregate(transactions: txs, limitedCategories: [], now: Date()))
     }
 }

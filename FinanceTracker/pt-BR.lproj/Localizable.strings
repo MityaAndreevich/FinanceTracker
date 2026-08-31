@@ -214,6 +214,8 @@
 "cs.category.secondary_label" = "Não mostrado por padrão";
 
 /* Dashboard — cartão de primeiro dia */
+"dashboard.totals_unavailable.title" = "Não é possível mostrar os totais do mês";
+"dashboard.totals_unavailable.body" = "Um ou mais valores deste mês são grandes demais para somar. Nada foi perdido — abra Transações para encontrar e corrigir o lançamento. As demais telas funcionam normalmente.";
 "dashboard.day0.message.singular" = "Continue registrando — as análises aparecerão com mais dados";
 
 /* Quick Entry hero sheet (Brief 23A) */
@@ -510,6 +512,7 @@
 "data.import.in_progress" = "Importando…";
 "csv.import.error.too_many_rows.format" = "O arquivo contém %d linhas; o máximo é 10.000.";
 "csv.import.error.field_too_long.format" = "Linha %d ignorada: um campo excede 1.024 caracteres.";
+"csv.import.error.amount_out_of_range.format" = "Linha %d ignorada: o valor é maior do que o app pode armazenar (100.000.000.000,00). Verifique se a coluna de valor foi mapeada corretamente.";
 "cs.section.sources" = "Contas";
 "cs.section.expense_categories" = "Categorias de despesa";
 "cs.section.income_categories" = "Categorias de receita";

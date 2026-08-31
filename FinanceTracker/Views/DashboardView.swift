@@ -126,15 +126,23 @@ struct DashboardView: View {
 
     // Extracted to MonthTotals (design doc §8.1) so the SplitCanary suite pins
     // the production formula. Category-blind: parent transactions only.
-    private var expenseCents: Int {
+    /// nil = this month's expense cannot be represented in Int. Not zero, not
+    /// "very large" — unrepresentable. The body swaps the whole money area for
+    /// `totalsUnavailableCard` in that case; the `—` fallbacks further down exist
+    /// only so each display site compiles honestly on its own.
+    private var expenseCents: Int? {
         MonthTotals.expenseCents(currentMonthTransactions)
     }
 
-    private var incomeCents: Int {
+    private var incomeCents: Int? {
         MonthTotals.incomeCents(currentMonthTransactions)
     }
 
-    private var netCents: Int { incomeCents - expenseCents }
+    private var netCents: Int? {
+        guard let incomeCents, let expenseCents else { return nil }
+        let (net, overflow) = incomeCents.subtractingReportingOverflow(expenseCents)
+        return overflow ? nil : net
+    }
 
 
     // MARK: - Budget / safe-to-spend
@@ -146,7 +154,7 @@ struct DashboardView: View {
     private enum HeroMode { case budget, income, spent }
     private var heroMode: HeroMode {
         if budgetIsSet { return .budget }
-        if incomeCents > 0 { return .income }
+        if let incomeCents, incomeCents > 0 { return .income }
         return .spent
     }
 
@@ -155,8 +163,9 @@ struct DashboardView: View {
     /// Delegates to `SafeToSpend` — the proactive alerts read the same computation, and
     /// a notification that disagreed with this screen would be worse than no
     /// notification at all.
-    private var remainingCents: Int {
-        SafeToSpend.remainingCents(
+    private var remainingCents: Int? {
+        guard let expenseCents else { return nil }
+        return SafeToSpend.remainingCents(
             monthlyBudgetCents: monthlyBudgetCents,
             spentCents: expenseCents
         )
@@ -165,7 +174,8 @@ struct DashboardView: View {
     /// The Velocity Dashboard numbers (Item 2): today's allowance, the budget
     /// ring fraction, and the month-end forecast. nil while no budget is set.
     private var allowance: DailyAllowance.Snapshot? {
-        DailyAllowance.compute(
+        guard let expenseCents else { return nil }
+        return DailyAllowance.compute(
             monthlyBudgetCents: monthlyBudgetCents,
             spentThisMonthCents: expenseCents
         )
@@ -183,21 +193,19 @@ struct DashboardView: View {
     /// split purchase's money lands in the splits' categories. The donut's
     /// center total stays the parent-summed `expenseCents` — the two agree by
     /// the conservation invariant (canary: donutAttributionSumEqualsMonthExpenseTotal).
-    private var monthCategorySpend: [CategorySpend] {
+    private var monthCategorySpend: [CategorySpend]? {
         hangProbe("Dashboard.categorySpend", rows: currentMonthTransactions.count) {
             monthCategorySpendPass
         }
     }
 
-    private var monthCategorySpendPass: [CategorySpend] {
-        let expenses = currentMonthTransactions.filter { !$0.isIncome }
-        var byBucket: [UUID: (Category?, Int)] = [:]
-        for tx in expenses {
-            for share in CategoryAttribution.shares(for: tx) {
-                let key = share.category.bucketID
-                let running = byBucket[key]?.1 ?? 0
-                byBucket[key] = (share.category, running + share.amountCents)
-            }
+    /// nil = a category bucket cannot be summed in Int. This accumulator is the
+    /// site no grep found (it reads `running + share.amountCents`, matching
+    /// neither `+=` nor `reduce(0`) and it sits ON the launch screen, so it could
+    /// brick the app exactly as MonthTotals could.
+    private var monthCategorySpendPass: [CategorySpend]? {
+        guard let byBucket = MonthTotals.categorySpendBuckets(currentMonthTransactions) else {
+            return nil
         }
         return byBucket
             .map { CategorySpend(id: $0.key.uuidString, category: $0.value.0, cents: $0.value.1) }
@@ -206,7 +214,7 @@ struct DashboardView: View {
 
     /// Donut slices: top 6 categories, remainder folded into a gray "Other".
     private var donutSlices: [CategoryDonutView.Slice] {
-        let sorted = monthCategorySpend
+        guard let sorted = monthCategorySpend else { return [] }
         let maxSlices = 6
         func slice(_ s: CategorySpend) -> CategoryDonutView.Slice {
             CategoryDonutView.Slice(
@@ -241,20 +249,29 @@ struct DashboardView: View {
                         .padding(.horizontal, 16)
                 }
 
-                heroCard
-                    .padding(.horizontal, 16)
-
-                // Brief 28-A #1: when no budget is set the "safe to spend" value is
-                // hidden, so surface a clear CTA to set one right under the hero.
-                if !budgetIsSet {
-                    budgetCTACard
-                        .coachmarkTarget(.budget)
+                if totalsUnavailable {
+                    // The money area is replaced wholesale rather than showing a
+                    // zero or a clamped figure. The user is told what happened and
+                    // where to go; every other tab still works, which is the whole
+                    // point — before this, the trap here made the app unlaunchable.
+                    totalsUnavailableCard
                         .padding(.horizontal, 16)
-                }
-
-                if !monthCategorySpend.isEmpty {
-                    spendingCard
+                } else {
+                    heroCard
                         .padding(.horizontal, 16)
+
+                    // Brief 28-A #1: when no budget is set the "safe to spend" value is
+                    // hidden, so surface a clear CTA to set one right under the hero.
+                    if !budgetIsSet {
+                        budgetCTACard
+                            .coachmarkTarget(.budget)
+                            .padding(.horizontal, 16)
+                    }
+
+                    if let monthCategorySpend, !monthCategorySpend.isEmpty {
+                        spendingCard
+                            .padding(.horizontal, 16)
+                    }
                 }
 
                 insightSection
@@ -710,6 +727,39 @@ struct DashboardView: View {
 
     // MARK: - Hero (safe-to-spend / net fallback)
 
+    /// True when any of this month's totals cannot be represented. One flag, so
+    /// the hero, the budget CTA and the spending card disappear together — a
+    /// half-rendered money area would be worse than none.
+    /// Shown only where a figure is structurally required but cannot exist. The
+    /// real explanation is `totalsUnavailableCard`; this is never the only cue.
+    private static let unrepresentable = "—"
+
+    private var totalsUnavailable: Bool {
+        expenseCents == nil || incomeCents == nil || monthCategorySpend == nil
+    }
+
+    /// The "this total cannot be shown" state. It is deliberately not a number:
+    /// a zero or a clamped ceiling here would be a plausible wrong figure, which
+    /// is the defect this whole change exists to remove. It says what happened and
+    /// points at the list, which is where the offending row can be deleted.
+    private var totalsUnavailableCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Color.bcWarning)
+                Text("dashboard.totals_unavailable.title")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.bcTextPrimary)
+            }
+            Text("dashboard.totals_unavailable.body")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.bcTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .bcCard(padding: 18)
+    }
+
     private var heroCard: some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 10) {
@@ -863,9 +913,14 @@ struct DashboardView: View {
             if let allowance, !allowance.isOverBudget {
                 return Money.format(cents: allowance.perDayCents, currencyCode: defaultCurrencyCode)
             }
+            guard let remainingCents else { return Self.unrepresentable }
             return Money.format(cents: remainingCents, currencyCode: defaultCurrencyCode)
-        case .income: return Money.format(cents: netCents, currencyCode: defaultCurrencyCode)
-        case .spent:  return Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode)
+        case .income:
+            guard let netCents else { return Self.unrepresentable }
+            return Money.format(cents: netCents, currencyCode: defaultCurrencyCode)
+        case .spent:
+            guard let expenseCents else { return Self.unrepresentable }
+            return Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode)
         }
     }
 
@@ -874,8 +929,8 @@ struct DashboardView: View {
         // safe-to-spend number read as a gain on the first screen). Neutral primary
         // while healthy; calm coral (bcDanger) only when actually negative/over.
         switch heroMode {
-        case .budget: return remainingCents >= 0 ? .bcTextPrimary : .bcDanger
-        case .income: return netCents >= 0 ? .bcTextPrimary : .bcDanger
+        case .budget: return (remainingCents ?? 0) >= 0 ? .bcTextPrimary : .bcDanger
+        case .income: return (netCents ?? 0) >= 0 ? .bcTextPrimary : .bcDanger
         case .spent:  return .bcTextPrimary
         }
     }
@@ -893,13 +948,13 @@ struct DashboardView: View {
             }
             return String(
                 format: String(localized: "dashboard.over_budget", bundle: LocalizedBundle.shared.bundle),
-                Money.format(cents: -remainingCents, currencyCode: defaultCurrencyCode)
+                Money.format(cents: -(remainingCents ?? 0), currencyCode: defaultCurrencyCode)
             )
         }
         return String(
             format: String(localized: "dashboard.spent_earned_caption", bundle: LocalizedBundle.shared.bundle),
-            Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
-            Money.format(cents: incomeCents, currencyCode: defaultCurrencyCode)
+            expenseCents.map { Money.format(cents: $0, currencyCode: defaultCurrencyCode) } ?? Self.unrepresentable,
+            incomeCents.map { Money.format(cents: $0, currencyCode: defaultCurrencyCode) } ?? Self.unrepresentable
         )
     }
 
@@ -916,12 +971,12 @@ struct DashboardView: View {
                 CategoryDonutView(
                     slices: donutSlices,
                     centerTitle: "dashboard.total_spent",
-                    centerValue: Money.format(cents: expenseCents, currencyCode: defaultCurrencyCode),
+                    centerValue: expenseCents.map { Money.format(cents: $0, currencyCode: defaultCurrencyCode) } ?? Self.unrepresentable,
                     size: 150
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
-                    ForEach(monthCategorySpend.prefix(4)) { item in
+                    ForEach((monthCategorySpend ?? []).prefix(4)) { item in
                         categoryLegendRow(item)
                     }
                 }
@@ -934,7 +989,8 @@ struct DashboardView: View {
 
     @ViewBuilder
     private func categoryLegendRow(_ item: CategorySpend) -> some View {
-        let pct = expenseCents > 0 ? Int((Double(item.cents) / Double(expenseCents) * 100).rounded()) : 0
+        let total = expenseCents ?? 0
+        let pct = total > 0 ? Int((Double(item.cents) / Double(total) * 100).rounded()) : 0
         HStack(spacing: 8) {
             Circle()
                 .fill(item.category.themeColorOrFallback)

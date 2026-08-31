@@ -499,7 +499,7 @@ struct AddTransactionView: View {
             showErrorKey("add.error.invalid_amount")
             return
         }
-        guard amountCents > 0 && amountCents <= 10_000_000_000_000 else {
+        guard amountCents > 0 && amountCents <= AmountParsing.maxAmountCents else {
             showErrorKey("validation.amount.out_of_range")
             return
         }

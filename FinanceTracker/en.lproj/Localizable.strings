@@ -234,6 +234,8 @@
 /* ======================================================
    Dashboard
    ====================================================== */
+"dashboard.totals_unavailable.title" = "This month's totals can't be shown";
+"dashboard.totals_unavailable.body" = "One or more amounts this month are too large to add up. Nothing has been lost — open Transactions to find and fix the affected entry. Every other screen works normally.";
 "dashboard.summary.income" = "Income";
 "dashboard.summary.expenses" = "Expenses";
 "dashboard.summary.net" = "Net";
@@ -505,6 +507,7 @@
 "data.import.in_progress" = "Importing…";
 "csv.import.error.too_many_rows.format" = "File contains %d rows; the maximum is 10,000.";
 "csv.import.error.field_too_long.format" = "Line %d skipped: a field exceeds 1,024 characters.";
+"csv.import.error.amount_out_of_range.format" = "Line %d skipped: the amount is larger than this app can hold (100,000,000,000.00). Check that the amount column is mapped to the right column.";
 
 /* ======================================================
    Categories & Accounts

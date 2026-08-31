@@ -74,9 +74,13 @@ struct LedgerAggregatorTests {
         let actor = LedgerAggregator(modelContainer: container)
         let offMain = await actor.safeToSpendAggregate(now: now)
 
-        #expect(offMain.spentThisMonthCents == sync.spentThisMonthCents)
-        #expect(offMain.priorExpenseCents == sync.priorExpenseCents)
-        #expect(offMain.priorSpanDays == sync.priorSpanDays)
+        // Both are optional now: nil = "this ledger cannot be summed in Int".
+        // These fixtures are in range, so both must be non-nil AND equal.
+        let syncValue = try #require(sync)
+        let offMainValue = try #require(offMain)
+        #expect(offMainValue.spentThisMonthCents == syncValue.spentThisMonthCents)
+        #expect(offMainValue.priorExpenseCents == syncValue.priorExpenseCents)
+        #expect(offMainValue.priorSpanDays == syncValue.priorSpanDays)
     }
 
     @Test func burstOfScheduleRefreshCallsCoalescesToExactlyOnePass() async throws {

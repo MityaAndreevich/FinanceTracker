@@ -636,14 +636,22 @@ private struct ScopedTransactionList: View {
         // routed through CategoryAttribution. A day subtotal is a day subtotal;
         // summing shares here would double-count nothing but would start
         // disagreeing with the rows printed directly beneath it.
-        let spend = items.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
+        // nil = this day's subtotal cannot be represented. The header then shows
+        // the date alone rather than a wrong figure, and — critically — the LIST
+        // STILL RENDERS. This screen is the one the dashboard's unavailable state
+        // sends the user to, so a trap here would defeat the entire point of the
+        // recovery: reaching the row in order to delete it.
+        //
+        // Found by the poisoned-store launch test, not by enumeration. It is the
+        // 24th such site and the second the test caught after four human passes.
+        let spend = MonthTotals.expenseCents(items)
         return HStack {
             sectionHeader(for: day)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color.bcTextSecondary)
                 .textCase(nil)
             Spacer()
-            if spend > 0 {
+            if let spend, spend > 0 {
                 Text(Money.format(cents: spend, currencyCode: defaultCurrencyCode))
                     .font(.system(size: 13, weight: .medium))
                     .monospacedDigit()

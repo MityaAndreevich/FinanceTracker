@@ -74,13 +74,20 @@ enum CategoryLimitPolicy {
         monthStart: Date,
         today: Date,
         calendar: Calendar = .current
-    ) -> [UUID: Int] {
+    ///
+    /// Returns nil when a category's spend cannot be summed in `Int`. Like
+    /// `SafeToSpend.aggregate`, the caller's correct response is to schedule no
+    /// limit warning at all — a warning computed from a number we could not
+    /// compute would be worse than silence.
+    ) -> [UUID: Int]? {
         var spent: [UUID: Int] = [:]
         for row in rows where !row.isIncome {
             let day = calendar.startOfDay(for: row.date)
             guard day >= monthStart, day <= today else { continue }
             guard let categoryUUID = row.categoryUUID else { continue }
-            spent[categoryUUID, default: 0] += row.amountCents
+            let (sum, overflow) = (spent[categoryUUID] ?? 0).addingReportingOverflow(row.amountCents)
+            guard !overflow else { return nil }
+            spent[categoryUUID] = sum
         }
         return spent
     }

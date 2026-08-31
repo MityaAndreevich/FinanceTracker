@@ -42,8 +42,12 @@ extension SafeToSpend {
         limitedCategories: [(uuid: UUID, displayName: String, limitCents: Int)],
         now: Date,
         calendar: Calendar = .current
-    ) -> Aggregate {
-        let agg = aggregate(entries: entries(from: transactions), now: now)
+    ///
+    /// Returns nil when the ledger cannot be summed — see `SafeToSpend.aggregate`.
+    /// Every caller of this is the proactive-alert path, and the correct response
+    /// to "we cannot compute the number" there is to schedule nothing.
+    ) -> Aggregate? {
+        guard let agg = aggregate(entries: entries(from: transactions), now: now) else { return nil }
 
         var statuses: [CategoryLimitPolicy.Status] = []
         if !limitedCategories.isEmpty {
@@ -51,9 +55,9 @@ extension SafeToSpend {
             let monthStart = calendar.date(
                 from: calendar.dateComponents([.year, .month], from: now)) ?? today
             let rows = transactions.flatMap { CategoryAttribution.rows(for: $0) }
-            let spent = CategoryLimitPolicy.spentByCategory(
+            guard let spent = CategoryLimitPolicy.spentByCategory(
                 rows: rows, monthStart: monthStart, today: today, calendar: calendar
-            )
+            ) else { return nil }
             statuses = limitedCategories.map {
                 CategoryLimitPolicy.Status(
                     categoryUUID: $0.uuid,
@@ -82,7 +86,7 @@ actor LedgerAggregator {
     ///
     /// The tuple-returning `SafeToSpend.aggregate` stays the single source of
     /// the arithmetic; this only relocates the fetch that feeds it.
-    func safeToSpendAggregate(now: Date) -> SafeToSpend.Aggregate {
+    func safeToSpendAggregate(now: Date) -> SafeToSpend.Aggregate? {
         let transactions = (try? modelContext.fetch(FetchDescriptor<Transaction>())) ?? []
         let limited = ((try? modelContext.fetch(FetchDescriptor<Category>())) ?? [])
             .compactMap { category -> (uuid: UUID, displayName: String, limitCents: Int)? in
