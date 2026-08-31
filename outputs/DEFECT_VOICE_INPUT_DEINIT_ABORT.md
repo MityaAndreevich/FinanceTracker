@@ -182,7 +182,14 @@ mechanism is platform-independent code reacting to a platform-dependent latency.
 - Not claimed that fixing (a), (b) or (c) removes the abort. The abort is AudioToolbox's response
   to a timeout; the fixes reduce how often the app asks it to dispose a unit at all.
 
-## 6. Consequence for the test suite, already handled elsewhere
+## 6. Not fixed in build 10
+
+Build 10 carries the PDF export fix and the amount-overflow work
+(`DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md`). This abort is untouched: it is a crash on a
+teardown path, not a data defect, and the store-open path was ruled out of scope
+deliberately. It remains a release hold in its own right.
+
+## 7. Consequence for the test suite, already handled elsewhere
 
 While this is open, the crashing test makes any unfiltered run a coin flip: when it aborts it takes
 the whole swift-testing phase with it (44 suites, 415 `@Test` functions) and the run reports a

@@ -124,7 +124,69 @@ A ≥20-digit amount is not rejected and does not crash. `Int(intDigits) ?? 0` a
 transaction. The user is told the import succeeded. Their ledger is wrong and nothing in the app
 will ever tell them.
 
-## 7. What is NOT claimed
+---
+
+## 7. FIXED IN BUILD 10 — and what the enumeration cost
+
+### Prevention (new rows)
+
+`AmountParsing.parseCents` returns nil for both failure modes instead of `?? 0`
+(silent zero) and a trapping `* 100`. `AmountParsing.maxAmountCents` is now the single
+ceiling, referenced by `AddTransactionView`, `EditTransactionView` and BOTH import paths —
+import could previously write a row the editor then refused to save. Rejection rides the
+1.0.5 partial-import disclosure; the reason is localised in all five languages.
+
+### Recovery (rows already in a user's store)
+
+The rule is the same at both ends: **a value that cannot be represented is reported, never
+clamped, zeroed, wrapped or saturated.** Ten expressions across eight files now report
+instead of trapping — the dashboard's totals and category buckets, the alert path
+(`SafeToSpend`, `CategoryLimitPolicy`, `LedgerAggregator`), the widget snapshot builder,
+and the transactions list's day header. The alert path and the widget bail silently: an
+alert or a widget figure we could not compute is not published. The dashboard gets an
+explicit "this month's totals can't be shown" card that replaces the money area and sends
+the user to Transactions.
+
+### THE ENUMERATION WAS WRONG FOUR TIMES, IN FOUR DIFFERENT WAYS
+
+This is the part worth carrying forward, because it was not a lapse — it was four
+independent methods each failing once, on the same question, in one day:
+
+| # | method | what it missed |
+|---|---|---|
+| 1 | grep `\.draw(in: CGRect` | multi-line `.draw(` calls — reported 10 sites, there were 13 |
+| 2 | grep `(\+=\|reduce\(0)` | `running + share.amountCents` in `DashboardView` — a site ON the launch screen |
+| 3 | inspection | predicted `SafeToSpend` on the dashboard; it is not there (`remainingCents` is pure subtraction) |
+| 4 | mis-classification | `NetSnapshotBuilder` catalogued as "widget", assumed off the launch path — `DashboardView.refreshWidgetSnapshot()` calls it during the first render |
+
+Errors 3 and 4 were made by two people independently. A fifth attempt at enumeration was
+not going to be the right one.
+
+**So the closing evidence is not a list.** `PoisonedAmountsDebugSeed` (`--poison-amounts`)
+seeds the store an affected user actually has, and `PoisonedAmountLaunchTests` walks the
+whole journey the recovery exists for:
+
+> cold launch → the dashboard renders its unavailable state → Transactions → the list
+> renders → **delete the offending row** → the dashboard shows real totals again
+
+It found error 4 immediately, and then found `ScopedTransactionList.dayHeader` on the way
+to the list — a site nobody had listed, on the destination rather than the launch path.
+The final assertion is positive (the hero label is back), not merely the absence of the
+unavailable card: an absence can pass vacuously, which is the same proxy mistake in
+miniature.
+
+### Still filed: 14 expressions, same rule
+
+`AnalyticsSeries` (6), `CategoryDetailView` (2), `DaySpendingSheet` (2), `AnalyticsView` (1),
+`AnalyticsBreakdownView` (1), `EditTransactionView` (1), `CSVImportService` (1).
+
+None is on the journey from cold launch to deleting the row, which is why they are not in
+build 10. **Whoever fixes them applies the same rule** — `addingReportingOverflow` and an
+explicit unavailable state, never a wrapped, saturated, zeroed or widened number. Widening
+is not a fix: `Int128` overflows too, it only moves the cliff, and it drags type changes
+through public signatures for no invariant.
+
+## 8. What is NOT claimed
 
 - Not claimed that any user has hit this. It requires a hand-made or malformed CSV; there is no
   field evidence either way.
@@ -134,7 +196,7 @@ will ever tell them.
 - Not claimed the trap is reachable without the silent-zero path also being reachable; they are
   adjacent regimes of the same expression.
 
-## 8. Relationship to the PDF work
+## 9. Relationship to the PDF work
 
 The PDF export fix sizes the amount column from the content and shrinks the font before it will
 truncate, so it renders these values correctly rather than silently clipping them — verified at

@@ -73,18 +73,64 @@ final class PoisonedAmountLaunchTests: XCTestCase {
                       + "or a clamped figure is exactly the defect this replaced")
     }
 
-    /// Recovery's whole purpose: the user can REACH the screen that holds the row.
-    func test_launchWithUnsummableLedger_transactionsTabIsReachable() {
+    /// THE WHOLE JOURNEY, which is the invariant recovery exists for:
+    ///
+    ///   cold launch → dashboard renders its unavailable state → Transactions →
+    ///   the list renders → DELETE the offending row → totals come back
+    ///
+    /// "The Transactions tab renders" was the previous version of this test, and it
+    /// was a PROXY for the journey. Proxies have cost us four enumeration errors in
+    /// a day: the launch path was a proxy for this journey and missed the list's
+    /// own day-header sum; "~2 files" was a proxy for a mechanism. So this walks
+    /// the whole thing and ends on the state the user actually needs — a working
+    /// app showing real numbers.
+    func test_poisonedRow_canBeReachedDeletedAndTheAppRecovers() {
         let app = launch(poisoned: true)
-        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30),
+                      "the app did not survive launch with an unsummable ledger")
 
+        let unavailable = app.staticTexts["This month's totals can't be shown"]
+        XCTAssertTrue(unavailable.waitForExistence(timeout: 15),
+                      "the dashboard did not explain itself before sending the user onward")
+
+        // → Transactions. Every sum this screen performs runs here, footer included.
         let transactions = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(transactions.waitForExistence(timeout: 15), "no tab bar to navigate with")
         transactions.tap()
 
-        XCTAssertEqual(app.state, .runningForeground,
-                       "the app died on the way to the transactions list — the user still "
-                       + "cannot reach the row they need to delete")
+        let row = app.staticTexts["poisoned 0"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 15),
+                      "the transactions list did not render with an unsummable ledger — the "
+                      + "user cannot reach the row they need to delete")
+        XCTAssertEqual(app.state, .runningForeground, "the app died rendering the list")
+
+        // → delete it. One row is enough: what cannot be represented is the SUM of
+        // two, so removing either makes the month summable again.
+        row.swipeLeft()
+        let deleteButton = app.buttons["Delete"].firstMatch
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 10), "no delete affordance on the row")
+        deleteButton.tap()
+        // The confirmation dialog reuses the same label.
+        let confirm = app.buttons["Delete"].firstMatch
+        if confirm.waitForExistence(timeout: 5) { confirm.tap() }
+
+        XCTAssertEqual(app.state, .runningForeground, "the app died deleting the row")
+
+        // → back to the dashboard. Two assertions, and the POSITIVE one is the load
+        // bearing half: "the unavailable card is gone" can pass vacuously if we
+        // simply are not on the dashboard, and an absence-only check is the same
+        // kind of proxy that has cost us four errors today. The hero label only
+        // renders inside the money area, which only renders when the totals are
+        // real — so its presence IS the recovery.
+        app.tabBars.buttons.element(boundBy: 0).tap()
+
+        let heroLabel = app.staticTexts["Spent"].firstMatch
+        XCTAssertTrue(heroLabel.waitForExistence(timeout: 15),
+                      "the dashboard's money area did not come back after the offending row "
+                      + "was deleted — the user did everything right and the app did not recover")
+        XCTAssertFalse(unavailable.exists,
+                       "the unavailable card is still on screen alongside real totals")
+        XCTAssertEqual(app.state, .runningForeground, "the app died returning to the dashboard")
     }
 
     /// The seed must not leak into later runs, and an ordinary launch must be
