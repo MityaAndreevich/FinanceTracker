@@ -52,7 +52,12 @@ enum DailyAllowance {
         let dayOfMonth = max(1, calendar.component(.day, from: now))
         let daysLeft = max(1, daysInMonth - dayOfMonth + 1)
 
-        let remaining = monthlyBudgetCents - spentThisMonthCents
+        // nil = this allowance cannot be computed. Snapshot is ALREADY optional —
+        // the hero simply falls back to its non-allowance path — so reporting
+        // costs nothing here and a wrong daily number would cost a lot.
+        let (remaining, remainingOverflow) =
+            monthlyBudgetCents.subtractingReportingOverflow(spentThisMonthCents)
+        guard !remainingOverflow else { return nil }
         let perDay = remaining > 0 ? remaining / daysLeft : 0
 
         let spent = max(0, spentThisMonthCents)
@@ -61,8 +66,17 @@ enum DailyAllowance {
         let percent = rawFraction.isFinite ? Int((rawFraction * 100).rounded()) : 0
 
         // Multiply before dividing: `spent / dayOfMonth` truncates first and
-        // understates the projection by up to daysInMonth−1 cents.
-        let forecast = spent * daysInMonth / dayOfMonth
+        // understates the projection by up to daysInMonth−1 cents. The multiply is
+        // exactly why this trapped — `spent` is a month's total, so a ledger the
+        // dashboard CAN sum can still overflow when projected forward.
+        //
+        // The 25th site, and the one that proved the point about proxies: the
+        // journey test only reached it once its final assertion became POSITIVE
+        // (the hero label must be back). "The unavailable card is gone" had been
+        // passing while the app crashed rendering the hero right behind it.
+        let (scaled, forecastOverflow) = spent.multipliedReportingOverflow(by: daysInMonth)
+        guard !forecastOverflow else { return nil }
+        let forecast = scaled / dayOfMonth
 
         return Snapshot(
             perDayCents: perDay,

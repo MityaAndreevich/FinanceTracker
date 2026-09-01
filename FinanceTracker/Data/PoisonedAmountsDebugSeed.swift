@@ -22,8 +22,14 @@
 //  how a store written by 1.0.3–1.0.5 would hold them.
 //
 
+//  The whole file is inside `#if DEBUG`: a Release build must not so much as READ
+//  a launch argument, and this one wipes rows. Pinned by
+//  ReleaseDebugAffordanceTests — which caught this file the first time it ran.
+
 import Foundation
 import SwiftData
+
+#if DEBUG
 
 enum PoisonedAmountsDebugSeed {
 
@@ -81,9 +87,17 @@ enum PoisonedAmountsDebugSeed {
         guard !isRequested else { return }
         guard UserDefaults.standard.bool(forKey: markerKey) else { return }
         do {
-            try wipe(modelContext: modelContext)
+            // ONLY this seam's own rows. The first version wiped the whole ledger,
+            // and because this runs AFTER LargeDatasetDebugSeed and friends, it
+            // deleted the 8 000 rows they had just seeded — turning five unrelated
+            // UI suites red. Precision here is not tidiness, it is the difference
+            // between a purge and a cross-test data loss.
+            let poisoned = try modelContext.fetch(FetchDescriptor<Transaction>())
+                .filter { $0.amountCents > AmountParsing.maxAmountCents }
+            for tx in poisoned { modelContext.delete(tx) }
+            try modelContext.save()
             UserDefaults.standard.removeObject(forKey: markerKey)
-            print("PoisonedAmountsDebugSeed: purged rows left by an earlier run")
+            print("PoisonedAmountsDebugSeed: purged \(poisoned.count) row(s) left by an earlier run")
         } catch {
             print("PoisonedAmountsDebugSeed purge failed: \(error.localizedDescription)")
         }
@@ -102,3 +116,5 @@ enum PoisonedAmountsDebugSeed {
         try modelContext.save()
     }
 }
+
+#endif

@@ -85,7 +85,20 @@ enum AmountParsing {
         // is already `nil`. `taxCents` next door has always kept the optional
         // (CSVImportService.swift:714) — evidence this was an oversight rather
         // than a decision.
-        guard let intValue = Int(intDigits) else { return nil }
+        // Two different things that both make `Int(intDigits)` fail, and the first
+        // version of this fix collapsed them — which broke ".15" and ",15", i.e.
+        // every leading-decimal amount a user can type. Caught by
+        // AmountParsingTests.testLeadingDecimal, not by review.
+        //
+        //   • EMPTY  → there is no integer part. That is a legitimate amount.
+        //   • NON-EMPTY but unparseable → digits we cannot represent. Reject.
+        let intValue: Int
+        if intDigits.isEmpty {
+            intValue = 0
+        } else {
+            guard let parsed = Int(intDigits) else { return nil }
+            intValue = parsed
+        }
         guard var fracValue = Int((fracDigits + "00").prefix(2)) else { return nil }
 
         // Half-up rounding on the 3rd fractional digit — truncating here biased

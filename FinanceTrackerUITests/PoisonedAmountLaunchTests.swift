@@ -107,14 +107,31 @@ final class PoisonedAmountLaunchTests: XCTestCase {
         // → delete it. One row is enough: what cannot be represented is the SUM of
         // two, so removing either makes the month summable again.
         row.swipeLeft()
-        let deleteButton = app.buttons["Delete"].firstMatch
-        XCTAssertTrue(deleteButton.waitForExistence(timeout: 10), "no delete affordance on the row")
-        deleteButton.tap()
-        // The confirmation dialog reuses the same label.
-        let confirm = app.buttons["Delete"].firstMatch
-        if confirm.waitForExistence(timeout: 5) { confirm.tap() }
+        let swipeDelete = app.buttons["Delete"].firstMatch
+        XCTAssertTrue(swipeDelete.waitForExistence(timeout: 10), "no delete affordance on the row")
+        swipeDelete.tap()
+
+        // The confirmation is a confirmationDialog — an action SHEET. Matching
+        // app.buttons["Delete"] again here picked up the swipe action instead and
+        // the row was never deleted, which the test then reported as "the app did
+        // not recover". Target the sheet explicitly, and fall back only if the
+        // dialog is presented some other way.
+        let sheetDelete = app.sheets.buttons["Delete"].firstMatch
+        if sheetDelete.waitForExistence(timeout: 5) {
+            sheetDelete.tap()
+        } else {
+            let anyDelete = app.buttons["Delete"].firstMatch
+            if anyDelete.exists { anyDelete.tap() }
+        }
 
         XCTAssertEqual(app.state, .runningForeground, "the app died deleting the row")
+
+        // The row must actually be GONE before we judge the dashboard. Without
+        // this, a failed deletion is indistinguishable from a failed recovery —
+        // the previous version blamed recovery for a tap that never landed.
+        XCTAssertTrue(row.waitForNonExistence(timeout: 10),
+                      "the row is still in the list — the delete never happened, so nothing "
+                      + "below this line is a statement about recovery")
 
         // → back to the dashboard. Two assertions, and the POSITIVE one is the load
         // bearing half: "the unavailable card is gone" can pass vacuously if we
@@ -124,10 +141,24 @@ final class PoisonedAmountLaunchTests: XCTestCase {
         // real — so its presence IS the recovery.
         app.tabBars.buttons.element(boundBy: 0).tap()
 
-        let heroLabel = app.staticTexts["Spent"].firstMatch
-        XCTAssertTrue(heroLabel.waitForExistence(timeout: 15),
+        // Match a real MONETARY FIGURE rather than a label. The first version
+        // looked for "Spent" and the screen says "SPENT" — and which label appears
+        // at all depends on whether a budget is set (the hero reads "Safe to spend
+        // today" then). A currency figure on screen is the thing that actually
+        // means "the totals are back", and it does not depend on casing or mode.
+        let anyMoney = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS %@", "$")
+        ).firstMatch
+        let cameBack = anyMoney.waitForExistence(timeout: 15)
+        XCTAssertTrue(cameBack,
                       "the dashboard's money area did not come back after the offending row "
-                      + "was deleted — the user did everything right and the app did not recover")
+                      + "was deleted — the user did everything right and the app did not "
+                      + "recover. unavailable-card still present: \(unavailable.exists); "
+                      + "static texts on screen: "
+                      + app.staticTexts.allElementsBoundByIndex.prefix(12)
+                          .map { $0.label }.joined(separator: " | "))
+        XCTAssertFalse(unavailable.exists,
+                       "real totals and the unavailable card are on screen together")
         XCTAssertFalse(unavailable.exists,
                        "the unavailable card is still on screen alongside real totals")
         XCTAssertEqual(app.state, .runningForeground, "the app died returning to the dashboard")
