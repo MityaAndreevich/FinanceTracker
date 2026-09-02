@@ -214,16 +214,33 @@ final class PoisonedAmountLaunchTests: XCTestCase {
         app.buttons["Save"].firstMatch.tap()
 
         XCTAssertEqual(app.state, .runningForeground, "the app died saving a corrected amount")
-        XCTAssertTrue(row.waitForNonExistence(timeout: 10) || app.staticTexts["poisoned 0"].exists,
-                      "the editor neither saved nor stayed open — unclear state")
 
-        // (c) and the dashboard must be whole again, which is the point.
-        app.tabBars.buttons.element(boundBy: 0).tap()
-        let money = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "$")).firstMatch
-        XCTAssertTrue(money.waitForExistence(timeout: 15),
-                      "after correcting the amount the dashboard still shows no totals — "
-                      + "unavailable card present: "
-                      + "\(app.staticTexts["This month's totals can't be shown"].exists)")
+        // (c) DID THE SAVE ACTUALLY LAND? Two things had to be got right here.
+        //
+        // The editor DISMISSING is the discriminator: `save()` guards on
+        // `amountCents <= AmountParsing.maxAmountCents`, so a refused save leaves
+        // the sheet open. Editor gone = accepted; editor still there = refused,
+        // and the card must then say DELETE.
+        //
+        // What this must NOT use is "the dashboard recovered". Correcting ONE row
+        // to 4000 leaves Int.max − 8 + 400000, which still overflows — a genuine
+        // save produces NO recovery here. And a naive "is there a $ on screen"
+        // check passes anyway, because the RECENT list prints amounts. That is the
+        // vacuous-assertion trap one level down, and it is why this asserts on the
+        // corrected VALUE instead.
+        XCTAssertTrue(editor.waitForNonExistence(timeout: 15),
+                      "the editor is still open after Save — the corrected amount was REFUSED, "
+                      + "so the card must tell the user to DELETE, not to fix")
+
+        let corrected = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS %@", "4,000")
+        ).firstMatch
+        XCTAssertTrue(corrected.waitForExistence(timeout: 15),
+                      "the editor closed but the corrected amount is not in the list — the save "
+                      + "did not persist. On screen: "
+                      + app.staticTexts.allElementsBoundByIndex.prefix(10)
+                          .map { $0.label }.joined(separator: " | "))
+        XCTAssertEqual(app.state, .runningForeground, "the app died after saving")
     }
 
     /// The seed must not leak into later runs, and an ordinary launch must be

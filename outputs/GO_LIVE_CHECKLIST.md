@@ -7,8 +7,18 @@ All v1.0 code blockers closed: CSV integrity, premium gate, Charts crash+freeze,
 These are gates, not reminders. Build 10 does not ship until each is closed by a RESULT,
 not by recollection.
 
-- [ ] **`test_poisonedRow_opensInTheEditorAndAcceptsACorrection` has RUN, and the card's verb
-      was chosen from its result.** The card currently says "find and **fix** the affected
+- [x] **CLEARED 2026-09-02, erased simulator.** `test_poisonedRow_opensInTheEditorAndAcceptsA`
+      `Correction` ran green: the editor OPENS on a row whose amount cannot be summed (no 26th
+      site), and it ACCEPTS a corrected value — the sheet dismissed and `4,000` appeared in the
+      list. **Outcome three, so the card keeps "fix" / «исправьте»** and no string changed.
+      That is also the better instruction: the expense was real, only the import column
+      slipped, and correcting preserves the fact that deleting erases.
+      Note for whoever reads this next: the test does NOT use "the dashboard recovered" as its
+      success signal, because correcting one row still leaves `Int.max − 8 + 400000`, which
+      overflows — a genuine save produces no recovery here. The first version of the assertion
+      passed vacuously off a `$` in the Recent list.
+- [ ] ~~`test_poisonedRow_opensInTheEditorAndAcceptsACorrection` has RUN, and the card's verb
+      was chosen from its result.~~ (superseded by the line above) The card currently says "find and **fix** the affected
       entry" / «найдите и **исправьте** запись», and that verb is UNVERIFIED — the editor has
       never been opened on a row whose amount cannot be summed. Three outcomes, three
       different actions:
