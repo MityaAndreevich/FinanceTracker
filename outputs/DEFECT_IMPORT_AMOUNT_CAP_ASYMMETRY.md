@@ -175,6 +175,26 @@ The final assertion is positive (the hero label is back), not merely the absence
 unavailable card: an absence can pass vacuously, which is the same proxy mistake in
 miniature.
 
+
+### The most instructive failure of the day: the fix collapsed the two cases the rule exists to separate
+
+`AmountParsing.parseCents` ended in `Int(intDigits) ?? 0`. That `?? 0` was doing TWO jobs:
+
+| input | `Int(intDigits)` | what it means | what it deserves |
+|---|---|---|---|
+| `".15"` | nil — the integer part is EMPTY | a legitimate leading-decimal amount | 0, and carry on |
+| 22 digits | nil — the integer part CANNOT be represented | a value we cannot read | reject the row |
+
+The fix removed the `?? 0` for the second case and took the first with it, so `.15` and `,15`
+— every leading-decimal amount a user can type — stopped parsing. **Two distinct cases were
+collapsed into one while implementing the rule against collapsing two distinct cases into one.**
+
+Nothing in review caught it. `AmountParsingTests.testLeadingDecimal` did, in the full run, after
+the change had already passed every suite it was tested against in isolation. The lesson is not
+"be more careful": it is that a guard which returns the same value for two different reasons will
+be read as guarding one of them, and the other will be lost silently the first time someone
+tightens it.
+
 ### Still filed: 14 expressions, same rule
 
 `AnalyticsSeries` (6), `CategoryDetailView` (2), `DaySpendingSheet` (2), `AnalyticsView` (1),
