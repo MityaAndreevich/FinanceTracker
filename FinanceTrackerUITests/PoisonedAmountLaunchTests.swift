@@ -164,6 +164,68 @@ final class PoisonedAmountLaunchTests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground, "the app died returning to the dashboard")
     }
 
+    /// THE EDITOR, which the journey never opened.
+    ///
+    /// The card tells the user to "find and fix the affected entry". That
+    /// instruction is only honest if the editor (a) opens on such a row without
+    /// trapping and (b) accepts a corrected value. Neither had ever been
+    /// exercised: the journey test reaches the list and DELETES, so the whole
+    /// edit path on a poisoned row was untested while the copy pointed at it.
+    ///
+    /// `EditTransactionView`'s split sum (`v.sumCents += cents`) is one of the
+    /// sites NOT fixed, and it is reached from this screen — it sits behind
+    /// `guard !splitDrafts.isEmpty`, so a row without splits should not reach it,
+    /// but "should not" is exactly the kind of claim that has been wrong four
+    /// times today. This measures it instead.
+    ///
+    /// Three outcomes, and the card's verb depends on which:
+    ///   • traps on open              → a 26th site, on the journey, fix it
+    ///   • opens but cannot save      → the copy must say DELETE
+    ///   • opens and accepts a value  → the copy says FIX, which is the better
+    ///                                  instruction: the expense was real, only
+    ///                                  the import column slipped, and correcting
+    ///                                  preserves the fact that deleting erases
+    func test_poisonedRow_opensInTheEditorAndAcceptsACorrection() {
+        let app = launch(poisoned: true)
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
+
+        app.tabBars.buttons.element(boundBy: 1).tap()
+        let row = app.staticTexts["poisoned 0"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 15), "the poisoned row is not in the list")
+
+        // (a) does it open at all?
+        row.tap()
+        let editor = app.navigationBars["Edit"]
+        XCTAssertTrue(editor.waitForExistence(timeout: 15),
+                      "the editor did not open on a poisoned row — if the app is gone this is "
+                      + "a 26th overflow site, and it is ON the journey the card points at")
+        XCTAssertEqual(app.state, .runningForeground, "the app died opening the row")
+
+        // (b) can a corrected value be saved?
+        let amountField = app.textFields.element(boundBy: 0)
+        XCTAssertTrue(amountField.waitForExistence(timeout: 10), "no amount field in the editor")
+        amountField.tap()
+        // Clear whatever is there, then type a sane amount.
+        if let existing = amountField.value as? String, !existing.isEmpty {
+            amountField.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count + 2))
+        }
+        amountField.typeText("4000")
+
+        app.buttons["Save"].firstMatch.tap()
+
+        XCTAssertEqual(app.state, .runningForeground, "the app died saving a corrected amount")
+        XCTAssertTrue(row.waitForNonExistence(timeout: 10) || app.staticTexts["poisoned 0"].exists,
+                      "the editor neither saved nor stayed open — unclear state")
+
+        // (c) and the dashboard must be whole again, which is the point.
+        app.tabBars.buttons.element(boundBy: 0).tap()
+        let money = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "$")).firstMatch
+        XCTAssertTrue(money.waitForExistence(timeout: 15),
+                      "after correcting the amount the dashboard still shows no totals — "
+                      + "unavailable card present: "
+                      + "\(app.staticTexts["This month's totals can't be shown"].exists)")
+    }
+
     /// The seed must not leak into later runs, and an ordinary launch must be
     /// unaffected by any of this.
     func test_ordinaryLaunchIsUnaffected() {

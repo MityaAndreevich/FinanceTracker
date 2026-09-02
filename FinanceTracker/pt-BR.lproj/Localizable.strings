@@ -215,7 +215,7 @@
 
 /* Dashboard — cartão de primeiro dia */
 "dashboard.totals_unavailable.title" = "Não é possível mostrar os totais do mês";
-"dashboard.totals_unavailable.body" = "Um ou mais valores deste mês são grandes demais para somar. Nada foi perdido — abra Transações para encontrar e corrigir o lançamento. As demais telas funcionam normalmente.";
+"dashboard.totals_unavailable.body" = "Um ou mais valores deste mês são grandes demais para somar. Nada foi perdido — abra Transações para encontrar e corrigir o lançamento.";
 "dashboard.day0.message.singular" = "Continue registrando — as análises aparecerão com mais dados";
 
 /* Quick Entry hero sheet (Brief 23A) */

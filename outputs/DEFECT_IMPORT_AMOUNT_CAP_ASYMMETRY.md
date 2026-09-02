@@ -195,6 +195,29 @@ the change had already passed every suite it was tested against in isolation. Th
 be read as guarding one of them, and the other will be lost silently the first time someone
 tightens it.
 
+
+### A false promise was removed from the card, and the code it lied about is still broken
+
+The dashboard's unavailable card ended with *"Every other screen works normally."*
+(«Остальные экраны работают как обычно.») **That was not true.** `AnalyticsSeries.swift:92,94`
+accumulates across ALL months in `Int` and is not among the fixed sites, so Analytics still
+traps on a ledger the dashboard has just told the user is otherwise fine.
+
+The sentence was **deleted in all five languages** rather than softened. The card exists to be
+trustworthy at the moment someone is frightened the app ate their data; a reassurance that fails
+one tab away costs more than no reassurance. *"Nothing has been lost"* already does the work that
+sentence was written to do.
+
+**The copy was corrected instead of the code, deliberately.** Analytics is genuinely off the
+recovery journey — you do not need it to delete a row — and the boundary for build 10 is the path
+from cold launch to deleting the offending row. Fixing Analytics would be scope; removing a
+sentence that lies is not. Anyone widening the fix later applies the same rule
+(`addingReportingOverflow`, explicit unavailable state) and may then restore the sentence.
+
+Also filed, not built: the card does not NAME the offending row. A user whose amounts all look
+ordinary — because the bad one arrived through a mis-mapped import column — has no way to tell
+which entry is meant. Identifying it is a feature, not a copy fix.
+
 ### Still filed: 14 expressions, same rule
 
 `AnalyticsSeries` (6), `CategoryDetailView` (2), `DaySpendingSheet` (2), `AnalyticsView` (1),

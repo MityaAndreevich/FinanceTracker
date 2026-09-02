@@ -235,7 +235,7 @@
    Dashboard
    ====================================================== */
 "dashboard.totals_unavailable.title" = "This month's totals can't be shown";
-"dashboard.totals_unavailable.body" = "One or more amounts this month are too large to add up. Nothing has been lost — open Transactions to find and fix the affected entry. Every other screen works normally.";
+"dashboard.totals_unavailable.body" = "One or more amounts this month are too large to add up. Nothing has been lost — open Transactions to find and fix the affected entry.";
 "dashboard.summary.income" = "Income";
 "dashboard.summary.expenses" = "Expenses";
 "dashboard.summary.net" = "Net";

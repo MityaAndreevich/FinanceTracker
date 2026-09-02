@@ -251,7 +251,7 @@
    ====================================================== */
 "tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
 "dashboard.totals_unavailable.title" = "No se pueden mostrar los totales del mes";
-"dashboard.totals_unavailable.body" = "Uno o más importes de este mes son demasiado grandes para sumarse. No se ha perdido nada: abre Transacciones para encontrar y corregir la entrada afectada. Las demás pantallas funcionan con normalidad.";
+"dashboard.totals_unavailable.body" = "Uno o más importes de este mes son demasiado grandes para sumarse. No se ha perdido nada: abre Transacciones para encontrar y corregir la entrada afectada.";
 "dashboard.empty.title" = "Añade tu primer gasto para ver a dónde va tu dinero";
 "dashboard.empty.caption" = "Escribe o habla arriba — Budget Crab hace el resto";
 "transactions.empty.title" = "Todavía no hay transacciones";
