@@ -2,6 +2,38 @@
 
 All v1.0 code blockers closed: CSV integrity, premium gate, Charts crash+freeze, locked-intent P0 (audit), QuickEntry UX, amount parser. Remaining = QA + ASC + submit. Work top to bottom.
 
+## 0. BUILD 10 — blocking items (added 2026-09-01, must clear before anything below)
+
+These are gates, not reminders. Build 10 does not ship until each is closed by a RESULT,
+not by recollection.
+
+- [ ] **`test_poisonedRow_opensInTheEditorAndAcceptsACorrection` has RUN, and the card's verb
+      was chosen from its result.** The card currently says "find and **fix** the affected
+      entry" / «найдите и **исправьте** запись», and that verb is UNVERIFIED — the editor has
+      never been opened on a row whose amount cannot be summed. Three outcomes, three
+      different actions:
+      • traps on open → a 26th overflow site, ON the recovery journey, fix it before shipping
+      • opens but refuses a corrected value → the copy must say **delete** / **удалите**
+      • opens and accepts a corrected value → the copy stays **fix**, and it is the better
+        instruction (the expense was real; correcting preserves what deleting erases)
+      *Why this is a gate:* the unverified verb is what ships if this is merely forgotten,
+      which is the wrong default for the one string whose correctness is the open question.
+- [ ] **Full suite from an ERASED simulator**, HEAD baseline and branch, compared test by
+      test. `xcrun simctl shutdown all && xcrun simctl erase all` first — this session seeded
+      unsummable rows into the simulator, and a stale poisoned row breaks a HEAD build, which
+      has no overflow protection.
+- [ ] **`EXPECTED_TOTAL_RUN` in `scripts/run-tests.sh` set from the OBSERVED count** of that
+      branch run (the gate prints it on exit 5), never from arithmetic.
+- [ ] **No new failure vs the baseline SET** — `test_seededRowTap_opensEditor` and
+      `test_savingThreeConsecutiveTransactions_...` deterministic,
+      `test_editAfterQuickAddInsert_stillOpensEditor` flaky. Anything else red is ours.
+
+Known-and-accepted for build 10, both filed, neither fixed:
+`outputs/DEFECT_VOICE_INPUT_DEINIT_ABORT.md` (AVAudioEngine teardown can abort the process)
+and the 14 unfixed overflow sites in `outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md` — of
+which `AnalyticsSeries` still traps, which is why the unavailable card no longer claims that
+every other screen works.
+
 ## 1. Final device QA — ONE clean-reinstall pass (the gate)
 Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (⇧⌘K) → rebuild. Then run in **all 5 locales** (en/ru/es-MX/pt-BR/uk), Dark + Light, on a normal phone + one small (SE/mini):
 - [ ] **Amount parser (the last fix):** long amount with kopecks/cents, BOTH text and voice, in ru + en + pt-BR (comma-decimal) and es-MX (period). `10143,15`, `10 143,15 руб.`, voice "1342 рубля 15 копеек" → correct value.

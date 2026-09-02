@@ -249,6 +249,35 @@ that describes what a *view* does can be falsified by an edit in a different fil
 no reviewer of that file will ever see. Prefer stating the local contract (`isAvailable`
 is a predicate) over the remote consequence ("so the mic is hidden").
 
+### UI COPY that asserts something about the app's behaviour is a CLAIM, and is verified like any other claim
+
+**The rule.** The same rule as above, on a different surface. If a string shown to the
+user states what the app *does* — "Every other screen works normally", "your data never
+leaves this device", "repeats are flagged, never lost" — it must be **checked against the
+code the way a behavioural comment must be**, and deleted if it cannot be.
+
+**A false comment misleads a developer. A false line of interface copy misleads a USER,
+at a moment deliberately chosen so that they will believe it.** Same defect, worse
+audience.
+
+**The incident, 2026-09-01.** The dashboard's "totals can't be shown" card ended with
+*"Every other screen works normally."* — written to scope the failure reassuringly, in a
+different mode of attention from the code, and never checked against the very list of
+unfixed overflow sites its author had compiled that same day. `AnalyticsSeries` was on
+that list. The card would have told a frightened user, in writing, that Analytics was
+fine, one tap before Analytics crashed the app. The sentence was deleted in all five
+languages; the code it lied about is still unfixed and filed
+(`outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md`).
+
+**Corollary — reassurance is the highest-risk kind of copy.** It is written last, it is
+written to feel good, and it is read at the exact moment the user is least able to check
+it. "Nothing has been lost" is verifiable and was true. "Every other screen works
+normally" was neither. Say the narrow true thing.
+
+**Prior art in this repo, both the same shape:** five shipped strings claimed "100%
+on-device" while an iCloud-sync design was in flight (`project_icloud_sync_104_design`),
+and `docs/PRIVACY_POLICY.md` asserted three things untrue of the shipped app for 40 days.
+
 ## Debug scaffolding to remove (don't let it rot)
 
 Instruments added to bisect a specific bug, to be deleted once that bug is closed —
