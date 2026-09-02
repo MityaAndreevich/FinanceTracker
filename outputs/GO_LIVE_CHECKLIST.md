@@ -34,6 +34,33 @@ and the 14 unfixed overflow sites in `outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY
 which `AnalyticsSeries` still traps, which is why the unavailable card no longer claims that
 every other screen works.
 
+## 0b. BEFORE iCloud SYNC SHIPS — a gate on THAT release, not on build 10
+
+Not a build-10 item. Recorded here because we already know the date on which our own rule
+gets broken if nobody remembers it, and that date is on the plan.
+
+- [ ] **Re-read every on-device / privacy claim against what the build actually does** —
+      in-app strings, the App Store listing (Description, Promo, Subtitle, What's New) and
+      `docs/PRIVACY_POLICY.md` — and for each one: still true, or rewritten. **Enumerate them
+      at that point.** Do not rely on today's count of "five shipped strings"; that number came
+      from a grep, and a grep has been the wrong instrument four times in this project already.
+
+**Why this is a gate and not a note.** Those strings are TRUE TODAY and become FALSE on the day
+`cloudKitDatabase` is flipped to `.private(…)`. Not by oversight — **by schedule.** The claim
+does not change; the app changes underneath it.
+
+**Why privacy copy specifically.** In a money app this is not ordinary copy. It is read by App
+Store review, and by the users who chose Budget Crab *for that sentence*. The positioning rests
+on it, so a stale claim here is both a review risk and a broken promise to the people most
+likely to notice.
+
+**And the reason this entry exists at all:** ARCHITECTURE.md now says UI copy asserting
+behaviour is a claim, verified like any other claim. All three occurrences of that defect so far
+— "100% on-device", the 40-day privacy policy, "Every other screen works normally" — were found
+**retrospectively**, after the copy was already wrong and in one case already shipped. This is
+the first chance to apply the rule BEFORE the fact. A rule that has only ever been applied in
+hindsight has not yet been shown to work.
+
 ## 1. Final device QA — ONE clean-reinstall pass (the gate)
 Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (⇧⌘K) → rebuild. Then run in **all 5 locales** (en/ru/es-MX/pt-BR/uk), Dark + Light, on a normal phone + one small (SE/mini):
 - [ ] **Amount parser (the last fix):** long amount with kopecks/cents, BOTH text and voice, in ru + en + pt-BR (comma-decimal) and es-MX (period). `10143,15`, `10 143,15 руб.`, voice "1342 рубля 15 копеек" → correct value.
