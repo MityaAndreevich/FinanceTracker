@@ -60,8 +60,8 @@ struct CategoryLimitPolicyTests {
             today: cal.startOfDay(for: day),
             calendar: cal
         )
-        #expect(spent[catB] == 4_000, "the split's money counts toward the SPLIT's category")
-        #expect(spent[catA] == 8_000, "the remainder counts toward the purchase's own category")
+        #expect(spent?[catB] == 4_000, "the split's money counts toward the SPLIT's category")
+        #expect(spent?[catA] == 8_000, "the remainder counts toward the purchase's own category")
     }
 
     @Test func spentByCategoryUsesTheSafeToSpendMonthWindow() {
@@ -80,7 +80,7 @@ struct CategoryLimitPolicyTests {
             ],
             monthStart: monthStart, today: today, calendar: cal
         )
-        #expect(spent[catA] == 1_000,
+        #expect(spent?[catA] == 1_000,
                 "same window as SafeToSpend.aggregate: day ≤ today, this month only")
     }
 
@@ -106,7 +106,7 @@ struct CategoryLimitPolicyTests {
             calendar: cal
         )
         let parentSum = purchases.reduce(0) { $0 + $1.total }
-        #expect(spent.values.reduce(0, +) == parentSum)
+        #expect(spent?.values.reduce(0, +) == parentSum)
     }
 
     // MARK: - Plan precedence, latch, silence

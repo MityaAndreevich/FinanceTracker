@@ -254,20 +254,20 @@ struct SplitCanaryTests {
         let aggA = SafeToSpend.aggregate(entries: SafeToSpend.entries(from: try a.allTransactions()), now: a.now)
         let aggB = SafeToSpend.aggregate(entries: SafeToSpend.entries(from: try b.allTransactions()), now: b.now)
 
-        #expect(aggA.spentThisMonthCents == aggB.spentThisMonthCents)
-        #expect(aggA.priorExpenseCents == aggB.priorExpenseCents)
-        #expect(aggA.priorSpanDays == aggB.priorSpanDays)
+        #expect(aggA?.spentThisMonthCents == aggB?.spentThisMonthCents)
+        #expect(aggA?.priorExpenseCents == aggB?.priorExpenseCents)
+        #expect(aggA?.priorSpanDays == aggB?.priorSpanDays)
         // Against independent arithmetic, not just each other:
-        #expect(aggB.spentThisMonthCents == b.expectedMonthExpenseCents)
-        #expect(aggB.priorExpenseCents == b.expectedPriorExpenseCents)
+        #expect(aggB?.spentThisMonthCents == b.expectedMonthExpenseCents)
+        #expect(aggB?.priorExpenseCents == b.expectedPriorExpenseCents)
 
         // The actor path must agree with the pure path on the split store —
         // catches a split-join sneaking into the actor's fetch specifically.
         let actor = LedgerAggregator(modelContainer: b.container)
         let offMain = await actor.safeToSpendAggregate(now: b.now)
-        #expect(offMain.spentThisMonthCents == aggB.spentThisMonthCents)
-        #expect(offMain.priorExpenseCents == aggB.priorExpenseCents)
-        #expect(offMain.priorSpanDays == aggB.priorSpanDays)
+        #expect(offMain?.spentThisMonthCents == aggB?.spentThisMonthCents)
+        #expect(offMain?.priorExpenseCents == aggB?.priorExpenseCents)
+        #expect(offMain?.priorSpanDays == aggB?.priorSpanDays)
     }
 
     @Test func entriesCountEqualsTransactionCountNeverRowCount() throws {
@@ -361,11 +361,12 @@ struct SplitCanaryTests {
             let agg = SafeToSpend.aggregate(
                 entries: SafeToSpend.entries(from: try fixture.allTransactions()), now: fixture.now
             )
+            let aggValue = try #require(agg, "fixture ledger must be summable")
             let snapshot = SafeToSpend.snapshot(
                 monthlyBudgetCents: 500_000,
-                spentThisMonthCents: agg.spentThisMonthCents,
-                priorExpenseCents: agg.priorExpenseCents,
-                priorSpanDays: agg.priorSpanDays,
+                spentThisMonthCents: aggValue.spentThisMonthCents,
+                priorExpenseCents: aggValue.priorExpenseCents,
+                priorSpanDays: aggValue.priorSpanDays,
                 now: fixture.now
             )
             let baseline = PaceMetric.baselineDailyCents(
@@ -425,15 +426,15 @@ struct SplitCanaryTests {
                                              monthlyBudgetCents: 500_000,
                                              locale: locale)
 
-        #expect(snapA.spentText == snapB.spentText)
-        #expect(snapA.earnedText == snapB.earnedText)
-        #expect(snapA.heroLabel == snapB.heroLabel)
-        #expect(snapA.heroAmount == snapB.heroAmount)
-        #expect(snapA.heroSubtitle == snapB.heroSubtitle)
-        #expect(snapA.heroIsAlert == snapB.heroIsAlert)
-        #expect(snapA.ringFraction == snapB.ringFraction)
-        #expect(snapA.ringIsNeutral == snapB.ringIsNeutral)
-        #expect(snapA.spendSeries == snapB.spendSeries)
+        #expect(snapA?.spentText == snapB?.spentText)
+        #expect(snapA?.earnedText == snapB?.earnedText)
+        #expect(snapA?.heroLabel == snapB?.heroLabel)
+        #expect(snapA?.heroAmount == snapB?.heroAmount)
+        #expect(snapA?.heroSubtitle == snapB?.heroSubtitle)
+        #expect(snapA?.heroIsAlert == snapB?.heroIsAlert)
+        #expect(snapA?.ringFraction == snapB?.ringFraction)
+        #expect(snapA?.ringIsNeutral == snapB?.ringIsNeutral)
+        #expect(snapA?.spendSeries == snapB?.spendSeries)
     }
 
     // Vacuity guard — the mirror must actually split, or every green canary
@@ -450,7 +451,7 @@ struct SplitCanaryTests {
                                              currencyCode: "USD", monthlyBudgetCents: 0, locale: locale)
         let snapB = NetSnapshotBuilder.build(transactions: try b.allTransactions(),
                                              currencyCode: "USD", monthlyBudgetCents: 0, locale: locale)
-        #expect(snapA.topCategories != snapB.topCategories,
+        #expect(snapA?.topCategories != snapB?.topCategories,
                 "splitting moves money between categories — the A-path must see it")
     }
 

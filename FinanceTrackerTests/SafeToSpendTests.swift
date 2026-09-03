@@ -99,8 +99,8 @@ struct SafeToSpendTests {
             ],
             now: date(2026, 7, 14), calendar: cal
         )
-        #expect(agg.spentThisMonthCents == 8_000)
-        #expect(agg.priorExpenseCents == 7_000)
+        #expect(agg?.spentThisMonthCents == 8_000)
+        #expect(agg?.priorExpenseCents == 7_000)
     }
 
     @Test func priorSpanIsMeasuredFromTheEarliestPriorExpense() {
@@ -112,8 +112,8 @@ struct SafeToSpendTests {
             now: date(2026, 7, 14), calendar: cal
         )
         // 1 June → 1 July is 30 days of history.
-        #expect(agg.priorSpanDays == 30)
-        #expect(agg.priorExpenseCents == 2_000)
+        #expect(agg?.priorSpanDays == 30)
+        #expect(agg?.priorExpenseCents == 2_000)
     }
 
     @Test func noPriorHistoryIsZeroSpanNotACrash() {
@@ -123,15 +123,15 @@ struct SafeToSpendTests {
             entries: [expense(1_000, date(2026, 7, 3))],
             now: date(2026, 7, 14), calendar: cal
         )
-        #expect(agg.priorExpenseCents == 0)
-        #expect(agg.priorSpanDays == 0)
+        #expect(agg?.priorExpenseCents == 0)
+        #expect(agg?.priorSpanDays == 0)
     }
 
     @Test func emptyLedgerAggregatesToZeros() {
         let agg = SafeToSpend.aggregate(entries: [], now: date(2026, 7, 14), calendar: cal)
-        #expect(agg.spentThisMonthCents == 0)
-        #expect(agg.priorExpenseCents == 0)
-        #expect(agg.priorSpanDays == 0)
+        #expect(agg?.spentThisMonthCents == 0)
+        #expect(agg?.priorExpenseCents == 0)
+        #expect(agg?.priorSpanDays == 0)
     }
 
     @Test func futureDatedExpensesDoNotCountAsSpentYet() {
@@ -140,6 +140,6 @@ struct SafeToSpendTests {
             entries: [expense(9_000, date(2026, 7, 28))],
             now: date(2026, 7, 14), calendar: cal
         )
-        #expect(agg.spentThisMonthCents == 0)
+        #expect(agg?.spentThisMonthCents == 0)
     }
 }

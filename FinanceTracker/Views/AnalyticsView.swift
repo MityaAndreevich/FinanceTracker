@@ -247,6 +247,8 @@ struct AnalyticsView: View {
             guard let aggregator else { return }
 
             let now = Date()
+            // nil = unsummable ledger; `priorAggregate` is already optional and
+            // Pace simply does not render without it.
             let aggregate = await aggregator.safeToSpendAggregate(now: now)
             let horizon = await aggregator.horizonSeries(now: now)
             guard !Task.isCancelled else { return }

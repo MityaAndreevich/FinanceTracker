@@ -25,6 +25,15 @@ import Foundation
 
 enum AmountParsing {
 
+    /// The largest amount the app will accept, in cents — 100 000 000 000.00.
+    ///
+    /// ONE constant, referenced by every writer. It was previously a literal
+    /// repeated in AddTransactionView and EditTransactionView and absent from the
+    /// import path entirely, so import could insert a row the editor would then
+    /// refuse to save — a value the user could see but not correct.
+    static let maxAmountCents = 10_000_000_000_000
+
+
     /// Parse a money string into a non-negative magnitude in cents, or nil when it
     /// carries no digits. Sign is the caller's concern (an NL amount is positive; a
     /// CSV field's sign is derived separately from `-`/parentheses/columns).
@@ -60,8 +69,38 @@ enum AmountParsing {
         }
         guard !(intDigits.isEmpty && fracDigits.isEmpty) else { return nil }
 
-        let intValue = Int(intDigits) ?? 0
-        var fracValue = Int((fracDigits + "00").prefix(2)) ?? 0    // pad/cap to 2 digits
+        // ── AN AMOUNT THAT CANNOT BE REPRESENTED IS NOT AN AMOUNT ───────────────
+        // This tail used to read `Int(intDigits) ?? 0`, and that `?? 0` was a
+        // silent data-loss bug: a 22-digit cell — an account or reference number
+        // mis-mapped into the amount column, which the app's own flexible column
+        // mapping makes easy — imported as ZERO cents, with no error and no flag.
+        // The user was told the import succeeded and their ledger was wrong.
+        //
+        // `intValue * 100` was worse: for 17–19 digit input it TRAPPED, crashing
+        // the process inside a parser, on a file the app itself accepted.
+        //
+        // Both are the same mistake in opposite directions — a value the app
+        // cannot represent turned into a plausible number, or into a crash. It is
+        // neither: it is a row we cannot read, and the caller's contract for that
+        // is already `nil`. `taxCents` next door has always kept the optional
+        // (CSVImportService.swift:714) — evidence this was an oversight rather
+        // than a decision.
+        // Two different things that both make `Int(intDigits)` fail, and the first
+        // version of this fix collapsed them — which broke ".15" and ",15", i.e.
+        // every leading-decimal amount a user can type. Caught by
+        // AmountParsingTests.testLeadingDecimal, not by review.
+        //
+        //   • EMPTY  → there is no integer part. That is a legitimate amount.
+        //   • NON-EMPTY but unparseable → digits we cannot represent. Reject.
+        let intValue: Int
+        if intDigits.isEmpty {
+            intValue = 0
+        } else {
+            guard let parsed = Int(intDigits) else { return nil }
+            intValue = parsed
+        }
+        guard var fracValue = Int((fracDigits + "00").prefix(2)) else { return nil }
+
         // Half-up rounding on the 3rd fractional digit — truncating here biased
         // every >2-decimal foreign amount down by up to a cent. Working on the
         // digit string avoids binary-float artifacts (2.675 → 2.68, not 2.67). The
@@ -70,7 +109,12 @@ enum AmountParsing {
             let thirdDigit = fracDigits[fracDigits.index(fracDigits.startIndex, offsetBy: 2)].wholeNumberValue ?? 0
             if thirdDigit >= 5 { fracValue += 1 }
         }
-        return intValue * 100 + fracValue
+
+        let (scaled, mulOverflow) = intValue.multipliedReportingOverflow(by: 100)
+        guard !mulOverflow else { return nil }
+        let (cents, addOverflow) = scaled.addingReportingOverflow(fracValue)
+        guard !addOverflow else { return nil }
+        return cents
     }
 
     /// Whether a single-symbol separator is the decimal point or a thousands group,

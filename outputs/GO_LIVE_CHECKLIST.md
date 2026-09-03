@@ -2,6 +2,75 @@
 
 All v1.0 code blockers closed: CSV integrity, premium gate, Charts crash+freeze, locked-intent P0 (audit), QuickEntry UX, amount parser. Remaining = QA + ASC + submit. Work top to bottom.
 
+## 0. BUILD 10 — blocking items (added 2026-09-01, must clear before anything below)
+
+These are gates, not reminders. Build 10 does not ship until each is closed by a RESULT,
+not by recollection.
+
+- [x] **CLEARED 2026-09-02, erased simulator.** `test_poisonedRow_opensInTheEditorAndAcceptsA`
+      `Correction` ran green: the editor OPENS on a row whose amount cannot be summed (no 26th
+      site), and it ACCEPTS a corrected value — the sheet dismissed and `4,000` appeared in the
+      list. **Outcome three, so the card keeps "fix" / «исправьте»** and no string changed.
+      That is also the better instruction: the expense was real, only the import column
+      slipped, and correcting preserves the fact that deleting erases.
+      Note for whoever reads this next: the test does NOT use "the dashboard recovered" as its
+      success signal, because correcting one row still leaves `Int.max − 8 + 400000`, which
+      overflows — a genuine save produces no recovery here. The first version of the assertion
+      passed vacuously off a `$` in the Recent list.
+- [ ] ~~`test_poisonedRow_opensInTheEditorAndAcceptsACorrection` has RUN, and the card's verb
+      was chosen from its result.~~ (superseded by the line above) The card currently says "find and **fix** the affected
+      entry" / «найдите и **исправьте** запись», and that verb is UNVERIFIED — the editor has
+      never been opened on a row whose amount cannot be summed. Three outcomes, three
+      different actions:
+      • traps on open → a 26th overflow site, ON the recovery journey, fix it before shipping
+      • opens but refuses a corrected value → the copy must say **delete** / **удалите**
+      • opens and accepts a corrected value → the copy stays **fix**, and it is the better
+        instruction (the expense was real; correcting preserves what deleting erases)
+      *Why this is a gate:* the unverified verb is what ships if this is merely forgotten,
+      which is the wrong default for the one string whose correctness is the open question.
+- [ ] **Full suite from an ERASED simulator**, HEAD baseline and branch, compared test by
+      test. `xcrun simctl shutdown all && xcrun simctl erase all` first — this session seeded
+      unsummable rows into the simulator, and a stale poisoned row breaks a HEAD build, which
+      has no overflow protection.
+- [ ] **`EXPECTED_TOTAL_RUN` in `scripts/run-tests.sh` set from the OBSERVED count** of that
+      branch run (the gate prints it on exit 5), never from arithmetic.
+- [ ] **No new failure vs the baseline SET** — `test_seededRowTap_opensEditor` and
+      `test_savingThreeConsecutiveTransactions_...` deterministic,
+      `test_editAfterQuickAddInsert_stillOpensEditor` flaky. Anything else red is ours.
+
+Known-and-accepted for build 10, both filed, neither fixed:
+`outputs/DEFECT_VOICE_INPUT_DEINIT_ABORT.md` (AVAudioEngine teardown can abort the process)
+and the 14 unfixed overflow sites in `outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md` — of
+which `AnalyticsSeries` still traps, which is why the unavailable card no longer claims that
+every other screen works.
+
+## 0b. BEFORE iCloud SYNC SHIPS — a gate on THAT release, not on build 10
+
+Not a build-10 item. Recorded here because we already know the date on which our own rule
+gets broken if nobody remembers it, and that date is on the plan.
+
+- [ ] **Re-read every on-device / privacy claim against what the build actually does** —
+      in-app strings, the App Store listing (Description, Promo, Subtitle, What's New) and
+      `docs/PRIVACY_POLICY.md` — and for each one: still true, or rewritten. **Enumerate them
+      at that point.** Do not rely on today's count of "five shipped strings"; that number came
+      from a grep, and a grep has been the wrong instrument four times in this project already.
+
+**Why this is a gate and not a note.** Those strings are TRUE TODAY and become FALSE on the day
+`cloudKitDatabase` is flipped to `.private(…)`. Not by oversight — **by schedule.** The claim
+does not change; the app changes underneath it.
+
+**Why privacy copy specifically.** In a money app this is not ordinary copy. It is read by App
+Store review, and by the users who chose Budget Crab *for that sentence*. The positioning rests
+on it, so a stale claim here is both a review risk and a broken promise to the people most
+likely to notice.
+
+**And the reason this entry exists at all:** ARCHITECTURE.md now says UI copy asserting
+behaviour is a claim, verified like any other claim. All three occurrences of that defect so far
+— "100% on-device", the 40-day privacy policy, "Every other screen works normally" — were found
+**retrospectively**, after the copy was already wrong and in one case already shipped. This is
+the first chance to apply the rule BEFORE the fact. A rule that has only ever been applied in
+hindsight has not yet been shown to work.
+
 ## 1. Final device QA — ONE clean-reinstall pass (the gate)
 Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (⇧⌘K) → rebuild. Then run in **all 5 locales** (en/ru/es-MX/pt-BR/uk), Dark + Light, on a normal phone + one small (SE/mini):
 - [ ] **Amount parser (the last fix):** long amount with kopecks/cents, BOTH text and voice, in ru + en + pt-BR (comma-decimal) and es-MX (period). `10143,15`, `10 143,15 руб.`, voice "1342 рубля 15 копеек" → correct value.

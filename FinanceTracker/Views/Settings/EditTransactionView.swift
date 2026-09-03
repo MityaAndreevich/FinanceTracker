@@ -503,7 +503,7 @@ struct EditTransactionView: View {
             fail(key: "edit.error.invalid_amount", extra: nil)
             return
         }
-        guard amountCents > 0 && amountCents <= 10_000_000_000_000 else {
+        guard amountCents > 0 && amountCents <= AmountParsing.maxAmountCents else {
             fail(key: "validation.amount.out_of_range", extra: nil)
             return
         }

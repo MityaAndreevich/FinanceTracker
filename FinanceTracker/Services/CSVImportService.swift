@@ -360,6 +360,20 @@ struct CSVImportService {
             return
         }
 
+        // Same ceiling as the legacy path and as the editor — mapped import is
+        // where a mis-mapped reference column arrives, so this is the path that
+        // most needs it. Rejected with a reason; never clamped, never zeroed.
+        guard normalized.amountCents <= AmountParsing.maxAmountCents else {
+            result.failedRows += 1
+            if result.firstError == nil {
+                result.firstError = String(
+                    format: NSLocalizedString("csv.import.error.amount_out_of_range.format", comment: ""),
+                    i + 1
+                )
+            }
+            return
+        }
+
         do {
             let category = try resolveCategory(
                 modelContext: modelContext,
@@ -709,6 +723,19 @@ struct CSVImportService {
 
             guard let amountCents = Money.parseCents(from: amountStr) else {
                 throw makeLineError(i, "Invalid amount: \(amountStr)")
+            }
+
+            // The UI refuses anything above this (AddTransactionView), so import
+            // must too — otherwise it writes a row the editor cannot save and the
+            // aggregates cannot sum. A row we cannot represent is REJECTED with a
+            // reason, never clamped to the ceiling and never zeroed: both of those
+            // hand the user a plausible wrong number, which is the disease, not
+            // the cure. The reason rides the partial-import disclosure that
+            // already exists (result.skipped + result.firstError).
+            guard amountCents <= AmountParsing.maxAmountCents else {
+                throw makeLineError(i, "Amount out of range: \(amountStr) — the largest "
+                                    + "amount this app can hold is 100 000 000 000.00. "
+                                    + "Check that the amount column is mapped to the right column.")
             }
 
             let taxCents = Money.parseCents(from: taxStr)

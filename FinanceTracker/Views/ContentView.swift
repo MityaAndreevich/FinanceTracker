@@ -291,6 +291,12 @@ struct ContentView: View {
             // otherwise inherit the accounts left by the previous run (or by a demo-mode
             // screenshot session) and meet the cap before it had added anything.
             AccountResetDebugSeam.resetIfRequested(modelContext: modelContext)
+            // Enumeration seam: rows a pre-ceiling build could write, which no
+            // aggregate can sum. The UI test that uses this asserts only that the
+            // app is STILL RUNNING — the point is to catch a launch-path sum that
+            // nobody listed. Purge first so a stale seed cannot brick later runs.
+            PoisonedAmountsDebugSeed.purgeIfLeftOver(modelContext: modelContext)
+            PoisonedAmountsDebugSeed.seedIfRequested(modelContext: modelContext)
             // Row count and the flags go in the label because app stdout/os_log is
             // NOT captured in xcodebuild logs — the /tmp file is the only reliable
             // channel back, and a report that cannot say how many rows it observed

@@ -297,7 +297,12 @@ final class LocaleCompletenessTests: XCTestCase {
         // `premigration.export_failed` there: that string ends "you can still
         // continue safely", and on the floor there is nothing to continue to.
         // Was 754.
-        XCTAssertEqual(enKeys.count, 756, "English baseline changed; update the expected count.")
+        // 756 → 759: three keys added for the amount-overflow work —
+        // csv.import.error.amount_out_of_range.format (a rejected import row says
+        // which line and why) and dashboard.totals_unavailable.title/.body (the
+        // state shown when a month's totals cannot be represented). All five
+        // .lproj files carry them; this count is the tripwire that proves it.
+        XCTAssertEqual(enKeys.count, 759, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

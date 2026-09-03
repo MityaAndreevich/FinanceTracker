@@ -73,7 +73,10 @@ final class ProactiveAlertRefreshScheduler {
             guard let aggregator = self.aggregator else { return }
 
             let now = Date()
-            let aggregate = await aggregator.safeToSpendAggregate(now: now)
+            // nil = the ledger cannot be summed. Schedule nothing; see
+            // SafeToSpend.aggregate. This is the path that runs on every .active
+            // transition, so before the guard existed it crashed the app at launch.
+            guard let aggregate = await aggregator.safeToSpendAggregate(now: now) else { return }
             guard !Task.isCancelled else { return }
 
             ProactiveAlertRefresher.apply(
@@ -139,10 +142,14 @@ enum ProactiveAlertRefresher {
                 guard let limit = category.limitCents, limit > 0 else { return nil }
                 return (category.uuid, category.displayName(), limit)
             }
+        // Overflowing ledger → schedule NOTHING. An alert derived from a total we
+        // could not compute would be worse than silence, and there is no screen or
+        // string to add here: the correct behaviour is absence.
+        guard let aggregate = SafeToSpend.makeAggregate(
+            transactions: transactions, limitedCategories: limited, now: now
+        ) else { return }
         apply(
-            aggregate: SafeToSpend.makeAggregate(
-                transactions: transactions, limitedCategories: limited, now: now
-            ),
+            aggregate: aggregate,
             isAllowed: isAllowed,
             defaults: defaults,
             now: now,

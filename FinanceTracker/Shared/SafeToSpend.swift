@@ -80,11 +80,24 @@ enum SafeToSpend {
     }
 
     /// Rolls a ledger up into the three figures `snapshot(...)` needs.
+    /// Returns nil when the ledger cannot be summed in `Int`.
+    ///
+    /// A total that cannot be represented is not a total, so this reports rather
+    /// than wrapping (`&+`), saturating at `Int.max`, or widening — the first two
+    /// hand back a plausible wrong number and the third only moves the cliff.
+    ///
+    /// The caller's correct response here is to do NOTHING: this feeds proactive
+    /// alerts, and an alert we cannot compute is an alert we must not schedule.
+    /// No screen, no state, no string — just no alert. Before this guard existed
+    /// the addition below TRAPPED, and because the refresher is scheduled on every
+    /// `.active` transition (FinanceTrackerApp.swift:141), that trap crashed the
+    /// app at launch — locking the user out of the screen they needed in order to
+    /// delete the row that caused it.
     static func aggregate(
         entries: [Entry],
         now: Date,
         calendar: Calendar = .current
-    ) -> (spentThisMonthCents: Int, priorExpenseCents: Int, priorSpanDays: Int) {
+    ) -> (spentThisMonthCents: Int, priorExpenseCents: Int, priorSpanDays: Int)? {
         guard let monthStart = calendar.date(
             from: calendar.dateComponents([.year, .month], from: now)
         ) else { return (0, 0, 0) }
@@ -97,11 +110,15 @@ enum SafeToSpend {
         for entry in entries where !entry.isIncome {
             let day = calendar.startOfDay(for: entry.date)
             if day < monthStart {
-                priorExpense += entry.amountCents
+                let (sum, overflow) = priorExpense.addingReportingOverflow(entry.amountCents)
+                guard !overflow else { return nil }
+                priorExpense = sum
                 earliestPriorDay = earliestPriorDay.map { min($0, day) } ?? day
             } else if day <= today {
                 // A future-dated expense has not been spent yet.
-                spentThisMonth += entry.amountCents
+                let (sum, overflow) = spentThisMonth.addingReportingOverflow(entry.amountCents)
+                guard !overflow else { return nil }
+                spentThisMonth = sum
             }
         }
 

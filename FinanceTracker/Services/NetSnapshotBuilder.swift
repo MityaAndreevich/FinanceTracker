@@ -36,10 +36,13 @@ enum NetSnapshotBuilder {
         UserDefaults(suiteName: WidgetSharing.appGroupID)?
             .set(languageCode, forKey: "appLanguageCode")
 
-        let snapshot = build(transactions: transactions,
-                             currencyCode: currencyCode,
-                             monthlyBudgetCents: monthlyBudgetCents,
-                             locale: appLocale(for: languageCode))
+        // No snapshot rather than a wrong one: the widget keeps whatever it last
+        // had, which is stale but true, instead of a figure derived from a total
+        // that could not be computed.
+        guard let snapshot = build(transactions: transactions,
+                                   currencyCode: currencyCode,
+                                   monthlyBudgetCents: monthlyBudgetCents,
+                                   locale: appLocale(for: languageCode)) else { return }
         snapshot.save()
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -47,7 +50,7 @@ enum NetSnapshotBuilder {
     static func build(transactions: [Transaction],
                       currencyCode: String,
                       monthlyBudgetCents: Int,
-                      locale: Locale = .current) -> NetSnapshot {
+                      locale: Locale = .current) -> NetSnapshot? {
         let scope = PeriodScope.currentMonth
         let month = scope.filter(transactions)
 
@@ -57,8 +60,17 @@ enum NetSnapshotBuilder {
         let bundle = chromeBundle(for: locale)
         func L(_ key: String) -> String { bundle.localizedString(forKey: key, value: key, table: nil) }
 
-        let incomeCents = month.filter { $0.isIncome }.reduce(0) { $0 + $1.amountCents }
-        let expenseCents = month.filter { !$0.isIncome }.reduce(0) { $0 + $1.amountCents }
+        // nil = this month cannot be summed in Int. The widget then keeps the
+        // snapshot it already has rather than showing a wrong figure — same rule
+        // as the alert refresher: a number we cannot compute is not published.
+        //
+        // THIS SITE WAS MISSED BY THE ENUMERATION. It was catalogued as "widget
+        // snapshot", i.e. assumed to be off the launch path — but DashboardView
+        // calls refreshWidgetSnapshot() on appear, so it runs during the first
+        // render like everything else here. The launch test with a poisoned store
+        // is what found it, after four human passes had not.
+        guard let incomeCents = MonthTotals.incomeCents(month),
+              let expenseCents = MonthTotals.expenseCents(month) else { return nil }
 
         func compact(_ cents: Int) -> String {
             Money.formatCompact(cents: cents, currencyCode: currencyCode, locale: locale)
@@ -153,13 +165,19 @@ enum NetSnapshotBuilder {
         var perDay = [Int: Int]()
         for tx in transactions where !tx.isIncome {
             guard month.contains(tx.date), tx.date <= now else { continue }
-            perDay[calendar.component(.day, from: tx.date), default: 0] += tx.amountCents
+            let key = calendar.component(.day, from: tx.date)
+            let (sum, overflow) = (perDay[key] ?? 0).addingReportingOverflow(tx.amountCents)
+            guard !overflow else { return nil }
+            perDay[key] = sum
         }
 
         var running = 0
-        let cumulative: [Int] = (1...today).map { day in
-            running += perDay[day, default: 0]
-            return running
+        var cumulative: [Int] = []
+        for day in 1...today {
+            let (sum, overflow) = running.addingReportingOverflow(perDay[day, default: 0])
+            guard !overflow else { return nil }
+            running = sum
+            cumulative.append(running)
         }
         let total = running
         guard total > 0 else { return nil }               // nothing to normalize against

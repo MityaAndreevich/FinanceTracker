@@ -250,6 +250,8 @@
    Tutorial & empty states (Brief 25)
    ====================================================== */
 "tutorial.page3.demo_offer" = "Añadir datos de muestra para explorar";
+"dashboard.totals_unavailable.title" = "No se pueden mostrar los totales del mes";
+"dashboard.totals_unavailable.body" = "Uno o más importes de este mes son demasiado grandes para sumarse. No se ha perdido nada: abre Transacciones para encontrar y corregir la entrada afectada.";
 "dashboard.empty.title" = "Añade tu primer gasto para ver a dónde va tu dinero";
 "dashboard.empty.caption" = "Escribe o habla arriba — Budget Crab hace el resto";
 "transactions.empty.title" = "Todavía no hay transacciones";
@@ -506,6 +508,7 @@
 "data.import.in_progress" = "Importando…";
 "csv.import.error.too_many_rows.format" = "El archivo contiene %d filas; el máximo es 10,000.";
 "csv.import.error.field_too_long.format" = "Línea %d omitida: un campo supera los 1,024 caracteres.";
+"csv.import.error.amount_out_of_range.format" = "Línea %d omitida: el importe supera lo que la app puede almacenar (100.000.000.000,00). Comprueba que la columna de importe esté asignada correctamente.";
 "cs.section.sources" = "Cuentas";
 "cs.section.expense_categories" = "Categorías de gastos";
 "cs.section.income_categories" = "Categorías de ingresos";

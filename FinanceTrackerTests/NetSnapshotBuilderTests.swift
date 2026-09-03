@@ -264,10 +264,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
 
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 200_000,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.topCategories.count == 3)
         #expect(snap.topCategories.map(\.name) == ["Food", "Transport", "Shopping"])
@@ -286,10 +286,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 200_000,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.heroLabel == en("widget.safe_to_spend"))
         #expect(!snap.heroIsAlert)
@@ -305,10 +305,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 200_000,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.heroIsAlert)
         #expect(snap.heroLabel == en("widget.over_budget"))
@@ -325,10 +325,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 0,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.heroLabel == en("widget.safe_to_spend"))
         #expect(!snap.heroIsAlert)
@@ -345,10 +345,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 0,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.heroIsAlert)
         #expect(snap.heroLabel == en("widget.overspent"))
@@ -362,10 +362,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 0,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
 
         #expect(snap.heroLabel == en("widget.hero.spent"))
         #expect(!snap.heroIsAlert)
@@ -382,10 +382,10 @@ struct NetSnapshotBuilderTests {
         try ctx.save()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())
 
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 200_000,
-                                            locale: Locale(identifier: "ru"))
+                                            locale: Locale(identifier: "ru")))
 
         let ruPath = try #require(Bundle.main.path(forResource: "ru", ofType: "lproj"))
         let ruBundle = try #require(Bundle(path: ruPath))
@@ -396,10 +396,10 @@ struct NetSnapshotBuilderTests {
     @Test func build_emptyPeriod_noBudget_hasNoData() throws {
         let ctx = try makeContext()
         let all = try ctx.fetch(FetchDescriptor<Transaction>())   // empty
-        let snap = NetSnapshotBuilder.build(transactions: all,
+        let snap = try #require(NetSnapshotBuilder.build(transactions: all,
                                             currencyCode: "USD",
                                             monthlyBudgetCents: 0,
-                                            locale: Locale(identifier: "en_US"))
+                                            locale: Locale(identifier: "en_US")))
         #expect(!snap.hasData)
         #expect(snap.topCategories.isEmpty)
         #expect(snap.ringIsNeutral)
