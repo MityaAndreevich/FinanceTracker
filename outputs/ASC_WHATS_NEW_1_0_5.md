@@ -1,4 +1,15 @@
-# App Store "What's New" — 1.0.5 (build 9)
+# App Store "What's New" — 1.0.5 (build 10)
+
+**Build 10 adds one user-visible fix to build 9's list: PDF reports printed some amounts wrong.**
+That is what a TestFlight tester reported and what she will look for, so it is called out on its
+own rather than buried in the bullets. The migration fix still leads: someone stuck on a screen
+that would not go anywhere should still recognise themselves in the first sentence.
+
+**These notes are UI copy, so the ARCHITECTURE.md rule applies: every sentence is a claim.**
+Each line below was verified against build 10 — the PDF wording against rendered pixels
+(a 4 000,00 ₽ expense really did print as "−4"), the totals line against a real launch on a
+ledger that could not be summed, the import line against a real import of a 22-digit amount.
+Nothing here describes work that is only filed.
 
 **Ship-only rule applied:** every line below is in build 9 and was verified in the code, not in a
 plan. Nothing about iCloud sync, nothing about receipt capture.
@@ -25,6 +36,10 @@ you entered still there. Nothing was lost while you were waiting.
 That screen is also more honest now: if an update ever can't finish, it warns you not to
 delete the app (which would erase the data on your device) and can still export a copy.
 
+Also fixed: PDF reports printed some amounts incorrectly. An amount with a thousands
+separator lost everything after it — 4 000,00 ₽ could print as 4 — and the currency symbol
+could go missing. Exported reports now show every amount in full.
+
 Also in this release:
 • Imports that stop partway now tell you how many transactions were saved, instead of just
   saying the import failed. Re-importing is safe.
@@ -32,6 +47,10 @@ Also in this release:
 • Deleting a large number of transactions is dramatically faster.
 • A new Settings entry shows how to set up the Widget and Siri shortcuts.
 • The Categories screen now mentions that you can set a monthly limit on any expense category.
+• A very large amount could stop the app showing this month's totals. It now says so, and
+  points you to the entry, instead of leaving you without a screen.
+• Importing a file now refuses an amount it can't store, telling you which line, instead of
+  saving something different from what the file said.
 • Wording and translation fixes across all five languages.
 ```
 
@@ -47,6 +66,10 @@ Also in this release:
 Этот экран стал честнее: если обновление вдруг не сможет завершиться, он предупредит, что
 удалять приложение нельзя (это сотрёт данные с устройства), и всё равно даст выгрузить копию.
 
+Ещё исправлено: в PDF-отчётах некоторые суммы печатались неверно. Сумма с разделителем
+тысяч теряла всё после него — 4 000,00 ₽ могло напечататься как 4, — а знак валюты мог
+пропасть. Теперь в отчёте каждая сумма печатается полностью.
+
 Также в этой версии:
 • Если импорт прервался, приложение теперь сообщает, сколько операций уже сохранено, вместо
   простого «не удалось». Повторный импорт безопасен.
@@ -54,6 +77,10 @@ Also in this release:
 • Удаление большого количества операций стало значительно быстрее.
 • В настройках появился раздел о том, как настроить виджет и команды Siri.
 • На экране категорий теперь видно, что любой категории расходов можно задать месячный лимит.
+• Очень большая сумма могла помешать приложению показать итоги за месяц. Теперь оно об этом
+  сообщает и указывает, где искать запись, а не оставляет вас без экрана.
+• При импорте файла сумма, которую невозможно сохранить, теперь отклоняется с указанием строки,
+  а не сохраняется искажённой.
 • Правки формулировок и переводов во всех пяти языках.
 ```
 
@@ -70,6 +97,10 @@ Esa pantalla ahora también es más honesta: si una actualización no puede comp
 avisa que no elimines la app (eso borraría los datos del dispositivo) y aun así permite
 exportar una copia.
 
+También corregido: los informes en PDF imprimían algunos importes de forma incorrecta. Un
+importe con separador de miles perdía todo lo que venía después — 4.000,00 $ podía imprimirse
+como 4 — y el símbolo de moneda podía desaparecer. Ahora cada importe se imprime completo.
+
 También en esta versión:
 • Las importaciones que se detienen a medias ahora indican cuántas transacciones se
   guardaron, en lugar de decir solo que fallaron. Volver a importar es seguro.
@@ -78,6 +109,10 @@ También en esta versión:
 • Una nueva sección en Ajustes explica cómo configurar el widget y los atajos de Siri.
 • La pantalla de categorías ahora indica que puedes ponerle un límite mensual a cualquier
   categoría de gastos.
+• Un importe muy grande podía impedir que la app mostrara los totales del mes. Ahora lo avisa
+  y te indica dónde está la transacción, en vez de dejarte sin pantalla.
+• Al importar un archivo, un importe que no se puede guardar ahora se rechaza indicando la
+  línea, en lugar de guardarse alterado.
 • Correcciones de redacción y traducción en los cinco idiomas.
 ```
 
@@ -94,6 +129,10 @@ Essa tela também ficou mais honesta: se uma atualização não conseguir termin
 para você não excluir o app (isso apagaria os dados do aparelho) e ainda permite exportar
 uma cópia.
 
+Também corrigido: os relatórios em PDF imprimiam alguns valores de forma incorreta. Um valor
+com separador de milhares perdia tudo o que vinha depois — 4.000,00 R$ podia sair como 4 — e o
+símbolo da moeda podia sumir. Agora cada valor é impresso por completo.
+
 Também nesta versão:
 • Importações interrompidas agora informam quantas transações foram salvas, em vez de apenas
   dizer que falharam. Importar de novo é seguro.
@@ -102,6 +141,10 @@ Também nesta versão:
 • Uma nova entrada em Ajustes mostra como configurar o widget e os atalhos da Siri.
 • A tela de categorias agora lembra que você pode definir um limite mensal para qualquer
   categoria de despesa.
+• Um valor muito grande podia impedir o app de mostrar os totais do mês. Agora ele avisa e
+  indica onde está o lançamento, em vez de deixar você sem tela.
+• Ao importar um arquivo, um valor que não pode ser guardado agora é recusado com a linha
+  indicada, em vez de ser salvo alterado.
 • Correções de texto e tradução nos cinco idiomas.
 ```
 
@@ -117,6 +160,10 @@ Também nesta versão:
 Цей екран став чеснішим: якщо оновлення раптом не зможе завершитися, він попередить, що
 видаляти застосунок не можна (це зітре дані з пристрою), і все одно дасть експортувати копію.
 
+Ще виправлено: у PDF-звітах деякі суми друкувалися неправильно. Сума з роздільником тисяч
+втрачала все після нього — 4 000,00 ₴ могло надрукуватися як 4, — а знак валюти міг зникнути.
+Тепер кожна сума друкується повністю.
+
 Також у цій версії:
 • Якщо імпорт перервався, застосунок тепер повідомляє, скільки операцій уже збережено,
   замість простого «не вдалося». Повторний імпорт безпечний.
@@ -124,12 +171,33 @@ Também nesta versão:
 • Видалення великої кількості операцій стало значно швидшим.
 • У налаштуваннях з'явився розділ про те, як налаштувати віджет і команди Siri.
 • На екрані категорій тепер видно, що будь-якій категорії витрат можна задати місячний ліміт.
+• Дуже велика сума могла завадити застосунку показати підсумки за місяць. Тепер він про це
+  повідомляє й підказує, де шукати запис, а не лишає вас без екрана.
+• Під час імпорту сума, яку неможливо зберегти, тепер відхиляється із зазначенням рядка, а не
+  зберігається спотвореною.
 • Виправлення формулювань і перекладів у всіх п'яти мовах.
 ```
 
 ---
 
 ## Provenance — every claim mapped to the commit that ships it
+
+### Build 10 additions (2026-09-02)
+
+| Claim in the notes | Where it was verified |
+|---|---|
+| PDF amounts lost everything after the thousands separator; "4 000,00 ₽" printed as "−4" | `PDFExportRenderTests` — reproduced out of a real rendered PDF, then fixed with a 0-pixel difference against an unconstrained render. Commits `891bcb1`, `f7dde93` |
+| the currency symbol could go missing | same suite: "−250,00 ₽" rendered as "−250,00" at the old 56pt column |
+| every amount now prints in full | ink-diff 0 px across ru_RU/en_US/de_DE, including a 3-page render |
+| a very large amount could stop the app showing this month's totals | `PoisonedAmountLaunchTests` — before the fix the app did not survive launch on such a ledger; it now shows an explanation. Commit `1b6be14` |
+| it points you to the entry | the card names Transactions, and the journey test walks there and deletes the row |
+| import refuses an amount it can't store, naming the line | `ImportOverflowChainTests` — a 22-digit amount previously imported as **0** with no error; now rejected with the line number via the existing partial-import disclosure |
+
+**Not claimed anywhere in these notes**, because it is filed and not fixed: Analytics can still
+fail on such a ledger (`outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md`), and the voice-input
+teardown abort (`outputs/DEFECT_VOICE_INPUT_DEINIT_ABORT.md`). The in-app card had a sentence
+promising "every other screen works normally" and it was removed for exactly this reason; the
+release notes must not reintroduce the same promise.
 
 | Claim | Commit |
 |---|---|
