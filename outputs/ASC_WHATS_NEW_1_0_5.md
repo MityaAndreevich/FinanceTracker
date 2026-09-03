@@ -36,9 +36,8 @@ you entered still there. Nothing was lost while you were waiting.
 That screen is also more honest now: if an update ever can't finish, it warns you not to
 delete the app (which would erase the data on your device) and can still export a copy.
 
-Also fixed: PDF reports printed some amounts incorrectly. An amount with a thousands
-separator lost everything after it — 4 000,00 ₽ could print as 4 — and the currency symbol
-could go missing. Exported reports now show every amount in full.
+Also fixed: PDF reports printed some amounts incorrectly — part of a number could be
+missing, and the currency symbol could disappear. Every amount now prints in full.
 
 Also in this release:
 • Imports that stop partway now tell you how many transactions were saved, instead of just
@@ -97,9 +96,9 @@ Esa pantalla ahora también es más honesta: si una actualización no puede comp
 avisa que no elimines la app (eso borraría los datos del dispositivo) y aun así permite
 exportar una copia.
 
-También corregido: los informes en PDF imprimían algunos importes de forma incorrecta. Un
-importe con separador de miles perdía todo lo que venía después — 4.000,00 $ podía imprimirse
-como 4 — y el símbolo de moneda podía desaparecer. Ahora cada importe se imprime completo.
+También corregido: los informes en PDF imprimían algunos importes de forma incorrecta:
+podía faltar parte de la cifra y desaparecer el símbolo de moneda. Ahora cada importe se
+imprime completo.
 
 También en esta versión:
 • Las importaciones que se detienen a medias ahora indican cuántas transacciones se
@@ -129,9 +128,9 @@ Essa tela também ficou mais honesta: se uma atualização não conseguir termin
 para você não excluir o app (isso apagaria os dados do aparelho) e ainda permite exportar
 uma cópia.
 
-Também corrigido: os relatórios em PDF imprimiam alguns valores de forma incorreta. Um valor
-com separador de milhares perdia tudo o que vinha depois — 4.000,00 R$ podia sair como 4 — e o
-símbolo da moeda podia sumir. Agora cada valor é impresso por completo.
+Também corrigido: os relatórios em PDF imprimiam alguns valores de forma incorreta: parte
+do número podia faltar e o símbolo da moeda podia sumir. Agora cada valor é impresso por
+completo.
 
 Também nesta versão:
 • Importações interrompidas agora informam quantas transações foram salvas, em vez de apenas
@@ -160,9 +159,8 @@ Também nesta versão:
 Цей екран став чеснішим: якщо оновлення раптом не зможе завершитися, він попередить, що
 видаляти застосунок не можна (це зітре дані з пристрою), і все одно дасть експортувати копію.
 
-Ще виправлено: у PDF-звітах деякі суми друкувалися неправильно. Сума з роздільником тисяч
-втрачала все після нього — 4 000,00 ₴ могло надрукуватися як 4, — а знак валюти міг зникнути.
-Тепер кожна сума друкується повністю.
+Ще виправлено: у PDF-звітах деякі суми друкувалися неправильно: частина числа могла
+зникнути, а разом із нею — знак валюти. Тепер кожна сума друкується повністю.
 
 Також у цій версії:
 • Якщо імпорт перервався, застосунок тепер повідомляє, скільки операцій уже збережено,
@@ -192,6 +190,7 @@ Também nesta versão:
 | a very large amount could stop the app showing this month's totals | `PoisonedAmountLaunchTests` — before the fix the app did not survive launch on such a ledger; it now shows an explanation. Commit `1b6be14` |
 | it points you to the entry | the card names Transactions, and the journey test walks there and deletes the row |
 | import refuses an amount it can't store, naming the line | `ImportOverflowChainTests` — a 22-digit amount previously imported as **0** with no error; now rejected with the line number via the existing partial-import disclosure |
+| **the worked example ("4 000,00 ₽ could print as 4") appears in ru ONLY** | it is a MEASURED claim about ONE locale's rendering, and it is false elsewhere. `PDFExportLayoutTests`/`PDFExportRenderTests` measured ru_RU, de_DE, en_US and ja_JP: with a space separator (ru_RU) the cell keeps only the digits before it; with a period separator (de_DE) it char-wraps MID-number; in en_US the cell renders a BARE MINUS SIGN and nothing else. pt-BR and uk were never measured. The other four locales therefore say only what is true everywhere — part of the amount could be missing, the symbol could disappear — and name no figure. **Do not "helpfully" restore the example across locales.** |
 
 **Not claimed anywhere in these notes**, because it is filed and not fixed: Analytics can still
 fail on such a ledger (`outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md`), and the voice-input
