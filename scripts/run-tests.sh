@@ -152,16 +152,22 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 #
 # PROVENANCE: 2026-08-26, iPhone 17 Pro / iOS 26.5.
 #   HEAD 5a8ce5b, unfiltered            → executed=1084 skipped=3  → total 1087
-#   this tree, one test -skip-testing'd → executed=1096 skipped=3  → total 1099,
-#                                         i.e. 1100 unfiltered
-#   + 1 test added since (PDFExportRenderTests.testTheWidestStorableAmountFitsTheTable)
-# The confirming full run re-measures this and its own count becomes the entry
-# above. If it disagrees, exit 5 below will say so and name the number.
+#   branch, 2026-09-02, ERASED simulator, one test -skip-testing'd
+#                                       → executed=1109 skipped=3  → total 1112,
+#                                         i.e. 1113 unfiltered   ← THIS IS THE FIGURE
+# Bundle: /tmp/bundles/branch.xcresult. The +1 is the single -skip-testing'd test,
+# which is exactly knowable from the flag; everything else is observed.
+#
+# ERASE THE SIMULATOR BEFORE A FULL RUN. Measured 2026-09-02: several UI suites
+# (DuplicateReviewFlow, SearchRecomputationRegression, EditAtScaleRepro) failed on
+# a dirty simulator — including against a clean HEAD worktree, which is what made
+# it look like the code — and passed from an erased one. The app container, not
+# the checkout, was carrying the state.
 #
 # (Do not be reassured by a grep of declarations matching this figure. It did
 #  once, at 1097, purely by coincidence — two unrelated sums landing on the same
 #  value. Declared-vs-observed is not corroboration.)
-EXPECTED_TOTAL_RUN=1101
+EXPECTED_TOTAL_RUN=1113
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
 # The obvious instinct is a percentage band for headroom. It is wrong here, twice
