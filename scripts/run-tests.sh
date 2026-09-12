@@ -167,6 +167,28 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 # (Do not be reassured by a grep of declarations matching this figure. It did
 #  once, at 1097, purely by coincidence — two unrelated sums landing on the same
 #  value. Declared-vs-observed is not corroboration.)
+#
+# ⚠️ STALE ON PURPOSE, 2026-09-12 — expect exit 5 on the next full run.
+#
+#   `ShippedStoreShapeTests.test_v1_0_5_build10_storeOpens` was added that day
+#   (the 1.0.5 build 10 fixture was captured but never asserted on). That is +1
+#   test, so this constant is one low.
+#
+#   It was NOT updated, because GO_LIVE_CHECKLIST §0 says this number comes from
+#   the OBSERVED count and never from arithmetic — and no full run could be
+#   observed. Three attempts on 2026-09-12 were killed by the OS during the
+#   compile phase, none reaching a single test, on a 16 GB machine whose swap was
+#   7.7 GB of 9.2 GB consumed by unrelated processes. `1114` is the arithmetic
+#   answer and it is probably right; "probably right" is exactly the currency this
+#   constant exists to refuse.
+#
+#   So the NEXT full run exits 5 and PRINTS the observed count. That is the
+#   designed path, not a failure — set this from the number it prints, delete this
+#   block, and say in the commit that the run was observed.
+#
+#   Scoped evidence that the added test is real, not a phantom +1:
+#     scripts/run-tests.sh -only-testing:FinanceTrackerTests/ShippedStoreShapeTests
+#     → executed=9 passed=9 failed=0, exit 0   (was 8 before the change)
 EXPECTED_TOTAL_RUN=1113
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────

@@ -43,7 +43,11 @@ final class ShippedStoreShapeTests: XCTestCase {
     /// versions that remain — the silent-success class this project keeps
     /// getting caught by (`AUDIT_SILENT_SUCCESS_CLASS_2026-08-09`). A missing
     /// fixture must FAIL, loudly, in `test_everyShippedVersionHasAFixture`.
-    private static let shippedVersions = ["V1_0_0", "V1_0_1", "V1_0_2", "V1_0_3", "V1_0_4", "V1_0_5"]
+    private static let shippedVersions = [
+        "V1_0_0", "V1_0_1", "V1_0_2", "V1_0_3", "V1_0_4",
+        "V1_0_5",            // build 9
+        "V1_0_5_BUILD10",    // build 10 — the binary submitted for review
+    ]
 
     /// Rows written by `--demo-mode` at capture time. Identical across versions
     /// because the demo seed is deterministic — which is exactly why it is the
@@ -121,6 +125,18 @@ final class ShippedStoreShapeTests: XCTestCase {
     func test_v1_0_4_storeOpens() throws { try assertOpens("V1_0_4") }
     func test_v1_0_5_storeOpens() throws { try assertOpens("V1_0_5") }
 
+    /// 1.0.5 shipped twice. Build 9 and build 10 are separate binaries with
+    /// separate tags, and a fixture is evidence about *a binary*, not about a
+    /// marketing version — so both are in the corpus and both are asserted on.
+    ///
+    /// Build 10 introduces no schema change, so this shape is identical to build
+    /// 9's today and `test_fixturesSpanDistinctShapes` deliberately makes no
+    /// claim about it. That is not a reason to drop it. The fixture's job is to
+    /// be the shape the SUBMITTED binary wrote, captured while that binary still
+    /// existed; whether it happens to differ from its predecessor is a fact
+    /// about this release, not a criterion for keeping the evidence.
+    func test_v1_0_5_build10_storeOpens() throws { try assertOpens("V1_0_5_BUILD10") }
+
     // MARK: - The corpus actually spans distinct shapes
 
     /// A corpus of five identical stores would pass everything above and prove
@@ -131,6 +147,11 @@ final class ShippedStoreShapeTests: XCTestCase {
     ///   1.0.1  — has the column, no split table                     (declared V1)
     ///   1.0.2  — has the column, no split table                     (declared V1)
     ///   1.0.3+ — has both                                           (V2)
+    ///
+    /// 1.0.5 build 9 and build 10 are the same shape — no schema change between
+    /// them — so no boundary is asserted between those two. They are both in the
+    /// corpus because they are different binaries, which is the unit a fixture
+    /// is evidence about.
     func test_fixturesSpanDistinctShapes() throws {
         let v100 = try columns(of: "ZTRANSACTION", in: try stage("V1_0_0"))
         XCTAssertFalse(v100.contains("ZISPOSSIBLEDUPLICATE"),

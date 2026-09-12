@@ -92,7 +92,15 @@ VERSION="$(grep -m1 "MARKETING_VERSION" "$WORKTREE/FinanceTracker.xcodeproj/proj
 BUILD="$(grep -m1 "CURRENT_PROJECT_VERSION" "$WORKTREE/FinanceTracker.xcodeproj/project.pbxproj" | sed 's/.*= *//;s/;//')"
 SUBJECT="$(git log -1 --format=%s "$COMMIT")"
 COMMIT_DATE="$(git log -1 --format=%ci "$COMMIT")"
-FULL_SHA="$(git rev-parse --short "$COMMIT")"
+# ^{commit} is NOT optional. `git rev-parse <annotated-tag>` returns the TAG
+# OBJECT's sha, not a commit — a different hash that names no commit at all.
+# Every other field here (VERSION, BUILD, SUBJECT, COMMIT_DATE) peels the tag
+# implicitly, so the MANIFEST came out internally consistent and wrong in
+# exactly one cell: StoreV1_0_5_BUILD10 recorded `443bbfb` under the heading
+# "commit" when the commit is `8c98982`. The whole point of these fixtures is
+# answering "which commit shipped as X.Y.Z" — so that cell is the one that
+# must not be a different kind of object.
+FULL_SHA="$(git rev-parse --short "$COMMIT^{commit}")"
 echo "  $FULL_SHA  version $VERSION (build $BUILD)  $COMMIT_DATE"
 
 echo "▶ building (this is the binary whose output we are capturing)"

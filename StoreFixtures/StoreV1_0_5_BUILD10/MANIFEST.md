@@ -5,7 +5,7 @@
 
 | | |
 |---|---|
-| commit | `443bbfb` — chore(release): bump to 1.0.5 (build 10) |
+| commit | `8c98982` — chore(release): bump to 1.0.5 (build 10) |
 | commit date | 2026-09-02 18:36:41 -0700 |
 | marketing version | `1.0.5` (build 10) |
 | captured | 2026-09-02 on iPhone 17 Pro Max, erased simulator, `--demo-mode`, Debug build |
@@ -18,6 +18,19 @@
 ```
 Z_PK Z_ENT Z_OPT ZAMOUNTCENTS ZISDEMO ZISPOSSIBLEDUPLICATE ZTAXCENTS ZCATEGORY ZSOURCE ZCREATEDAT ZDATE ZUPDATEDAT ZCURRENCY ZMERCHANT ZNOTE ZRECURRENCERAW ZTYPERAW ZUUID 
 ```
+
+## Corrected 2026-09-12 — the `commit` cell
+
+As generated this cell read **`443bbfb`**. That is the SHA of the **annotated tag object**
+`v1.0.5-build10`, not of a commit: `capture-store-fixture.sh` used `git rev-parse --short "$COMMIT"`,
+which does not peel a tag. The commit is **`8c98982`** (`git rev-parse v1.0.5-build10^{commit}`),
+and it is the commit that was archived and submitted for review.
+
+Nothing about the captured store changes — the script built the tag, so the *binary* was always
+the right one, and every other cell (version, build, subject, date) peeled the tag implicitly and
+was already correct. Only the identifier was the wrong kind of object, in the one cell whose job
+is to answer "which commit shipped as 1.0.5 (10)". The script is fixed
+(`^{commit}`) so no future MANIFEST repeats it.
 
 ## Rules
 
