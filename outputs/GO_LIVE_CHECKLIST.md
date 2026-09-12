@@ -2,47 +2,86 @@
 
 All v1.0 code blockers closed: CSV integrity, premium gate, Charts crash+freeze, locked-intent P0 (audit), QuickEntry UX, amount parser. Remaining = QA + ASC + submit. Work top to bottom.
 
-## 0. BUILD 10 — blocking items (added 2026-09-01, must clear before anything below)
+## 0. BUILD 10 — CLOSED. Submitted to App Review, awaiting verdict.
 
-These are gates, not reminders. Build 10 does not ship until each is closed by a RESULT,
-not by recollection.
+Submitted 2026-09-12 as reported by the founder. **That date is not a repo artefact** — the
+upload happened outside this checkout (the `v1.0.5-build10` tag message still reads "upload to
+App Store Connect pending credentials"), so it is recollection, not evidence, and it is the one
+line in this section that is.
 
-- [x] **CLEARED 2026-09-02, erased simulator.** `test_poisonedRow_opensInTheEditorAndAcceptsA`
-      `Correction` ran green: the editor OPENS on a row whose amount cannot be summed (no 26th
-      site), and it ACCEPTS a corrected value — the sheet dismissed and `4,000` appeared in the
-      list. **Outcome three, so the card keeps "fix" / «исправьте»** and no string changed.
-      That is also the better instruction: the expense was real, only the import column
-      slipped, and correcting preserves the fact that deleting erases.
+Every gate below is closed by a RESULT. The results are quoted, not summarised.
+
+- [x] **Recovery-journey verb VERIFIED.** `test_poisonedRow_opensInTheEditorAndAcceptsACorrection`
+      ran green on an erased simulator, 2026-09-02: the editor OPENS on a row whose amount cannot
+      be summed (so there is no 26th overflow site on that journey) and it ACCEPTS a corrected
+      value — the sheet dismissed and `4,000` appeared in the list. **Outcome three, so the card
+      keeps "fix" / «исправьте»** and no string changed. That is also the better instruction: the
+      expense was real, only the import column slipped, and correcting preserves what deleting
+      erases.
       Note for whoever reads this next: the test does NOT use "the dashboard recovered" as its
       success signal, because correcting one row still leaves `Int.max − 8 + 400000`, which
       overflows — a genuine save produces no recovery here. The first version of the assertion
       passed vacuously off a `$` in the Recent list.
-- [ ] ~~`test_poisonedRow_opensInTheEditorAndAcceptsACorrection` has RUN, and the card's verb
-      was chosen from its result.~~ (superseded by the line above) The card currently says "find and **fix** the affected
-      entry" / «найдите и **исправьте** запись», and that verb is UNVERIFIED — the editor has
-      never been opened on a row whose amount cannot be summed. Three outcomes, three
-      different actions:
-      • traps on open → a 26th overflow site, ON the recovery journey, fix it before shipping
-      • opens but refuses a corrected value → the copy must say **delete** / **удалите**
-      • opens and accepts a corrected value → the copy stays **fix**, and it is the better
-        instruction (the expense was real; correcting preserves what deleting erases)
-      *Why this is a gate:* the unverified verb is what ships if this is merely forgotten,
-      which is the wrong default for the one string whose correctness is the open question.
-- [ ] **Full suite from an ERASED simulator**, HEAD baseline and branch, compared test by
-      test. `xcrun simctl shutdown all && xcrun simctl erase all` first — this session seeded
-      unsummable rows into the simulator, and a stale poisoned row breaks a HEAD build, which
-      has no overflow protection.
-- [ ] **`EXPECTED_TOTAL_RUN` in `scripts/run-tests.sh` set from the OBSERVED count** of that
-      branch run (the gate prints it on exit 5), never from arithmetic.
-- [ ] **No new failure vs the baseline SET** — `test_seededRowTap_opensEditor` and
-      `test_savingThreeConsecutiveTransactions_...` deterministic,
-      `test_editAfterQuickAddInsert_stillOpensEditor` flaky. Anything else red is ours.
+- [x] **Full suite from an ERASED simulator**, HEAD baseline and branch, compared test by test.
+      Recorded verbatim in the annotated tag:
+      `executed=1109 passed=1107 failed=2 skipped=3` · `executed+skipped=1112 expected=1112 Δ=+0`.
+- [x] **`EXPECTED_TOTAL_RUN` set from the OBSERVED count.** `scripts/run-tests.sh:170` = **1113**;
+      the run above excluded one test by name (`-skip-testing`, the VoiceInputService abort), so
+      `SKIP_ALLOWANCE=1` and the adjusted expectation printed as 1112. The two numbers are the
+      same statement — do not "fix" one to match the other.
+- [x] **No new failure vs the baseline SET.** Both failures are in the known set:
+      `test_editAfterQuickAddInsert_stillOpensEditor` (flaky) and
+      `test_savingThreeConsecutiveTransactions_...` (deterministic). Nothing else was red.
 
-Known-and-accepted for build 10, both filed, neither fixed:
-`outputs/DEFECT_VOICE_INPUT_DEINIT_ABORT.md` (AVAudioEngine teardown can abort the process)
-and the 14 unfixed overflow sites in `outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md` — of
-which `AnalyticsSeries` still traps, which is why the unavailable card no longer claims that
-every other screen works.
+### What actually shipped in 1.0.5 (10)
+
+Tagged commit `8c98982` (`git rev-parse v1.0.5-build10^{commit}` — `git rev-parse` without
+`^{commit}` returns the tag object `443bbfb`, which is not a commit and has already been written
+into a fixture MANIFEST under the heading "commit"). Branch `release/1.0.5`.
+
+- **PDF export no longer clips amounts** (`f7dde93`) — the table sizes its columns from the
+  content and shrinks the font before it will truncate. This is the fix a tester will look for,
+  and it is what the build-10 What's New leads on (`outputs/ASC_WHATS_NEW_1_0_5.md`).
+- **Amounts we cannot represent are rejected at import, and the aggregates on the recovery
+  journey stopped trapping** (`1b6be14`, `c2461b3`, `4348f7c`) — 25 sites, plus the explicit
+  unavailable state on the dashboard.
+- **The unavailable card stopped promising something we do not deliver** (`5dcf9b4`) —
+  *"Every other screen works normally."* deleted in all five languages, because Analytics still
+  traps. Copy corrected instead of code, deliberately and on the record.
+- **The suite gate learned to see a truncated run** (`764d920`, `aaad550`) — exit 4, the guard
+  that was blind through build 9.
+
+### Still filed against 1.0.5 (10), and NOT fixed in it
+
+Three, each with an owner document. None is a reason to pull the build; each is a reason not to
+claim the build is clean.
+
+1. **`outputs/DEFECT_VOICE_INPUT_DEINIT_ABORT.md` — AVAudioEngine teardown can abort the
+   process.** A `SIGABRT` out of `AudioComponentInstanceDispose` reached from
+   `-[AVAudioEngine dealloc]`, i.e. a crash with no user-visible cause and no recovery. Budget
+   Crab ships voice input. Analysed to mechanism in §8 of that file on 2026-09-12 and still
+   deliberately untouched: the decisive experiment is a **device** repetition run, and no fix
+   should be chosen before it. Its one measured consequence — the suite silently dropping 415
+   tests — is already handled by `run-tests.sh` exit 4 and by excluding the single test by name.
+2. **The 14 remaining overflow expressions**
+   (`outputs/DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md` §"Still filed"): `AnalyticsSeries` (6),
+   `CategoryDetailView` (2), `DaySpendingSheet` (2), `AnalyticsView` (1),
+   `AnalyticsBreakdownView` (1), `EditTransactionView` (1), `CSVImportService` (1).
+   **All 14 are off the recovery journey** — cold launch to deleting the offending row — which is
+   the boundary build 10 was drawn at. **`AnalyticsSeries` is the one that matters**: it
+   accumulates across ALL months in `Int`, so Analytics still traps on a ledger the dashboard has
+   just told the user is otherwise fine. That is exactly why the reassurance sentence was deleted
+   rather than softened, and the sentence may only be restored once these are fixed.
+   Whoever widens the fix applies the same rule — `addingReportingOverflow` and an explicit
+   unavailable state, never a wrapped, saturated, zeroed or widened number. Widening is not a
+   fix: `Int128` overflows too, it only moves the cliff.
+   Also filed, not built: **the card does not NAME the offending row.** A user whose amounts all
+   look ordinary — because the bad one arrived through a mis-mapped import column — cannot tell
+   which entry is meant. That is a feature, not a copy fix.
+3. **The privacy-copy gate does not fire on build 10. It fires when iCloud sync ships** — §0b
+   below, unchanged and still open. Recorded here so that reading §0 as "build 10 is clear"
+   cannot be mistaken for "nothing is pending": the gate is on a *different* release, and its
+   whole point is that today's copy is TRUE and becomes FALSE by schedule.
 
 ## 0b. BEFORE iCloud SYNC SHIPS — a gate on THAT release, not on build 10
 
@@ -92,6 +131,16 @@ Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (�
 ## 3. Build & submit
 - [ ] Xcode: Version **1.0**, increment **build number**, `ITSAppUsesNonExemptEncryption = NO` present, Release scheme, all icon sizes.
 - [ ] **Archive → Distribute → App Store Connect (upload).**
+- [ ] **UNCHECK "Manage Version and Build Number" in the Distribute App dialog.** Or export from
+      the command line, which cannot forget:
+      `xcodebuild -exportArchive -archivePath <archive> -exportPath build/export -exportOptionsPlist ExportOptions.plist`
+      — `ExportOptions.plist` pins `manageAppVersionAndBuildNumber` to **false** with the reason
+      inline. Checked (the default), Xcode may silently increment the build number *during export*
+      when App Store Connect already holds it, and the uploaded binary then carries a build the
+      tagged commit never contained — while the tag, the release branch and the `StoreFixtures/`
+      MANIFEST all keep asserting the old one, with nothing warning. **That is the tag rule's
+      guarantee, broken without a symptom.** On build 10 it was left at the default and Xcode
+      happened not to renumber; *it did not happen* is not *it cannot happen*.
 - [ ] **Tag the submitted commit** — `git tag vX.Y.Z-buildN && git push --tags`. Without it, "which
       commit shipped as X.Y.Z" becomes a judgment call within weeks: the 1.0.1 and 1.0.2 fixtures had
       to be inferred from version-bump boundaries, and the first attempt at 1.0.2 picked a commit
