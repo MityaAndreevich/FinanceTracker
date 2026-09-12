@@ -349,11 +349,48 @@ ship — with none of the unreleased work on `main` coming along by accident.
 pre-Budget-Crab "FinanceTracker Lite/Pro" split. They all sit at old commits, they are not part of
 this scheme, and nothing should ever be cut from or merged into them.
 
+### The export must not renumber the build — `ExportOptions.plist`
+
+The tag rule above only holds if the build number in the uploaded binary is the build number
+in the tagged commit. One setting can break that silently.
+
+`manageAppVersionAndBuildNumber` defaults to **true** — in `xcodebuild -exportArchive` and as
+the checked "Manage Version and Build Number" box in Organizer ▸ Distribute App. True lets
+Xcode increment the build number *during export* when App Store Connect already holds that
+number. The upload then carries a build the tagged commit never contained, while the tag, the
+release branch, the `StoreFixtures/` capture and its MANIFEST all keep asserting the old one.
+Nothing warns. "Which commit shipped as X.Y.Z (N)?" stops being answerable from the repo —
+which is the single thing this whole section exists to guarantee.
+
+`ExportOptions.plist` at the repo root sets it to **false**, with that reasoning inline. Export
+from the command line with:
+
+```bash
+xcodebuild -exportArchive -archivePath build/BudgetCrab.xcarchive \
+           -exportPath build/export -exportOptionsPlist ExportOptions.plist
+```
+
+⚠️ **The plist does not bind the Organizer.** Distribute App ignores it and asks in a dialog.
+**Uncheck "Manage Version and Build Number" there every time.** A plist cannot enforce a
+checkbox, so `GO_LIVE_CHECKLIST` §3 carries it as a step as well.
+
+On the 1.0.5 build 10 upload this was not set: Xcode was free to renumber and happened not to.
+Recorded because *it did not happen* is not *it cannot happen*, and the difference is only
+visible after it has already cost a release.
+
 **Shipped so far:**
 
 | Version | Build | Commit | Tag | Branch |
 |---|---:|---|---|---|
 | 1.0.3 | 7 | `a615e07` | `v1.0.3-build7` | `release/1.0.3` |
+| 1.0.4 | 8 | `4e6a8db` | `v1.0.4-build8` | `release/1.0.4` |
+| 1.0.5 | 9 | `b908d2d` | `v1.0.5-build9` | `release/1.0.5` |
+| 1.0.5 | 10 | `8c98982` | `v1.0.5-build10` | `release/1.0.5` |
+
+Commits are the **commit** each tag points at, resolved with `git rev-parse <tag>^{commit}`.
+`git rev-parse <tag>` on an annotated tag returns the *tag object's* SHA, which is a different
+hash and not a commit at all — that is how `443bbfb` (the `v1.0.5-build10` tag object) came to
+be written into a fixture MANIFEST under the heading "commit".
 
 (1.0.0–1.0.2 shipped before this rule existed and have no tags. Do not backfill them from memory —
 if one is ever needed, find it by `CURRENT_PROJECT_VERSION` in `project.pbxproj` history and tag it

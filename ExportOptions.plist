@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ExportOptions.plist — the options every App Store archive is exported with.
+
+  Use it:  xcodebuild -exportArchive \
+             -archivePath  build/BudgetCrab.xcarchive \
+             -exportPath   build/export \
+             -exportOptionsPlist ExportOptions.plist
+
+  ⚠️ THIS FILE ONLY BINDS THE COMMAND-LINE PATH. Xcode's Organizer ▸ Distribute App
+  does NOT read it; it asks the same questions in a dialog, and its
+  "Manage Version and Build Number" checkbox is the UI spelling of
+  manageAppVersionAndBuildNumber below. It must be UNCHECKED there too.
+  GO_LIVE_CHECKLIST §3 carries that as a step, because a plist cannot enforce a
+  checkbox.
+-->
+<plist version="1.0">
+<dict>
+
+    <key>method</key>
+    <string>app-store-connect</string>
+
+    <!--
+      THE REASON, because this key is the one that is easy to leave at its default.
+
+      The build number is set by the COMMIT, not by the export. `CURRENT_PROJECT_VERSION`
+      in project.pbxproj is bumped in a `chore(release):` commit, that commit is what gets
+      the annotated tag `v<marketing>-build<n>`, and the store fixture in StoreFixtures/ is
+      captured by building that same commit. Three artefacts all assert the same number.
+
+      With manageAppVersionAndBuildNumber TRUE (Xcode's default, and the Organizer
+      checkbox's default), Xcode is free to silently increment the build number during
+      export when App Store Connect already holds that number. The uploaded binary then
+      reports a build the tagged commit never contained — and the tag, the fixture and the
+      MANIFEST all keep asserting the old one, with nothing raising a flag. "Which commit
+      shipped as 1.0.5 (10)?" stops being answerable from the repo, which is the exact
+      question the tag rule in ARCHITECTURE.md exists to keep answerable.
+
+      On the 1.0.5 build 10 upload Xcode was free to do this and happened not to.
+      "It did not happen" is not "it cannot happen". FALSE makes the export inert:
+      it ships the number the commit says, or it fails the upload and we fix the commit.
+    -->
+    <key>manageAppVersionAndBuildNumber</key>
+    <false/>
+
+    <!-- Signing matches the project: automatic, team 2867U8T596. -->
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>teamID</key>
+    <string>2867U8T596</string>
+
+    <!-- Upload symbols so App Store Connect can symbolicate field crash reports.
+         Relevant while DEFECT_VOICE_INPUT_DEINIT_ABORT.md is open: an unsymbolicated
+         AudioToolbox abort in the field is indistinguishable from any other SIGABRT. -->
+    <key>uploadSymbols</key>
+    <true/>
+
+    <!-- Bitcode is dead; state it rather than inheriting a default that may move. -->
+    <key>compileBitcode</key>
+    <false/>
+
+    <!-- Ship a single universal binary; the App Store thins it per device. -->
+    <key>stripSwiftSymbols</key>
+    <true/>
+
+    <key>destination</key>
+    <string>export</string>
+
+</dict>
+</plist>
