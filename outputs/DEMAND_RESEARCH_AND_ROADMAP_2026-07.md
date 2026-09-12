@@ -107,6 +107,55 @@ Two of those deserve naming, and neither is actioned here:
 
 ---
 
+### 1.3 Signal #7 gets its first demand-side data point — n=1 (2026-09-12)
+
+**One data point. Not a re-score, not a roadmap item.** Recorded here because #7 is the row §1.2
+named as *"the uncomfortable one"* — the app's hero number, its widget, its proactive alerts and
+half its positioning, resting on an evidence cell that reads *competitor advertising*. Everything
+that happens to that cell is worth writing down, including a single user.
+
+**The observation.** Eliel — first written contact from a real App Store user, Spanish, on 1.0.4
+build 8 — asked for a **savings balance**. Alongside it: what am I spending, and what is my income.
+
+**What it is evidence for, stated narrowly.**
+
+- It is the **first demand-side source of any kind** in row #7's family. Every prior entry in that
+  cell was Rocket Money / Quicken / Albert ad copy. One user is not much, but it is a different
+  *kind* of thing, and the defect §1.1 pinned was kind, not quantity.
+- It is a request for a **cash-position number** — "how much do I have". That is the family #7
+  belongs to.
+
+**What it is NOT evidence for, and this is the half that matters.**
+
+- **It is not confirmation of "safe to spend".** He asked for a *savings balance* — a stock, a
+  net position — not for a per-month discretionary remainder, which is a flow. Those are different
+  numbers and they answer different questions. Writing this down as "a user asked for safe to
+  spend" is precisely the paraphrase drift the citation protocol exists to stop
+  (`AUDIT_NOTEBOOKLM_CITATIONS_2026-08-13.md`: *adoption → retention*, *~6× → ~7×*). The request
+  is a savings balance. Those are his words and they stay his words.
+- **It does not raise #7's score, and arguably cannot.** Two of his three questions are already
+  answered by shipped features — monthly budget with safe-to-spend and a per-day remainder, the
+  dashboard month totals, Analytics with Income•Expenses over a 12-month horizon, per-category
+  limits with a weekly notification. His usage summary says he had used **none** of them: under a
+  month installed, 0–10 transactions, no splits, no recurring, no limits, no voice, no CSV, no
+  export.
+- So **a request for a number we already compute, from a user who never found it, is a
+  discoverability observation wearing a demand observation's clothes.** It belongs in the
+  discoverability ledger with more force than it belongs here. See
+  `outputs/PLAN_TUTORIAL_AND_HELP.md`, where the same case is the evidence.
+
+**n=1, and the denominator is worse than it looks.** §1.2's closing point applies with full force:
+one request is not demand, and our percentages are already shares of a population whose first
+choice we refuse to serve. What would change #7's standing is a demand-side source with a
+denominator — the 1.0.4 usage instrument, review text, or support mail with more than two items in
+it (`project_sync_demand_evidence`: the mailbox read zero organic mail on 2026-08-13). This is one
+row in a corpus that does not exist yet. **Its value is that the corpus now has a first row.**
+
+**If a savings-balance feature is ever proposed, this is what it may be cited for:** that one user
+asked for it, unprompted, in September 2026. Nothing else.
+
+---
+
 ## 2. Positioning verdict (research-driven answer to your question)
 
 You asked: **"same features but cheaper" vs "free stripped version" vs (locked) privacy-first?**
