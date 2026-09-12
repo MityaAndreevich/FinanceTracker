@@ -196,3 +196,126 @@ the whole swift-testing phase with it (44 suites, 415 `@Test` functions) and the
 plausible number with no indication anything is missing. `scripts/run-tests.sh` now exits 4 on a
 truncated run. The clean rerun excludes this single test by name and runs it separately, and that
 exclusion is logged in the run report rather than left silent.
+
+---
+
+## 8. Answering the two questions from the code (2026-09-12)
+
+Asked while 1.0.5 build 10 sits in review: **does `deinit` stop the engine and deactivate the
+session before releasing it, or does it rely on dealloc order? And is there a user-reachable path
+that releases the service with the engine still running?**
+
+Read at `8c98982` + the post-submission docs commits; `VoiceInputService.swift` is unchanged since
+the defect was filed. **Nothing was fixed. No code was touched.**
+
+### 8.1 `deinit` relies on dealloc order, and it cannot do otherwise
+
+Three separate statements, and only the third is a design choice:
+
+1. **It stops the engine, conditionally** — `if audioEngine.isRunning` (`:159`).
+2. **It never deactivates the `AVAudioSession`.** `cleanup()` does (`:321`); `deinit` does not, and
+   cannot call `cleanup()` — `cleanup()` is main-actor-isolated and `deinit` is not, which `deinit`
+   says in its own comment.
+3. **It never disposes the engine, and there is no API with which it could.** `audioEngine` is a
+   stored `let` (`:48`). ARC releases it in the ivar destroyer *after* the `deinit` body returns.
+   `AVAudioEngine` has no `dispose()`; disposal is `-[AVAudioEngine dealloc]`'s business.
+
+The crash stack is that order, printed:
+
+```
+VoiceInputService.__deallocating_deinit      ← our deinit body has already run
+_objc_rootDealloc → objc_destructInstance
+VoiceInputService.__ivar_destroyer           ← ARC now releases `audioEngine`
+-[AVAudioEngine dealloc]
+AVAudioIOUnit::~AVAudioIOUnit → AudioComponentInstanceDispose
+_CheckRPCError → _ReportRPCTimeout → abort
+```
+
+So the answer is **dealloc order, unavoidably** — and the abort is not in the part `deinit`
+controls. `deinit` runs to completion and *then* the process dies. Anything `deinit` could be made
+to do about the engine is therefore the wrong lever; the levers are earlier (never instantiate the
+IO unit) or adjacent (do not hand the daemon a live session to tear down at the same moment).
+
+### 8.2 The second question is answerable, but it is not the load-bearing one
+
+**Answer: not on the ordinary dismissal path.** `QuickEntryView` owns the only production instance
+(`@StateObject`, `:72`) and calls `voice.stop()` in `.onDisappear` (`:210`), which fires before
+the sheet's state storage is released. `handleResignActive` (`:328`, registered `:147`) covers
+backgrounding. `toggleVoice` awaits across `requestAuthorizationIfNeeded()` and `start()`, but the
+`Task` captures the view struct, which holds the `StateObject` box, so the service cannot be
+released mid-suspension. The remaining engine-still-running releases are **process termination**
+and **a view-tree teardown with no appearance transition** — narrow, and not the interesting case.
+
+**The interesting case is that a stopped engine does not avoid the abort.** The aborting frame is
+`AudioComponentInstanceDispose`, and dispose runs whenever an `AURemoteIO` was ever *instantiated*
+— not whenever it was *started*. The crashing test never starts the engine. So the reachability
+question that matters is not "can the service be released while running" but:
+
+> **On what user path does an `AURemoteIO` get created at all?**
+
+And the answer is **every open-and-close of Quick Entry, whether or not the user speaks**, because
+`cleanup()` reaches `audioEngine.inputNode` unconditionally at `:316` — outside the `isRunning`
+guard that protects `audioEngine.stop()` one line above. `AVAudioEngine.inputNode` is lazy; first
+access instantiates and configures the input audio unit. `stop()`, documented at `:290` as
+*"Safe to call when not listening (no-op)"*, is therefore not a no-op: on a service that never
+listened it plausibly **creates** the very unit whose disposal aborts. Construct → `stop()` →
+release is the crashing test, exactly.
+
+`start()` also calls `stop()` first (`:239`), so the same access happens at the top of every
+dictation, before the session is configured.
+
+### 8.3 One piece of discriminating evidence we may already hold, and one new prediction
+
+**Already held, if the attribution is real.** `LeakTeardownTests` contains two near-identical
+tests in one `.serialized` suite: `voiceInputServiceDeallocatesWhenReleased` (construct, release —
+**never calls `stop()`**, `:43`) and `voiceInputServiceDeallocatesAfterStop` (`:65`). §1 names the
+`stop()` variant as the triggering test. If that name came out of the `.ips` reports, then across
+three aborts the no-`stop()` twin sitting beside it never fired — which is direct evidence for
+(b), and nobody has drawn it out. **If the name was inferred rather than read, it is worth
+nothing.** Check the three `.ips` files before relying on this; it is the cheapest evidence in the
+whole file and it is either decisive or absent.
+
+**New, and it costs nothing to observe.** `cleanup()` also calls
+`setActive(false, options: .notifyOthersOnDeactivation)` unconditionally (`:321`). So closing
+Quick Entry without ever tapping the mic tells the system Budget Crab has released an audio session
+it never took, and invites other apps to resume. On a device with music playing that is a
+potentially *audible* side effect of closing the add-expense sheet — and it is also the most
+plausible reason the abort correlates with audio contention rather than with platform. It may well
+be swallowed: deactivating a session that was never activated can fail, and the error is discarded
+by `try?`. **Both outcomes are informative**, which is what makes it worth running first.
+
+### 8.4 What a device test would have to show
+
+The claim to kill is **Claim S** (§4): the abort needs the daemon to miss AudioToolbox's RPC
+timeout, and only the simulator's daemon is slow enough.
+
+**Test 1 — the decisive one. Repetition on physical hardware.**
+Construct → `stop()` → release, in a loop, on a real device, under CPU and audio contention
+(music playing, another app holding the session). **One abort falsifies S outright** and the
+defect stops being a test-infrastructure problem and becomes a shipped crash.
+
+What a *null* result may and may not say: this test **cannot prove S**. Zero aborts in N cycles
+bounds the per-dispose rate, nothing more — so **the loop must count and log its own denominator**,
+or the result is unreportable. Three simulator aborts arrived inside ~4 hours of heavy parallel
+load whose dispose count nobody recorded, so there is no rate to compare against yet; the device
+run should produce the first one on either platform. State the bound the run achieved
+(e.g. "0 in 50,000 cycles ⇒ p < 6×10⁻⁵ at 95%") and treat "simulator-only" as **unproven at that
+bound**, never as "fixed".
+
+**Test 2 — separates (b) from everything else, and is nearly free.**
+Same loop, one variable changed: an instrumented build that records whether `audioEngine.inputNode`
+was ever touched. Compare construct→release against construct→`stop()`→release.
+If aborts occur only in the `stop()` arm, (b) is confirmed and the fix surface collapses to one
+unguarded line. If both arms abort, (b) is wrong and `inputNode` is not what creates the unit.
+
+**Test 3 — the audible one, no build required.**
+Play music, open Quick Entry, close it without touching the mic, on device. If the music's ducking
+or level changes, `cleanup()`'s `setActive(false)` is reaching the system on a service that never
+listened — (b)'s premise, observed with an ear instead of a profiler. If nothing happens, the
+session half of `cleanup()` is inert when unused and only the `inputNode` half remains suspect.
+
+**What none of these tests may conclude.** That fixing (a), (b) or (c) removes the abort. The abort
+is AudioToolbox's response to a timeout it owns; the findings change how often we ask it to dispose
+a unit, not what it does when the daemon is late. A fix is justified by "stop creating an audio unit
+on a screen nobody spoke to", which is true regardless — **and it is deliberately not being chosen
+here, because Test 2 is what tells us whether that is one line or the wrong line.**
