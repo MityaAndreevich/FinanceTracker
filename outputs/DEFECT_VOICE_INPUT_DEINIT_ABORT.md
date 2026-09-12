@@ -272,8 +272,30 @@ tests in one `.serialized` suite: `voiceInputServiceDeallocatesWhenReleased` (co
 `stop()` variant as the triggering test. If that name came out of the `.ips` reports, then across
 three aborts the no-`stop()` twin sitting beside it never fired — which is direct evidence for
 (b), and nobody has drawn it out. **If the name was inferred rather than read, it is worth
-nothing.** Check the three `.ips` files before relying on this; it is the cheapest evidence in the
-whole file and it is either decisive or absent.
+nothing.**
+
+> ⚠️ **The three `.ips` files can no longer be checked, and this section caused that.**
+> Searched 2026-09-12: nothing named `FinanceTracker*.ips` survives anywhere —
+> `~/Library/Logs/DiagnosticReports` holds 9 files, none older than **2026-09-05**, so macOS had
+> already rotated the 2026-08-26 reports out of the host directory before today (that directory's
+> mtime, 2026-09-11, predates this session). But the per-device copy under
+> `~/Library/Logs/CoreSimulator/DB0C60E3-…/CrashReporter/` **was wiped by an
+> `xcrun simctl erase all` run in this session**, minutes before the search, and whether it still
+> held them cannot now be established. Host rotation is the more likely cause. It is not the only
+> one, and the honest statement is: **this may have been destroyed here.**
+>
+> **Two of this project's own rules are in direct conflict, and nobody had noticed.**
+> `run-tests.sh` and `project_simulator_contamination_confirmed` both say **erase before every full
+> run** — mandatory, and correct. `§1` of this file rests on `.ips` files that live on the device
+> being erased. **The erase rule silently deletes the evidence the defect rule depends on.** The
+> fix is not to stop erasing; it is to **copy `.ips` files out of the device and into the repo the
+> moment they are cited**, the way the store fixtures are committed rather than left where the next
+> capture will overwrite them. Nothing of this file's §1 is committed anywhere — the stack in §1 is
+> a transcription, and transcriptions are now all we have.
+
+So the attribution in §1 cannot be confirmed and cannot be refuted. It can only be **re-earned**,
+by Test 2 below, which produces the same discrimination from a run we control instead of from a
+report we no longer hold.
 
 **New, and it costs nothing to observe.** `cleanup()` also calls
 `setActive(false, options: .notifyOthersOnDeactivation)` unconditionally (`:321`). So closing
