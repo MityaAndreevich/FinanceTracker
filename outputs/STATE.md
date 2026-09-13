@@ -3,6 +3,16 @@
 **Derived 2026-09-12 from the sources, at HEAD `537e220`.** Every row was re-read today. No row was
 written from memory, including mine.
 
+**Counts used below, each with the command that produced it** (run 2026-09-12) — because a count is a
+separate claim from the thing it counts (rule 4):
+
+| number | value | command |
+|---|---|---|
+| markdown documents in `outputs/` | **115** (112 before this pass added three) | `ls outputs/*.md \| wc -l` |
+| entries in `outputs/` including data files | **127** | `ls outputs/ \| wc -l` |
+| of those carrying a status/verdict/decision header | **25** | the sweep in §5 step 1, piped to `wc -l` |
+| `outputs/` documents citing the pre-test | **5** (excluding this file and the register) | `grep -rln DECISION_RECEIPT_INPUT_PRETEST outputs/*.md` |
+
 ---
 
 ## THE RULES THIS FILE IMPOSES
@@ -13,7 +23,7 @@ written from memory, including mine.
 2. **A status line must cite where it was verified — file AND line.** No status from memory, ever.
    Not the founder's, not Claude's, not a previous session's. A pointer a reader cannot open is not
    evidence; it is a claim, and this project has a rule about claims.
-3. **The 124 documents in `outputs/` are the evidence archive. They no longer carry AUTHORITATIVE
+3. **The 115 documents in `outputs/` are the evidence archive. They no longer carry AUTHORITATIVE
    status.** Read precisely: their status headers were **not** stripped and are still there, several
    of them stale — §4.2 and §4.3 are two proven cases. What changed is **precedence**, not the files.
    Where a document's header contradicts this file, **this file wins**, and the contradiction gets a
@@ -62,8 +72,39 @@ It also found that §0's Q1 named one blocker where §2 named two, and that *"bo
 met"* contradicted §2's own enumeration of three. Both fixed above.
 
 **What this does not establish.** §0 was written to answer these three questions, so passing proves
-§0 exists — not that this file carries status in general. **The fourth question, whatever it turns
-out to be, is untested.** Re-run this test against a *new* question whenever one is asked twice.
+§0 exists — not that this file carries status in general.
+
+### RUN 2 — same day, with a FOURTH question the file was not built for
+
+*"I am about to run the full suite and then start work on iCloud sync. What must I not get wrong,
+and what must I do first?"*
+
+**Content: passed. Retrieval: failed.** Everything needed was present and correct — including the
+single most decision-relevant fact, that **sync was withdrawn as a demand signal and nobody asked
+for it** (§4.4). But answering required assembling **nine** locations: §1, §7, S1, L1–L3, V3, E1, P1,
+A1 and §4.4. Well over a minute.
+
+> **The diagnosis is structural: this file is organised by ITEM, and Q4 is a question about an
+> ACTION.** The three registered questions are item-shaped, which is why §0 works for them and only
+> them. **A reader arriving with a task, rather than with a question about one item, is not served.**
+> That is recorded as a known limitation, not repaired — repairing it means an action-shaped index,
+> and that should be built when a second action-shaped question appears, not guessed at now.
+
+**Run 2 also found three defects run 1 missed, and one claim run 1's own repair log overstated:**
+
+| what it found | repaired |
+|---|---|
+| §7 said *"fix **or exclude** D1's test and run again"* — excluding removes the only coverage of a user-reachable process `abort()`, **and then sanctions harvesting the count from that run**, baking a lowered baseline in through the front door | §7 now bars harvesting from any filtered run, and bars standing exclusion of D1 |
+| §5's own recipe used `&& echo yes \|\| echo NO` — a missing tag, bad SHA or wrong cwd exits non-zero and prints a confident **"NO"**. The *"reports success while doing nothing"* class, installed in the verification recipe | Replaced with a three-outcome form that prints `ERR` on failure |
+| §7 gave exit 4 and 5 but not **exit 2 and exit 3**, and said nothing about the run not finishing — three attempts on 2026-09-12 were killed in the compile phase | All four exit codes tabled; the erase rule and the OOM record added, both cited to `scripts/run-tests.sh` |
+| Run 1's repair log claimed *"both fixed above"* about the preconditions — **§0 was fixed and row R1 still read "Both preconditions are MET"** | R1 corrected. **The log was wrong, and that is recorded here rather than edited away** |
+
+Unsourced counts found in both runs (*"124 documents"*, *"roughly twenty"*, *"~100"*, *"at least six"*,
+*"1114 is the arithmetic answer"*) are now counted or cited — see the table at the top of this file.
+Three of those numbers were wrong: it is **115** documents, **25** with status headers, and **five**
+citing the pre-test.
+
+**Re-run this test against a new question whenever one is asked twice.**
 
 ---
 
@@ -95,8 +136,8 @@ discover the conflict later.
 
 ⚠️ **The governing document is NOT in this repository.** Its path is
 `../budget-crab-internal/working-docs/DECISION_RECEIPT_INPUT_PRETEST.md` — a **sibling repo**, one
-level above this working tree. Every citation below is to that file. Six `outputs/` documents cite
-it as though it were local; from inside this repo those are all dead links. See §4.5.
+level above this working tree. Every citation below is to that file. **Five** `outputs/` documents
+cite it as though it were local (counted — §4.5); from inside this repo those are all dead links.
 
 `:4` — *"**Status:** registered, not yet resolved."* The §5 results table (`:199–212`) is **empty**.
 
@@ -112,7 +153,11 @@ build 8 (verified against the tag, §2); **R1c, T0 itself, is UNRECORDED.** The 
 this item.**
 
 **Q3 — Defects reachable by a user in the currently shipped version.**
-The currently shipped version is **1.0.4 build 8**; 1.0.5 build 10 is in review (§1). So
+The currently shipped version is **1.0.4 build 8** — ⚠️ **this is an INFERENCE, not a recorded
+fact, and every answer below rests on it.** No document states which version is available; the
+inference is that 1.0.5 b10 is *in review* and a real App Store user is on 1.0.4 b8. **Confirm it in
+App Store Connect before acting on this table** — the same visit settles R1c. Full statement in §1.
+1.0.5 build 10 is in review. So
 **every fix that landed in build 9 or build 10 is NOT yet in users' hands.** Build 10 contains build
 9's work (`v1.0.5-build9` is an ancestor of `v1.0.5-build10`, checked 2026-09-12), so "fixed in
 build 9" and "fixed in build 10" are equally out of reach today.
@@ -174,7 +219,7 @@ Evidence is the document **and line** that holds the detail, never a summary of 
 | id | item | status | blocked by | evidence |
 |---|---|---|---|---|
 | **F1** | **Family / shared ledger** | **open** — no decision taken | SwiftData cannot use the CloudKit shared database; and it sits behind private sync, which has two unbuilt prerequisites of its own | `RESEARCH_FAMILY_ACCESS_2026-08-12.md:3` (status) · `:302–321` (the veto) · `:382` (candidate 5 is the only model that gives privacy AND fits CloudKit) · `:388` (candidate 5 is still behind the veto) · `:412–415` (recommends refusing it in the 1.0.x line) · `:419` (*"That is judgement, not evidence"*) |
-| **R1** | **Receipt / screenshot OCR** | **awaiting-measurement** — and **the clock is running unrecorded** | Nothing. Both preconditions are MET; what is missing is that **T0 was never written down** | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
+| **R1** | **Receipt / screenshot OCR** | **awaiting-measurement** — and **the clock is running unrecorded** | Nothing external. **Of the three gating conditions, R1a and R1b are MET and R1c (T0) is UNRECORDED** — what is missing is that nobody wrote the date down | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
 | **S1** | **iCloud sync (private CloudKit)** | **blocked** | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
 | **V3** | **V3 schema (8 frozen attributes)** | **blocked** | D3 (the sentinel defect) is a prerequisite of *shipping* V3, not only of drilling it; and there is no real V2 store to drill against | `DESIGN_V3_SCHEMA_FREEZE.md:3` (*"no code written yet"*) · `:166–170` (what is needed first) · `DEFECT_V2_MIGRATION_SENTINEL.md:26` · `AUDIT_V3_ROLLBACK_READINESS.md:122` (§6, no real V2 store on this machine) |
 | **RP1** | **Reports** | **open** — reframed, not scheduled | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
@@ -238,7 +283,17 @@ Two consequences, both narrow and neither a licence to act:
 
 1. **The first look may already be due or overdue.** It is not computable from anything in this repo,
    because the availability date is not in this repo. Get it from App Store Connect and write it into
-   the pre-test's `:103` and `:118`. That is the entire action.
+   the pre-test's `:103` and `:118`.
+
+   **Why this is not barred by `:214` ("Do not edit §4 after data starts arriving").** `:103` and
+   `:118` are in **§3 and §5**, not §4. **No threshold moves.** The ban is on §4, and §4 is untouched.
+
+   **The honest hazard, which is real and is not resolved by that distinction.** You cannot establish
+   whether mails have already arrived, *because you do not know T0* — and `:125` makes T0 the
+   boundary that decides which mails count. **A T0 recorded late is still the correct T0** (it is a
+   fact about the App Store, not about us), but anyone recording it should note in §5 that it was
+   backfilled and on what date, so a future reader can see that the boundary was set after the window
+   opened rather than before. **Record the backfill; do not quietly date it.**
 2. **Nothing about §4 may move.** `:214` — *"**Do not edit §4 after data starts arriving.**"* — and
    `:306` — *"**An open amendment window is not a reason to amend.**"* Recording a missing T0 is
    bookkeeping. Touching a threshold is not, and §8.3 gives the two-part test that would have to pass
@@ -247,6 +302,32 @@ Two consequences, both narrow and neither a licence to act:
 **What this row is NOT.** It is not evidence about receipt OCR in either direction. The council's
 2026-07-19 kill stands until the instrument reads (`:162`). This row is about a blank field, not
 about a feature.
+
+---
+
+### ⚠️ APPLY §4.2 AND §4.3 TO S1 AND V3 BEFORE ACTING ON THEM
+
+The evidence for **S1** is `DESIGN_ICLOUD_SYNC_1_0_4.md:3`, a **status header** — and §4.2 and §4.3
+below prove that status headers in `outputs/` go stale while the body moves on, while §6.3 notes
+that quiet staleness *"presents no seam to catch."* **The rule this file states undermines its own
+citation for the largest item on the roadmap, and honesty requires saying so rather than exempting
+it.**
+
+**So S1's header was checked against the code, not only re-read.** `grep -rn "cloudKitDatabase"
+--include=*.swift` returns **8 hits, none of them `.private(…)`** — and the one that matters is the
+app's own synced store:
+
+```swift
+// FinanceTracker/Data/SharedModelContainer.swift:258
+"synced", schema: syncedSchema, url: store, cloudKitDatabase: .none
+```
+
+**`DESIGN_ICLOUD_SYNC_1_0_4.md:3` is corroborated by the tree, so S1 is a re-verified status and not
+merely a re-read one.** Checked 2026-09-12.
+
+**V3 and A1 have NOT had this treatment.** `DESIGN_V3_SCHEMA_FREEZE.md:3` and
+`DESIGN_AUTOPOST_RECURRENCE_1_0_4.md:3` are re-read headers only. Do the equivalent check before
+acting on either — it is cheap, and it is the difference between a header and a fact.
 
 ---
 
@@ -311,9 +392,10 @@ stop using it, not to annotate it.
 
 ### 4.5 The receipt pre-test is not in this repository
 
-`DECISION_RECEIPT_INPUT_PRETEST.md` is cited by **at least six documents in `outputs/`** — e.g.
-`FEATURE_PREP_BACKLOG.md:6`, `PROPOSAL_SPLIT_DISCOVERABILITY_1_0_4.md:4`,
-`DECISION_RELEASE_SHAPE_1_0_4.md:81`, `:94` — as though it were a sibling file. **It is not in this
+`DECISION_RECEIPT_INPUT_PRETEST.md` is cited by **five documents in `outputs/`** — counted, not
+estimated: `FEATURE_PREP_BACKLOG.md:6`, `PROPOSAL_SPLIT_DISCOVERABILITY_1_0_4.md:4`,
+`DECISION_RELEASE_SHAPE_1_0_4.md:81` and `:94`, `REVIEW_PRIVACY_POLICY_CORRECTION_2026-08-03.md:114`,
+`RESEARCH_SYNTHESIS_2026-07-02.md` — each as though it were a sibling file. **It is not in this
 repo and has not been since `758691d` (2026-08-04) untracked it**; `.gitignore` carries it under
 *"Internal decision records (moved to budget-crab-internal 2026-08-04)"*.
 
@@ -337,7 +419,16 @@ for f in outputs/*.md; do echo "### $f"; \
 
 # 2. Which builds contain which fix. This is the ONLY way to answer "reachable today".
 #    Do not reason from a commit date; tags are what shipped.
-git merge-base --is-ancestor <commit> v1.0.4-build8 && echo "in shipped" || echo "NOT in shipped"
+#
+#    ⚠️ DO NOT use `... && echo yes || echo NO`. An earlier draft of this file did,
+#    and it is the "reports success while doing nothing" class installed in the
+#    verification recipe itself: a missing tag, a bad SHA or the wrong cwd exits
+#    non-zero and prints a confident "NO". Distinguish the three outcomes:
+case "$(git merge-base --is-ancestor "$C" "$TAG"; echo $?)" in
+  0) echo "IN $TAG" ;;
+  1) echo "NOT in $TAG" ;;
+  *) echo "CHECK FAILED — bad SHA, missing tag, or wrong cwd. This is not an answer." ;;
+esac
 
 # 3. Whether a precondition really shipped — read the TAG, not HEAD.
 git show v1.0.4-build8:FinanceTracker/Views/TransactionDetailView.swift
@@ -361,13 +452,15 @@ f7dde93    PDF amount column sizing              NO         NO         yes
 ```
 
 ```bash
+# Three outcomes, never two — see the warning in step 2 above.
+anc() { git merge-base --is-ancestor "$1" "$2"; case $? in 0) echo yes;; 1) echo NO;; *) echo ERR;; esac; }
 for c in 8c748b7 1b6be14 c2461b3 f7dde93 15b646b; do
   printf "%s  b8=%s b9=%s b10=%s\n" "$c" \
-    "$(git merge-base --is-ancestor $c v1.0.4-build8  && echo yes || echo NO)" \
-    "$(git merge-base --is-ancestor $c v1.0.5-build9  && echo yes || echo NO)" \
-    "$(git merge-base --is-ancestor $c v1.0.5-build10 && echo yes || echo NO)"
+    "$(anc $c v1.0.4-build8)" "$(anc $c v1.0.5-build9)" "$(anc $c v1.0.5-build10)"
 done
 ```
+**Any `ERR` invalidates the whole row.** The table above was produced with this form and contains
+none.
 
 **Read the `15b646b` row against the others**: it is the only fix already in users' hands, and it is
 the instrument correction — not any of the three defect fixes.
@@ -408,9 +501,9 @@ Three specific ways this file is wrong right now, in order of likelihood:
    "permanent bootstrap logging" has no source document anywhere. There is no reason to think B1 is
    the only one. **This file cannot find what was never written down — it can only make the gap
    visible once someone names the item.**
-2. **Documents with no status line are under-represented.** Of 124 files in `outputs/`, the sweep in
-   §5 step 1 found an explicit status/verdict/decision line in roughly **twenty**. The remaining
-   ~100 were read only where a required item pointed into them. **A decision sitting in the body of
+2. **Documents with no status line are under-represented.** Of **115** markdown files in `outputs/`,
+   the sweep in §5 step 1 found an explicit status/verdict/decision header in **25** — counted, not
+   estimated. **The other 90 were read only where a required item pointed into them.** **A decision sitting in the body of
    a brief with no header line is invisible to the method that built this file.**
 3. **A status can be stale without contradicting itself,** so §4 catches only the loud cases. §4.2
    and §4.3 were found because the document argued with *itself*. A document that is simply, quietly
@@ -428,15 +521,20 @@ exhaustive, which it is not and cannot be.
 
 `scripts/run-tests.sh:192` sets `EXPECTED_TOTAL_RUN=1113`, deliberately **one low**. 1114 is the
 arithmetic answer, and the constant exists to refuse an arithmetic answer: per
-`project_full_suite_oom_on_this_mac`, **`EXPECTED_TOTAL_RUN` is never to be set by arithmetic — the
-next full run prints the observed number and that number is what goes in.** Exit 5 is the guard
-working.
+`scripts/run-tests.sh:177–178`, **the constant comes from the OBSERVED count and never from
+arithmetic.** The +1 is sourced, not guessed: `:174–175` names the test that was added
+(`ShippedStoreShapeTests.test_v1_0_5_build10_storeOpens`) and `:190–192` records the scoped run that
+proves it real — `executed=9`, *"was 8 before the change"*. `:181` calls 1114 *"the arithmetic answer
+and it is probably right; 'probably right' is exactly the currency this constant exists to refuse."*
+**Exit 5 is the guard working.**
 
 ### ⚠️ BUT: never harvest the count from a truncated run
 
 **These two facts interact, and the interaction is a trap.** A full run can still lose ~415 tests to
-the `VoiceInputService` abort (`DEFECT_REGISTER.md` D1) — 44 suites, 415 `@Test` functions — and
-`run-tests.sh` exits **4** on that (`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:196`).
+the `VoiceInputService` abort (`DEFECT_REGISTER.md` D1; `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:195`) —
+44 suites, 415 `@Test` functions — and
+`run-tests.sh` exits **4** on that — *"(44 suites, 415 `@Test` functions)"*,
+`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:195–196`.
 
 > **If you take the count from a run that exited 4, you bake a truncated total into
 > `EXPECTED_TOTAL_RUN` permanently, and the guard silently stops guarding — forever, and with no
@@ -445,8 +543,43 @@ the `VoiceInputService` abort (`DEFECT_REGISTER.md` D1) — 44 suites, 415 `@Tes
 
 **The rule, stated so it cannot be got wrong:**
 
-> **Harvest the count ONLY from a run that exited 5 (or 0). Never from an exit-4 run. If the run
-> exits 4, fix or exclude D1's test and run again — the number from that run is not a number.**
+> **Harvest the count ONLY from a FULL run that exited 5 or 0, with NOTHING excluded.**
+>
+> **Three ways to get a number that is not a number:**
+> 1. **exit 4** — the run was truncated. Not a number.
+> 2. **a run with `-skip-testing` or `-only-testing`** — including one that excludes D1's test.
+>    Harvesting from it bakes a permanently lowered baseline in **through the front door**, which is
+>    the same trap as (1) with the guard's consent. Not a number.
+> 3. **exit 2 or exit 3** — see below. Not a number.
+>
+> **And do not "just exclude D1's test" as a habit.** It is the only coverage of a defect this file's
+> own Q3 table calls user-reachable, a process `abort()`, and never fixed in any build. Excluding it
+> for one diagnostic run is fine; excluding it standing is how D1 stops being visible at all.
 
-**Also: never pipe `run-tests.sh`** — a pipe replaces its exit code with the tail's, which discards
-exit 4 and exit 5 alike.
+### The other two exit codes, and the run that does not finish
+
+§7 named exit 4 and 5. **There are four**, all documented at `scripts/run-tests.sh:20–27`:
+
+| exit | meaning | why it exists |
+|---|---|---|
+| **2** | **ZERO tests executed** — *"the silent no-op; never a pass"* (`:20`) | `xcodebuild -only-testing` prints `** TEST SUCCEEDED **` when the filter matches nothing |
+| **3** | the build failed, or its status could not be read (`:21`) | a compile failure had been scored as a caught mutation |
+| **4** | FEWER tests than declared (`:23`) | D1's abort |
+| **5** | MORE tests than declared (`:27`) | the expected case right now |
+
+**Two things that will bite before you ever see an exit code:**
+
+- **ERASE THE SIMULATOR FIRST.** `scripts/run-tests.sh:161` — several UI suites pass from an erased
+  simulator and fail from a dirty one. **A clean worktree is not a clean simulator**; both trees
+  launch into the same app container.
+- **The run may not finish on this machine.** `scripts/run-tests.sh:180–182` records that three
+  attempts on 2026-09-12 were **killed by the OS in the compile phase, none reaching a single test**,
+  on a 16 GB machine with 7.7 GB of 9.2 GB swap consumed by unrelated processes. Reuse
+  `-derivedDataPath` so a retry skips the compile.
+
+**`scripts/run-tests.sh:171–192` is the authoritative version of this entire section** — it carries
+the derivation of 1114, why the constant was deliberately left one low, and the scoped evidence that
+the added test is real rather than a phantom +1. **Read it before the run; this section is a
+pointer, not a substitute.**
+
+**Never pipe `run-tests.sh`** — a pipe replaces its exit code with the tail's, discarding all four.
