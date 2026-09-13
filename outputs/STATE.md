@@ -13,9 +13,11 @@ written from memory, including mine.
 2. **A status line must cite where it was verified — file AND line.** No status from memory, ever.
    Not the founder's, not Claude's, not a previous session's. A pointer a reader cannot open is not
    evidence; it is a claim, and this project has a rule about claims.
-3. **The 124 documents in `outputs/` remain the evidence archive. They no longer carry status.**
-   Where a document's own header contradicts this file, this file is later and wins — and the
-   contradiction gets a row in §4 rather than a silent edit.
+3. **The 124 documents in `outputs/` are the evidence archive. They no longer carry AUTHORITATIVE
+   status.** Read precisely: their status headers were **not** stripped and are still there, several
+   of them stale — §4.2 and §4.3 are two proven cases. What changed is **precedence**, not the files.
+   Where a document's header contradicts this file, **this file wins**, and the contradiction gets a
+   row in §4 rather than a silent edit to either.
 4. **A superlative is a separate claim from the thing** (`CLAUDE.md`, citation protocol §5). "Sync is
    blocked" and "sync is the largest item on the roadmap" verify independently.
 
@@ -39,52 +41,120 @@ This file exists to fix a failure of memory, so it is testable the way the guard
 **§0 answers them directly.** That is the design, not a summary: a file that requires reading a
 table to answer its own acceptance test has already failed the one-minute clause.
 
+### RESULT — run 2026-09-12, same day, and it found real defects
+
+**Run as registered:** a session with no context, permitted to open this file and nothing else — no
+git, no grep, no following a citation.
+
+**All three answered, all three immediately.** The stopwatch clause passed.
+
+**And it failed in ways worth recording, because a test that only ever passes is not a test.** Nine
+repairs were made to this file as a result; four mattered:
+
+| what it found | why it mattered | repaired |
+|---|---|---|
+| The Q3 table's middle column **changed subject halfway down** — rows 1–3 answered about the *fix*, rows 4–6 about the *defect*, under one header | A reader taking the header literally reads row 1 as *"not in build 8 ⇒ not reachable"* — **the exact inversion of the truth**, in the section built to pass this test | Split into two columns, `defect present?` and `fix present?` |
+| §3 said the window *"has been open for some weeks"* | That is **a duration computed from a date §1 marks NOT RECORDED ANYWHERE** — a plausible unsourced number, in the file whose whole purpose is stopping those | Deleted, and the deletion is now documented in §3 so it cannot come back |
+| §7 said to harvest the suite count from the next run — with no caveat that an **exit-4 truncated run** would bake a short total in permanently | Following this file's own instruction would have **disarmed the guard, silently and forever** | §7 now forbids harvesting from an exit-4 run, in a box |
+| §0's citation to the pre-test used a path that **does not resolve from this repo** | §4.5 names precisely that as a cause of the 2026-09-08 error — and §0 reproduced it | §0 now leads with the sibling-repo path and a warning |
+
+It also found that §0's Q1 named one blocker where §2 named two, and that *"both preconditions are
+met"* contradicted §2's own enumeration of three. Both fixed above.
+
+**What this does not establish.** §0 was written to answer these three questions, so passing proves
+§0 exists — not that this file carries status in general. **The fourth question, whatever it turns
+out to be, is untested.** Re-run this test against a *new* question whenever one is asked twice.
+
 ---
 
 ## 0. THE THREE ANSWERS
 
 **Q1 — Family / shared access: OPEN. No decision has been taken.**
-`RESEARCH_FAMILY_ACCESS_2026-08-12.md:3` — *"**Status: RESEARCH ONLY. No design, no code, no
-decision taken.**"*
-What blocks it is **architecture, not product**: `:302` — *"SwiftData does not support the shared
-database — and this is the veto"*, and `:388` — *"**But both still sit behind §3.2's veto.**
-Expressible in CloudKit ≠ available in SwiftData."* The document **recommends** refusing it in the
-1.0.x line (`:412`) but §5 is written in the conditional — *"WHAT I WOULD BUILD, AND WHAT I WOULD
-REFUSE"* (`:399`) — and the header at `:3` governs. See row F1 and the contradiction at §4.1.
+`outputs/RESEARCH_FAMILY_ACCESS_2026-08-12.md:3` — *"**Status: RESEARCH ONLY. No design, no code,
+no decision taken.**"*
+
+**Two blockers, not one:**
+1. **SwiftData cannot use the CloudKit shared database.** `:302` — *"SwiftData does not support the
+   shared database — and this is the veto"*; `:388` — *"**But both still sit behind §3.2's veto.**
+   Expressible in CloudKit ≠ available in SwiftData."* This reaches the **feature**, not only the
+   sharing shapes: the one candidate that gives privacy *and* fits CloudKit (`:382`) is still behind it.
+2. **It sits behind private sync**, which is itself blocked on two unbuilt prerequisites — `:414`:
+   *"behind private sync, which is itself behind two unbuilt prerequisites (the rollback ladder and
+   the recurrence watermark)"*. See rows **S1** and **L1–L3**.
+
+**Where a careful reader could land on `decided-skip` instead, and why this file does not.** The
+research document **recommends** refusing it in the 1.0.x line (`:412`), and
+`outputs/FEATURE_PREP_BACKLOG.md:32` renders the feature name itself struck through. Against that:
+`:412` sits under a heading written in the conditional — *"WHAT I WOULD BUILD, AND WHAT I WOULD
+REFUSE"* (`:399`) — `:419` says *"That is judgement, not evidence"*, and the header at `:3` is the
+document's own status line. **This file reads `:3` as governing, and records the disagreement rather
+than burying it — §4.1.** A reader who wants the other reading should go argue with §4.1, not
+discover the conflict later.
 
 **Q2 — Receipt-input pre-test: NOT RESOLVED. It is registered and unread.**
-`budget-crab-internal/working-docs/DECISION_RECEIPT_INPUT_PRETEST.md:4` — *"**Status:** registered,
-not yet resolved."* The §5 results table (`:199–212`) is **empty**.
-What would resolve it: recording **T0**, then reading N / S / S6 at T0+90 and T0+180 against the
-thresholds at `:143–145` and `:153`. **Both preconditions are already met and T0 has passed
-unrecorded** — see row R1, which is the actionable finding on this item.
+
+⚠️ **The governing document is NOT in this repository.** Its path is
+`../budget-crab-internal/working-docs/DECISION_RECEIPT_INPUT_PRETEST.md` — a **sibling repo**, one
+level above this working tree. Every citation below is to that file. Six `outputs/` documents cite
+it as though it were local; from inside this repo those are all dead links. See §4.5.
+
+`:4` — *"**Status:** registered, not yet resolved."* The §5 results table (`:199–212`) is **empty**.
+
+**What would resolve it,** in order:
+1. **Record T0** = the date 1.0.4 became available on the App Store (`:103`). **It is not in this
+   repo** — App Store Connect has it.
+2. Read **N / S / S6** at T0+90 and T0+180 against the thresholds at `:143–145` (BUILD) and `:153`
+   (KILL), band rule at `:184–187`.
+
+**Of the three gating conditions, two are met and one is blank** — R1a and R1b shipped in 1.0.4
+build 8 (verified against the tag, §2); **R1c, T0 itself, is UNRECORDED.** The clock started when
+1.0.4 became available and nobody wrote the date down. **Row R1 and §3 are the actionable finding on
+this item.**
 
 **Q3 — Defects reachable by a user in the currently shipped version.**
-The currently shipped version is **1.0.4 build 8**; 1.0.5 build 10 is in review
-(`PLAN_TUTORIAL_AND_HELP.md:170` — *"1.0.5 build 10 is in review"*). So **every fix that landed in
-build 9 or build 10 is NOT yet in users' hands.** Verified by `git merge-base --is-ancestor` against
-tag `v1.0.4-build8` on 2026-09-12:
+The currently shipped version is **1.0.4 build 8**; 1.0.5 build 10 is in review (§1). So
+**every fix that landed in build 9 or build 10 is NOT yet in users' hands.** Build 10 contains build
+9's work (`v1.0.5-build9` is an ancestor of `v1.0.5-build10`, checked 2026-09-12), so "fixed in
+build 9" and "fixed in build 10" are equally out of reach today.
 
-| defect | in 1.0.4 build 8? | reachable by a user today |
-|---|---|---|
-| Migration floor strands 1.0.0-era stores | fix `8c748b7` **NOT in build 8** (lands build 9) | **YES — live in the field since 1.0.3 became available 2026-07-29** (`BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:98`) |
-| Import amount-cap asymmetry / aggregate overflow | fix `1b6be14`, `c2461b3` **NOT in build 8** (land build 10) | **YES**, via a hand-made or malformed CSV (`DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md:234`) |
-| PDF export clips amounts | fix `f7dde93` **NOT in build 8** (lands build 10) | **YES** |
-| `VoiceInputService` teardown `abort()` | never fixed, in any build | **YES on the code's reading** — `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:135`: *"it is reachable by opening Quick Entry and closing it"*; but `:176` — *"Not claimed that this has ever crashed a user's device."* |
-| 14 remaining overflow expressions (`AnalyticsSeries` et al.) | never fixed | **YES** — `DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md:202` — *"Analytics still traps on a ledger the dashboard has just told the user is otherwise fine."* |
-| V2 migration sentinel disconnects the rollback ladder | present in build 8 | **NO — latent.** It fires only when a V2→V3 migration runs, and V3 has not shipped. `DEFECT_V2_MIGRATION_SENTINEL.md:26` |
+**Read the two middle columns separately — they answer different questions.** `defect present?` is
+about the bug; `fix present?` is about the patch. They are deliberately not merged, because merging
+them is how a reader concludes the opposite of the truth.
 
-Full table with regression-test columns, plus 30-odd defects that were described in AUDIT
-documents and never filed anywhere: `outputs/DEFECT_REGISTER.md`.
-Which money-touching surfaces have **zero tests**: `outputs/COVERAGE_MATRIX.md`.
+| defect | **defect present in 1.0.4 b8?** | **fix present in 1.0.4 b8?** | reachable by a user today |
+|---|---|---|---|
+| Migration floor strands 1.0.0-era stores | **YES** | **NO** — fix `8c748b7` lands build 9 | **YES — happening now.** Live in the field since 1.0.3 became available 2026-07-29 (`BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:98`). Terminal: the user's only escape was delete-and-reinstall, which discards the ledger |
+| Import amount-cap asymmetry / aggregate overflow | **YES** | **NO** — `1b6be14`, `c2461b3` land build 10 | **YES, but needs adversarial input** — a hand-made or malformed CSV. *"Not claimed that any user has hit this"* (`DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md:234`). Consequence is a **process trap — a crash — on the dashboard's first render** |
+| PDF export clips amounts | **YES** | **NO** — `f7dde93` lands build 10 | **YES — already reported by a real user.** Silent: the amount is wrong on the page, with no error |
+| `VoiceInputService` teardown `abort()` | **YES** | **NO — never fixed, in any build** | **YES on the code's reading** — *"reachable by opening Quick Entry and closing it"* (`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:135`). **The caveat is about manifestation, not reachability:** `:176` — *"Not claimed that this has ever crashed a user's device."* Consequence is a **process `abort()` — a crash with no recovery** |
+| 14 remaining overflow expressions (`AnalyticsSeries` et al.) | **YES** | **NO — never fixed** | **YES** — *"Analytics still **traps** on a ledger the dashboard has just told the user is otherwise fine"* (`DEFECT_IMPORT_AMOUNT_CAP_ASYMMETRY.md:202`). "Traps" = **crashes the process** |
+| V2 migration sentinel disconnects the rollback ladder | **YES** | n/a — not a fix, a prerequisite | **NO — latent.** Fires only when a V2→V3 migration runs; V3 has not shipped (`DEFECT_V2_MIGRATION_SENTINEL.md:26`) |
+
+**Is this list complete? NO, and the gap is knowable.** These six are the *filed* defects plus the
+overflow thread. `outputs/DEFECT_REGISTER.md` §3.1 carries **five more that are reachable in build 8
+and were never filed anywhere** — including a dead "Rate the app" link and a Settings button that
+does nothing behind a destructive confirmation alert. **Anyone answering this question for real must
+read §3.1 of the register, not just this table.** And per §6, neither file can see a defect nobody
+wrote down.
+
+Register (regression-test columns, ~30 unfiled defects): `outputs/DEFECT_REGISTER.md`.
+Money-touching surfaces with **zero tests**: `outputs/COVERAGE_MATRIX.md`.
 
 ---
 
 ## 1. SHIPPED-VERSION FACTS (everything in Q3 depends on these)
 
+⚠️ **The first row is an INFERENCE, not a recorded fact, and everything in Q3 rests on it.**
+No document in `outputs/` states which version is currently available. The inference is: 1.0.5 b10
+is *in review* (so not available), and a real App Store user is on 1.0.4 b8 (so it was released).
+Both halves are cited below. **It is not proof that 1.0.4 b8 is the latest available build** — only
+App Store Connect can settle that, and it would settle R1c in the same visit. **Anyone acting on Q3
+should confirm it there first.**
+
 | fact | value | evidence |
 |---|---|---|
-| Currently available on the App Store | **1.0.4 build 8** | `PLAN_TUTORIAL_AND_HELP.md:20` (a real App Store user is on it), `:170` (1.0.5 b10 is in review) |
+| Currently available on the App Store | **1.0.4 build 8** — *inferred, see above* | `PLAN_TUTORIAL_AND_HELP.md:170` (1.0.5 b10 in review, written 2026-09-12) + `:20` (a real App Store user is on 1.0.4 b8) |
+| Build 10 contains build 9 | yes | `git merge-base --is-ancestor v1.0.5-build9 v1.0.5-build10` → 0, checked 2026-09-12 |
 | In review | 1.0.5 build 10 | `PLAN_TUTORIAL_AND_HELP.md:170`; `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:204` |
 | Working tree version | 1.0.5 (10) | `FinanceTracker.xcodeproj/project.pbxproj:477`, `:466` |
 | 1.0.0 released | 2026-07-10 | `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:101` |
@@ -132,7 +202,7 @@ the brief was reaching for. Costed, not applied:"*
 | **E1** | **CloudKit field-level encryption** | **open — and no decision has ever been recorded** | nothing; it is simply undecided | `REVIEW_PRIVACY_POLICY_CORRECTION_2026-08-03.md:50–54` — *"`outputs/DESIGN_ICLOUD_SYNC_1_0_4.md` contains **zero** occurrences of `encryptedValues`, `allowsCloudEncryption`, or any encryption-marking decision (grepped)."* · `:45–48` (a field we do not mark is not E2EE even under ADP) |
 | **P1** | **Privacy-copy gate** | **blocked** — deliberately; it fires on the sync release | S1 (iCloud sync) | `GO_LIVE_CHECKLIST.md:81` (*"The privacy-copy gate does not fire on build 10. It fires when iCloud sync ships"*) · `:86–99` (the gate, unticked) · `:94–95` (do not reuse today's count of five — it came from a grep) |
 | **W1** | **`wipeLedger` main-thread cost** | **open** — investigation, explicitly not a release gate | — | `BRIEF_UI_SHARED_CONTAINER_RESIDUE_2026-08-14.md:3` (*"**Status: INVESTIGATION. Not a fix, and explicitly NOT a release gate.**"*) · `:66` (*"**`wipeLedger` is unconditional**"*) · `FinanceTracker/Views/ContentView.swift:217` (*"`wipeLedger` over 8 000 categorised rows measures 45.8 s"*) · `FinanceTracker/Data/LargeDatasetDebugSeed.swift:125` (DEBUG-only) · measured by `FinanceTrackerTests/PurgeCostMeasurementTests.swift:33` |
-| **B1** | **Permanent bootstrap logging** | **open — NO SOURCE DOCUMENT EXISTS** | — | **Nothing in `outputs/` proposes it.** Greps for `permanent bootstrap logging`, `permanent logging`, `BootstrapLog`, `bootstrap logging` over `*.md` and `*.swift` return zero. The nearest real text is explicitly temporary: `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:149–151` — *"`LAUNCHPROBE` instrumentation added to `LaunchGateView` in the 1.0.4 worktree only (log-only, no behaviour change)"*. `grep -rn LAUNCHPROBE --include=*.swift` returns **zero** — it is not in the tree. `LaunchGateView.swift` carries exactly one log line, at `:438`. **This item exists only because it was named out loud. It is recorded here so it stops living in someone's head — but it has no case written down, and writing one is the next action.** |
+| **B1** | **Permanent bootstrap logging** | ⚠️ **NOT AN ITEM YET — no source document exists.** Do not count this as scheduled work; it has no case written down | — | **Nothing in `outputs/` proposes it.** Greps for `permanent bootstrap logging`, `permanent logging`, `BootstrapLog`, `bootstrap logging` over `*.md` and `*.swift` return zero. The nearest real text is explicitly temporary: `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:149–151` — *"`LAUNCHPROBE` instrumentation added to `LaunchGateView` in the 1.0.4 worktree only (log-only, no behaviour change)"*. `grep -rn LAUNCHPROBE --include=*.swift` returns **zero** — it is not in the tree. `LaunchGateView.swift` carries exactly one log line, at `:438`. **This item exists only because it was named out loud. It is recorded here so it stops living in someone's head — but it has no case written down, and writing one is the next action.** |
 
 ### Measurement instruments
 
@@ -155,8 +225,14 @@ The pre-test's own gating conditions are **satisfied**, and have been since 1.0.
 By `DECISION_RECEIPT_INPUT_PRETEST.md:103`, **T0 is that availability date**, and by `:104` the first
 look is T0 + 90 days. Nobody wrote T0 down. So:
 
-> **The measurement window is open, it has been open for some weeks, and the file that governs it
-> still reads `T0 = ____________`.**
+> **The measurement window is open, and the file that governs it still reads
+> `T0 = ____________`.**
+
+**How long it has been open is NOT stated here, deliberately.** The obvious sentence — *"it has been
+open for some weeks"* — was written into an earlier draft of this file and removed. It is a duration
+computed from a date §1 marks **NOT RECORDED ANYWHERE**, which makes it exactly the kind of
+plausible, unsourced number the citation protocol exists to stop. **The elapsed time is unknown
+until someone reads the availability date off App Store Connect.**
 
 Two consequences, both narrow and neither a licence to act:
 
@@ -224,7 +300,11 @@ So *"signal #7"* in the demand roadmap is safe-to-spend; *"row #7"* in the backl
 (`12a5ad7`) and means safe-to-spend** — `DEMAND_RESEARCH_AND_ROADMAP_2026-07.md:110`. Anyone reading
 that subject line against the backlog will conclude a user asked for iCloud sync. **Nobody did.**
 
-- **Signal #7 (safe-to-spend) status: open, n=1, explicitly not re-scored.** `:112` — *"**One data
+**Naming rule, from here on:** write **`demand-signal safe-to-spend`** and **`backlog-row sync`**.
+Do not write a bare `#7` or `#9` in either system again — the fix for an overloaded identifier is to
+stop using it, not to annotate it.
+
+- **`demand-signal safe-to-spend` status: open, n=1, explicitly not re-scored.** `:112` — *"**One data
   point. Not a re-score, not a roadmap item.**"* · `:130` — *"**It is not confirmation of 'safe to
   spend'.** He asked for a *savings balance* — a stock, a net position — not for a per-month
   discretionary remainder, which is a flow."*
@@ -265,6 +345,34 @@ git show v1.0.4-build8:FinanceTracker/Views/TransactionDetailView.swift
 # 4. The pre-test lives in a DIFFERENT REPO. See §4.5.
 cat ../budget-crab-internal/working-docs/DECISION_RECEIPT_INPUT_PRETEST.md
 ```
+
+### The recorded output behind every build claim in §0 and §2
+
+Rule 2 forbids a pointer a reader cannot open. A `git merge-base` result asserted with no output is
+exactly that, so here it is — **run on 2026-09-12, reproducible with the loop below.**
+
+```
+commit     what it fixes                      1.0.4-b8   1.0.5-b9   1.0.5-b10
+8c748b7    migration floor (pre-V1 lift)         NO         yes        yes
+1b6be14    reject unrepresentable amounts        NO         NO         yes
+c2461b3    4 regressions + 25th overflow site    NO         NO         yes
+f7dde93    PDF amount column sizing              NO         NO         yes
+15b646b    usage.ever.* ordering (R1b)           yes        yes        yes
+```
+
+```bash
+for c in 8c748b7 1b6be14 c2461b3 f7dde93 15b646b; do
+  printf "%s  b8=%s b9=%s b10=%s\n" "$c" \
+    "$(git merge-base --is-ancestor $c v1.0.4-build8  && echo yes || echo NO)" \
+    "$(git merge-base --is-ancestor $c v1.0.5-build9  && echo yes || echo NO)" \
+    "$(git merge-base --is-ancestor $c v1.0.5-build10 && echo yes || echo NO)"
+done
+```
+
+**Read the `15b646b` row against the others**: it is the only fix already in users' hands, and it is
+the instrument correction — not any of the three defect fixes.
+
+---
 
 **Rule for updating this file:** change a status only after re-running the check that establishes it,
 and update the citation in the same edit. A status whose citation was not re-read is a status written
@@ -322,8 +430,23 @@ exhaustive, which it is not and cannot be.
 arithmetic answer, and the constant exists to refuse an arithmetic answer: per
 `project_full_suite_oom_on_this_mac`, **`EXPECTED_TOTAL_RUN` is never to be set by arithmetic — the
 next full run prints the observed number and that number is what goes in.** Exit 5 is the guard
-working. Read the printed count, set the constant to it, and move on.
+working.
 
-Separately, and unrelated to the count: a full run can still lose ~415 tests to the
-`VoiceInputService` abort (row in `DEFECT_REGISTER.md`). `run-tests.sh` now exits 4 on a truncated
-run — `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:196`.
+### ⚠️ BUT: never harvest the count from a truncated run
+
+**These two facts interact, and the interaction is a trap.** A full run can still lose ~415 tests to
+the `VoiceInputService` abort (`DEFECT_REGISTER.md` D1) — 44 suites, 415 `@Test` functions — and
+`run-tests.sh` exits **4** on that (`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:196`).
+
+> **If you take the count from a run that exited 4, you bake a truncated total into
+> `EXPECTED_TOTAL_RUN` permanently, and the guard silently stops guarding — forever, and with no
+> trace.** That is the "reports success while doing nothing" class, installed by following this
+> section's own instruction.
+
+**The rule, stated so it cannot be got wrong:**
+
+> **Harvest the count ONLY from a run that exited 5 (or 0). Never from an exit-4 run. If the run
+> exits 4, fix or exclude D1's test and run again — the number from that run is not a number.**
+
+**Also: never pipe `run-tests.sh`** — a pipe replaces its exit code with the tail's, which discards
+exit 4 and exit 5 alike.

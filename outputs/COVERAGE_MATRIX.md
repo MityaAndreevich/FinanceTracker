@@ -218,17 +218,19 @@ the July escape, and it is now the best-covered surface in the app.
 `scripts/run-tests.sh:192` sets `EXPECTED_TOTAL_RUN=1113`, **deliberately one low.** 1114 is the
 arithmetic answer, and the constant exists to refuse an arithmetic answer — per
 `project_full_suite_oom_on_this_mac`, it is never to be set by arithmetic; the next full run prints
-the observed number and that number is what goes in. **Exit 5 is the guard working.** Read the count,
-set the constant to it, move on.
+the observed number and that number is what goes in. **Exit 5 is the guard working.**
 
-Two separate things that can also make a run look wrong, neither of them a real failure:
+> ### ⚠️ Harvest the count ONLY from a run that exited 5 or 0 — NEVER from an exit-4 run.
+>
+> **Exit 4 = a truncated run.** The `VoiceInputService` abort (`DEFECT_REGISTER.md` D1) can take the
+> whole swift-testing phase with it — 44 suites, 415 `@Test` functions — and report a plausible
+> number (`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:196`). **Take the count from such a run and you bake a
+> truncated total into `EXPECTED_TOTAL_RUN` permanently — the guard then passes forever, silently,
+> having stopped guarding.** That is the "reports success while doing nothing" class, installed by
+> following the instruction above. If the run exits 4, fix or exclude D1's test and run again.
 
-- **Exit 4 = a truncated run.** The `VoiceInputService` abort (`DEFECT_REGISTER.md` D1) can take the
-  whole swift-testing phase with it — 44 suites, 415 `@Test` functions — and report a plausible
-  number. `run-tests.sh` now exits 4 rather than letting that pass
-  (`DEFECT_VOICE_INPUT_DEINIT_ABORT.md:196`).
-- **Never pipe `run-tests.sh`.** A pipe replaces its exit code with the tail's, which discards every
-  guard above.
+**Never pipe `run-tests.sh`.** A pipe replaces its exit code with the tail's, which discards exit 4
+and exit 5 alike — every guard above.
 
 **Scope note:** `FinanceTrackerTests/` holds **125** `.swift` files, not 120 — several are fixtures
 and helpers rather than test classes (`RecurrenceTwinFixture.swift`, `RenderPixels.swift`,

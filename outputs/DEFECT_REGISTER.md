@@ -9,15 +9,24 @@ memory.**
 ## HOW TO READ THIS FILE
 
 **`user-reachable?`** means: can an ordinary user, on a build that exists, get to it. It is not a
-severity. A defect that is unreachable today can become reachable by a schedule (D8 fires the day a
-V2→V3 migration runs), and those rows say so.
+severity. A defect that is unreachable today can become reachable by a schedule (D4 fires the day a
+V2→V3 migration runs; D15 and D16 the day sync ships), and those rows say so.
 
 **`present in`** names *shipped App Store versions*, established by `git merge-base --is-ancestor`
 against the release tags — **not by commit date.** The distinction is load-bearing:
 
-> **The currently shipped version is 1.0.4 build 8.** 1.0.5 build 10 is **in review**
-> (`PLAN_TUTORIAL_AND_HELP.md:170`). **Every fix that landed in build 9 or build 10 is not yet in any
-> user's hands.** Eleven rows below are fixed in the tree and still live in the field.
+**Read `present in` carefully — it names where the DEFECT is, and any fix commit named beside it is
+where the PATCH is.** Those are different facts and conflating them inverts the answer. `STATE.md`
+§0 Q3 splits them into two columns for exactly this reason, and carries the recorded `git
+merge-base` output behind every build claim in this file (`STATE.md` §5).
+
+> **The currently shipped version is 1.0.4 build 8** — an *inference*, not a recorded fact; see
+> `STATE.md` §1, which states the inference and what would settle it.
+> **Build 10 contains build 9** (`v1.0.5-build9` is an ancestor of `v1.0.5-build10`, checked
+> 2026-09-12), so "fixed in build 9" and "fixed in build 10" are equally out of users' reach today.
+>
+> **Every fix that landed in build 9 or build 10 is not yet in any user's hands.** Eleven rows below
+> are fixed in the tree and still live in the field.
 
 **`regression test?`** is a column because **a defect without one is a defect that can come back
 silently.** "No" here is a finding, not an omission.
