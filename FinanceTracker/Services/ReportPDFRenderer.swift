@@ -202,6 +202,17 @@ enum ReportPDFRenderer {
 
     // MARK: - Render
 
+    /// Where page 1 actually drew its money — recorded during the render so
+    /// `ReportPDFRenderTests` reads the geometry instead of transcribing it.
+    /// Rows are top-left UIKit coordinates on page 1.
+    struct Page1Geometry {
+        var summaryRowYs: [CGFloat] = []
+        var categoryRowYs: [CGFloat] = []
+        var summaryLayout: SummaryLayout?
+        var categoryLayout: CategoryLayout?
+        var pages = 0
+    }
+
     static func makeReportPDF(
         snapshot: ReportSnapshot?,
         period: ReportPeriod,
@@ -213,6 +224,22 @@ enum ReportPDFRenderer {
         calendar: Calendar = .current,
         now: Date = Date()
     ) -> PDFExportResult {
+        makeReportPDFWithGeometry(snapshot: snapshot, period: period, transactions: transactions,
+                                  currencyCode: currencyCode, includeTransactions: includeTransactions,
+                                  bundle: bundle, locale: locale, calendar: calendar, now: now).result
+    }
+
+    static func makeReportPDFWithGeometry(
+        snapshot: ReportSnapshot?,
+        period: ReportPeriod,
+        transactions: [Transaction],
+        currencyCode: String,
+        includeTransactions: Bool,
+        bundle: Bundle,
+        locale: Locale = .current,
+        calendar: Calendar = .current,
+        now: Date = Date()
+    ) -> (result: PDFExportResult, content: Page1Content, geometry: Page1Geometry) {
         let content = page1Content(snapshot: snapshot, period: period, transactionCount: transactions.count,
                                    currencyCode: currencyCode, includeTransactions: includeTransactions,
                                    bundle: bundle, locale: locale, calendar: calendar, now: now)
@@ -221,18 +248,19 @@ enum ReportPDFRenderer {
         let tableLayout = PDFExportService.tableLayout(rows: rows, headers: headers)
 
         // Two passes: the first only counts pages so the footer can say "of N".
-        let totalPages = render(content: content, rows: rows, headers: headers, tableLayout: tableLayout, totalPages: nil).pages
-        let data = render(content: content, rows: rows, headers: headers, tableLayout: tableLayout, totalPages: totalPages).data
+        let totalPages = render(content: content, rows: rows, headers: headers, tableLayout: tableLayout, totalPages: nil).geometry.pages
+        let final = render(content: content, rows: rows, headers: headers, tableLayout: tableLayout, totalPages: totalPages)
         let filename = "BudgetCrab_Report_\(period.identity(calendar: calendar).replacingOccurrences(of: ":", with: "_")).pdf"
-        return PDFExportResult(data: data, filename: filename)
+        return (PDFExportResult(data: final.data, filename: filename), content, final.geometry)
     }
 
     private static func render(
         content: Page1Content, rows: [PDFExportService.RowContent], headers: PDFExportService.HeaderLabels,
         tableLayout: PDFExportService.TableLayout, totalPages: Int?
-    ) -> (data: Data, pages: Int) {
+    ) -> (data: Data, geometry: Page1Geometry) {
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(origin: .zero, size: page))
-        var pages = 0
+        var geometry = Page1Geometry()
+        var pages: Int { get { geometry.pages } set { geometry.pages = newValue } }
         let data = renderer.pdfData { ctx in
             ctx.beginPage(); pages = 1
             var y = top
@@ -246,7 +274,7 @@ enum ReportPDFRenderer {
                 y = drawParagraph(unavailable.body, font: labelFont, color: .secondaryLabel, y: y)
                 y += sectionGap
             } else {
-                y = drawSummary(content, y: y)
+                y = drawSummary(content, y: y, geometry: &geometry)
                 y += sectionGap
                 if let budget = content.budgetLine {
                     y = drawSection(content.budgetTitle, y: y)
@@ -258,7 +286,7 @@ enum ReportPDFRenderer {
                 if let empty = content.emptyCategories {
                     y = drawParagraph(empty, font: labelFont, color: .secondaryLabel, y: y)
                 } else {
-                    y = drawCategories(content.categories, y: y)
+                    y = drawCategories(content.categories, y: y, geometry: &geometry)
                 }
                 y += sectionGap
             }
@@ -282,7 +310,7 @@ enum ReportPDFRenderer {
             }
             PDFExportService.drawPageFooter(pageIndex: pages, totalPages: totalPages ?? pages)
         }
-        return (data, pages)
+        return (data, geometry)
     }
 
     private static func drawSection(_ text: String, y: CGFloat) -> CGFloat {
@@ -305,8 +333,9 @@ enum ReportPDFRenderer {
         return y + ceil(bounds.height) + 4
     }
 
-    static func drawSummary(_ content: Page1Content, y startY: CGFloat) -> CGFloat {
+    static func drawSummary(_ content: Page1Content, y startY: CGFloat, geometry: inout Page1Geometry) -> CGFloat {
         let layout = summaryLayout(rows: content.summary)
+        geometry.summaryLayout = layout
         var y = startY
         let headerAttrs: [NSAttributedString.Key: Any] = [.font: sectionFont, .foregroundColor: UIColor.secondaryLabel,
                                                           .paragraphStyle: PDFExportService.truncatingStyle(.right)]
@@ -320,6 +349,7 @@ enum ReportPDFRenderer {
         // guarantees a single line, and the ink test proves nothing was lost.
         let valueAttrs: [NSAttributedString.Key: Any] = [.font: layout.font, .paragraphStyle: PDFExportService.truncatingStyle(.right)]
         for row in content.summary {
+            geometry.summaryRowYs.append(y)
             row.label.draw(in: CGRect(x: layout.labelX, y: y, width: layout.labelWidth, height: PDFExportService.rowCellHeight), withAttributes: labelAttrs)
             row.current.draw(in: layout.valueRect(column: 0, rowY: y), withAttributes: valueAttrs)
             if let p = row.previous { p.draw(in: layout.valueRect(column: 1, rowY: y), withAttributes: valueAttrs) }
@@ -329,14 +359,16 @@ enum ReportPDFRenderer {
         return y
     }
 
-    static func drawCategories(_ rows: [Page1Content.CategoryRow], y startY: CGFloat) -> CGFloat {
+    static func drawCategories(_ rows: [Page1Content.CategoryRow], y startY: CGFloat, geometry: inout Page1Geometry) -> CGFloat {
         let layout = categoryLayout(rows: rows)
+        geometry.categoryLayout = layout
         var y = startY
         let nameAttrs: [NSAttributedString.Key: Any] = [.font: PDFExportService.bodyFont, .paragraphStyle: PDFExportService.truncatingStyle(.natural)]
         let amountAttrs: [NSAttributedString.Key: Any] = [.font: layout.amountFont, .paragraphStyle: PDFExportService.truncatingStyle(.right)]
         let shareAttrs: [NSAttributedString.Key: Any] = [.font: PDFExportService.bodyFont, .foregroundColor: UIColor.secondaryLabel,
                                                          .paragraphStyle: PDFExportService.truncatingStyle(.right)]
         for row in rows {
+            geometry.categoryRowYs.append(y)
             row.name.draw(in: CGRect(x: layout.nameX, y: y, width: layout.nameWidth, height: PDFExportService.rowCellHeight), withAttributes: nameAttrs)
             row.amount.draw(in: layout.amountRect(rowY: y), withAttributes: amountAttrs)
             row.share.draw(in: CGRect(x: layout.shareX, y: y, width: layout.shareWidth, height: PDFExportService.rowCellHeight), withAttributes: shareAttrs)
