@@ -1,7 +1,8 @@
 # COVERAGE MATRIX — which money-touching surfaces have zero tests
 
-**Derived 2026-09-12 at HEAD `537e220`.** Status lives in `outputs/STATE.md`; defects live in
-`outputs/DEFECT_REGISTER.md`. This file answers one question and stops.
+**Derived 2026-09-12 at HEAD `537e220`. Row 1 closed 2026-09-21 at `83da3ce`** — see the note in
+§2. Status lives in `outputs/STATE.md`; defects live in `outputs/DEFECT_REGISTER.md`. This file
+answers one question and stops.
 
 ---
 
@@ -84,7 +85,7 @@ closing it with a journey.**
 
 | # | surface | production | what it does with money | tests | verdict |
 |---|---|---|---|---|---|
-| **1** | **`TSVExportService.makeTSV`** — the premium Excel export | `Services/TSVExportService.swift:18`; formatting at `:88`; wired at `Views/Settings/DataSettingsView.swift:144` (month, free) and `:150` `gate(.exportExcelAll)` (all-time, **paid**) | Fetches **every transaction**, converts `amountCents` to a decimal string, writes the user's whole ledger to a file | **ZERO.** No reference in `FinanceTrackerTests/` or `FinanceTrackerUITests/`. Re-verified today; the two grep hits are the false positives in §1 | **UNCOVERED** |
+| **1** | **`TSVExportService.makeTSV`** — the premium Excel export | `Services/TSVExportService.swift:18`; wired at `Views/Settings/DataSettingsView.swift:144` (month, free) and `:150` `gate(.exportExcelAll)` (all-time, **paid**) | Fetches **every transaction**, converts `amountCents` to a decimal string, writes the user's whole ledger to a file | **CLOSED 2026-09-21** — `TSVExportServiceTests.swift`, 10 tests calling the real `makeTSV` and asserting on the bytes: amount matrix incl. `Int.max`/`Int.min`, one formatting path (`Money.plainDecimalString`), Gregorian/POSIX date pin, tab/newline collisions, Σ Amount == ledger with a split row, month scope, filename, importer-does-not-read-TSV. 1 red as shipped + 5 red under mutants (`83da3ce`) | **COVERED** — the remaining gap is a format limitation, `DEFECT_REGISTER.md` D47 |
 | **2** | **Horizon aggregation chain** (12-month income/expense/net) | `Services/LedgerAggregator.swift:111` `horizonSeries(now:calendar:)` → `Shared/AnalyticsSeries.swift:77` `horizon(…)` → `AnalyticsView.swift:253–258` | Accumulates a **year** of `amountCents` into per-month income and expense buckets | **ZERO on the values.** `grep -rn horizonSeries FinanceTrackerTests/ FinanceTrackerUITests/` → **0 hits** (verified today). `AnalyticsSeries.horizon` is called once, at `SplitCanaryTests.swift:406–410`, asserting only `#expect(horizonA == horizonB)` | **UNCOVERED** — see §3.3 |
 | **3** | **`CSVExportService.makeCSVFromV1Store`** — the migration floor's escape hatch | `Services/CSVExportService.swift:100`; called from `Views/Launch/LaunchGateView.swift:220, 417, 434` | The **only** data-out route for a user stranded by `DEFECT_REGISTER.md` D3. Reads `amountCents`/`taxCents` from the frozen V1 schema | **ZERO.** `grep -rn makeCSVFromV1Store FinanceTrackerTests/ FinanceTrackerUITests/` → **0 hits** (verified today). The nearest test asserts an error label is absent — see §3.5 | **UNCOVERED** |
 | **4** | **`CSVImportActor` orchestration** — batched saves, `PartialImportFailure`, `@ModelActor` affinity | `Services/CSVImportActor.swift:34, 41–46, 80`; run by `DataSettingsView.swift:281, 340` | Decides **how many rows actually landed** and what the user is told when an import stops mid-file | **ZERO.** Only mention in either target is a comment at `SaveFailureReachabilityProbe.swift:151`. `PartialImportFailure` is thrown only at `CSVImportActor.swift:45` and constructed in **no test** | **UNCOVERED** (orchestration). **Row-level parsing IS covered** — see §3.1, which corrects a claim this project has been carrying |

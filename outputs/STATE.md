@@ -1,7 +1,12 @@
 # STATE — the one page where status lives
 
-**Derived 2026-09-12 from the sources, at HEAD `537e220`.** Every row was re-read today. No row was
+**Derived 2026-09-12 from the sources, at HEAD `537e220`. Updated 2026-09-21 at HEAD `83da3ce`
+(Phase 0 of `BRIEF_MASTER_2026-09-21.md`) — §8 lists every row that changed and why.** No row was
 written from memory, including mine.
+
+> **2026-09-21: the shipped version is no longer an inference.** `itunes.apple.com/lookup?id=6784424678`
+> (queried 2026-09-21) returns `version 1.0.5`, `currentVersionReleaseDate 2026-09-12T18:22:22Z`.
+> Every "inferred" warning below about 1.0.4 b8 is left in place as history and **superseded by §8.1**.
 
 **Counts used below, each with the command that produced it** (run 2026-09-12) — because a count is a
 separate claim from the thing it counts (rule 4):
@@ -153,7 +158,11 @@ build 8 (verified against the tag, §2); **R1c, T0 itself, is UNRECORDED.** The 
 this item.**
 
 **Q3 — Defects reachable by a user in the currently shipped version.**
-The currently shipped version is **1.0.4 build 8** — ⚠️ **this is an INFERENCE, not a recorded
+
+> **SUPERSEDED 2026-09-21 — read §8.1 instead.** The shipped version is **1.0.5 build 10**, a
+> recorded fact (App Store lookup). The table below answered for 1.0.4 b8 and is kept as history.
+
+The currently shipped version *was* **1.0.4 build 8** — ⚠️ **this was an INFERENCE, not a recorded
 fact, and every answer below rests on it.** No document states which version is available; the
 inference is that 1.0.5 b10 is *in review* and a real App Store user is on 1.0.4 b8. **Confirm it in
 App Store Connect before acting on this table** — the same visit settles R1c. Full statement in §1.
@@ -198,14 +207,15 @@ should confirm it there first.**
 
 | fact | value | evidence |
 |---|---|---|
-| Currently available on the App Store | **1.0.4 build 8** — *inferred, see above* | `PLAN_TUTORIAL_AND_HELP.md:170` (1.0.5 b10 in review, written 2026-09-12) + `:20` (a real App Store user is on 1.0.4 b8) |
+| Currently available on the App Store | **1.0.5 build 10** — **recorded 2026-09-21** (supersedes the 1.0.4 b8 inference that stood here from 2026-09-12) | `itunes.apple.com/lookup?id=6784424678` → `version: 1.0.5`, `currentVersionReleaseDate: 2026-09-12T18:22:22Z` (queried 2026-09-21). The lookup carries no build number; **build 10** is the founder's statement, `BRIEF_MASTER_2026-09-21.md:83`, and the only 1.0.5 build ever uploaded per `ARCHITECTURE.md` "Shipped so far" |
+| 1.0.5 available | **2026-09-12** | same lookup, `currentVersionReleaseDate` |
 | Build 10 contains build 9 | yes | `git merge-base --is-ancestor v1.0.5-build9 v1.0.5-build10` → 0, checked 2026-09-12 |
 | In review | 1.0.5 build 10 | `PLAN_TUTORIAL_AND_HELP.md:170`; `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:204` |
 | Working tree version | 1.0.5 (10) | `FinanceTracker.xcodeproj/project.pbxproj:477`, `:466` |
 | 1.0.0 released | 2026-07-10 | `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:101` |
 | 1.0.3 available | 2026-07-29 | `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:98` |
-| **1.0.4 available** | **NOT RECORDED ANYWHERE** | see row R1 — this blank is load-bearing |
-| Suite constant | `EXPECTED_TOTAL_RUN=1113` | `scripts/run-tests.sh:192` |
+| **1.0.4 available** | **STILL NOT RECORDED** — the public lookup exposes only the *current* version's date, so 2026-09-21 did not settle it | see row R1 — this blank is load-bearing; App Store Connect's version history has it |
+| Suite constant | `EXPECTED_TOTAL_RUN=1113` — **further behind after 2026-09-21**: four test files were added (§8.5); by how much is deliberately not computed | `scripts/run-tests.sh:192` |
 
 ---
 
@@ -218,12 +228,12 @@ Evidence is the document **and line** that holds the detail, never a summary of 
 
 | id | item | status | blocked by | evidence |
 |---|---|---|---|---|
-| **F1** | **Family / shared ledger** | **open** — no decision taken | SwiftData cannot use the CloudKit shared database; and it sits behind private sync, which has two unbuilt prerequisites of its own | `RESEARCH_FAMILY_ACCESS_2026-08-12.md:3` (status) · `:302–321` (the veto) · `:382` (candidate 5 is the only model that gives privacy AND fits CloudKit) · `:388` (candidate 5 is still behind the veto) · `:412–415` (recommends refusing it in the 1.0.x line) · `:419` (*"That is judgement, not evidence"*) |
-| **R1** | **Receipt / screenshot OCR** | **awaiting-measurement** — and **the clock is running unrecorded** | Nothing external. **Of the three gating conditions, R1a and R1b are MET and R1c (T0) is UNRECORDED** — what is missing is that nobody wrote the date down | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
-| **S1** | **iCloud sync (private CloudKit)** | **blocked** | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
+| **F1** | **Family / shared ledger** | **decided-build** — founder's decision 2026-09-21, target 1.2, **design first, no code before approval** (`BRIEF_MASTER_2026-09-21.md:287–288`: *"Measured demand was 0.04–0.14% of 4,904 competitor reviews. Dmitry has decided to build it anyway"*; `:300–303` design doc then STOP). Model fixed by the brief: candidate 5, a separate shared ledger (`:282–286`). Was **open** until 2026-09-21 | SwiftData cannot use the CloudKit shared database; and it sits behind private sync, which has two unbuilt prerequisites of its own | `RESEARCH_FAMILY_ACCESS_2026-08-12.md:3` (status) · `:302–321` (the veto) · `:382` (candidate 5 is the only model that gives privacy AND fits CloudKit) · `:388` (candidate 5 is still behind the veto) · `:412–415` (recommends refusing it in the 1.0.x line) · `:419` (*"That is judgement, not evidence"*) |
+| **R1** | **Receipt / screenshot OCR** | **decided-build** — founder's decision 2026-09-21, target 1.0.7, design doc first (`BRIEF_MASTER_2026-09-21.md:177–178`: *"Dmitry has DECIDED to build this; the pre-test was not resolved and must not be described as resolved"*). **The pre-test remains NOT RESOLVED** — the decision overrides it, it does not answer it; T0 is still blank (R1c). Was **awaiting-measurement** until 2026-09-21 | Nothing external. **Of the three gating conditions, R1a and R1b are MET and R1c (T0) is UNRECORDED** — what is missing is that nobody wrote the date down | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
+| **S1** | **iCloud sync (private CloudKit)** | **decided-build**, target 1.1, **design first with family in view** (`BRIEF_MASTER_2026-09-21.md:273–279`, `:300–303`); the technical blockers in the next column are unchanged and are what the design must resolve | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
 | **V3** | **V3 schema (8 frozen attributes)** | **blocked** | D3 (the sentinel defect) is a prerequisite of *shipping* V3, not only of drilling it; and there is no real V2 store to drill against | `DESIGN_V3_SCHEMA_FREEZE.md:3` (*"no code written yet"*) · `:166–170` (what is needed first) · `DEFECT_V2_MIGRATION_SENTINEL.md:26` · `AUDIT_V3_ROLLBACK_READINESS.md:122` (§6, no real V2 store on this machine) |
-| **RP1** | **Reports** | **open** — reframed, not scheduled | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
-| **T1** | **Re-playable tutorial + annotated help** | **open** — evidence and acceptance test written, nothing designed | not scheduled against any release | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
+| **RP1** | **Reports** | **decided-build**, target 1.0.6, design doc `outputs/DESIGN_REPORTS_1_0_6.md` first then STOP (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
+| **T1** | **Re-playable tutorial + annotated help** | **decided-build**, target 1.0.7, as a three-layer user guide; design doc `outputs/DESIGN_USER_GUIDE.md` first then STOP (`BRIEF_MASTER_2026-09-21.md:204–268`) | not scheduled against any release | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
 | **A1** | **Auto-post recurrence** | **open** — design only | coupled to S1; must ship with the watermark move | `DESIGN_AUTOPOST_RECURRENCE_1_0_4.md:3` · `:644–645` |
 
 ### The rollback ladder — `AUDIT_V3_ROLLBACK_READINESS.md` §5
@@ -583,3 +593,93 @@ the added test is real rather than a phantom +1. **Read it before the run; this 
 pointer, not a substitute.**
 
 **Never pipe `run-tests.sh`** — a pipe replaces its exit code with the tail's, discarding all four.
+
+---
+
+## 8. PHASE 0 — 2026-09-21, HEAD `83da3ce`
+
+Brief: `outputs/BRIEF_MASTER_2026-09-21.md` (Phase 0 at `:89–127`). Each row cites the commit or
+file that establishes it. Release cut proposed by the brief (`:317–321`): 1.0.6 = Phase 0 + Reports;
+1.0.7 = scanning + guide; 1.1 = sync; 1.2 = family.
+
+### 8.1 The shipped version, and Q3 re-answered against it
+
+**1.0.5 build 10 is live** (§1, recorded). Tag `v1.0.5-build10` re-created on the same commit
+`8c98982` with an "approved and released" message and force-pushed 2026-09-21; the old tag object
+`443bbfb` is superseded by `787cbe7` (`git ls-remote --tags origin v1.0.5-build10`). Documents
+quoting `443bbfb` (`ARCHITECTURE.md:392`, `StoreFixtures/StoreV1_0_5_BUILD10/MANIFEST.md:24`,
+`GO_LIVE_CHECKLIST.md:39`, `scripts/capture-store-fixture.sh:99`) describe the earlier object and
+are correct as history.
+
+| defect | present in 1.0.5 b10? | reachable by a user today | evidence |
+|---|---|---|---|
+| D3 migration floor | **NO** — fixed | no | `8c748b7` ∈ `v1.0.5-build10` (§5 table) |
+| D2 import cap / aggregate overflow on the recovery journey | **NO** — fixed | no | `1b6be14`, `c2461b3` ∈ tag (§5 table) |
+| D10 PDF clips amounts | **NO** — fixed | no | `f7dde93` ∈ tag (§5 table) |
+| D7 `idTBD` store link | **NO** — fixed | no | `git show v1.0.5-build10:FinanceTracker/Views/Settings/AboutView.swift` `:59` = `id6784424678`. Regression test added 2026-09-21: `AppStoreLinkTests` (`8e52013`), commissioned red with the competitor ID |
+| D8 "Restart onboarding" no-op | **NO** — removed | no | `git grep restartOnboarding v1.0.5-build10 -- FinanceTracker` → 0 hits |
+| D9 month-end recurrence drift | **NO** — fixed | no | `anchor: Date` present in tag's `RecurrenceType.swift`; `RecurrenceMonthEndDriftTests` exists |
+| D11 rewound clock revives trial | **NO** — fixed | no | tag's `ReverseTrial.swift:58` *"never earlier than the…"*; `AccessManagerTests.swift:143` *"A rewound clock can no longer revive an expired trial"* |
+| **D1 VoiceInputService teardown `abort()`** | **YES** | **YES on the code's reading** — never fixed | `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:135`. Founder's device run n≈5–7, no crash — *"bounds a rate, it does not prove simulator-only"* (`BRIEF_MASTER_2026-09-21.md:122–124`). **Stays filed** per brief §0.5 |
+| **D5 14 overflow expressions (`AnalyticsSeries` et al.)** | **YES** | **YES** — Analytics traps on an unrepresentable amount | `DEFECT_REGISTER.md` D5, re-counted 2026-09-12. **Scheduled: fixed under Reports (RP1)** |
+| **D46 music does not resume after voice input** | **YES** | **YES — every voice entry while audio plays** | founder's device, `BRIEF_MASTER_2026-09-21.md:95–98`. **Fixed in the tree `b3ca3ef`, NOT released, device confirmation PENDING** (§8.2) |
+| D4 V2 sentinel | YES, latent | no (fires on V2→V3) | unchanged |
+
+**So the §3.1 question ("still reachable?") answers NO for all five**, D7–D11. None needs a 1.0.6
+action beyond the D7 test already added.
+
+### 8.2 D46 — the voice fix, and what is NOT yet established
+
+`b3ca3ef`: `AVAudioSession` now lives only in `FinanceTracker/Services/VoiceAudioSessionController.swift`.
+Activation errors propagate; deactivation is retried (100 ms, 250 ms, 500 ms, 1 s) and a final
+failure is logged as a `fault`; the activation call no longer passes `.notifyOthersOnDeactivation`.
+Guarded by `AudioSessionCallSiteGuardTests` (any other file referencing `AVAudioSession`, or a
+`try?` on one inside the controller, fails the suite) and `VoiceAudioSessionControllerTests` (retry
+contract). Both observed red under mutants before the fix was restored.
+
+**NOT established: that the swallowed error is the mechanism.** The brief asked for a device
+confirmation first (`:104`); no device run with music has happened. The Debug build at `b3ca3ef` is
+installed on the paired iPhone 14 Pro (`9B2EADBE-…`). The run is: play music → Quick Entry → dictate
+one entry → close → Console.app, subsystem `com.dmitrylogachev.budgetcrab`, category `VoiceAudio`.
+Three lines decide it: `othersPlayingAtActivate=true`, then either `deactivated attempts=N` (N>1
+confirms "busy") or `deactivate GAVE UP`, then `othersPlayingAfterRelease=true|false`. **Until that
+run, D46 is "fixed by construction", which this project does not accept as fixed.**
+
+**Option B, proposed, not chosen** (brief `:109–111`): category `.playAndRecord` with
+`[.duckOthers, .defaultToSpeaker]` so music ducks instead of stopping. Cost: the ducked music is
+audible to the mic, and `requiresOnDeviceRecognition` models have no noise model for it — a
+recognition-accuracy risk with no measurement behind it. Product decision; Dmitry's call.
+
+### 8.3 D1 stays filed — brief §0.5
+
+Nothing in `b3ca3ef` touches `VoiceInputService.deinit`. The three device tests in
+`DEFECT_VOICE_INPUT_DEINIT_ABORT.md` §8.4 stay specified and unrun.
+
+### 8.4 TSV export — `COVERAGE_MATRIX.md` row 1 closed
+
+`83da3ce`: `TSVExportServiceTests`, 10 tests. Against the code as shipped, **one was red**
+(filename `FinanceTracker_All.tsv` → now `BudgetCrab_All.tsv`); the date-formatter pin could not
+compile before the seam existed, so it was commissioned by mutation with two others in one run
+(locale `.current`, escaping pass-through, `ru_RU` amounts) — **5 of 10 red, each the test written
+for its mutant**. Fixes forced: date formatter pinned to `en_US_POSIX`/Gregorian (a Thai-region
+device wrote Buddhist-era years); private decimal formatter replaced by `Money.plainDecimalString`.
+
+Filed, not fixed — `DEFECT_REGISTER.md` **D47**: a split transaction exports as ONE row under its
+parent category, so category totals computed in Excel disagree with Analytics for anyone who splits.
+Recorded, not a defect: the importer cannot read TSV (sees one column, recognises no header) — the
+test pins that so it cannot start being mis-imported silently.
+
+### 8.5 The suite constant
+
+Four test files added today (`VoiceAudioSessionControllerTests`, `AppStoreLinkTests`,
+`TSVExportServiceTests`, plus the guard suite inside the first). `EXPECTED_TOTAL_RUN` was **not**
+touched: §7's rule stands, the next full run exits 5 and prints the number. **No full run was made
+today** — every run was `-only-testing`, so no count from today is admissible.
+
+### 8.6 Contradictions this pass adds to §4
+
+- **4.6** `GO_LIVE_CHECKLIST.md:5` — *"BUILD 10 — CLOSED. Submitted to App Review, awaiting
+  verdict."* — is stale: the verdict is in (§1). Not edited there; status lives here.
+- **4.7** `DEFECT_REGISTER.md` header and every *"NOT RELEASED"* cell for a build-9/10 fix were
+  written for 1.0.4 b8 as current. The register's header now carries the same supersession note as
+  this file; the per-row cells were updated for D2, D3, D7–D11 and left as history elsewhere.
