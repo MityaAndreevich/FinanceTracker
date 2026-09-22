@@ -30,14 +30,12 @@ enum TSVExportService {
             "Note"
         ].joined(separator: "\t"))
 
-        let df = DateFormatter()
-        df.locale = .current
-        df.dateFormat = "yyyy-MM-dd"
+        let df = dateFormatter
 
         for tx in txs {
             let date = df.string(from: tx.date)
             let type = tx.typeRaw
-            let amount = formatDecimal(cents: tx.amountCents)
+            let amount = Money.plainDecimalString(cents: tx.amountCents)
             let currency = tx.currency
 
             // ✅ displayName()
@@ -66,8 +64,8 @@ enum TSVExportService {
         }
 
         let filename = (scope == .month)
-            ? "FinanceTracker_ThisMonth.tsv"
-            : "FinanceTracker_All.tsv"
+            ? "BudgetCrab_ThisMonth.tsv"
+            : "BudgetCrab_All.tsv"
 
         return TSVExportResult(data: data, filename: filename)
     }
@@ -88,10 +86,20 @@ enum TSVExportService {
 
     // MARK: - Helpers
 
-    private static func formatDecimal(cents: Int) -> String {
-        let value = Decimal(cents) / 100
-        return NSDecimalNumber(decimal: value).stringValue
-    }
+    /// The calendar day in the user's time zone, as `yyyy-MM-dd`, and nothing
+    /// else. Locale and calendar are pinned: with `.current` a device set to
+    /// Thailand writes Buddhist-era years (2569) and one set to Egypt writes
+    /// Arabic-Indic digits, and Excel reads neither as a date. Internal so
+    /// `TSVExportServiceTests` can pin the two properties a unit test cannot
+    /// otherwise observe.
+    static let dateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "en_US_POSIX")
+        df.calendar = Calendar(identifier: .gregorian)
+        df.timeZone = .current
+        df.dateFormat = "yyyy-MM-dd"
+        return df
+    }()
 
     private static func safe(_ s: String) -> String {
         s
