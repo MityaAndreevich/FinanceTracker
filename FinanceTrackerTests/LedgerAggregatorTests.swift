@@ -30,9 +30,15 @@ import UserNotifications
 struct LedgerAggregatorTests {
 
     private final class SpyCenter: NotificationScheduling, @unchecked Sendable {
+        /// Passes are counted by the SAFE-TO-SPEND identifier only. Since 1.0.6
+        /// every pass also removes the two report identifiers
+        /// (`ReportNotificationRefresher`), so a raw call count would read 2 per
+        /// pass and this test would stop measuring what its name says.
         var removePendingCalls = 0
         var scheduleCalls = 0
-        func removePending(identifiers: [String]) { removePendingCalls += 1 }
+        func removePending(identifiers: [String]) {
+            if identifiers.contains(ProactiveAlertScheduler.identifier) { removePendingCalls += 1 }
+        }
         func schedule(_ request: UNNotificationRequest) { scheduleCalls += 1 }
     }
 

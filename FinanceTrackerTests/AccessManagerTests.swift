@@ -490,7 +490,8 @@ struct CapabilityMatrixTests {
         .csvImport,
         .exportPDFAll, .exportExcelAll,
         .addAccountBeyondFreeCap, .addCustomCategoryBeyondFreeCap,
-        .iCloudSync, .proactiveAlerts
+        .iCloudSync, .proactiveAlerts,
+        .scheduledReports   // 1.0.6 — P1, founder's decision (STATE.md RP1)
     ]
 
     @Test("History, CSV export and the widget are never premium", arguments: alwaysFree)

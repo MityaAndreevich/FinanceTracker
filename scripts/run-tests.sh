@@ -168,28 +168,16 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 #  once, at 1097, purely by coincidence — two unrelated sums landing on the same
 #  value. Declared-vs-observed is not corroboration.)
 #
-# ⚠️ STALE ON PURPOSE, 2026-09-12 — expect exit 5 on the next full run.
-#
-#   `ShippedStoreShapeTests.test_v1_0_5_build10_storeOpens` was added that day
-#   (the 1.0.5 build 10 fixture was captured but never asserted on). That is +1
-#   test, so this constant is one low.
-#
-#   It was NOT updated, because GO_LIVE_CHECKLIST §0 says this number comes from
-#   the OBSERVED count and never from arithmetic — and no full run could be
-#   observed. Three attempts on 2026-09-12 were killed by the OS during the
-#   compile phase, none reaching a single test, on a 16 GB machine whose swap was
-#   7.7 GB of 9.2 GB consumed by unrelated processes. `1114` is the arithmetic
-#   answer and it is probably right; "probably right" is exactly the currency this
-#   constant exists to refuse.
-#
-#   So the NEXT full run exits 5 and PRINTS the observed count. That is the
-#   designed path, not a failure — set this from the number it prints, delete this
-#   block, and say in the commit that the run was observed.
-#
-#   Scoped evidence that the added test is real, not a phantom +1:
-#     scripts/run-tests.sh -only-testing:FinanceTrackerTests/ShippedStoreShapeTests
-#     → executed=9 passed=9 failed=0, exit 0   (was 8 before the change)
-EXPECTED_TOTAL_RUN=1113
+# OBSERVED 2026-09-21, iPhone 17 Pro / iOS 26.5, ERASED simulator, UNFILTERED
+# (no -skip-testing, no -only-testing), HEAD f73e871 + two test-only fixes:
+#     executed=1181 skipped=3 → total 1184, exit 5 against the stale 1113
+# (Δ=+71: Phase 0 + Phase 1 of BRIEF_MASTER_2026-09-21 — voice controller,
+# App Store link, TSV, ReportPeriod, ReportBuilder, equality canaries, D5,
+# notifications, PDF pixels, the poisoned-Analytics journey, usage summary).
+# The 2026-09-12 note that sat here — "stale on purpose, expect exit 5" — is
+# discharged by that run; its +1 (ShippedStoreShapeTests) is inside the 71.
+# Bundle: /var/folders/.../tmp.3ArmIEq7xW/result.xcresult (session-local).
+EXPECTED_TOTAL_RUN=1184
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
 # The obvious instinct is a percentage band for headroom. It is wrong here, twice

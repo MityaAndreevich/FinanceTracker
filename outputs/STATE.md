@@ -215,7 +215,7 @@ should confirm it there first.**
 | 1.0.0 released | 2026-07-10 | `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:101` |
 | 1.0.3 available | 2026-07-29 | `BUG_MIGRATION_FLOOR_1_0_0_STORES_2026-08-14.md:98` |
 | **1.0.4 available** | **STILL NOT RECORDED** — the public lookup exposes only the *current* version's date, so 2026-09-21 did not settle it | see row R1 — this blank is load-bearing; App Store Connect's version history has it |
-| Suite constant | `EXPECTED_TOTAL_RUN=1113` — **further behind after 2026-09-21**: four test files were added (§8.5); by how much is deliberately not computed | `scripts/run-tests.sh:192` |
+| Suite constant | `EXPECTED_TOTAL_RUN=1184` — **observed 2026-09-21** (§9.1), no longer stale | `scripts/run-tests.sh:180` |
 
 ---
 
@@ -232,7 +232,7 @@ Evidence is the document **and line** that holds the detail, never a summary of 
 | **R1** | **Receipt / screenshot OCR** | **decided-build** — founder's decision 2026-09-21, target 1.0.7, design doc first (`BRIEF_MASTER_2026-09-21.md:177–178`: *"Dmitry has DECIDED to build this; the pre-test was not resolved and must not be described as resolved"*). **The pre-test remains NOT RESOLVED** — the decision overrides it, it does not answer it; T0 is still blank (R1c). Was **awaiting-measurement** until 2026-09-21 | Nothing external. **Of the three gating conditions, R1a and R1b are MET and R1c (T0) is UNRECORDED** — what is missing is that nobody wrote the date down | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
 | **S1** | **iCloud sync (private CloudKit)** | **decided-build**, target 1.1, **design first with family in view** (`BRIEF_MASTER_2026-09-21.md:273–279`, `:300–303`); the technical blockers in the next column are unchanged and are what the design must resolve | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
 | **V3** | **V3 schema (8 frozen attributes)** | **blocked** | D3 (the sentinel defect) is a prerequisite of *shipping* V3, not only of drilling it; and there is no real V2 store to drill against | `DESIGN_V3_SCHEMA_FREEZE.md:3` (*"no code written yet"*) · `:166–170` (what is needed first) · `DEFECT_V2_MIGRATION_SENTINEL.md:26` · `AUDIT_V3_ROLLBACK_READINESS.md:122` (§6, no real V2 store on this machine) |
-| **RP1** | **Reports** | **decided-build, DESIGN APPROVED 2026-09-21** — `outputs/DESIGN_REPORTS_1_0_6.md` approach A; decisions: **P1 premium split**, Analytics entry point yes, monthly always on the 1st, transactions table off by default in year/custom PDFs (`BRIEF_MASTER_2026-09-21.md:331–351`). **Condition: D47 ships in 1.0.6** with a split-heavy equality test commissioned red first (`:353–371`). **Premium rationale, founder's words:** *"no source supports any split (NOT IN SOURCES), and a gate is easy to remove later and painful to add — so start gated, revisit on data"* (`:339–341`). Building (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
+| **RP1** | **Reports** | **BUILT 2026-09-21 — in the tree, NOT released; see §9** — design approved 2026-09-21: `outputs/DESIGN_REPORTS_1_0_6.md` approach A; decisions: **P1 premium split**, Analytics entry point yes, monthly always on the 1st, transactions table off by default in year/custom PDFs (`BRIEF_MASTER_2026-09-21.md:331–351`). **Condition: D47 ships in 1.0.6** with a split-heavy equality test commissioned red first (`:353–371`). **Premium rationale, founder's words:** *"no source supports any split (NOT IN SOURCES), and a gate is easy to remove later and painful to add — so start gated, revisit on data"* (`:339–341`). Building (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
 | **T1** | **Re-playable tutorial + annotated help** | **decided-build**, target 1.0.7, as a three-layer user guide; design doc `outputs/DESIGN_USER_GUIDE.md` first then STOP (`BRIEF_MASTER_2026-09-21.md:204–268`) | not scheduled against any release | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
 | **A1** | **Auto-post recurrence** | **open** — design only | coupled to S1; must ship with the watermark move | `DESIGN_AUTOPOST_RECURRENCE_1_0_4.md:3` · `:644–645` |
 
@@ -702,3 +702,65 @@ Founder's instruction 2026-09-21 (`BRIEF_MASTER_2026-09-21.md:342–344`): `MONE
 cites notebook `e4a8bc88`, which §8.7 found to be mostly 404 pages, so **the free/paid line as a whole
 rests on a weak source.** Not a blocker for 1.0.6. Next action when monetization is next revisited:
 re-derive each `e4a8bc88`-attributed claim in that spec from the review corpus or the other notebooks.
+
+---
+
+## 9. PHASE 1 — REPORTS, BUILT 2026-09-21
+
+Design `DESIGN_REPORTS_1_0_6.md` (approach A, approved with four decisions and one condition,
+`BRIEF_MASTER_2026-09-21.md:331–`). Every row cites the commit; the red-then-green evidence for each
+guard is in that commit's message and, where the red was a crash, in `outputs/crash_harvest/2026-09-21/`.
+
+| commit | what | red observed as |
+|---|---|---|
+| `4840af2` | week / month / year / custom, previous period, closed-period rule, ASCII identity | 17 pure tests (new type; no prior behaviour to be red against) |
+| `f2ae0a9` | **D5: 12 of 14 overflow sites closed** — `AnalyticsSeries`, the one `CategoryBreakdown` fold (replaces three copies), Breakdown/CategoryDetail/DaySpending guards, `TotalsUnavailableCard` extracted | plain-`+` mutants → *"Restarting after unexpected exit, crash, or test timeout"*, `.ips`: *Swift runtime failure: arithmetic overflow* |
+| `984542d` | `ReportSnapshot` / `ReportBuilder` (pure, sums nothing itself), `LedgerAggregator.reportInput` off main, **`ReportEqualityCanaryTests`** on the split-heavy fixture: report == MonthTotals == CategoryBreakdown == AnalyticsSeries.pulse/horizon, week == month slice | a last-day-dropping mutant fails 2 of 7 |
+| `c02b8b0` | **D47 closed (the founder's condition)**: TSV one row per attributed part, `Split` + `Transaction ID` appended, first eight columns unchanged | `TSVSplitEqualityTests` on today's file: Food 12 700 / Home 5 000 / Health 3 000 vs 9 400 / 6 500 / 4 800 |
+| `cff1dbf` | `ReportsView` (Settings row + Analytics toolbar), `ReportsSettingsView`, notifications (policy, scheduler, refresher hook BEFORE the aggregate guard, `AppCapability.scheduledReports`, paywall row), **first `UNUserNotificationCenterDelegate`**, tap → sheet, Siri last-month/this-year → report, `ReportPDFRenderer`, 51 strings ×5 | policy/scheduler/frozen-language tests 31/31 |
+| `c03c4b8` | **PDF pixels**: 7 process locales × 7 currencies, ink-diff 0 on every money cell, unavailable page, 120-row year on page 2 through the 1.0.5 allocator | font-fit disabled → USD cell 23 px narrower than its reference |
+| `a6a47e9` | **Journey** `PoisonedAnalyticsJourneyTests`: Analytics ×3 → Reports ×3 → PDF, from an erased simulator | five-site mutant → app leaves the foreground on Analytics. A two-site mutant did NOT fail it (the guarded day-net sum bailed first) — recorded |
+| `547b85e` | usage summary: `Reports` appended as the LAST line (lines 1–8 keep the decision file's positions) | — |
+| `f73e871` | crash-report harvest before the erase, `crashReporterKey` redacted | — |
+
+**What is NOT done, stated plainly:**
+- **No version bump.** `MARKETING_VERSION` is still 1.0.5 / build 10. The bump, tag, release branch
+  and store fixture happen at submission per `ARCHITECTURE.md` "Releases".
+- **The music-fix device run is still pending** (§8.2). The What's New paragraph for it is marked ⚠️
+  and is deleted if the run does not confirm.
+- **D5's two remaining sites** (`EditTransactionView:120`, `CSVImportService:827`) are open; the
+  dashboard card's deleted sentence stays deleted.
+- **The safe-to-spend alert's own tap** still only foregrounds the app (D48, partial).
+- **`e4a8bc88`** (the market notebook) is still mostly 404 pages (§8.7).
+- The existing `PDFExportRenderTests` / `PDFExportLayoutTests` were **not modified**; the draw helpers
+  they pin were opened from `private` to `internal` so the report renderer composes them.
+
+### 9.1 The full suite — SEE THE ROW BELOW; do not read a count from anywhere else
+
+**Run 2026-09-21, erased simulator, unfiltered, `-derivedDataPath build/FullSuiteDD`, HEAD `f73e871`:**
+
+```
+executed=1181 passed=1176 failed=5 skipped=3
+count: executed+skipped=1184 expected=1113 Δ=+71 → exit 5 (the designed path)
+```
+
+`EXPECTED_TOTAL_RUN` set to **1184** from that run (`scripts/run-tests.sh:180`), the 2026-09-12
+stale-on-purpose note discharged. The run took ~55 min; `detachForBulkDelete removes the quadratic…`
+alone took 682 s while swap peaked at 14.4 of 15.3 GB — memory, not code (`project_full_suite_oom_on_this_mac`).
+
+**The five reds, against the known-failure baseline** (`GO_LIVE_CHECKLIST.md` §0: two known —
+`test_editAfterQuickAddInsert_stillOpensEditor` flaky, `test_savingThreeConsecutiveTransactions_…`
+deterministic):
+
+| test | verdict |
+|---|---|
+| `CapabilityMatrixTests` "Every capability is classified" | **mine** — `.scheduledReports` missing from the test's premium list; fixed, 3/3 |
+| `LedgerAggregatorTests.burstOfScheduleRefreshCallsCoalescesToExactlyOnePass` / `passesSeparatedInTimeEachRun` | **mine** — the tests counted `removePending` calls as a proxy for refresh passes, and each pass now also removes the two report identifiers; the spy now counts the alert's own identifier. Coalescing itself unchanged; fixed, 3/3 |
+| `EditAtScaleReproTests.test_seededRowTap_opensEditor` | **not in the baseline.** Message *"no rows (demo seed missing)"* / *"Transactions list never showed rows"* — the launch-seam residue class (`BRIEF_UI_SHARED_CONTAINER_RESIDUE_2026-08-14.md`, D33/D44). **Passes alone from an erased simulator** (1/1). Recorded as residue-class, not proven |
+| `test_editAfterQuickAddInsert_stillOpensEditor` | known flaky — in the baseline |
+| *(absent)* `test_savingThreeConsecutiveTransactions_…` | the baseline's deterministic red **PASSED** this run. Not investigated; noted so the baseline can be re-derived |
+
+**No second full run was made after the two test-only fixes**: they add no tests (count unchanged
+at 1184) and each was re-run scoped and green. A reader who wants the whole-suite confirmation runs
+it; the constant is already the observed number.
+
