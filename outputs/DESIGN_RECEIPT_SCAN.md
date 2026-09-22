@@ -202,8 +202,8 @@ One sheet after recognition, before the form:
 ```
 
 **Use these** presents `AddTransactionView(prefill:)` with amount (only if `high`), merchant, date,
-category via `CategorySuggestionService.suggest(forMerchant:)` when it returns one, and `note` =
-nothing (the raw text is **not** written into the note — it would put the receipt's contents into
+category via `CategorySuggestionService.suggest(forMerchant:)` when it returns one, and `note`
+left empty even though the extended prefill can carry one (the raw text is **not** written into the note — it would put the receipt's contents into
 the ledger and into every export). The form's own Save is the only save. **Nothing is ever
 auto-saved**, and the review sheet has no save button of its own.
 
@@ -221,8 +221,9 @@ the screen never says *"Total found"* for a `low` parse.
   version, no migration**: presence is `FileManager.fileExists`. `TransactionDetailView` shows it
   under the note. `TransactionDeleteService` removes the file with the row; `wipeLedger` / Reset
   remove the directory. `StoreBackup`'s copy set and both `ModelConfiguration`s exclude it.
-- **It stays on the phone.** The images are never included in CSV/TSV/PDF export. A user who wants
-  them out uses the Files app? — no: they are inside the App Group container, not user-visible.
+- **It stays on the phone.** The images are never included in CSV/TSV/PDF export, and they live
+  inside the App Group container, which the Files app does not show — so "keep" means keep for the
+  detail screen only, and the toggle's footer says exactly that.
   **DECIDE:** ship the toggle in 1.0.7, or defer attachment to 1.0.8 and ship scanning as
   in-memory only. Recommended: **defer**. The brief allows it ("optional"), it removes the App Privacy
   question (`APP_PRIVACY_ANSWERS.md` §1.5) from this release, and it keeps §7 about one thing.
