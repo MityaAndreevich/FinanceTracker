@@ -12,15 +12,29 @@ import UIKit
 /// Optional initial values, used when re-opening the form to edit a due
 /// recurring charge (see RecurringPromptSheet → "Edit").
 struct AddTransactionPrefill {
+    /// Where the prefill came from — `.receiptScan` marks the usage signal
+    /// AFTER a successful save (the pre-test's §1.1 lesson: never before).
+    enum Origin: Equatable { case edit, quickAdd, receiptScan }
+
     var typeRaw: String
     var amountText: String
     var merchant: String
     var categoryUUID: UUID?
     var sourceUUID: UUID?
     var recurrence: RecurrenceType?
+    /// 1.0.7: a scanned receipt's date. Nil = today, as before. Outside the
+    /// form's 1990…now+1y window it is ignored (the form's own validation).
+    var date: Date? = nil
+    var note: String? = nil
+    var origin: Origin = .edit
 }
 
 struct AddTransactionView: View {
+    /// The date window the form accepts — one definition for validation and
+    /// for a prefilled (scanned) date.
+    static let minDate = Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))!
+    static func maxDate(now: Date = Date()) -> Date { Calendar.current.date(byAdding: .year, value: 1, to: now)! }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -30,6 +44,8 @@ struct AddTransactionView: View {
     var prefill: AddTransactionPrefill? = nil
     /// Raw text from QuickEntryView "Use detailed form" path. Parsed on appear.
     var prefillText: String? = nil
+    /// A scan performed while this form is open (1.0.7). Wins over `prefill`.
+    @State private var prefillOverride: AddTransactionPrefill? = nil
     @State private var didApplyPrefill = false
 
     @Query(sort: \Category.order, order: .forward) private var categories: [Category]
@@ -131,8 +147,16 @@ struct AddTransactionView: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("common.add") { add() }
-                        .disabled(!canAdd)
+                    HStack(spacing: 12) {
+                        ReceiptScanButton { scanned in
+                            // A scan into an OPEN form fills the fields in place.
+                            didApplyPrefill = false
+                            prefillOverride = scanned
+                            applyPrefillIfNeeded()
+                        }
+                        Button("common.add") { add() }
+                            .disabled(!canAdd)
+                    }
                 }
             }
             .onAppear {
@@ -517,8 +541,8 @@ struct AddTransactionView: View {
             showErrorKey("validation.note.too_long")
             return
         }
-        let minDate = Calendar.current.date(from: DateComponents(year: 1990, month: 1, day: 1))!
-        let maxDate = Calendar.current.date(byAdding: .year, value: 1, to: Date())!
+        let minDate = Self.minDate
+        let maxDate = Self.maxDate()
         guard date >= minDate && date <= maxDate else {
             showErrorKey("validation.date.out_of_range")
             return
@@ -561,6 +585,8 @@ struct AddTransactionView: View {
                 #endif
 
                 RatingPromptCoordinator.recordTransactionSaved()
+                // Only after the save returned: a scan that was abandoned is not a use.
+                if (prefillOverride ?? prefill)?.origin == .receiptScan { FeatureUsageSignals.markUsed(.receiptScan) }
                 dismiss()
             } catch {
                 logSaveFailure("AddTransactionView.add", error)
@@ -578,12 +604,14 @@ struct AddTransactionView: View {
         guard !didApplyPrefill else { return }
         didApplyPrefill = true
 
-        if let p = prefill {
+        if let p = prefillOverride ?? prefill {
             typeRaw = p.typeRaw
             amountText = p.amountText
             merchantText = p.merchant
             selectedCategoryUUID = p.categoryUUID
             selectedSourceUUID = p.sourceUUID
+            if let d = p.date, d >= Self.minDate, d <= Self.maxDate() { date = d }
+            if let n = p.note { note = n }
             if let rec = p.recurrence {
                 isRecurring = true
                 recurrenceType = rec

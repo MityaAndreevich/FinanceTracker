@@ -1,2 +1,3 @@
 "NSMicrophoneUsageDescription" = "O Budget Crab usa o microfone apenas quando você toca o botão para ditar uma transação. O áudio é processado no seu iPhone e não é enviado.";
 "NSSpeechRecognitionUsageDescription" = "O Budget Crab transcreve sua fala no dispositivo usando o framework Speech da Apple. Nada é enviado a um servidor.";
+"NSCameraUsageDescription" = "O Budget Crab usa a câmera apenas quando você toca em “Fotografar recibo”, para ler o total. A foto é processada no seu iPhone e não é enviada.";

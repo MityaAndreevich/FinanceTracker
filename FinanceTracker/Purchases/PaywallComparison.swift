@@ -95,11 +95,16 @@ enum PaywallComparison {
             labelKey: "paywall.compare.row.alerts"),
         Row(capability: .scheduledReports,
             labelKey: "paywall.compare.row.scheduled_reports"),
+        // `.receiptScan` gets its row ("Unlimited receipt scanning", 5/month free)
+        // in the commit that SHIPS the scanner — after the corpus measurement
+        // (DESIGN_RECEIPT_SCAN.md §7). Until then it is in `unshippedCapabilities`.
     ]
 
     /// Capabilities whose gate exists but whose feature has not shipped. A row for
     /// any of these is a promise we cannot keep on the day the card is charged.
-    static let unshippedCapabilities: Set<AppCapability> = [.iCloudSync]
+    /// `.receiptScan` sits here until the 1.0.7 scanner ships; its row is
+    /// filtered off the paywall by this set, not by deleting the row.
+    static let unshippedCapabilities: Set<AppCapability> = [.iCloudSync, .receiptScan]
 }
 
 // MARK: - Spoken form

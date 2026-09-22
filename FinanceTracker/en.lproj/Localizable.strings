@@ -1058,3 +1058,22 @@
 "pdf.report.categories" = "Where it went";
 "pdf.report.transactions_omitted.format" = "%d transactions — export Excel for the full list.";
 "paywall.compare.row.scheduled_reports" = "Weekly & monthly report notifications";
+
+// MARK: - Receipt scanning (1.0.7)
+"scan.menu.camera" = "Photograph receipt";
+"scan.menu.screenshot" = "Choose screenshot";
+"scan.a11y.button" = "Scan a receipt";
+"scan.review.title" = "Recognised";
+"scan.review.amount" = "Amount";
+"scan.review.no_total" = "We couldn't find a total. Tap an amount below, or type it in the form.";
+"scan.review.other_amounts" = "Other amounts on the receipt";
+"scan.review.currency_mismatch.format" = "The receipt shows %1$@, your app uses %2$@ — check the amount.";
+"scan.review.details" = "Details";
+"scan.review.merchant" = "Merchant";
+"scan.review.date" = "Date";
+"scan.review.today" = "Today (no date found)";
+"scan.review.raw_text" = "Recognised text";
+"scan.review.use" = "Use these";
+"scan.failed.title" = "Couldn't read the image";
+"scan.failed.message" = "Nothing was saved. Try a sharper photo with the whole receipt in the frame.";
+"paywall.compare.row.receipt_scan" = "Receipt scanning per month";

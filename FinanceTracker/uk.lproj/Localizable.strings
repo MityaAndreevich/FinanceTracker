@@ -1056,3 +1056,22 @@
 "pdf.report.categories" = "Куди пішли гроші";
 "pdf.report.transactions_omitted.format" = "Операцій: %d — повний список в експорті Excel.";
 "paywall.compare.row.scheduled_reports" = "Сповіщення зі звітом за тиждень і місяць";
+
+// MARK: - Receipt scanning (1.0.7)
+"scan.menu.camera" = "Сфотографувати чек";
+"scan.menu.screenshot" = "Вибрати знімок екрана";
+"scan.a11y.button" = "Відсканувати чек";
+"scan.review.title" = "Розпізнано";
+"scan.review.amount" = "Сума";
+"scan.review.no_total" = "Підсумок не знайдено. Натисніть на суму нижче або введіть її у формі.";
+"scan.review.other_amounts" = "Інші суми на чеку";
+"scan.review.currency_mismatch.format" = "На чеку %1$@, у застосунку %2$@ — перевірте суму.";
+"scan.review.details" = "Деталі";
+"scan.review.merchant" = "Продавець";
+"scan.review.date" = "Дата";
+"scan.review.today" = "Сьогодні (дату не знайдено)";
+"scan.review.raw_text" = "Розпізнаний текст";
+"scan.review.use" = "Використати";
+"scan.failed.title" = "Не вдалося прочитати зображення";
+"scan.failed.message" = "Нічого не збережено. Спробуйте чіткіше фото, щоб увесь чек був у кадрі.";
+"paywall.compare.row.receipt_scan" = "Сканування чеків на місяць";

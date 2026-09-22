@@ -930,3 +930,22 @@
 "pdf.report.categories" = "Para onde foi";
 "pdf.report.transactions_omitted.format" = "%d lançamentos — exporte para Excel para ver a lista completa.";
 "paywall.compare.row.scheduled_reports" = "Notificações de relatório semanal e mensal";
+
+// MARK: - Receipt scanning (1.0.7)
+"scan.menu.camera" = "Fotografar recibo";
+"scan.menu.screenshot" = "Escolher captura de tela";
+"scan.a11y.button" = "Escanear um recibo";
+"scan.review.title" = "Reconhecido";
+"scan.review.amount" = "Valor";
+"scan.review.no_total" = "Não encontramos um total. Toque em um valor abaixo ou digite no formulário.";
+"scan.review.other_amounts" = "Outros valores no recibo";
+"scan.review.currency_mismatch.format" = "O recibo mostra %1$@ e o app usa %2$@ — confira o valor.";
+"scan.review.details" = "Detalhes";
+"scan.review.merchant" = "Estabelecimento";
+"scan.review.date" = "Data";
+"scan.review.today" = "Hoje (sem data no recibo)";
+"scan.review.raw_text" = "Texto reconhecido";
+"scan.review.use" = "Usar estes dados";
+"scan.failed.title" = "Não foi possível ler a imagem";
+"scan.failed.message" = "Nada foi salvo. Tente uma foto mais nítida com o recibo inteiro no enquadramento.";
+"paywall.compare.row.receipt_scan" = "Digitalização de recibos por mês";

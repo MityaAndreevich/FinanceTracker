@@ -39,6 +39,9 @@ enum FeatureUsageSignals {
         /// 1.0.6: a report was displayed (any period). Alongside-measurement for
         /// Reports — Phase 3's "which Guide cards were opened" starts here.
         case reportOpened = "report_opened"
+        /// 1.0.7: a scanned receipt was SAVED (not merely scanned). Marked in
+        /// AddTransactionView's success path only.
+        case receiptScan = "receipt_scan"
     }
 
     private static let prefix = "usage.ever."

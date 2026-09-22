@@ -491,7 +491,8 @@ struct CapabilityMatrixTests {
         .exportPDFAll, .exportExcelAll,
         .addAccountBeyondFreeCap, .addCustomCategoryBeyondFreeCap,
         .iCloudSync, .proactiveAlerts,
-        .scheduledReports   // 1.0.6 — P1, founder's decision (STATE.md RP1)
+        .scheduledReports,  // 1.0.6 — P1, founder's decision (STATE.md RP1)
+        .receiptScan        // 1.0.7 — S1, five free scans per month (STATE.md R1)
     ]
 
     @Test("History, CSV export and the widget are never premium", arguments: alwaysFree)

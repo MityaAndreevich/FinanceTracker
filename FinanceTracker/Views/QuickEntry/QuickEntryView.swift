@@ -35,11 +35,13 @@ struct QuickEntryView: View {
     // fixes it. `dismissAfterSheet` lets the form-fallback dismiss Quick Entry on
     // close while the category picker leaves Quick Entry open.
     private enum ActiveSheet: String, Identifiable {
-        case category, addTxFallback
+        case category, addTxFallback, scanResult
         var id: String { rawValue }
     }
     @State private var activeSheet: ActiveSheet? = nil
     @State private var dismissAfterSheet = false
+    /// 1.0.7: the prefill a receipt scan produced; presented as the full form.
+    @State private var scanPrefill: AddTransactionPrefill? = nil
     @State private var saveError = false
     // Success toast for the "Save & add another" path only. The primary Save
     // dismisses the sheet (the list surfaces its own confirmation), so this in-sheet
@@ -299,6 +301,10 @@ struct QuickEntryView: View {
             case .addTxFallback:
                 NavigationStack {
                     AddTransactionView(prefillText: inputText)
+                }
+            case .scanResult:
+                NavigationStack {
+                    AddTransactionView(prefill: scanPrefill)
                 }
             }
         }
@@ -764,6 +770,14 @@ struct QuickEntryView: View {
                             .accessibilityLabel(saveA11yLabel)
                         }
                     }
+            }
+
+            // 1.0.7: scan a paper receipt or a screenshot; the result opens the
+            // full form (it has the date field), and Quick Entry closes with it.
+            ReceiptScanButton { prefill in
+                scanPrefill = prefill
+                dismissAfterSheet = true
+                activeSheet = .scanResult
             }
 
             // Bug 7: always show the mic so voice is discoverable in every locale.

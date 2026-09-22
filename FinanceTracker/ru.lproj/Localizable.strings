@@ -1059,3 +1059,22 @@
 "pdf.report.categories" = "Куда ушли деньги";
 "pdf.report.transactions_omitted.format" = "Операций: %d — полный список в экспорте Excel.";
 "paywall.compare.row.scheduled_reports" = "Уведомления с отчётом за неделю и месяц";
+
+// MARK: - Receipt scanning (1.0.7)
+"scan.menu.camera" = "Сфотографировать чек";
+"scan.menu.screenshot" = "Выбрать скриншот";
+"scan.a11y.button" = "Отсканировать чек";
+"scan.review.title" = "Распознано";
+"scan.review.amount" = "Сумма";
+"scan.review.no_total" = "Итог не найден. Нажмите на сумму ниже или введите её в форме.";
+"scan.review.other_amounts" = "Другие суммы на чеке";
+"scan.review.currency_mismatch.format" = "На чеке %1$@, в приложении %2$@ — проверьте сумму.";
+"scan.review.details" = "Детали";
+"scan.review.merchant" = "Продавец";
+"scan.review.date" = "Дата";
+"scan.review.today" = "Сегодня (дата не найдена)";
+"scan.review.raw_text" = "Распознанный текст";
+"scan.review.use" = "Использовать";
+"scan.failed.title" = "Не удалось прочитать изображение";
+"scan.failed.message" = "Ничего не сохранено. Попробуйте более чёткое фото, чтобы весь чек был в кадре.";
+"paywall.compare.row.receipt_scan" = "Сканирование чеков в месяц";

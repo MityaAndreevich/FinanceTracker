@@ -205,6 +205,7 @@ final class UsageSummaryTests: XCTestCase {
         XCTAssertEqual(FeatureUsageSignals.Feature.csvImport.rawValue, "csv_import")
         XCTAssertEqual(FeatureUsageSignals.Feature.export.rawValue, "export")
         XCTAssertEqual(FeatureUsageSignals.Feature.reportOpened.rawValue, "report_opened")   // 1.0.6
-        XCTAssertEqual(FeatureUsageSignals.Feature.allCases.count, 7)
+        XCTAssertEqual(FeatureUsageSignals.Feature.receiptScan.rawValue, "receipt_scan")     // 1.0.7
+        XCTAssertEqual(FeatureUsageSignals.Feature.allCases.count, 8)
     }
 }

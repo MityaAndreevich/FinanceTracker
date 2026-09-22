@@ -30,6 +30,10 @@ enum FreeTierLimits {
     /// User-created (`isUserDefined`) categories a non-premium user may add,
     /// ON TOP of the 13 seeded defaults, which are always available.
     static let maxCustomCategories = 3
+
+    /// 1.0.7 receipt scanning, S1 (founder's decision 2026-09-21): five scans
+    /// per calendar month free, then the paywall. Counted by `ReceiptScanQuota`.
+    static let freeScansPerMonth = 5
 }
 
 extension Collection where Element == Category {
@@ -92,6 +96,10 @@ enum AppCapability: CaseIterable {
     /// paywall as its own row.
     case scheduledReports
 
+    /// 1.0.7: receipt / screenshot scanning. A COUNTED cap (`freeLimit`), gated
+    /// through `CapGate.attempt` with `ReceiptScanQuota.count` as the count.
+    case receiptScan
+
     // MARK: Premium hooks — NOT built yet
 
     /// Declared so the gate exists the day the feature lands (1.0.3). Do not
@@ -109,7 +117,7 @@ enum AppCapability: CaseIterable {
         case .csvImport,
              .exportPDFAll, .exportExcelAll,
              .addAccountBeyondFreeCap, .addCustomCategoryBeyondFreeCap,
-             .iCloudSync, .proactiveAlerts, .scheduledReports:
+             .iCloudSync, .proactiveAlerts, .scheduledReports, .receiptScan:
             return true
         }
     }
@@ -119,6 +127,7 @@ enum AppCapability: CaseIterable {
         switch self {
         case .addAccountBeyondFreeCap:         return FreeTierLimits.maxAccounts
         case .addCustomCategoryBeyondFreeCap:  return FreeTierLimits.maxCustomCategories
+        case .receiptScan:                     return FreeTierLimits.freeScansPerMonth
         default:                               return nil
         }
     }
