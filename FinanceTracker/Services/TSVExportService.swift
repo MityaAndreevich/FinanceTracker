@@ -17,7 +17,41 @@ enum TSVExportService {
 
     static func makeTSV(modelContext: ModelContext, scope: CSVExportScope) throws -> TSVExportResult {
         let txs = try fetchTransactions(modelContext: modelContext, scope: scope)
+        let filename = (scope == .month)
+            ? "BudgetCrab_ThisMonth.tsv"
+            : "BudgetCrab_All.tsv"
+        return try makeTSV(transactions: txs, filename: filename)
+    }
 
+    /// A report's period (1.0.6). Same columns, same rules; the file is named by
+    /// the period's ASCII identity.
+    static func makeTSV(modelContext: ModelContext, period: ReportPeriod, calendar: Calendar = .current) throws -> TSVExportResult {
+        let range = period.range(calendar: calendar)
+        let lo = range.lowerBound, hi = range.upperBound
+        var descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate<Transaction> { $0.date >= lo && $0.date < hi },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.includePendingChanges = true
+        let txs = try modelContext.fetch(descriptor)
+        return try makeTSV(transactions: txs, filename: "BudgetCrab_\(period.identity(calendar: calendar).replacingOccurrences(of: ":", with: "_")).tsv")
+    }
+
+    /// COLUMNS. The first eight are the 1.0.0 format and are unchanged. Two were
+    /// added in 1.0.6 for D47:
+    ///
+    ///   Split           "1 of 2" on each part of a split transaction; empty otherwise
+    ///   Transaction ID  the parent's UUID — the same on every part, so parts can
+    ///                   be grouped back into one purchase in a spreadsheet
+    ///
+    /// A split transaction is ONE ROW PER PART, with the part's amount and the
+    /// part's category (the remainder part carries the parent's category), so
+    /// that Σ Amount by Category computed in Excel equals what Analytics shows —
+    /// `CategoryAttribution.shares` is the single source of both. Before 1.0.6 a
+    /// split exported as one row under the parent's category, and the two
+    /// disagreed for anyone who split (`TSVSplitEqualityTests`). Σ Amount over
+    /// the whole file is unchanged by this: the parts sum to the parent.
+    private static func makeTSV(transactions txs: [Transaction], filename: String) throws -> TSVExportResult {
         var lines: [String] = []
         lines.append([
             "Date",
@@ -27,7 +61,9 @@ enum TSVExportService {
             "Category",
             "Source",
             "Merchant",
-            "Note"
+            "Note",
+            "Split",
+            "Transaction ID"
         ].joined(separator: "\t"))
 
         let df = dateFormatter
@@ -35,25 +71,31 @@ enum TSVExportService {
         for tx in txs {
             let date = df.string(from: tx.date)
             let type = tx.typeRaw
-            let amount = Money.plainDecimalString(cents: tx.amountCents)
             let currency = tx.currency
-
-            // ✅ displayName()
-            let category = safe(tx.category.displayNameOrFallback())
             let source = safe(tx.source?.name ?? "")
             let merchant = safe(tx.merchant ?? "")
             let note = safe(tx.note ?? "")
+            let id = tx.uuid.uuidString
 
-            lines.append([
-                date,
-                type,
-                amount,
-                currency,
-                category,
-                source,
-                merchant,
-                note
-            ].joined(separator: "\t"))
+            let shares = CategoryAttribution.shares(for: tx)
+            let isSplit = shares.count > 1
+            for (index, share) in shares.enumerated() {
+                let amount = Money.plainDecimalString(cents: share.amountCents)
+                let category = safe(share.category.displayNameOrFallback())
+                let split = isSplit ? "\(index + 1) of \(shares.count)" : ""
+                lines.append([
+                    date,
+                    type,
+                    amount,
+                    currency,
+                    category,
+                    source,
+                    merchant,
+                    note,
+                    split,
+                    id
+                ].joined(separator: "\t"))
+            }
         }
 
         let tsv = lines.joined(separator: "\n")
@@ -62,10 +104,6 @@ enum TSVExportService {
                 NSLocalizedDescriptionKey: "Failed to encode TSV as UTF-8."
             ])
         }
-
-        let filename = (scope == .month)
-            ? "BudgetCrab_ThisMonth.tsv"
-            : "BudgetCrab_All.tsv"
 
         return TSVExportResult(data: data, filename: filename)
     }

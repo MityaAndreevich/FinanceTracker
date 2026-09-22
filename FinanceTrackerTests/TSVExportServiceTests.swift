@@ -75,27 +75,27 @@ struct TSVExportServiceTests {
         return text.components(separatedBy: "\n").map { $0.components(separatedBy: "\t") }
     }
 
-    private static let header = ["Date", "Type", "Amount", "Currency", "Category", "Source", "Merchant", "Note"]
+    private static let header = ["Date", "Type", "Amount", "Currency", "Category", "Source", "Merchant", "Note", "Split", "Transaction ID"]
 
     // MARK: - Shape
 
-    @Test("an empty ledger exports exactly the eight-column header and nothing else")
+    @Test("an empty ledger exports exactly the ten-column header and nothing else")
     func emptyLedgerIsHeaderOnly() throws {
         let store = try makeStore()
         let rows = try rows(TSVExportService.makeTSV(modelContext: store.context, scope: .all))
         #expect(rows == [Self.header])
     }
 
-    @Test("every row has exactly eight cells, in header order")
-    func everyRowHasEightCells() throws {
+    @Test("every row has exactly ten cells, in header order; an unsplit row has an empty Split cell and its own ID")
+    func everyRowHasTenCells() throws {
         let store = try makeStore()
         let card = Source(name: "Visa")
         store.context.insert(card)
-        try insert(store, cents: 1_234, date: day(2026, 3, 5), source: card, merchant: "Cafe", note: "Lunch")
+        let tx = try insert(store, cents: 1_234, date: day(2026, 3, 5), source: card, merchant: "Cafe", note: "Lunch")
         let rows = try rows(TSVExportService.makeTSV(modelContext: store.context, scope: .all))
         #expect(rows.count == 2)
         #expect(rows[0] == Self.header)
-        #expect(rows[1] == ["2026-03-05", "expense", "12.34", "USD", "Food", "Visa", "Cafe", "Lunch"])
+        #expect(rows[1] == ["2026-03-05", "expense", "12.34", "USD", "Food", "Visa", "Cafe", "Lunch", "", tx.uuid.uuidString])
     }
 
     // MARK: - Money
@@ -126,7 +126,7 @@ struct TSVExportServiceTests {
         #expect(amounts == viaMoney)
     }
 
-    @Test("the Amount column sums to the ledger — a split transaction is one row, not two and not none")
+    @Test("the Amount column sums to the ledger — a split transaction is one row PER PART, under the part's category (D47)")
     func amountColumnSumsToTheLedger() throws {
         let store = try makeStore()
         let order = try insert(store, cents: 5_800, merchant: "Amazon")
@@ -140,14 +140,15 @@ struct TSVExportServiceTests {
         try store.context.save()
 
         let rows = try rows(TSVExportService.makeTSV(modelContext: store.context, scope: .all))
-        #expect(rows.count == 3)
+        #expect(rows.count == 4)   // header + 2 parts + 1 unsplit
         let amounts = rows.dropFirst().map { $0[2] }
-        #expect(amounts.sorted() == ["58", "7"])
-        // Known limitation, filed: the split breakdown (Home 40 / Food 18) is not
-        // in the file. Category-level totals computed in Excel will disagree with
-        // Analytics for any user who splits. See DEFECT_REGISTER.md.
-        let amazon = try #require(rows.first { $0[6] == "Amazon" })
-        #expect(amazon[4] == "Food")
+        #expect(amounts.sorted() == ["18", "40", "7"])
+        let parts = rows.filter { $0[6] == "Amazon" }
+        #expect(parts.map { $0[4] } == ["Home", "Food"])           // the part's category, in split order
+        #expect(parts.map { $0[8] } == ["1 of 2", "2 of 2"])
+        #expect(Set(parts.map { $0[9] }) == [order.uuid.uuidString])   // one purchase, one ID
+        let kiosk = try #require(rows.first { $0[6] == "Kiosk" })
+        #expect(kiosk[8] == "")
     }
 
     // MARK: - Locale
@@ -184,7 +185,7 @@ struct TSVExportServiceTests {
         let result = try TSVExportService.makeTSV(modelContext: store.context, scope: .all)
         let rows = try rows(result)
         #expect(rows.count == 3, "a newline in a cell became a row")
-        for row in rows { #expect(row.count == 8, "a tab in a cell became a column: \(row)") }
+        for row in rows { #expect(row.count == 10, "a tab in a cell became a column: \(row)") }
 
         let joe = try #require(rows.first { $0[6].hasPrefix("Joe") })
         #expect(joe[6] == "Joe's \"Diner\", downtown")   // quotes and commas are NOT special in TSV
@@ -230,5 +231,79 @@ struct TSVExportServiceTests {
         // `prepare` only skips a header it recognises as ours; a TSV header is not.
         let preamble = try CSVImportService.prepare(modelContext: store.context, data: result.data)
         #expect(preamble.startIndex == 0)
+    }
+}
+
+// MARK: - D47 — category totals derived from the file equal the app's (split-heavy fixture)
+
+/// The founder's approval condition for 1.0.6 (BRIEF_MASTER_2026-09-21.md, Phase 1
+/// addendum): "TSV-derived category totals == Analytics == report PDF, for the
+/// same period. Commission it red against today's TSV first — it should fail
+/// exactly on D47."
+///
+/// COMMISSIONED RED 2026-09-21 against the one-row-per-transaction TSV: Food read
+/// 12 700 from the file against 9 400 in the app — the split parts' money was
+/// filed under the parent's category. See the commit that closed D47.
+@Suite("TSV export — category totals equal the app's (D47)")
+@MainActor
+struct TSVSplitEqualityTests {
+
+    private func rows(_ data: Data) throws -> (header: [String], rows: [[String]]) {
+        let text = try #require(String(data: data, encoding: .utf8))
+        let lines = text.components(separatedBy: "\n").map { $0.components(separatedBy: "\t") }
+        return (lines[0], Array(lines.dropFirst()))
+    }
+
+    /// Σ Amount per Category name, from the FILE — what a user computes in Excel.
+    private func fileCategoryTotals(_ data: Data) throws -> [String: Int] {
+        let (header, rows) = try rows(data)
+        let amountCol = try #require(header.firstIndex(of: "Amount"))
+        let categoryCol = try #require(header.firstIndex(of: "Category"))
+        let typeCol = try #require(header.firstIndex(of: "Type"))
+        var totals: [String: Int] = [:]
+        for r in rows where r[typeCol] == "expense" {
+            let cents = try #require(Money.parseCents(from: r[amountCol]), "unparseable amount cell \(r[amountCol])")
+            totals[r[categoryCol], default: 0] += cents
+        }
+        return totals
+    }
+
+    @Test("Σ Amount by Category in the file == CategoryBreakdown == the report's category table")
+    func fileTotalsEqualAppTotals() throws {
+        let f = try SplitMirrorFixture.make(applySplitsToStore: true)
+        #expect(f.hasSplits)
+        let period = ReportPeriod.month(containing: f.now)
+        let cal = Calendar.current
+
+        let tsv = try TSVExportService.makeTSV(modelContext: f.container.mainContext, period: period)
+        let fromFile = try fileCategoryTotals(tsv.data)
+
+        // Analytics' fold, by display name (the fixture's categories are custom names).
+        let monthTxs = try f.monthTransactions()
+        let analytics = try #require(CategoryBreakdown.buckets(transactions: monthTxs, includeIncome: false))
+        let analyticsByName = Dictionary(uniqueKeysWithValues: analytics.map { ($0.value.category.displayNameOrFallback(), $0.value.cents) })
+
+        // The report's table, same period.
+        let categories = try f.container.mainContext.fetch(FetchDescriptor<FinanceTracker.Category>())
+        let input = LedgerAggregator.makeReportInput(transactions: try f.allTransactions(), categories: categories,
+                                                     period: period, calendar: cal, bundle: .main)
+        let snapshot = try #require(ReportBuilder.build(input: input, period: period, calendar: cal, monthlyBudgetCents: 0))
+        let reportByName = Dictionary(uniqueKeysWithValues: snapshot.expenseCategories.map { ($0.label.name, $0.cents) })
+
+        #expect(fromFile == analyticsByName)
+        #expect(fromFile == reportByName)
+        #expect(fromFile == ["Food": 9_400, "Home": 6_500, "Health": 4_800])   // the hand sums
+    }
+
+    @Test("Σ Amount over the whole file still equals the ledger — splitting moves money, never creates it")
+    func fileSumEqualsLedger() throws {
+        let f = try SplitMirrorFixture.make(applySplitsToStore: true)
+        let period = ReportPeriod.month(containing: f.now)
+        let tsv = try TSVExportService.makeTSV(modelContext: f.container.mainContext, period: period)
+        let (header, rows) = try rows(tsv.data)
+        let amountCol = try #require(header.firstIndex(of: "Amount"))
+        let typeCol = try #require(header.firstIndex(of: "Type"))
+        let expense = try rows.filter { $0[typeCol] == "expense" }.map { try #require(Money.parseCents(from: $0[amountCol])) }.reduce(0, +)
+        #expect(expense == f.expectedMonthExpenseCents)
     }
 }
