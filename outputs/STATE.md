@@ -680,6 +680,9 @@ today** — every run was `-only-testing`, so no count from today is admissible.
 
 - **4.6** `GO_LIVE_CHECKLIST.md:5` — *"BUILD 10 — CLOSED. Submitted to App Review, awaiting
   verdict."* — is stale: the verdict is in (§1). Not edited there; status lives here.
+- **4.8** `GO_LIVE_CHECKLIST.md:32–34` calls `test_savingThreeConsecutiveTransactions_…`
+  *deterministic* and lists two known reds. §9.2's observations table supersedes it: three tests,
+  all intermittent. Not edited there; status lives here.
 - **4.7** `DEFECT_REGISTER.md` header and every *"NOT RELEASED"* cell for a build-9/10 fix were
   written for 1.0.4 b8 as current. The register's header now carries the same supersession note as
   this file; the per-row cells were updated for D2, D3, D7–D11 and left as history elsewhere.
@@ -756,7 +759,7 @@ deterministic):
 |---|---|
 | `CapabilityMatrixTests` "Every capability is classified" | **mine** — `.scheduledReports` missing from the test's premium list; fixed, 3/3 |
 | `LedgerAggregatorTests.burstOfScheduleRefreshCallsCoalescesToExactlyOnePass` / `passesSeparatedInTimeEachRun` | **mine** — the tests counted `removePending` calls as a proxy for refresh passes, and each pass now also removes the two report identifiers; the spy now counts the alert's own identifier. Coalescing itself unchanged; fixed, 3/3 |
-| `EditAtScaleReproTests.test_seededRowTap_opensEditor` | **not in the baseline.** Message *"no rows (demo seed missing)"* / *"Transactions list never showed rows"* — the launch-seam residue class (`BRIEF_UI_SHARED_CONTAINER_RESIDUE_2026-08-14.md`, D33/D44). **Passes alone from an erased simulator** (1/1). Recorded as residue-class, not proven |
+| `EditAtScaleReproTests.test_seededRowTap_opensEditor` | ~~not in the baseline~~ — **WRONG, corrected 2026-09-21 (§9.2):** it is red 5/6 in the 2026-08-14 six-run matrix and only absent from GO_LIVE §0's two-name list. Message *"Transactions list never showed rows"*; **passes alone from an erased simulator** (1/1). Residue class, suspected |
 | `test_editAfterQuickAddInsert_stillOpensEditor` | known flaky — in the baseline |
 | *(absent)* `test_savingThreeConsecutiveTransactions_…` | the baseline's deterministic red **PASSED** this run. Not investigated; noted so the baseline can be re-derived |
 
@@ -764,3 +767,53 @@ deterministic):
 at 1184) and each was re-run scoped and green. A reader who wants the whole-suite confirmation runs
 it; the constant is already the observed number.
 
+### 9.2 The UI-suite baseline, restated: "deterministic" is falsified — all three are INTERMITTENT
+
+**Correction.** §9.1 first said `test_seededRowTap_opensEditor` was *"not in the baseline"*. It is: the
+2026-08-14 six-run matrix (`BRIEF_UI_SHARED_CONTAINER_RESIDUE_2026-08-14.md:112–135`) has it red in
+5 of 6 runs. It was absent only from `GO_LIVE_CHECKLIST.md:32–34`, which names two tests and calls
+one of them *deterministic*. Both tests that document calls deterministic have since passed at least
+once, so the label is retired here. **No `outputs/` document dated 2026-08-26 names any of the three**
+(`grep -rn seededRowTap outputs/` → the 08-14 brief and this file only); the 2026-08-26 run on record
+is the truncated `executed=563` one (`scripts/run-tests.sh:36`).
+
+**Observations — every full or UI-target run on record, oldest first.** R = red, G = green.
+
+| run | date | tree | `seededRowTap` | `editAfterQuickAddInsert` | `savingThreeConsecutive` | source |
+|---|---|---|---|---|---|---|
+| full ×2 | 2026-08-13/14 | working | G, R | R, R | R, R | `BRIEF_UI_SHARED_CONTAINER_RESIDUE_2026-08-14.md:24–29` |
+| UI target W1 | 2026-08-14 | working | G | R | R | `:118` |
+| C1 | 2026-08-14 | clean `051f493` | R | R | R | `:119` |
+| W2 | 2026-08-14 | working | R | R | R | `:120` |
+| C2 | 2026-08-14 | clean | R | R | R | `:121` |
+| W3 | 2026-08-14 | working | R | R | R | `:122` |
+| C3 | 2026-08-14 | clean | R | R | R | `:123` |
+| build-10 confirming run | 2026-09-02 | `8c98982` | **G** | R | R | `GO_LIVE_CHECKLIST.md:25–34`; tag `v1.0.5-build10` message |
+| Phase 1 full run | 2026-09-21 | `f73e871` | R | R | **G** | §9.1 |
+| scoped, erased | 2026-09-21 | `f73e871` | G (1/1) | — | — | §9.1 |
+
+Tallies over the nine unfiltered rows: `seededRowTap` **7 R / 2 G**, `editAfterQuickAddInsert`
+**9 R / 0 G** (its "flaky" label is the generous one — on record it has never passed in a full run;
+it passes in isolation, `:31`), `savingThreeConsecutive` **8 R / 1 G**. **All three: INTERMITTENT.**
+
+**Suspected shared cause — suspected, not established:** the `wipeLedger` DEBUG launch seam. Every
+message is a missing-rows message (*"demo seed missing"*, *"list never showed rows"*, *"Save button
+missing for entry #1"*), each class passes in isolation, and the mechanism the 08-14 brief traced —
+the first non-scale launch after a scale-seeding class wiping 8 000 rows on the main thread while
+the demo seed writes (`:89–98`, D33/D44) — fits all three. It has not been shown to be the cause of
+`savingThreeConsecutive`'s "Save button missing".
+
+**Consequence, written down:** these three cover **opening the editor, editing after a quick add,
+and saving consecutive entries** — the most money-critical UI paths in the app. While they are
+intermittent, **a real regression on those paths is indistinguishable from flake in a full run.**
+The `wipeLedger` remedy (W1/D33 — off the main thread, or the seam redesigned so a scale class
+cannot bleed into the next launch) is therefore the **FIRST item after 1.0.6 ships**. Not in 1.0.6:
+Reports touches none of those paths, and the release run's baseline for these three is
+"intermittent", read against this table, not against a two-name list.
+
+### 9.3 Release-candidate rule (founder, 2026-09-21)
+
+The full suite runs on the **exact commit that is archived**, after the version bump, from an
+erased simulator, and its count must equal **1184 plus whatever is added** after `52ecdc1`. Scoped
+re-runs are evidence for the change they cover, never for the archive. If memory kills the run, that
+is reported; nothing is archived on scoped runs.
