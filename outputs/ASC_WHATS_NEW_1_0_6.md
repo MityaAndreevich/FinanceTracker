@@ -22,6 +22,8 @@ still works (the eight are unchanged); one that summed a split purchase now sees
 
 ---
 
+# VARIANT A — WITH the music paragraph (ships only if the device run confirms; ⚠️ marks the conditional sentence)
+
 ## 🇺🇸 en-US
 
 ```
@@ -151,6 +153,139 @@ Também nesta versão:
 вашому iPhone у момент відкриття, і ніщо не залишає телефон.
 
 ⚠️ Також виправлено: музика та подкасти відновлюються після голосового введення.
+
+Також у цьому випуску:
+• Аналітика більше не перестає працювати, якщо в записах є сума, яку
+  неможливо додати, — натомість вона повідомляє про це.
+• Експорт в Excel: розділена покупка тепер вивантажується по одному рядку на
+  кожну частину, тому підсумки за категоріями в таблиці збігаються із
+  застосунком. У кінець додано два стовпці (Split, Transaction ID); перші
+  вісім не змінилися.
+• Дати в експорті Excel завжди у форматі рік-місяць-день.
+• Виправлення формулювань і перекладів усіма п’ятьма мовами.
+```
+
+---
+
+# VARIANT B — WITHOUT the music paragraph (Variant A minus that one paragraph in each language; nothing else differs)
+
+## 🇺🇸 en-US — WITHOUT the music paragraph
+
+```
+New: Reports. Pick a week, a month, a year or your own date range and see
+where your money went — income, expenses, what changed since the previous
+period, your biggest categories and your largest purchases. Open Reports
+from Analytics or from Settings.
+
+Share any report as a PDF with the analysis on the first page, or as an
+Excel file.
+
+Turn on a weekly or monthly report and Budget Crab will remind you when
+the period closes — tap the notification to open it. Reports are built on
+your iPhone when you open them, and nothing leaves your phone.
+
+Also in this release:
+• Analytics no longer stops working on a ledger with an amount it cannot
+  add up — it tells you instead.
+• Excel export: a split purchase is now one row per part, so totals by
+  category in your spreadsheet match the app. Two columns were added at
+  the end (Split, Transaction ID); the first eight are unchanged.
+• Excel export dates are always plain year-month-day.
+• Wording and translation fixes across all five languages.
+```
+
+## 🇷🇺 ru — WITHOUT
+
+```
+Новое: Отчёты. Выберите неделю, месяц, год или свой период и посмотрите,
+куда ушли деньги — доходы, расходы, что изменилось по сравнению с прошлым
+периодом, крупнейшие категории и самые большие покупки. Отчёты открываются
+из Аналитики и из Настроек.
+
+Любой отчёт можно отправить как PDF с анализом на первой странице или как
+файл Excel.
+
+Включите еженедельный или ежемесячный отчёт — Budget Crab напомнит, когда
+период закончится; нажмите на уведомление, чтобы открыть отчёт. Отчёты
+строятся на вашем iPhone в момент открытия, и ничего не покидает телефон.
+
+Также в этом выпуске:
+• Аналитика больше не перестаёт работать, если в записях есть сумма, которую
+  невозможно сложить, — вместо этого она сообщает об этом.
+• Экспорт в Excel: разделённая покупка теперь выгружается по одной строке на
+  каждую часть, поэтому итоги по категориям в таблице совпадают с приложением.
+  В конец добавлены две колонки (Split, Transaction ID); первые восемь не
+  изменились.
+• Даты в экспорте Excel всегда в виде год-месяц-день.
+• Исправления формулировок и переводов на всех пяти языках.
+```
+
+## 🇲🇽 es-MX — WITHOUT
+
+```
+Nuevo: Informes. Elige una semana, un mes, un año o tu propio rango de
+fechas y mira a dónde se fue tu dinero: ingresos, gastos, qué cambió
+respecto al período anterior, tus mayores categorías y tus compras más
+grandes. Abre Informes desde Analíticas o desde Ajustes.
+
+Comparte cualquier informe como PDF con el análisis en la primera página,
+o como archivo de Excel.
+
+Activa un informe semanal o mensual y Budget Crab te avisará cuando cierre
+el período; toca la notificación para abrirlo. Los informes se generan en
+tu iPhone cuando los abres, y nada sale de tu teléfono.
+
+También en esta versión:
+• Analíticas ya no deja de funcionar cuando hay un importe que no se puede
+  sumar: ahora te lo indica.
+• Exportación a Excel: una compra dividida ahora es una fila por cada parte,
+  así los totales por categoría en tu hoja de cálculo coinciden con la app.
+  Se añadieron dos columnas al final (Split, Transaction ID); las primeras
+  ocho no cambian.
+• Las fechas de la exportación a Excel siempre van como año-mes-día.
+• Correcciones de redacción y traducción en los cinco idiomas.
+```
+
+## 🇧🇷 pt-BR — WITHOUT
+
+```
+Novidade: Relatórios. Escolha uma semana, um mês, um ano ou seu próprio
+intervalo de datas e veja para onde foi seu dinheiro: receitas, despesas,
+o que mudou em relação ao período anterior, suas maiores categorias e
+suas maiores compras. Abra Relatórios em Análises ou em Ajustes.
+
+Compartilhe qualquer relatório como PDF, com a análise na primeira página,
+ou como arquivo Excel.
+
+Ative um relatório semanal ou mensal e o Budget Crab avisa quando o período
+fechar — toque na notificação para abri-lo. Os relatórios são gerados no
+seu iPhone quando você os abre, e nada sai do seu telefone.
+
+Também nesta versão:
+• Análises não para mais de funcionar quando há um valor que não dá para
+  somar — agora ela avisa.
+• Exportação para Excel: uma compra dividida agora é uma linha por parte,
+  assim os totais por categoria na planilha batem com o app. Duas colunas
+  foram adicionadas no final (Split, Transaction ID); as oito primeiras não
+  mudaram.
+• As datas da exportação para Excel são sempre ano-mês-dia.
+• Correções de texto e tradução nos cinco idiomas.
+```
+
+## 🇺🇦 uk — WITHOUT
+
+```
+Нове: Звіти. Оберіть тиждень, місяць, рік або власний період і подивіться,
+куди пішли гроші — доходи, витрати, що змінилося порівняно з попереднім
+періодом, найбільші категорії та найбільші покупки. Звіти відкриваються з
+Аналітики та з Налаштувань.
+
+Будь-який звіт можна надіслати як PDF з аналізом на першій сторінці або як
+файл Excel.
+
+Увімкніть щотижневий або щомісячний звіт — Budget Crab нагадає, коли період
+закінчиться; натисніть на сповіщення, щоб відкрити звіт. Звіти будуються на
+вашому iPhone у момент відкриття, і ніщо не залишає телефон.
 
 Також у цьому випуску:
 • Аналітика більше не перестає працювати, якщо в записах є сума, яку
