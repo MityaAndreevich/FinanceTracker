@@ -137,6 +137,13 @@ final class ShippedStoreShapeTests: XCTestCase {
     /// about this release, not a criterion for keeping the evidence.
     func test_v1_0_5_build10_storeOpens() throws { try assertOpens("V1_0_5_BUILD10") }
 
+    /// 1.0.6 (11), uploaded 2026-09-21 from `3473c5c`. No schema change (Reports
+    /// is a value computed from the existing rows; the receipt-image attachment
+    /// was deferred precisely to avoid one), so this shape equals build 10's.
+    /// Captured because the binary that wrote it existed on that day and will
+    /// not build forever — the 1.0.0 lesson.
+    func test_v1_0_6_build11_storeOpens() throws { try assertOpens("V1_0_6_BUILD11") }
+
     // MARK: - The corpus actually spans distinct shapes
 
     /// A corpus of five identical stores would pass everything above and prove

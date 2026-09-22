@@ -386,6 +386,7 @@ visible after it has already cost a release.
 | 1.0.4 | 8 | `4e6a8db` | `v1.0.4-build8` | `release/1.0.4` |
 | 1.0.5 | 9 | `b908d2d` | `v1.0.5-build9` | `release/1.0.5` |
 | 1.0.5 | 10 | `8c98982` | `v1.0.5-build10` | `release/1.0.5` |
+| 1.0.6 | 11 | `3473c5c` | `v1.0.6-build11` | `release/1.0.6` |
 
 Commits are the **commit** each tag points at, resolved with `git rev-parse <tag>^{commit}`.
 `git rev-parse <tag>` on an annotated tag returns the *tag object's* SHA, which is a different

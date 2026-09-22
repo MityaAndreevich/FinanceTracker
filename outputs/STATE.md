@@ -835,3 +835,19 @@ ARRIVED", appended verbatim below the Phase 1 approval.
 | 1.0.6 release pass | bump to build 11 → full run on THAT commit, erased simulator, count 1184 + additions, reds read against §9.2's three INTERMITTENT tests → archive → `-exportArchive` upload → tag `v1.0.6-build11` + `release/1.0.6` → store fixture → `ShippedStoreShapeTests` → report. **No submission** — Dmitry does that |
 | R1 receipt scanning | **approach A APPROVED.** Premium **S1** (5 free scans/month, then paywall). Attachment **deferred to 1.0.8**. Real paper photographs: **Dmitry supplies** — en and ru first, es-MX/pt-BR/uk as available; a locale without ≥ 10 REAL paper photos is **uncertified for paper** and ships paper scanning with the permanent "check the amount" line; screenshots certified separately, collectable for all five. Ukrainian: **check `VNRecognizeTextRequest.supportedRecognitionLanguages()` at the deployment target in code**; if `uk` is missing, recognise with ru + en and **measure** the uk corpus against the same bar — the measurement decides. **HELD-OUT SET:** the frozen corpus is split by SHA-deterministic assignment BEFORE any parser work into a DEV half (tune against) and a SEALED half (run ONCE after the parser is frozen; record the parser commit). A sealed miss is reported, never tuned-and-re-run; a new sealed set is collected instead. Parser, capture flow and unit tests may be built before the corpus exists |
 | Next | collection guide for Dmitry (one page) → Phase 2 build |
+
+---
+
+## 11. 1.0.6 (BUILD 11) — UPLOADED 2026-09-21, NOT SUBMITTED
+
+| fact | value | evidence |
+|---|---|---|
+| release commit | `3473c5c` (`chore(release): bump to 1.0.6 (build 11)`) | `git rev-parse v1.0.6-build11^{commit}` |
+| full suite ON that commit, erased simulator, unfiltered | `executed=1181 passed=1178 failed=3 skipped=3`; `executed+skipped=1184 expected=1184 Δ=+0`; **exit 1** | tag message; the run's bundle is session-local |
+| the three reds | exactly `seededRowTap`, `editAfterQuickAddInsert`, `savingThreeConsecutive` — §9.2's three INTERMITTENT tests; **nothing else red** | tag message |
+| archive | `build/BudgetCrab-1.0.6-11.xcarchive`, built from a clean worktree at `3473c5c`; app and widget Info.plists read **1.0.6 / 11** | `plutil -p` on both, 2026-09-21 |
+| upload | `xcodebuild -exportArchive` with a copy of `ExportOptions.plist` whose ONLY difference is `destination = upload` (`manageAppVersionAndBuildNumber` false); *"Upload succeeded"*, no sign-in prompted | xcodebuild output 21:31:36 |
+| tag / branch | `v1.0.6-build11` (annotated, on `3473c5c`), `release/1.0.6` — both pushed | `git ls-remote --tags origin` |
+| store fixture | `StoreFixtures/StoreV1_0_6_BUILD11` from the tagged commit: 33 transactions, sum 635473, 13 categories, 3 sources; `ShippedStoreShapeTests.test_v1_0_6_build11_storeOpens` added, 10/10 | `MANIFEST.md`, commit `3473c5c` recorded there |
+| **submitted for review** | **NO — Dmitry does that in App Store Connect.** What's New to paste: `ASC_WHATS_NEW_1_0_6.md` (FINAL) | — |
+| tag message to amend on approval | "approved and released" + date, `git tag -f -a`, force-push the tag (`ARCHITECTURE.md` Releases) | — |
