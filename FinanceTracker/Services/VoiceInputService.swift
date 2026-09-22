@@ -244,9 +244,7 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
         self.request = request
 
         do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
+            try VoiceAudioSessionController.shared.activate()
         } catch {
             cleanup()
             throw VoiceError.audioEngineFailed(underlying: error)
@@ -318,7 +316,10 @@ final class VoiceInputService: NSObject, ObservableObject, SFSpeechRecognizerDel
         request?.endAudio()
         request = nil
 
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        // After the engine has stopped, never before: deactivating a session with
+        // running I/O fails. The controller logs and retries a failure instead of
+        // swallowing it, and is a no-op when this service never activated.
+        VoiceAudioSessionController.shared.release()
 
         isListening = false
     }
