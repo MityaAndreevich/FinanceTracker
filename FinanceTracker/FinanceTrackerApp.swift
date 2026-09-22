@@ -45,6 +45,9 @@ struct FinanceTrackerApp: App {
         // migration sentinels, so `needsGuardedMigration` must not have been
         // read yet. Inert without `--seed-pre-v1-store`.
         PreV1StoreDebugSeed.seedIfRequested()
+        // Inert without `--scan-quota-count`; resets the receipt-scan count so
+        // UI tests do not inherit a previous test's scans (1.0.7).
+        ReceiptScanDebugSeam.applyQuotaOverrideIfRequested()
         #endif
 
         // Must run before SharedModelContainer.shared is first accessed so the

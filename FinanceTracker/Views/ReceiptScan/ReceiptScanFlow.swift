@@ -107,6 +107,10 @@ struct ReceiptScanButton: View {
     @State private var showPaywall = false
     @State private var showReview = false
     @State private var showPhotoPicker = false
+    /// Handed on only AFTER the review sheet has finished dismissing, so the
+    /// presenting sheet never opens the form while another sheet is going away
+    /// (that race left the form unprefilled in the UI journey).
+    @State private var pendingPrefill: AddTransactionPrefill?
 
     /// Called with the prefill when the user taps "Use these".
     let onUse: (AddTransactionPrefill) -> Void
@@ -127,7 +131,17 @@ struct ReceiptScanButton: View {
                 Label("scan.menu.camera", systemImage: "camera")
             }
             Button {
-                gate { showPhotoPicker = true }
+                gate {
+                    #if DEBUG
+                    // UI tests cannot drive the picker; the seam renders a fixture
+                    // and hands it to the REAL recogniser instead.
+                    if ReceiptScanDebugSeam.isRequested, let fixture = ReceiptScanDebugSeam.renderFixture() {
+                        coordinator.process(fixture)
+                        return
+                    }
+                    #endif
+                    showPhotoPicker = true
+                }
             } label: {
                 Label("scan.menu.screenshot", systemImage: "photo.on.rectangle")
             }
@@ -159,10 +173,16 @@ struct ReceiptScanButton: View {
             }
             .ignoresSafeArea()
         }
-        .sheet(isPresented: $showReview, onDismiss: { coordinator.reset() }) {
-            ReceiptReviewSheet(coordinator: coordinator) { prefill in
-                showReview = false
+        .sheet(isPresented: $showReview, onDismiss: {
+            coordinator.reset()
+            if let prefill = pendingPrefill {
+                pendingPrefill = nil
                 onUse(prefill)
+            }
+        }) {
+            ReceiptReviewSheet(coordinator: coordinator) { prefill in
+                pendingPrefill = prefill
+                showReview = false
             }
         }
         .sheet(isPresented: $showPaywall) { PaywallView() }

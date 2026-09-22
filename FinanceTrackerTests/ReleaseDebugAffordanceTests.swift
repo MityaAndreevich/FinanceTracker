@@ -41,6 +41,7 @@ struct ReleaseDebugAffordanceTests {
         "DuplicateReviewDebugSeed",   // --seed-possible-duplicates
         "resetForDebugIfRequested",   // --reset-tip-collection (wipes the collection)
         "applyDebugTrialOverrides",   // --expire/--reset-reverse-trial
+        "ReceiptScanDebugSeam",       // --scan-fixture-text (renders a receipt for the scan journey)
     ]
 
     private static var repoRoot: URL {

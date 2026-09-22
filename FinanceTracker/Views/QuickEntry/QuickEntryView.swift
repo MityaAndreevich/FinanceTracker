@@ -34,14 +34,23 @@ struct QuickEntryView: View {
     // which is what silently broke the tappable category badge. One `.sheet(item:)`
     // fixes it. `dismissAfterSheet` lets the form-fallback dismiss Quick Entry on
     // close while the category picker leaves Quick Entry open.
-    private enum ActiveSheet: String, Identifiable {
-        case category, addTxFallback, scanResult
-        var id: String { rawValue }
+    private enum ActiveSheet: Identifiable {
+        case category, addTxFallback
+        /// 1.0.7: the prefill a receipt scan produced, CARRIED BY THE ITEM. A
+        /// separate `@State` for it was read as nil by the sheet's content
+        /// closure (observed 2026-09-21 via a sandbox log: onUse wrote 6.04,
+        /// the closure saw nil); the item is what the sheet was presented with.
+        case scanResult(AddTransactionPrefill)
+        var id: String {
+            switch self {
+            case .category: return "category"
+            case .addTxFallback: return "addTxFallback"
+            case .scanResult: return "scanResult"
+            }
+        }
     }
     @State private var activeSheet: ActiveSheet? = nil
     @State private var dismissAfterSheet = false
-    /// 1.0.7: the prefill a receipt scan produced; presented as the full form.
-    @State private var scanPrefill: AddTransactionPrefill? = nil
     @State private var saveError = false
     // Success toast for the "Save & add another" path only. The primary Save
     // dismisses the sheet (the list surfaces its own confirmation), so this in-sheet
@@ -302,9 +311,9 @@ struct QuickEntryView: View {
                 NavigationStack {
                     AddTransactionView(prefillText: inputText)
                 }
-            case .scanResult:
+            case .scanResult(let prefill):
                 NavigationStack {
-                    AddTransactionView(prefill: scanPrefill)
+                    AddTransactionView(prefill: prefill)
                 }
             }
         }
@@ -775,9 +784,8 @@ struct QuickEntryView: View {
             // 1.0.7: scan a paper receipt or a screenshot; the result opens the
             // full form (it has the date field), and Quick Entry closes with it.
             ReceiptScanButton { prefill in
-                scanPrefill = prefill
                 dismissAfterSheet = true
-                activeSheet = .scanResult
+                activeSheet = .scanResult(prefill)
             }
 
             // Bug 7: always show the mic so voice is discoverable in every locale.

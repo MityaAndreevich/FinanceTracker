@@ -139,7 +139,7 @@ final class ReceiptCorpusTests: XCTestCase {
     private func table(_ outcomes: [Outcome]) -> [String: Cell] {
         var cells: [String: Cell] = [:]
         for o in outcomes where o.row.type != "nonreceipt" {
-            let key = "\(o.row.type)/\(o.row.locale)"
+            let key = Self.cellLabel(type: o.row.type, locale: o.row.locale)
             var c = cells[key] ?? Cell()
             c.n += 1
             if o.exact { c.exact += 1 }
@@ -153,6 +153,21 @@ final class ReceiptCorpusTests: XCTestCase {
             cells[key] = c
         }
         return cells
+    }
+
+    /// The cell label says what the images ARE and what recognised them. Vision
+    /// has no es-MX model (VisionLanguageSupportTests): es-MX images are
+    /// recognised with es-ES, and the table says so in every row so nobody later
+    /// reads the cell as a native es-MX result.
+    static func cellLabel(type: String, locale: String) -> String {
+        let recogniser: String
+        switch locale {
+        case "es": recogniser = "es-MX images, recognised es-ES"
+        case "uk": recogniser = "uk images, recognised uk-UA"
+        case "pt": recogniser = "pt-BR images, recognised pt-BR"
+        default: recogniser = "\(locale) images, recognised \(locale)"
+        }
+        return "\(type)/\(locale) (\(recogniser))"
     }
 
     private func render(_ cells: [String: Cell], title: String) -> String {
@@ -229,6 +244,11 @@ final class ReceiptCorpusTests: XCTestCase {
     }
 
     // MARK: - The split itself is deterministic and roughly even
+
+    func testCellLabelsNameTheRecogniser() {
+        XCTAssertEqual(ReceiptCorpusTests.cellLabel(type: "paper", locale: "es"), "paper/es (es-MX images, recognised es-ES)")
+        XCTAssertTrue(ReceiptCorpusTests.cellLabel(type: "screenshot", locale: "uk").contains("uk-UA"))
+    }
 
     func testSplitIsDeterministicByHash() {
         XCTAssertEqual(ReceiptCorpusTests.half(forSHA: "00abc"), .dev)
