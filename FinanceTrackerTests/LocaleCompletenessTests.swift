@@ -302,7 +302,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // which line and why) and dashboard.totals_unavailable.title/.body (the
         // state shown when a month's totals cannot be represented). All five
         // .lproj files carry them; this count is the tripwire that proves it.
-        XCTAssertEqual(enKeys.count, 759, "English baseline changed; update the expected count.")
+        // 759 → 761 (2026-09-21, D5 closed on the Analytics tab): the period-
+        // neutral totals_unavailable.title/.body — the dashboard pair says "this
+        // month", and Analytics, the category detail, the day sheet and Reports
+        // needed the same sentence for any period. Reports' own keys follow.
+        XCTAssertEqual(enKeys.count, 761, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

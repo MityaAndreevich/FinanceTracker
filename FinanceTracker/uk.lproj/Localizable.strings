@@ -243,6 +243,9 @@
    ====================================================== */
 "dashboard.totals_unavailable.title" = "Підсумки за місяць показати неможливо";
 "dashboard.totals_unavailable.body" = "Одна або кілька сум цього місяця завеликі для додавання. Нічого не втрачено — відкрийте «Операції», щоб знайти та виправити запис.";
+// Period-neutral twin of the dashboard pair — Analytics, category detail, day sheet, Reports (D5, 1.0.6).
+"totals_unavailable.title" = "Підсумки показати неможливо";
+"totals_unavailable.body" = "Одна або кілька сум цього періоду завеликі для додавання. Нічого не втрачено — відкрийте «Операції», щоб знайти та виправити запис.";
 "dashboard.summary.income" = "Дохід";
 "dashboard.summary.expenses" = "Витрати";
 "dashboard.summary.net" = "Баланс";

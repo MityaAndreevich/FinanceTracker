@@ -39,8 +39,9 @@ struct DaySpendingSheet: View {
         return allTransactions.filter { $0.date >= range.start && $0.date < range.end }
     }
 
-    private var netCents: Int {
-        filtered.reduce(0) { $0 + $1.signedAmountCents }
+    /// Nil = unavailable (D5).
+    private var netCents: Int? {
+        CategoryBreakdown.total(filtered, cents: \.signedAmountCents)
     }
 
     // Per-category magnitude for the breakdown bars (expenses + income shown
@@ -54,25 +55,20 @@ struct DaySpendingSheet: View {
         let isIncome: Bool
     }
 
+    /// Empty when a bucket cannot be summed (D5) — `netCents` is nil on the
+    /// same ledger and the sheet shows the unavailable card in its place.
     private var categorySlices: [CategorySlice] {
-        struct Acc { var name: String; var symbol: String; var color: Color; var cents: Int; var isIncome: Bool }
-        var sums: [UUID: Acc] = [:]
         // A-path (design doc §2.4 A5): a split purchase's money lands in the
         // splits' categories; the day-net figure above stays parent-summed.
-        for tx in filtered {
-            for share in CategoryAttribution.shares(for: tx) {
-                let key = share.category.bucketID
-                var cur = sums[key]
-                    ?? Acc(name: share.category.displayNameOrFallback(locale: locale),
-                           symbol: share.category.symbolNameOrFallback,
-                           color: share.category.themeColorOrFallback,
-                           cents: 0, isIncome: tx.isIncome)
-                cur.cents += share.amountCents
-                sums[key] = cur
-            }
-        }
+        // The fold is CategoryBreakdown — the same one every other screen uses.
+        guard let sums = CategoryBreakdown.buckets(transactions: filtered) else { return [] }
         return sums
-            .map { CategorySlice(id: $0.key, name: $0.value.name, symbol: $0.value.symbol, color: $0.value.color, cents: $0.value.cents, isIncome: $0.value.isIncome) }
+            .map { CategorySlice(id: $0.key,
+                                 name: $0.value.category.displayNameOrFallback(locale: locale),
+                                 symbol: $0.value.category.symbolNameOrFallback,
+                                 color: $0.value.category.themeColorOrFallback,
+                                 cents: $0.value.cents,
+                                 isIncome: $0.value.isIncome) }
             .sorted { $0.cents > $1.cents }
     }
 
@@ -122,14 +118,18 @@ struct DaySpendingSheet: View {
         VStack(spacing: 6) {
             Text(day.formatted(.dateTime.weekday(.wide).day().month(.wide)))
                 .font(.headline)
-            Text(Money.formatSigned(
-                cents: netCents,
-                isPositive: netCents >= 0,
-                currencyCode: currencyCode
-            ))
-            .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
-            .foregroundStyle(Color.moneyDirectional(isPositive: netCents >= 0))
-            .privacySensitive(true)
+            if let netCents {
+                Text(Money.formatSigned(
+                    cents: netCents,
+                    isPositive: netCents >= 0,
+                    currencyCode: currencyCode
+                ))
+                .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(Color.moneyDirectional(isPositive: netCents >= 0))
+                .privacySensitive(true)
+            } else {
+                TotalsUnavailableCard()
+            }
             Text(String(format: NSLocalizedString("analytics.transactions_count", comment: ""), filtered.count))
                 .font(.caption)
                 .foregroundStyle(.secondary)

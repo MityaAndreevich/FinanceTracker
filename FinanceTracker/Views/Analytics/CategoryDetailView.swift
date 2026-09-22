@@ -38,16 +38,20 @@ struct CategoryDetailView: View {
         return allTransactions.filter { tx in
             let day = cal.startOfDay(for: tx.date)
             guard day >= window.start && day <= window.end else { return false }
-            return attributedCents(of: tx) > 0
+            // A row whose own shares cannot be summed is still THIS category's
+            // row; keeping it makes the header go unavailable rather than the
+            // row silently vanish.
+            return (attributedCents(of: tx) ?? Int.max) > 0
         }
     }
 
     /// This category's PORTION of one purchase (the whole amount for an
     /// unsplit transaction; only the matching shares for a split one).
-    private func attributedCents(of tx: Transaction) -> Int {
-        CategoryAttribution.shares(for: tx)
-            .filter { $0.category.bucketID == categoryUUID }
-            .reduce(0) { $0 + $1.amountCents }
+    private func attributedCents(of tx: Transaction) -> Int? {
+        CategoryBreakdown.total(
+            CategoryAttribution.shares(for: tx).filter { $0.category.bucketID == categoryUUID },
+            cents: \.amountCents
+        )
     }
 
     /// Sum of the ATTRIBUTED magnitudes — matches the donut slice value, and
@@ -60,8 +64,17 @@ struct CategoryDetailView: View {
     /// read the 1000 against a 500 header as a double-count and never scrolled
     /// far enough to find the footnote. In a list already narrowed to ONE
     /// category, every number on screen is now that category's.
-    private var totalCents: Int {
-        filtered.reduce(0) { $0 + attributedCents(of: $1) }
+    ///
+    /// Nil = unavailable (D5): a share or the header sum cannot be represented.
+    private var totalCents: Int? {
+        var acc = 0
+        for tx in filtered {
+            guard let part = attributedCents(of: tx) else { return nil }
+            let (sum, overflow) = acc.addingReportingOverflow(part)
+            guard !overflow else { return nil }
+            acc = sum
+        }
+        return acc
     }
 
     var body: some View {
@@ -71,9 +84,13 @@ struct CategoryDetailView: View {
                     Text("analytics.category_total")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text(Money.format(cents: totalCents, currencyCode: currencyCode))
-                        .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
-                        .privacySensitive(true)
+                    if let totalCents {
+                        Text(Money.format(cents: totalCents, currencyCode: currencyCode))
+                            .font(.system(size: 32, weight: .bold, design: .rounded).monospacedDigit())
+                            .privacySensitive(true)
+                    } else {
+                        TotalsUnavailableCard()
+                    }
                     Text(String(format: NSLocalizedString("analytics.transactions_count", comment: ""), filtered.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -92,6 +109,8 @@ struct CategoryDetailView: View {
                     // The row still opens the WHOLE purchase for edit, which is
                     // why it keeps the full amount visible in its split context
                     // line rather than just swapping the number out.
+                    // nil attributed → the row shows the parent amount; the
+                    // header above has already said the sum is unavailable.
                     CategoryTileRow(tx: tx, attributedCents: attributedCents(of: tx))
                 }
             }

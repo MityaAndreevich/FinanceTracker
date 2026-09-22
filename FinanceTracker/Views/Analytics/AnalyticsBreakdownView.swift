@@ -81,9 +81,14 @@ struct AnalyticsBreakdownView: View {
         otherName: String,
         otherColor: Color
     ) -> [CategoryTotal] {
-        guard sorted.count > maxNamed + 1 else { return sorted }
-        let named = Array(sorted.prefix(maxNamed))
-        let otherCents = sorted.dropFirst(maxNamed).reduce(0) { $0 + $1.cents }
+        // The one fold (CategoryBreakdown). Its inputs are buckets that already
+        // fit in Int, but a tail's sum still might not; nil = unavailable, and
+        // AnalyticsView has already replaced this whole screen with the card
+        // whenever the direction total overflows — so `?? []` here is a belt
+        // over braces, never the only guard.
+        guard let fold = CategoryBreakdown.fold(sorted, maxNamed: maxNamed, cents: \.cents) else { return [] }
+        let named = fold.named
+        let otherCents = fold.otherCents
         guard otherCents > 0 else { return named }
         let other = CategoryTotal(
             id: otherBucketID,
@@ -130,8 +135,11 @@ struct AnalyticsBreakdownView: View {
         ChartGuards.renderableSlices(displayCategories, magnitude: \.cents)
     }
 
-    private var total: Int {
-        filteredCategories.reduce(0) { $0 + $1.cents }
+    /// Nil = unavailable. `AnalyticsView` withholds this screen when the
+    /// direction total overflows, so a nil here is unreachable in the app; the
+    /// guard exists so the sum cannot trap if that ever changes.
+    private var total: Int? {
+        CategoryBreakdown.total(filteredCategories, cents: \.cents)
     }
 
     var body: some View {
@@ -243,7 +251,9 @@ struct AnalyticsBreakdownView: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(Color.bcTextSecondary)
                     .textCase(.uppercase)
-                Text(Money.formatCompact(cents: total, currencyCode: currencyCode))
+                // "—" only where a figure is structurally required and cannot
+                // exist; the explanation is AnalyticsView's unavailable card.
+                Text(total.map { Money.formatCompact(cents: $0, currencyCode: currencyCode) } ?? "—")
                     .font(.system(.title2, design: .rounded).bold().monospacedDigit())
                     .foregroundStyle(Color.bcTextPrimary)
                     .minimumScaleFactor(0.5)
@@ -388,7 +398,7 @@ struct AnalyticsBreakdownView: View {
     }
 
     private func percentLabel(_ cat: CategoryTotal) -> String {
-        Self.percentString(cents: cat.cents, total: total)
+        Self.percentString(cents: cat.cents, total: total ?? 0)
     }
 
     /// Row subtitle: percent share for a real category; for the "Other" fold,
@@ -423,7 +433,7 @@ extension AnalyticsBreakdownView: AXChartDescriptorRepresentable {
         )
         let yAxis = AXNumericDataAxisDescriptor(
             title: "Amount",
-            range: 0...Double(max(total, 1)),
+            range: 0...Double(max(total ?? 0, 1)),
             gridlinePositions: []
         ) { value in
             Money.format(cents: Int(value), currencyCode: currencyCode)

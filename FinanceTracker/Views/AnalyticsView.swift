@@ -66,6 +66,14 @@ struct AnalyticsView: View {
     @State private var pulseSpentCents: Int = 0
     @State private var breakdownCategories: [AnalyticsBreakdownView.CategoryTotal] = []
     @State private var horizonMonths: [AnalyticsHorizonView.MonthlyTotal] = []
+    /// D5: a sum on this screen could not be represented. One flag for all three
+    /// sub-screens, the way `DashboardView.totalsUnavailable` covers the whole
+    /// money area — Pulse, Breakdown and Horizon read the same ledger, and a
+    /// figure that is unsummable on one is not trustworthy on the others.
+    @State private var totalsUnavailable: Bool = false
+    @State private var pulseUnavailable: Bool = false
+    @State private var breakdownUnavailable: Bool = false
+    @State private var horizonUnavailable: Bool = false
     // Spending-velocity verdict for the Pulse screen (Item 3).
     @State private var pace: PaceMetric.State = .unavailable
 
@@ -103,6 +111,12 @@ struct AnalyticsView: View {
 
             if transactions.isEmpty {
                 emptyState
+            } else if totalsUnavailable {
+                ScrollView {
+                    TotalsUnavailableCard()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                }
             } else {
                 content
             }
@@ -254,9 +268,11 @@ struct AnalyticsView: View {
             guard !Task.isCancelled else { return }
 
             priorAggregate = aggregate
-            horizonMonths = horizon.map {
+            horizonUnavailable = (horizon == nil)
+            horizonMonths = (horizon ?? []).map {
                 .init(date: $0.monthStart, incomeCents: $0.incomeCents, expenseCents: $0.expenseCents)
             }
+            refreshUnavailable()
             // Only Pace depends on the aggregate; Pulse and Breakdown are driven
             // by the month-scoped @Query and are unaffected by this pass.
             let cal = Calendar.current
@@ -339,43 +355,51 @@ struct AnalyticsView: View {
     private func recomputePulse(cal: Calendar, monthStart: Date, today: Date) {
         // Accumulation extracted to AnalyticsSeries (design doc §8.1) so the
         // SplitCanary suite pins the production formula. Category-blind.
-        let pulse = AnalyticsSeries.pulse(
+        guard let pulse = AnalyticsSeries.pulse(
             transactions: transactions, calendar: cal, monthStart: monthStart, today: today
-        )
+        ), let net = pulse.netCents else {
+            pulseUnavailable = true
+            refreshUnavailable()
+            return
+        }
+        pulseUnavailable = false
         pulseEarnedCents = pulse.earnedCents
         pulseSpentCents = pulse.spentCents
         pulseDaily = pulse.daily.map { .init(date: $0.date, cents: $0.cents) }
-        pulseNetCents = pulse.netCents
+        pulseNetCents = net
+        refreshUnavailable()
+    }
+
+    private func refreshUnavailable() {
+        totalsUnavailable = pulseUnavailable || breakdownUnavailable || horizonUnavailable
     }
 
     private func recomputeBreakdown(cal: Calendar, monthStart: Date, today: Date) {
-        struct Acc { var name: String; var symbol: String; var color: Color; var cents: Int; var isIncome: Bool }
-        // Income and expense categories carry distinct UUIDs in this app's taxonomy,
-        // so a single uuid-keyed dictionary never merges directions. The Breakdown
-        // view filters by `isIncome` for its segmented Expenses/Income control.
-        var sums: [UUID: Acc] = [:]
-
         // A-path (design doc §2.4 A1): a split purchase's money lands in the
         // splits' categories via CategoryAttribution; nil categories fold into
-        // the reserved uncategorized bucket.
-        for tx in transactions {
-            let day = cal.startOfDay(for: tx.date)
-            guard day >= monthStart && day <= today else { continue }
-            for share in CategoryAttribution.shares(for: tx) {
-                let key = share.category.bucketID
-                var cur = sums[key]
-                    ?? Acc(name: share.category.displayNameOrFallback(locale: locale),
-                           symbol: share.category.symbolNameOrFallback,
-                           color: share.category.themeColorOrFallback,
-                           cents: 0, isIncome: tx.isIncome)
-                cur.cents += share.amountCents
-                sums[key] = cur
-            }
+        // the reserved uncategorized bucket. The fold is `CategoryBreakdown` —
+        // the same one Reports and the Dashboard use — guarded (D5). The per-
+        // direction totals the Breakdown view prints are checked here too:
+        // every bucket can fit while their sum does not.
+        let dayAfter = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: today)) ?? today
+        guard let sums = CategoryBreakdown.buckets(transactions: transactions, in: monthStart..<dayAfter),
+              CategoryBreakdown.total(sums.values.filter { !$0.isIncome }, cents: { $0.cents }) != nil,
+              CategoryBreakdown.total(sums.values.filter { $0.isIncome }, cents: { $0.cents }) != nil
+        else {
+            breakdownUnavailable = true
+            refreshUnavailable()
+            return
         }
-
+        breakdownUnavailable = false
         breakdownCategories = sums.map { id, acc in
-            .init(id: id, name: acc.name, symbol: acc.symbol, cents: acc.cents, isIncome: acc.isIncome, color: acc.color)
+            .init(id: id,
+                  name: acc.category.displayNameOrFallback(locale: locale),
+                  symbol: acc.category.symbolNameOrFallback,
+                  cents: acc.cents,
+                  isIncome: acc.isIncome,
+                  color: acc.category.themeColorOrFallback)
         }
+        refreshUnavailable()
     }
 
     // `recomputeHorizon` intentionally no longer exists. It fed `horizonMonths`

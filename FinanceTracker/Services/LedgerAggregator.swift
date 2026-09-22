@@ -108,7 +108,11 @@ actor LedgerAggregator {
     /// (the SplitCanary suite pins that formula); this only relocates the fetch.
     /// `MonthNet` is already `Sendable` — no PersistentModel crosses the
     /// boundary, per the project rule.
-    func horizonSeries(now: Date, calendar: Calendar = .current) -> [AnalyticsSeries.MonthNet] {
+    ///
+    /// Nil = unavailable: the fetch failed (logged, never swallowed — rule 7) or
+    /// a month's sum cannot be represented (D5). The view shows the unavailable
+    /// card for nil and an empty chart for `[]`; the two are different facts.
+    func horizonSeries(now: Date, calendar: Calendar = .current) -> [AnalyticsSeries.MonthNet]? {
         let today = calendar.startOfDay(for: now)
         let monthStart = calendar.date(
             from: calendar.dateComponents([.year, .month], from: now)) ?? today
@@ -121,7 +125,14 @@ actor LedgerAggregator {
         // Horizon sums into month buckets; order is irrelevant and sorting a
         // year of rows here would be pure cost.
         descriptor.sortBy = []
-        let transactions = (try? modelContext.fetch(descriptor)) ?? []
+        let transactions: [Transaction]
+        do {
+            transactions = try modelContext.fetch(descriptor)
+        } catch {
+            let ns = error as NSError
+            persistenceLog.error("horizonSeries fetch failed domain=\(ns.domain, privacy: .public) code=\(ns.code, privacy: .public)")
+            return nil
+        }
         return AnalyticsSeries.horizon(
             transactions: transactions, calendar: calendar, monthStart: monthStart
         )

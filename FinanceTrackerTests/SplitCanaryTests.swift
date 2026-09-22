@@ -400,14 +400,16 @@ struct SplitCanaryTests {
         let pulseB = AnalyticsSeries.pulse(transactions: try b.allTransactions(),
                                            calendar: cal, monthStart: monthStart, today: today)
         #expect(pulseA == pulseB)
-        #expect(pulseB.spentCents == b.expectedMonthExpenseCents)
-        #expect(pulseB.earnedCents == b.expectedMonthIncomeCents)
+        let pulseBValue = try #require(pulseB, "an ordinary ledger must produce a pulse (nil is the overflow state)")
+        #expect(pulseBValue.spentCents == b.expectedMonthExpenseCents)
+        #expect(pulseBValue.earnedCents == b.expectedMonthIncomeCents)
 
         let horizonA = AnalyticsSeries.horizon(transactions: try a.allTransactions(),
                                                calendar: cal, monthStart: monthStart)
         let horizonB = AnalyticsSeries.horizon(transactions: try b.allTransactions(),
                                                calendar: cal, monthStart: monthStart)
         #expect(horizonA == horizonB)
+        #expect(horizonA != nil, "an ordinary ledger must produce a horizon (nil is the overflow state)")
     }
 
     // C5 — Widget snapshot totals / ring / hero -------------------------------

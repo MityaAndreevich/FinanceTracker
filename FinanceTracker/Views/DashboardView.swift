@@ -224,9 +224,12 @@ struct DashboardView: View {
                 color: s.category.themeColorOrFallback
             )
         }
-        guard sorted.count > maxSlices else { return sorted.map(slice) }
-        var result = sorted.prefix(maxSlices - 1).map(slice)
-        let tail = sorted.dropFirst(maxSlices - 1).reduce(0) { $0 + $1.cents }
+        // Every bucket fit in Int; their tail's sum still might not. A nil fold
+        // is the unavailable state — shown as no slices, never as a wrong "Other".
+        guard let fold = CategoryBreakdown.fold(sorted, maxNamed: maxSlices - 1, cents: \.cents) else { return [] }
+        guard fold.otherCents > 0 else { return fold.named.map(slice) }
+        var result = fold.named.map(slice)
+        let tail = fold.otherCents
         result.append(CategoryDonutView.Slice(
             id: "__other",
             // The FOLD aggregate, not the seeded catch-all category — it must
@@ -743,21 +746,10 @@ struct DashboardView: View {
     /// is the defect this whole change exists to remove. It says what happened and
     /// points at the list, which is where the offending row can be deleted.
     private var totalsUnavailableCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Color.bcWarning)
-                Text("dashboard.totals_unavailable.title")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.bcTextPrimary)
-            }
-            Text("dashboard.totals_unavailable.body")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.bcTextSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .bcCard(padding: 18)
+        TotalsUnavailableCard(
+            titleKey: "dashboard.totals_unavailable.title",
+            bodyKey: "dashboard.totals_unavailable.body"
+        )
     }
 
     private var heroCard: some View {

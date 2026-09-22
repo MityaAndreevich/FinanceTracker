@@ -247,6 +247,9 @@
    ====================================================== */
 "dashboard.totals_unavailable.title" = "Итоги за месяц показать нельзя";
 "dashboard.totals_unavailable.body" = "Одна или несколько сумм за этот месяц слишком велики для сложения. Ничего не потеряно — откройте «Операции», найдите и исправьте запись.";
+// Period-neutral twin of the dashboard pair — Analytics, category detail, day sheet, Reports (D5, 1.0.6).
+"totals_unavailable.title" = "Итоги показать нельзя";
+"totals_unavailable.body" = "Одна или несколько сумм за этот период слишком велики для сложения. Ничего не потеряно — откройте «Операции», найдите и исправьте запись.";
 "dashboard.summary.income" = "Доходы";
 "dashboard.summary.expenses" = "Расходы";
 "dashboard.summary.net" = "Итого";

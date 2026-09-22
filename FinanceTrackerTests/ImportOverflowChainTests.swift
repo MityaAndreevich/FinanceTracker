@@ -214,6 +214,53 @@ final class ImportOverflowChainTests: XCTestCase {
 
     /// The guard must not fire on ordinary data — a recovery that made every
     /// total unavailable would be its own outage.
+    // MARK: - D5 — the Analytics-tab sums, closed 2026-09-21 (DESIGN_REPORTS_1_0_6.md §5.2)
+    //
+    // COMMISSIONED RED before the guards: against the pre-1.0.6 AnalyticsSeries
+    // these two tests do not fail — they kill the runner (a trap in the test
+    // process; run-tests.sh reports exit 4 / a dead swift-testing phase). The
+    // scoped run that showed it is recorded in the commit that added the guards.
+
+    /// Sites 4–9 in the register's D5 row: AnalyticsSeries.pulse / .horizon.
+    func testAnalyticsSeriesReportsOverflowInsteadOfTrapping() throws {
+        let (container, _, txs) = try poisonedStore()
+        defer { _ = container }
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let monthStart = cal.date(from: cal.dateComponents([.year, .month], from: today))!
+        XCTAssertNil(AnalyticsSeries.pulse(transactions: txs, calendar: cal, monthStart: monthStart, today: today),
+                     "pulse returned totals for a sum that cannot be represented")
+        XCTAssertNil(AnalyticsSeries.horizon(transactions: txs, calendar: cal, monthStart: monthStart),
+                     "horizon returned months for a sum that cannot be represented")
+        // The daily nets can each fit while their sum does not: PulseTotals.netCents
+        // is guarded separately. Two representable days whose sum is not.
+        let daily = [AnalyticsSeries.DayNet(date: today, cents: Int.max - 1),
+                     AnalyticsSeries.DayNet(date: monthStart, cents: 2)]
+        XCTAssertNil(AnalyticsSeries.PulseTotals(daily: daily, earnedCents: 0, spentCents: 0).netCents)
+    }
+
+    /// The category fold and the two tail folds, now one function.
+    func testCategoryBreakdownReportsOverflowInsteadOfTrapping() throws {
+        let (container, _, txs) = try poisonedStore()
+        defer { _ = container }
+        XCTAssertNil(CategoryBreakdown.buckets(transactions: txs),
+                     "buckets returned for a sum that cannot be represented")
+        XCTAssertNil(CategoryBreakdown.total(txs, cents: \.amountCents))
+        // A tail fold whose members each fit and whose sum does not.
+        // Sorted descending as every caller sorts; keep 1, tail = [Int.max - 1, 2].
+        let members = [Int.max, Int.max - 1, 2]
+        XCTAssertNil(CategoryBreakdown.fold(members, maxNamed: 1, cents: { $0 }),
+                     "fold summed a tail that cannot be represented")
+        // And an ordinary fold still folds: 4 members, keep 2, Other = 3 + 4.
+        let ok = try XCTUnwrap(CategoryBreakdown.fold([10, 9, 3, 4], maxNamed: 2, cents: { $0 }))
+        XCTAssertEqual(ok.named, [10, 9])
+        XCTAssertEqual(ok.otherCents, 7)
+        // No fold when it would save nothing (count <= maxNamed + 1).
+        let none = try XCTUnwrap(CategoryBreakdown.fold([10, 9, 3], maxNamed: 2, cents: { $0 }))
+        XCTAssertEqual(none.named, [10, 9, 3])
+        XCTAssertEqual(none.otherCents, 0)
+    }
+
     func testOrdinaryLedgerStillComputesEveryTotal() throws {
         let (container, context) = try makeStore()
         defer { _ = container }

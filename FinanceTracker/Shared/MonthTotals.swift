@@ -48,17 +48,13 @@ enum MonthTotals {
     /// money sum the launch screen performs is in one file, findable by anyone
     /// looking for them, and testable without rendering a view.
     static func categorySpendBuckets(_ transactions: [Transaction]) -> [UUID: (Category?, Int)]? {
-        var byBucket: [UUID: (Category?, Int)] = [:]
-        for tx in transactions where !tx.isIncome {
-            for share in CategoryAttribution.shares(for: tx) {
-                let key = share.category.bucketID
-                let running = byBucket[key]?.1 ?? 0
-                let (sum, overflow) = running.addingReportingOverflow(share.amountCents)
-                guard !overflow else { return nil }
-                byBucket[key] = (share.category, sum)
-            }
+        // The fold itself lives in CategoryBreakdown since 1.0.6 so that the
+        // Dashboard, Analytics and Reports cannot disagree; this keeps the
+        // Dashboard's expense-only shape.
+        guard let buckets = CategoryBreakdown.buckets(transactions: transactions, includeIncome: false) else {
+            return nil
         }
-        return byBucket
+        return buckets.mapValues { ($0.category, $0.cents) }
     }
 
     private static func sum(_ transactions: [Transaction]) -> Int? {
