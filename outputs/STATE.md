@@ -859,15 +859,17 @@ ARRIVED", appended verbatim below the Phase 1 approval.
 | commit | what | red observed as |
 |---|---|---|
 | `054ef9f` | `ReceiptParser` (pure, keyword-ranked, never largest-number) + 23 tests | largest-number mutant: 10 of 23 red |
-| *(this)* | `ReceiptRecognizer` (Vision, app language first), `ReceiptScanQuota` (5/month, S1), `AppCapability.receiptScan` (counted cap, in `unshippedCapabilities` — no paywall row until it ships), `ReceiptScanButton` in Quick Entry and the form, `DocumentCameraView`, `PhotosPicker`, `ReceiptReviewSheet` (two shapes, no Save), `AddTransactionPrefill` gains `date`/`note`/`origin`, usage signal after save, camera usage string ×5, 17 strings ×5 | `NoNetworkInScanModuleTests`: red with a planted `URLSession` |
-| *(this)* | `ReceiptCorpusTests`: frozen-manifest check, SHA-parity DEV/SEALED split, reporter table, §7.3 bar; SEALED only under `RECEIPT_SEALED_RUN=1` with `RECEIPT_PARSER_COMMIT` | skips visibly until `FinanceTrackerTests/Fixtures/Receipts/manifest.csv` exists |
+| `a8ad92e`, `1930853` | `ReceiptRecognizer` (Vision, app language first), `ReceiptScanQuota` (5/month, S1), `AppCapability.receiptScan` (counted cap, in `unshippedCapabilities` — no paywall row until it ships), `ReceiptScanButton` in Quick Entry and the form, `DocumentCameraView`, `PhotosPicker`, `ReceiptReviewSheet` (two shapes, no Save), `AddTransactionPrefill` gains `date`/`note`/`origin`, usage signal after save, camera usage string ×5, 17 strings ×5 | `NoNetworkInScanModuleTests`: red with a planted `URLSession` |
+| `a8ad92e` | `ReceiptCorpusTests`: frozen-manifest check, SHA-parity DEV/SEALED split, reporter table, §7.3 bar; SEALED only under `RECEIPT_SEALED_RUN=1` with `RECEIPT_PARSER_COMMIT` | skips visibly until `FinanceTrackerTests/Fixtures/Receipts/manifest.csv` exists |
 
 **Facts established in code, not assumed:** Vision here lists `en-US ru-RU es-ES pt-BR uk-UA` —
 **Spanish is `es-ES` (no `es-MX` model)** and **`uk-UA` IS supported** on this SDK
 (`VisionLanguageSupportTests`, which re-asks on every run and reports the answer). On an iOS 17
 device the runtime asks again and falls back to ru + en for uk if absent.
 
+| `423f020` | **Journey + cap UI tests** through the REAL recogniser (`--scan-fixture-text`, DEBUG-only seam registered in `ReleaseDebugAffordanceTests`; Release binary checked directly: argument 0 / symbol 0, Debug dylib 1 / 27, unrelated literal present in both as control). Journey: scan → 6.04 not the 5.59 subtotal → prefilled form → saved → second scan shows the learned category. Cap: 5th works, 6th meets the paywall (presence), last month's count ignored. Two defects found and fixed: the prefill handed through a separate `@State` read as nil by the sheet closure (now carried in the sheet item); quota writes persisting across UI tests. es-MX corpus cells labelled "recognised es-ES" | dropped-amount mutant → red at the prefill wait |
+
 **What has NOT happened:** no corpus (Dmitry supplies paper; `RECEIPT_CORPUS_COLLECTION_GUIDE.md`),
-no freeze, no split, no measurement, no journey UI test yet, no paywall row, no What's New. The
+no freeze, no split, no measurement, no paywall row, no What's New. The
 scanner is reachable in a Debug build; **it must not ship until the sealed half has been run once
 and reported** — and the paywall row and `unshippedCapabilities` move in that same commit.
