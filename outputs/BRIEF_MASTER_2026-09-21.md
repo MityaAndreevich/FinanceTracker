@@ -325,3 +325,61 @@ Dmitry approves this document.
 
 START: Phase 0. Report it before Phase 1's design doc.
 ```
+
+---
+
+## Addendum — Phase 1 approval, received 2026-09-21 (verbatim)
+
+```
+PHASE 1 — APPROVED: approach A, with the decisions below and one condition.
+
+Phase 0 accepted. Verified independently: the deactivation retries run as awaited
+sleeps in a MainActor Task (no main-thread block) and a new activation supersedes
+a pending retry; the weekly alert is currently premium, so P1 mirrors today.
+
+DECISIONS (§13)
+  1. Free/premium: P1. Rationale to record in STATE.md alongside "Dmitry
+     decided": no source supports any split (NOT IN SOURCES), and a gate is
+     easy to remove later and painful to add — so start gated, revisit on data.
+     Also record that MONETIZATION_FREE_PAID_SPEC.md cites notebook e4a8bc88,
+     which you found is mostly 404 pages: the free/paid line as a whole rests on
+     a weak source. Not a blocker for 1.0.6; file it.
+  2. Analytics toolbar entry point: yes.
+  3. Monthly report always on the 1st: yes, no picker.
+  4. Transactions table in year/custom PDFs: off by default.
+  5. Approach A: approved.
+
+THE CONDITION — D47 ships in 1.0.6
+
+You filed D47: a split transaction exports to TSV as ONE row under the parent
+category, so category totals in Excel disagree with Analytics for anyone who
+splits. Phase 1 extends Excel export to week/year/custom periods. That broadens
+an export we already know is wrong. The design's promise — report figures equal
+screen figures — holds for the PDF by construction and does NOT hold for TSV.
+
+So:
+  • Fix D47 in 1.0.6: export splits so that category totals computed from the
+    exported rows equal CategoryAttribution for the same period. Propose the row
+    shape (one row per split line with the parent reference is the obvious
+    candidate) — it changes a paid file format, so state the change in What's New.
+  • The equality tests must include a SPLIT-HEAVY fixture and assert
+    TSV-derived category totals == Analytics == report PDF, for the same period.
+    Commission it red against today's TSV first — it should fail exactly on D47.
+  • Also include the overflow fixture from the 1.0.5 work: a report over a
+    ledger with an unrepresentable amount shows the unavailable state, never a
+    number.
+
+KEEP AS DESIGNED
+  • Notification body carries the period label and NO figures — correct both for
+    lock-screen privacy and because the period is not closed at schedule time.
+  • No schema change, no Swift Charts, 1.0.5 pixel guards untouched.
+
+PENDING FROM DMITRY: the music check on the Debug build (does music resume after
+a dictated entry). Record the result in STATE §8.2 when it arrives; do not wait
+for it to start Phase 1.
+
+Build Phase 1. Stop at the end of it with the full-suite result from an erased
+simulator (expect exit 5 and set EXPECTED_TOTAL_RUN from the observed count),
+the equality tests' red-then-green evidence, and the What's New draft in five
+languages for review.
+```
