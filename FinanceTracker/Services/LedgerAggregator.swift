@@ -137,4 +137,80 @@ actor LedgerAggregator {
             transactions: transactions, calendar: calendar, monthStart: monthStart
         )
     }
+
+    // MARK: - Reports (1.0.6)
+
+    /// The input a report is built from, for `period` and its previous period.
+    /// Two scoped fetches, mapped to Sendable DTOs on this executor; the
+    /// arithmetic is `ReportBuilder.build`, which is pure and tested without a
+    /// container. Nil = the fetch failed (logged — rule 7, never swallowed).
+    func reportInput(period: ReportPeriod, calendar: Calendar, bundle: Bundle) -> ReportInput? {
+        let range = period.range(calendar: calendar)
+        let prevRange = period.previous(calendar: calendar).range(calendar: calendar)
+        let lo = min(range.lowerBound, prevRange.lowerBound)
+        let hi = max(range.upperBound, prevRange.upperBound)
+        var descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate<Transaction> { $0.date >= lo && $0.date < hi }
+        )
+        descriptor.sortBy = []
+        let all: [Transaction]
+        let categories: [Category]
+        do {
+            all = try modelContext.fetch(descriptor)
+            categories = try modelContext.fetch(FetchDescriptor<Category>())
+        } catch {
+            let ns = error as NSError
+            persistenceLog.error("reportInput fetch failed domain=\(ns.domain, privacy: .public) code=\(ns.code, privacy: .public)")
+            return nil
+        }
+        return Self.makeReportInput(transactions: all, categories: categories, period: period,
+                                    calendar: calendar, bundle: bundle)
+    }
+
+    /// Shared by the actor and the synchronous test form (the `makeAggregate` pattern).
+    static func makeReportInput(
+        transactions: [Transaction],
+        categories: [Category],
+        period: ReportPeriod,
+        calendar: Calendar,
+        bundle: Bundle
+    ) -> ReportInput {
+        let range = period.range(calendar: calendar)
+        let prevRange = period.previous(calendar: calendar).range(calendar: calendar)
+
+        var labels: [UUID: ReportSnapshot.CategoryLabel] = [:]
+        for c in categories {
+            labels[c.uuid] = .init(name: c.displayName(bundle: bundle), symbol: c.symbolName, themeKey: c.themeKey)
+        }
+        labels[CategoryAttribution.uncategorizedBucketID] = .init(
+            name: bundle.localizedString(forKey: "category.uncategorized", value: "Uncategorized", table: nil),
+            symbol: "tray", themeKey: nil
+        )
+
+        var parents: [ReportInput.Parent] = []
+        var rows: [CategoryAttribution.Row] = []
+        var previous: [SafeToSpend.Entry] = []
+        for tx in transactions {
+            if range.contains(tx.date) {
+                let label = labels[tx.category.bucketID] ?? labels[CategoryAttribution.uncategorizedBucketID]!
+                parents.append(.init(uuid: tx.uuid, date: tx.date, amountCents: tx.amountCents,
+                                     isIncome: tx.isIncome, merchant: tx.merchant, categoryLabel: label))
+                rows.append(contentsOf: CategoryAttribution.rows(for: tx))
+            } else if prevRange.contains(tx.date) {
+                previous.append(.init(amountCents: tx.amountCents, date: tx.date, isIncome: tx.isIncome))
+            }
+        }
+        let limited = categories.compactMap { c -> ReportSnapshot.LimitedCategory? in
+            guard let limit = c.limitCents, limit > 0 else { return nil }
+            return .init(uuid: c.uuid, displayName: c.displayName(bundle: bundle), limitCents: limit)
+        }
+        return ReportInput(parents: parents, rows: rows, labels: labels,
+                           previousEntries: previous, limitedCategories: limited)
+    }
+
+    /// The report, or nil when unavailable (fetch failure or an unrepresentable sum).
+    func reportSnapshot(period: ReportPeriod, calendar: Calendar, monthlyBudgetCents: Int, bundle: Bundle) -> ReportSnapshot? {
+        guard let input = reportInput(period: period, calendar: calendar, bundle: bundle) else { return nil }
+        return ReportBuilder.build(input: input, period: period, calendar: calendar, monthlyBudgetCents: monthlyBudgetCents)
+    }
 }

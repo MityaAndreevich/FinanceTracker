@@ -34,7 +34,11 @@ extension Category {
     }
 
     /// Distinct brand-legible color for this category (both light & dark themes).
-    var themeColor: Color {
+    var themeColor: Color { Category.themeColor(forKey: themeKey) }
+
+    /// The same lookup off a bare key, for value types that carry a category's
+    /// `themeKey` across an actor boundary (ReportSnapshot) instead of the model.
+    static func themeColor(forKey themeKey: String) -> Color {
         if let mapped = CategoryTheme.map[themeKey] { return mapped.color }
         // User-defined / unknown: deterministic pick so a category keeps its
         // color across launches without needing a stored field.
