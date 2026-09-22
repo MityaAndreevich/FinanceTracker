@@ -54,6 +54,21 @@ enum PeriodAppEnum: String, AppEnum {
     ]
 }
 
+// MARK: - ReportPeriod mapping (1.0.6)
+
+extension ReportPeriod {
+    /// The Siri periods Analytics' fixed windows cannot show. `today`,
+    /// `thisMonth` and unknown values return nil — Analytics handles those.
+    static func from(siriPeriodRaw raw: String, now: Date, calendar: Calendar) -> ReportPeriod? {
+        switch PeriodAppEnum(rawValue: raw) {
+        case .thisWeek: return .week(containing: now)
+        case .lastMonth: return .month(containing: now).previous(calendar: calendar)
+        case .thisYear: return .year(containing: now)
+        case .today, .thisMonth, .none: return nil
+        }
+    }
+}
+
 // MARK: - PeriodScope mapping
 
 extension PeriodScope {

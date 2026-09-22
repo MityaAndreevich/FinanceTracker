@@ -85,6 +85,13 @@ enum AppCapability: CaseIterable {
     /// row off the paywall for a feature users can buy today.
     case proactiveAlerts
 
+    /// 1.0.6: the automatic weekly / monthly report notifications. Viewing a
+    /// report for ANY period is free; only the scheduled reminder is premium
+    /// (P1, founder's decision 2026-09-21 — `STATE.md` RP1). Gated in
+    /// `ReportsSettingsView` + `ReportNotificationRefresher`, sold on the
+    /// paywall as its own row.
+    case scheduledReports
+
     // MARK: Premium hooks — NOT built yet
 
     /// Declared so the gate exists the day the feature lands (1.0.3). Do not
@@ -102,7 +109,7 @@ enum AppCapability: CaseIterable {
         case .csvImport,
              .exportPDFAll, .exportExcelAll,
              .addAccountBeyondFreeCap, .addCustomCategoryBeyondFreeCap,
-             .iCloudSync, .proactiveAlerts:
+             .iCloudSync, .proactiveAlerts, .scheduledReports:
             return true
         }
     }

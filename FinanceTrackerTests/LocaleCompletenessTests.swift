@@ -306,7 +306,11 @@ final class LocaleCompletenessTests: XCTestCase {
         // neutral totals_unavailable.title/.body — the dashboard pair says "this
         // month", and Analytics, the category detail, the day sheet and Reports
         // needed the same sentence for any period. Reports' own keys follow.
-        XCTAssertEqual(enKeys.count, 761, "English baseline changed; update the expected count.")
+        // 761 → 812 (2026-09-21, Reports): 51 keys — reports.* (screen, share menu,
+        // automatic-report settings), reports.notif.* (two titles, one body that
+        // carries the period label and no figure), pdf.report.* (the analysis
+        // sections of the report PDF) and paywall.compare.row.scheduled_reports.
+        XCTAssertEqual(enKeys.count, 812, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

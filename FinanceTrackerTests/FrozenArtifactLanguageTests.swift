@@ -106,6 +106,30 @@ struct FrozenArtifactLanguageTests {
         }
     }
 
+    @Test("a report notification scheduled after a switch to Russian has a Russian title and body (1.0.6)")
+    func reportNotificationHonorsTheOverride() throws {
+        try requireTranslated("reports.notif.title.weekly")
+        try requireTranslated("reports.notif.body.format")
+        let expectedTitle = try russian("reports.notif.title.weekly")
+        let bodyFormat = try russian("reports.notif.body.format")
+
+        try withRussian {
+            let cal = Calendar.current
+            let fire = Date().addingTimeInterval(3 * 24 * 3600)
+            let plan = ReportNotificationPolicy.Plan(
+                cadence: .weekly, fireDate: fire,
+                period: ReportPeriod.closed(before: fire, cadence: .weekly, calendar: cal)
+            )
+            let request = ReportNotificationScheduler.request(for: plan, calendar: cal)
+            #expect(request.content.title == expectedTitle)
+            // The label inside the body must be Russian too — same bundle, same
+            // locale — so the whole body equals the ru format applied to a ru label.
+            let ruLabel = plan.period.label(locale: Locale(identifier: "ru"), calendar: cal)
+            #expect(request.content.body == String(format: bodyFormat, ruLabel),
+                    "the notification body is frozen at schedule time — it must arrive in the in-app language")
+        }
+    }
+
     @Test("the category-limit alert body honors the override too")
     func categoryLimitAlertBodyHonorsTheOverride() throws {
         try requireTranslated("alerts.notif.body.limit.format")

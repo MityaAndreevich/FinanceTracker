@@ -36,6 +36,9 @@ enum FeatureUsageSignals {
         case voiceEntry = "voice_entry"
         case csvImport = "csv_import"
         case export
+        /// 1.0.6: a report was displayed (any period). Alongside-measurement for
+        /// Reports — Phase 3's "which Guide cards were opened" starts here.
+        case reportOpened = "report_opened"
     }
 
     private static let prefix = "usage.ever."

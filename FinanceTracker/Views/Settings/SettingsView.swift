@@ -60,6 +60,13 @@ struct SettingsView: View {
                 }
 
                 NavigationLink {
+                    ReportsView(initialPeriod: .month(containing: Date()))
+                } label: {
+                    Label("reports.title", systemImage: "doc.text.magnifyingglass")
+                }
+                .accessibilityIdentifier("settings_reports_row")
+
+                NavigationLink {
                     LearnAndTipsView()
                 } label: {
                     Label("settings.learn_tips", systemImage: "lightbulb")

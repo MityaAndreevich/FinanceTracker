@@ -235,3 +235,9 @@ enum ReportPeriod: Equatable, Hashable, Sendable {
         return .month(d)
     }
 }
+
+extension ReportPeriod: Identifiable {
+    /// For `.sheet(item:)`. The user's calendar is the only one a presentation
+    /// can mean, so this is the one place `Calendar.current` appears here.
+    var id: String { identity(calendar: .current) }
+}

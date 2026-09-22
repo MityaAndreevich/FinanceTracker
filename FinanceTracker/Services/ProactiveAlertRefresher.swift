@@ -55,7 +55,8 @@ final class ProactiveAlertRefreshScheduler {
         coalesceWindow: Duration = defaultCoalesceWindow,
         defaults: UserDefaults = .standard,
         center: NotificationScheduling = UNUserNotificationCenter.current(),
-        isAllowed: (@MainActor () -> Bool)? = nil
+        isAllowed: (@MainActor () -> Bool)? = nil,
+        isReportsAllowed: (@MainActor () -> Bool)? = nil
     ) {
         pending?.cancel()
         // `[weak self]`: `pending` holds this task and the task would otherwise
@@ -73,6 +74,13 @@ final class ProactiveAlertRefreshScheduler {
             guard let aggregator = self.aggregator else { return }
 
             let now = Date()
+            // Report notifications need no ledger data (the body carries no
+            // figure), so they are (re)scheduled BEFORE the aggregate guard
+            // below — an unsummable ledger still gets its report reminder.
+            ReportNotificationRefresher.apply(
+                isAllowed: isReportsAllowed?() ?? AccessManager.shared.isAllowed(.scheduledReports),
+                defaults: defaults, now: now, center: center
+            )
             // nil = the ledger cannot be summed. Schedule nothing; see
             // SafeToSpend.aggregate. This is the path that runs on every .active
             // transition, so before the guard existed it crashed the app at launch.

@@ -27,6 +27,9 @@ struct ContentView: View {
     @AppStorage("swipe_hint_shown_count") private var swipeHintShownCount = 0
     @State private var selectedTab: Int = 0
     @State private var showAddSheet: Bool = false
+    /// A report to open as a sheet — from a report notification's tap, or a Siri
+    /// period that Analytics' fixed windows cannot show (last month, this year).
+    @State private var pendingReport: ReportPeriod?
     @State private var showSwipeHint = false
 
     // Screenshot automation: which settings-detail / paywall screen to present
@@ -180,6 +183,9 @@ struct ContentView: View {
             if oldTab == 4 && newTab != 4 {
                 settingsResetToken = UUID()
             }
+        }
+        .sheet(item: $pendingReport) { period in
+            ReportsScreen(initialPeriod: period)
         }
         .sheet(isPresented: $showAddSheet) {
             // testHookInput is nil in normal use; under the screenshot capture with
@@ -422,6 +428,20 @@ struct ContentView: View {
         if defaults.bool(forKey: "pendingNavigateToAnalytics") {
             defaults.set(false, forKey: "pendingNavigateToAnalytics")
             selectedTab = 3
+            // Analytics shows fixed windows; a Siri period it cannot show opens
+            // as a report on that period instead (1.0.6). `thisMonth`/`today`
+            // are what Analytics already shows, so they stay a plain tab switch.
+            if let raw = defaults.string(forKey: "pendingAnalyticsPeriod"),
+               let period = ReportPeriod.from(siriPeriodRaw: raw, now: Date(), calendar: .current) {
+                defaults.removeObject(forKey: "pendingAnalyticsPeriod")
+                pendingReport = period
+            }
+        }
+        if let identity = defaults.string(forKey: AppDelegate.pendingOpenReportKey) {
+            defaults.removeObject(forKey: AppDelegate.pendingOpenReportKey)
+            // A period we cannot parse opens the default (current month) report
+            // rather than nothing: the user tapped "your report is ready".
+            pendingReport = ReportPeriod.from(identity: identity, calendar: .current) ?? .month(containing: Date())
         }
     }
 }

@@ -93,6 +93,8 @@ enum PaywallComparison {
             labelKey: "paywall.compare.row.reports_alltime"),
         Row(capability: .proactiveAlerts,
             labelKey: "paywall.compare.row.alerts"),
+        Row(capability: .scheduledReports,
+            labelKey: "paywall.compare.row.scheduled_reports"),
     ]
 
     /// Capabilities whose gate exists but whose feature has not shipped. A row for

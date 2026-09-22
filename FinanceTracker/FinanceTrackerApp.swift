@@ -22,6 +22,8 @@ let appLaunchClock = CFAbsoluteTimeGetCurrent()
 
 @main
 struct FinanceTrackerApp: App {
+    /// Notification-tap routing only — see AppDelegate.swift.
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("appLanguageCode") private var appLanguageCode: String = "system"
     @AppStorage("firstLaunchDate") private var firstLaunchInterval: Double = 0

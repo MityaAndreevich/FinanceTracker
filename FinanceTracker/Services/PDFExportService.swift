@@ -50,12 +50,12 @@ struct PDFExportResult {
 enum PDFExportService {
 
     /// US Letter page in points.
-    private static let pageSize = CGSize(width: 612, height: 792)
-    private static let leftMargin: CGFloat = 36
-    private static let rightMargin: CGFloat = 36
-    private static let topMargin: CGFloat = 36
-    private static let bottomMargin: CGFloat = 48
-    private static let rowHeight: CGFloat = 18
+    static let pageSize = CGSize(width: 612, height: 792)
+    static let leftMargin: CGFloat = 36
+    static let rightMargin: CGFloat = 36
+    static let topMargin: CGFloat = 36
+    static let bottomMargin: CGFloat = 48
+    static let rowHeight: CGFloat = 18
 
     // MARK: - Table geometry
     //
@@ -67,6 +67,11 @@ enum PDFExportService {
     // `internal`, not `private`, for exactly one reason: PDFExportRenderTests
     // must READ this geometry instead of transcribing it. A test that copies the
     // literals is a second source, and a second source is the defect.
+    //
+    // 1.0.6: the page constants and the draw helpers below are `internal` too,
+    // so `ReportPDFRenderer` COMPOSES them (same title, same table, same footer,
+    // same allocator) instead of carrying a second copy. Nothing about their
+    // behaviour changed; PDFExportRenderTests pins that it did not.
 
     static let tableLeft: CGFloat = 36
     static let tableRight: CGFloat = 576
@@ -85,7 +90,7 @@ enum PDFExportService {
     /// The amount font shrinks rather than the amount truncating. This is where
     /// shrinking stops; below it, the column is allowed to exceed its clamp and
     /// take the space from the title instead. Money never truncates.
-    private static let amountFontFloor: CGFloat = 7
+    static let amountFontFloor: CGFloat = 7
 
     static var headerFont: UIFont { UIFont.systemFont(ofSize: 12, weight: .semibold) }
     static var bodyFont: UIFont { UIFont.systemFont(ofSize: 12, weight: .regular) }
@@ -230,7 +235,7 @@ enum PDFExportService {
     // reference type and sharing one across a drawing pass is the sort of thing
     // Swift 6 concurrency checking is right to dislike.
 
-    private static func truncatingStyle(_ alignment: NSTextAlignment) -> NSParagraphStyle {
+    static func truncatingStyle(_ alignment: NSTextAlignment) -> NSParagraphStyle {
         let style = NSMutableParagraphStyle()
         style.lineBreakMode = .byTruncatingTail
         style.alignment = alignment
@@ -364,7 +369,7 @@ enum PDFExportService {
 
     // MARK: - Drawing helpers
 
-    private static func drawTitle(_ text: String, y: CGFloat) -> CGFloat {
+    static func drawTitle(_ text: String, y: CGFloat) -> CGFloat {
         let font = UIFont.systemFont(ofSize: 22, weight: .bold)
         text.draw(
             in: CGRect(x: leftMargin, y: y, width: pageSize.width - leftMargin - rightMargin, height: 28),
@@ -373,7 +378,7 @@ enum PDFExportService {
         return y + 30
     }
 
-    private static func drawSubTitle(_ text: String, y: CGFloat) -> CGFloat {
+    static func drawSubTitle(_ text: String, y: CGFloat) -> CGFloat {
         let font = UIFont.systemFont(ofSize: 13, weight: .regular)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -423,7 +428,7 @@ enum PDFExportService {
         return yy
     }
 
-    private static func drawTableHeader(_ headers: HeaderLabels, layout: TableLayout, y: CGFloat) -> CGFloat {
+    static func drawTableHeader(_ headers: HeaderLabels, layout: TableLayout, y: CGFloat) -> CGFloat {
         let font = headerFont
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -451,7 +456,7 @@ enum PDFExportService {
         return y + 24
     }
 
-    private static func drawTransactionRow(
+    static func drawTransactionRow(
         _ row: RowContent,
         layout: TableLayout,
         y: CGFloat
@@ -473,7 +478,7 @@ enum PDFExportService {
         return y + rowHeight
     }
 
-    private static func drawPageFooter(pageIndex: Int, totalPages: Int) {
+    static func drawPageFooter(pageIndex: Int, totalPages: Int) {
         let font = UIFont.systemFont(ofSize: 10, weight: .regular)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -491,7 +496,7 @@ enum PDFExportService {
         )
     }
 
-    private static func shortDate(_ date: Date) -> String {
+    static func shortDate(_ date: Date) -> String {
         let df = DateFormatter()
         df.dateStyle = .short
         df.timeStyle = .none

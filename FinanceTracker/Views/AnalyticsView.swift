@@ -55,6 +55,8 @@ struct AnalyticsView: View {
     }
 
     @State private var screen: Screen = .pulse
+    /// The Reports sheet (1.0.6) — opened on the month this screen shows.
+    @State private var showReports = false
 
     // Cached derived data — recomputed on appear and when inputs change, not on
     // every body redraw.
@@ -131,6 +133,20 @@ struct AnalyticsView: View {
         )
         .sensoryFeedback(.selection, trigger: screen)
         .navigationTitle("title.analytics")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showReports = true
+                } label: {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .accessibilityLabel(Text("reports.open"))
+                }
+                .accessibilityIdentifier("analytics_open_report")
+            }
+        }
+        .sheet(isPresented: $showReports) {
+            ReportsScreen(initialPeriod: .month(containing: Date()))
+        }
         .onAppear {
             #if DEBUG
             // Screenshot frame #4 is the category breakdown — open it directly.
