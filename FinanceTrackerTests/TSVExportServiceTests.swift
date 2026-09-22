@@ -187,7 +187,9 @@ struct TSVExportServiceTests {
         #expect(rows.count == 3, "a newline in a cell became a row")
         for row in rows { #expect(row.count == 10, "a tab in a cell became a column: \(row)") }
 
-        let joe = try #require(rows.first { $0[6].hasPrefix("Joe") })
+        // `count > 6` so a mutant that lets a newline split a row fails by
+        // assertion, not by an index trap (host crash report 2026-09-21 17:14).
+        let joe = try #require(rows.first { $0.count > 6 && $0[6].hasPrefix("Joe") })
         #expect(joe[6] == "Joe's \"Diner\", downtown")   // quotes and commas are NOT special in TSV
         #expect(joe[7] == "line one line two  line three")
         #expect(joe[4] == "Eating out late")
