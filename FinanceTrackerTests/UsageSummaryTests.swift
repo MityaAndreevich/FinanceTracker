@@ -110,7 +110,8 @@ final class UsageSummaryTests: XCTestCase {
             usedCategoryLimits: false,
             usedVoiceEntry: true,
             usedCSVImport: false,
-            usedExport: true
+            usedExport: true,
+            usedReports: true
         )
     }
 
@@ -124,8 +125,9 @@ final class UsageSummaryTests: XCTestCase {
             .map(String.init)
             .filter { !$0.hasPrefix("—") }
 
-        // heading + 8 fields
-        XCTAssertEqual(lines.count, 9, "Summary shape changed:\n\(text)")
+        // heading + 9 fields (1.0.6 appended "Reports" as the LAST line; lines
+        // 1–8 keep the positions the decision file documents)
+        XCTAssertEqual(lines.count, 10, "Summary shape changed:\n\(text)")
 
         // Values are locale-neutral, so they can be asserted regardless of the
         // bundle's language.
@@ -163,7 +165,8 @@ final class UsageSummaryTests: XCTestCase {
             usedCategoryLimits: false,
             usedVoiceEntry: false,
             usedCSVImport: false,
-            usedExport: false
+            usedExport: false,
+            usedReports: false
         )
         let text = summary.render(bundle: .main)
         XCTAssertFalse(text.contains("137"))
@@ -201,6 +204,7 @@ final class UsageSummaryTests: XCTestCase {
         XCTAssertEqual(FeatureUsageSignals.Feature.voiceEntry.rawValue, "voice_entry")
         XCTAssertEqual(FeatureUsageSignals.Feature.csvImport.rawValue, "csv_import")
         XCTAssertEqual(FeatureUsageSignals.Feature.export.rawValue, "export")
-        XCTAssertEqual(FeatureUsageSignals.Feature.allCases.count, 6)
+        XCTAssertEqual(FeatureUsageSignals.Feature.reportOpened.rawValue, "report_opened")   // 1.0.6
+        XCTAssertEqual(FeatureUsageSignals.Feature.allCases.count, 7)
     }
 }

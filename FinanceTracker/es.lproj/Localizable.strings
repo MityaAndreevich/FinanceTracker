@@ -363,6 +363,7 @@
 "feedback.usage.voice" = "Entrada por voz";
 "feedback.usage.import" = "Importación CSV";
 "feedback.usage.export" = "Exportación";
+"feedback.usage.reports" = "Informes";
 "dashboard.spending_by_category" = "Gastos por categoría";
 "dashboard.total_spent" = "Gastado";
 "dashboard.day0.title" = "Estadísticas próximamente";

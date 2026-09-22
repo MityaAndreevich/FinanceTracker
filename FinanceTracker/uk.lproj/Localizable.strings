@@ -305,6 +305,7 @@
 "feedback.usage.voice" = "Голосове введення";
 "feedback.usage.import" = "Імпорт CSV";
 "feedback.usage.export" = "Експорт";
+"feedback.usage.reports" = "Звіти";
 "dashboard.spending_by_category" = "Витрати за категоріями";
 "dashboard.total_spent" = "Витрачено";
 

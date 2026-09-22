@@ -300,6 +300,7 @@
 "feedback.usage.voice" = "Voice entry";
 "feedback.usage.import" = "CSV import";
 "feedback.usage.export" = "Export";
+"feedback.usage.reports" = "Reports";
 "dashboard.spending_by_category" = "Spending by category";
 "dashboard.total_spent" = "Spent";
 

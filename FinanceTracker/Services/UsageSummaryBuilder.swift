@@ -102,6 +102,9 @@ struct UsageSummary {
     var usedVoiceEntry: Bool
     var usedCSVImport: Bool
     var usedExport: Bool
+    /// 1.0.6. APPENDED as the LAST line so lines 1–8 keep the positions the
+    /// decision file documents; a reader of an older reply is not misled.
+    var usedReports: Bool
 
     // MARK: - Rendering
 
@@ -128,6 +131,7 @@ struct UsageSummary {
         lines.append("\(t("feedback.usage.voice")): \(flag(usedVoiceEntry))")
         lines.append("\(t("feedback.usage.import")): \(flag(usedCSVImport))")
         lines.append("\(t("feedback.usage.export")): \(flag(usedExport))")
+        lines.append("\(t("feedback.usage.reports")): \(flag(usedReports))")
 
         let rule = String(repeating: "—", count: 12)
         return "\n\(rule)\n" + lines.joined(separator: "\n") + "\n\(rule)\n"
@@ -160,7 +164,8 @@ enum UsageSummaryBuilder {
                 || hasCategoryLimit(in: modelContext),
             usedVoiceEntry: FeatureUsageSignals.wasUsed(.voiceEntry),
             usedCSVImport: FeatureUsageSignals.wasUsed(.csvImport),
-            usedExport: FeatureUsageSignals.wasUsed(.export)
+            usedExport: FeatureUsageSignals.wasUsed(.export),
+            usedReports: FeatureUsageSignals.wasUsed(.reportOpened)
         )
     }
 

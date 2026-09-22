@@ -310,7 +310,8 @@ final class LocaleCompletenessTests: XCTestCase {
         // automatic-report settings), reports.notif.* (two titles, one body that
         // carries the period label and no figure), pdf.report.* (the analysis
         // sections of the report PDF) and paywall.compare.row.scheduled_reports.
-        XCTAssertEqual(enKeys.count, 812, "English baseline changed; update the expected count.")
+        // 812 → 813: feedback.usage.reports, the usage summary's appended last line.
+        XCTAssertEqual(enKeys.count, 813, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {
