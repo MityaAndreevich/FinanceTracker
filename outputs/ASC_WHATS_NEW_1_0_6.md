@@ -15,6 +15,13 @@ weekly/monthly reminders through `scheduledReports` — all premium (`ReportsVie
 **Every sentence is a claim**; the Provenance table at the end names the test or commit that proves
 each one on this tree.
 
+**Names verified against the app's own strings 2026-09-21** (`tab.analytics`, `tab.settings`,
+`reports.title`, `paywall.compare.premium` in all five `.lproj`): es "Analíticas" → **"Análisis"**
+(twice) and pt-BR "Ajustes" → **"Definições"** were wrong in the first final and are corrected
+below; everything else matched. The Excel column names are English literals in every locale
+(`TSVExportService.swift:65–66`), so "(Split, Transaction ID)" is what a Russian user's file
+actually says.
+
 ---
 
 ## 🇺🇸 en-US
@@ -76,7 +83,7 @@ Also in this release:
 Nuevo: Informes. Elige una semana, un mes, un año o tu propio rango de
 fechas y mira a dónde se fue tu dinero: ingresos, gastos, qué cambió
 respecto al período anterior, tus mayores categorías y tus compras más
-grandes. Abre Informes desde Analíticas o desde Ajustes.
+grandes. Abre Informes desde Análisis o desde Ajustes.
 
 Comparte el informe mensual como PDF con el análisis en la primera página,
 o como archivo de Excel. Con Premium: informes de cualquier período y un
@@ -88,7 +95,7 @@ También corregido: la música y los podcasts se reanudan después de dictar
 un registro.
 
 También en esta versión:
-• Analíticas ya no deja de funcionar cuando hay un importe que no se puede
+• Análisis ya no deja de funcionar cuando hay un importe que no se puede
   sumar: ahora te lo indica.
 • Exportación a Excel: una compra dividida ahora es una fila por cada parte,
   así los totales por categoría en tu hoja de cálculo coinciden con la app.
@@ -104,7 +111,7 @@ También en esta versión:
 Novidade: Relatórios. Escolha uma semana, um mês, um ano ou seu próprio
 intervalo de datas e veja para onde foi seu dinheiro: receitas, despesas,
 o que mudou em relação ao período anterior, suas maiores categorias e
-suas maiores compras. Abra Relatórios em Análises ou em Ajustes.
+suas maiores compras. Abra Relatórios em Análises ou em Definições.
 
 Compartilhe o relatório mensal como PDF, com a análise na primeira página,
 ou como arquivo Excel. Com o Premium: relatórios de qualquer período e um
