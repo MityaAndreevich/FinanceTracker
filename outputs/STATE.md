@@ -232,7 +232,7 @@ Evidence is the document **and line** that holds the detail, never a summary of 
 | **R1** | **Receipt / screenshot OCR** | **decided-build** — founder's decision 2026-09-21, target 1.0.7, design doc first (`BRIEF_MASTER_2026-09-21.md:177–178`: *"Dmitry has DECIDED to build this; the pre-test was not resolved and must not be described as resolved"*). **The pre-test remains NOT RESOLVED** — the decision overrides it, it does not answer it; T0 is still blank (R1c). Was **awaiting-measurement** until 2026-09-21 | Nothing external. **Of the three gating conditions, R1a and R1b are MET and R1c (T0) is UNRECORDED** — what is missing is that nobody wrote the date down | pre-test `:4` (registered, not resolved) · `:103` (`T0 = ____________`, still blank) · `:199–212` (empty results table) · preconditions verified below |
 | **S1** | **iCloud sync (private CloudKit)** | **decided-build**, target 1.1, **design first with family in view** (`BRIEF_MASTER_2026-09-21.md:273–279`, `:300–303`); the technical blockers in the next column are unchanged and are what the design must resolve | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
 | **V3** | **V3 schema (8 frozen attributes)** | **blocked** | D3 (the sentinel defect) is a prerequisite of *shipping* V3, not only of drilling it; and there is no real V2 store to drill against | `DESIGN_V3_SCHEMA_FREEZE.md:3` (*"no code written yet"*) · `:166–170` (what is needed first) · `DEFECT_V2_MIGRATION_SENTINEL.md:26` · `AUDIT_V3_ROLLBACK_READINESS.md:122` (§6, no real V2 store on this machine) |
-| **RP1** | **Reports** | **decided-build**, target 1.0.6, design doc `outputs/DESIGN_REPORTS_1_0_6.md` first then STOP (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
+| **RP1** | **Reports** | **decided-build**, target 1.0.6. **Design written 2026-09-21 — `outputs/DESIGN_REPORTS_1_0_6.md`, AWAITING APPROVAL, no code**; five open items listed in its §13 (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
 | **T1** | **Re-playable tutorial + annotated help** | **decided-build**, target 1.0.7, as a three-layer user guide; design doc `outputs/DESIGN_USER_GUIDE.md` first then STOP (`BRIEF_MASTER_2026-09-21.md:204–268`) | not scheduled against any release | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
 | **A1** | **Auto-post recurrence** | **open** — design only | coupled to S1; must ship with the watermark move | `DESIGN_AUTOPOST_RECURRENCE_1_0_4.md:3` · `:644–645` |
 
@@ -683,3 +683,15 @@ today** — every run was `-only-testing`, so no count from today is admissible.
 - **4.7** `DEFECT_REGISTER.md` header and every *"NOT RELEASED"* cell for a build-9/10 fix were
   written for 1.0.4 b8 as current. The register's header now carries the same supersession note as
   this file; the per-row cells were updated for D2, D3, D7–D11 and left as history elsewhere.
+
+### 8.7 Research-instrument finding: notebook `e4a8bc88` is mostly dead pages
+
+Asked fresh (2026-09-21, `--new`, negative control passed) about demand for reports in Budget Crab's
+market, notebook `e4a8bc88` (*"FinanceTracker: Market & Pricing Analysis"*) answered: *"The notebook
+sources consist primarily of HTTP error/404 pages and the RevenueCat State of Subscription Apps 2026
+report"*. `MONETIZATION_FREE_PAID_SPEC.md` cites this notebook. **Any claim attributed to it should be
+re-verified against the review corpus or the other notebooks before reuse.** Archived histories of
+the four notebooks queried today are in `outputs/notebook_history/`.
+
+Reports design evidence and the demand count from the review corpus (1.08% mentions, 0.22% explicit
+asks, N = 4,904) are in `DESIGN_REPORTS_1_0_6.md` §0.
