@@ -383,3 +383,94 @@ simulator (expect exit 5 and set EXPECTED_TOTAL_RUN from the observed count),
 the equality tests' red-then-green evidence, and the What's New draft in five
 languages for review.
 ```
+
+---
+
+## Second addendum — decisions received 2026-09-21 (verbatim)
+
+```
+TWO DECISIONS ARRIVED. Record both in STATE.md, then proceed.
+
+1. MUSIC FIX CONFIRMED ON DEVICE. Dmitry, iPhone 14 Pro, Debug build b3ca3ef:
+   music resumes by itself after a dictated entry. STATE §8.2 → closed, with
+   that as the evidence. What's New ships VARIANT A.
+
+2. WHAT'S NEW — approved with TWO changes, all five languages:
+
+   a) Strip every ⚠️ marker. They are our annotations; pasted as-is they go to
+      the App Store literally.
+
+   b) The copy promises free users what P1 makes premium. "Share any report as
+      a PDF … or as an Excel file" and "Turn on a weekly or monthly report" are
+      false for a free user on a week/year/custom period and for the automatic
+      reminders — they will tap and meet a paywall. §2.8 applies. State the line
+      truthfully. English:
+
+        Share a monthly report as a PDF with the analysis on the first page, or
+        as an Excel file. With Premium: reports for any period, and a weekly or
+        monthly reminder when the period closes — tap it to open the report.
+
+      Russian:
+
+        Месячный отчёт можно отправить как PDF с анализом на первой странице
+        или как файл Excel. С Premium — отчёты за любой период и напоминание
+        раз в неделю или в месяц, когда период закончится; нажмите на него,
+        чтобы открыть отчёт.
+
+      es-MX, pt-BR, uk: same meaning, natural phrasing, use the exact name
+      Premium has in each locale's paywall strings. Keep "Reports are built on
+      your iPhone when you open them, and nothing leaves your phone" — it is true
+      and it is re-read at the sync gate.
+
+      Before finalising, verify against the paywall strings and the entitlement
+      code that the sentence matches exactly what a free user can and cannot do.
+      If the monthly PDF/Excel is not in fact free under the built P1, the
+      sentence changes, not the code.
+
+      Paste the final five blocks in your report.
+
+THEN — item 5, the 1.0.6 release pass, as specified:
+  bump to 1.0.6 build 11 → full run on THAT commit from an erased simulator
+  (count 1184 + anything added; report exit code and the failures against the
+  three INTERMITTENT tests) → archive → xcodebuild -exportArchive upload with
+  ExportOptions.plist → annotated tag v1.0.6-build11 + release/1.0.6 → store
+  fixture from that binary → ShippedStoreShapeTests list → report. Do NOT
+  submit; Dmitry does that.
+
+PHASE 2 — RECEIPT SCANNING: approach A APPROVED. Decisions:
+  1. Premium: S1 — 5 free scans per month, then paywall.
+  2. Image attachment: deferred to 1.0.8.
+  3. Real paper photographs: Dmitry supplies them. Realistic plan to record:
+     en and ru paper from Dmitry and friends first; es-MX, pt-BR and uk paper as
+     available. Any locale without ≥10 REAL paper photos is uncertified for paper
+     and ships paper scanning with the permanent "check the amount" line — the
+     screenshot path is certified separately. Screenshots can be collected for
+     all five locales.
+     Write Dmitry a one-page collection guide: what to photograph, how
+     (flat, full receipt, natural light, and some deliberately bad ones —
+     crumpled, angled, thermal-faded), how to name files, how to record the true
+     total, and — before handing anything over — to cover card numbers, names
+     and addresses. The corpus lives in the private repo; it still must not
+     carry personal data.
+  4. Ukrainian: do not assume. Check VNRecognizeTextRequest's supported
+     recognition languages at the app's minimum deployment target, in code.
+     If uk is missing: recognise with ru + en and MEASURE the uk corpus against
+     the same pre-registered bar. Totals are digits; the measurement decides,
+     not an assumption. Ships if it meets the bar.
+  5. Approach A: approved, with one addition —
+
+  HELD-OUT SET. Split the frozen corpus in two by SHA-deterministic assignment
+  BEFORE any parser work: a DEV half you may look at and tune against, and a
+  SEALED half that is run ONCE, for the reported numbers, after the parser is
+  frozen. Record the parser commit that ran against the sealed half. Tuning on
+  the images you then measure on produces a number that means nothing. If the
+  sealed run misses the bar, report it; do not tune and re-run the sealed half —
+  collect a new sealed set instead.
+
+  You may build the parser, the VisionKit/PHPicker flow and unit tests before the
+  corpus exists. You may not run against the sealed half until the parser is
+  frozen.
+
+Order: What's New fix → release pass → collection guide for Dmitry → Phase 2
+build.
+```

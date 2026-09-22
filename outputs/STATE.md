@@ -637,8 +637,11 @@ Guarded by `AudioSessionCallSiteGuardTests` (any other file referencing `AVAudio
 `try?` on one inside the controller, fails the suite) and `VoiceAudioSessionControllerTests` (retry
 contract). Both observed red under mutants before the fix was restored.
 
-**NOT established: that the swallowed error is the mechanism.** The brief asked for a device
-confirmation first (`:104`); no device run with music has happened. The Debug build at `b3ca3ef` is
+**CLOSED 2026-09-21 — confirmed on device.** Founder, iPhone 14 Pro, Debug build `b3ca3ef`: *"music
+resumes by itself after a dictated entry"* (`BRIEF_MASTER_2026-09-21.md`, second addendum). D46 is
+FIXED-and-confirmed in the tree, unreleased until 1.0.6. The What's New music sentence ships.
+*(Text below is the pre-confirmation record, kept.)* The brief asked for a device
+confirmation first (`:104`); at the time of writing no device run with music had happened. The Debug build at `b3ca3ef` is
 installed on the paired iPhone 14 Pro (`9B2EADBE-…`). The run is: play music → Quick Entry → dictate
 one entry → close → Console.app, subsystem `com.dmitrylogachev.budgetcrab`, category `VoiceAudio`.
 Three lines decide it: `othersPlayingAtActivate=true`, then either `deactivated attempts=N` (N>1
@@ -817,3 +820,18 @@ The full suite runs on the **exact commit that is archived**, after the version 
 erased simulator, and its count must equal **1184 plus whatever is added** after `52ecdc1`. Scoped
 re-runs are evidence for the change they cover, never for the archive. If memory kills the run, that
 is reported; nothing is archived on scoped runs.
+
+---
+
+## 10. DECISIONS RECEIVED 2026-09-21 (second addendum to the brief)
+
+Recorded here so they exist (rule 1). Source: `BRIEF_MASTER_2026-09-21.md`, addendum "TWO DECISIONS
+ARRIVED", appended verbatim below the Phase 1 approval.
+
+| item | decision |
+|---|---|
+| D46 music fix | **confirmed on device** (§8.2 closed) |
+| What's New 1.0.6 | **Variant A, with two changes**: markers stripped; the share/reminder sentence states the free/premium line truthfully — verified against `ReportsView.exportCapability` and `AppCapability.requiresPremium` before finalising. Final text: `ASC_WHATS_NEW_1_0_6.md` (FINAL) |
+| 1.0.6 release pass | bump to build 11 → full run on THAT commit, erased simulator, count 1184 + additions, reds read against §9.2's three INTERMITTENT tests → archive → `-exportArchive` upload → tag `v1.0.6-build11` + `release/1.0.6` → store fixture → `ShippedStoreShapeTests` → report. **No submission** — Dmitry does that |
+| R1 receipt scanning | **approach A APPROVED.** Premium **S1** (5 free scans/month, then paywall). Attachment **deferred to 1.0.8**. Real paper photographs: **Dmitry supplies** — en and ru first, es-MX/pt-BR/uk as available; a locale without ≥ 10 REAL paper photos is **uncertified for paper** and ships paper scanning with the permanent "check the amount" line; screenshots certified separately, collectable for all five. Ukrainian: **check `VNRecognizeTextRequest.supportedRecognitionLanguages()` at the deployment target in code**; if `uk` is missing, recognise with ru + en and **measure** the uk corpus against the same bar — the measurement decides. **HELD-OUT SET:** the frozen corpus is split by SHA-deterministic assignment BEFORE any parser work into a DEV half (tune against) and a SEALED half (run ONCE after the parser is frozen; record the parser commit). A sealed miss is reported, never tuned-and-re-run; a new sealed set is collected instead. Parser, capture flow and unit tests may be built before the corpus exists |
+| Next | collection guide for Dmitry (one page) → Phase 2 build |
