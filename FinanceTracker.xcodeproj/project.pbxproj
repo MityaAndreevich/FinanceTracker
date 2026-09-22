@@ -649,6 +649,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Budget Crab uses the camera only when you tap Photograph receipt, to read the total. The photo is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Budget Crab uses Face ID to protect your financial data. Authentication happens on-device and is never shared.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
@@ -693,6 +694,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Budget Crab";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Budget Crab uses the camera only when you tap Photograph receipt, to read the total. The photo is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Budget Crab uses Face ID to protect your financial data. Authentication happens on-device and is never shared.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Budget Crab uses the microphone only when you tap the mic button to dictate a transaction. Audio is processed on your iPhone and is not uploaded.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Budget Crab transcribes your speech on-device using Apple's speech framework. Nothing is sent to a server.";
