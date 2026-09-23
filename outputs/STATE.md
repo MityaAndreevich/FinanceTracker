@@ -1,8 +1,9 @@
 # STATE — the one page where status lives
 
 **Derived 2026-09-12 from the sources, at HEAD `537e220`. Updated 2026-09-21 at HEAD `83da3ce`
-(Phase 0 of `BRIEF_MASTER_2026-09-21.md`) — §8 lists every row that changed and why.** No row was
-written from memory, including mine.
+(Phase 0 of `BRIEF_MASTER_2026-09-21.md`) — §8 lists every row that changed and why. Updated
+2026-09-22: rule 5 (one authority per kind of fact) and §4.9, after the register and this file
+drifted on D46.** No row was written from memory, including mine.
 
 > **2026-09-21: the shipped version is no longer an inference.** `itunes.apple.com/lookup?id=6784424678`
 > (queried 2026-09-21) returns `version 1.0.5`, `currentVersionReleaseDate 2026-09-12T18:22:22Z`.
@@ -35,6 +36,16 @@ separate claim from the thing it counts (rule 4):
    row in §4 rather than a silent edit to either.
 4. **A superlative is a separate claim from the thing** (`CLAUDE.md`, citation protocol §5). "Sync is
    blocked" and "sync is the largest item on the roadmap" verify independently.
+5. **ONE authority per kind of fact — added 2026-09-22 after §4.9.** Rule 1 says status lives here
+   and nowhere else, and this project then built `DEFECT_REGISTER.md` as a second home for defect
+   status. The two drifted on the first update. So, from here on:
+   - **`DEFECT_REGISTER.md` is authoritative for DEFECT-level facts** — severity, reachability, which
+     shipped versions carry it, regression test, open / fixed / released.
+   - **This file is authoritative for PROGRAMME status** — decisions, what each release carries,
+     what is blocked. **A defect is mentioned here only as a pointer: `DEFECT_REGISTER.md` + row id,
+     plus the programme fact (which release carries the fix).** Never a restated status sentence.
+   - A status sentence about a defect in this file that disagrees with the register is a drift; the
+     register wins and the drift gets a §4 entry.
 
 ---
 
@@ -159,8 +170,10 @@ this item.**
 
 **Q3 — Defects reachable by a user in the currently shipped version.**
 
-> **SUPERSEDED 2026-09-21 — read §8.1 instead.** The shipped version is **1.0.5 build 10**, a
-> recorded fact (App Store lookup). The table below answered for 1.0.4 b8 and is kept as history.
+> **SUPERSEDED — read `DEFECT_REGISTER.md` instead** (rule 5, 2026-09-22): reachability is a
+> defect-level fact and the register owns it. §8.1 lists the pointers. The shipped version is
+> **1.0.5 build 10**, a recorded fact (App Store lookup). The table below answered for 1.0.4 b8 on
+> 2026-09-12 and is kept as history only.
 
 The currently shipped version *was* **1.0.4 build 8** — ⚠️ **this was an INFERENCE, not a recorded
 fact, and every answer below rests on it.** No document states which version is available; the
@@ -400,6 +413,31 @@ stop using it, not to annotate it.
   spend'.** He asked for a *savings balance* — a stock, a net position — not for a per-month
   discretionary remainder, which is a flow."*
 
+### 4.9 STATE.md and DEFECT_REGISTER.md both carried defect status, and drifted — 2026-09-22
+
+**Second occurrence of the class §4.2 and §4.3 describe** (a status written in two places, one
+updated, one not) — and this time both places were files this project built *to end that class*.
+
+- **What happened.** On 2026-09-21 the founder confirmed the D46 music fix on device. §8.2 here was
+  updated to *"CLOSED — confirmed on device"*. `DEFECT_REGISTER.md` D46 kept *"mechanism NOT yet
+  confirmed on device"*. A context-free session on 2026-09-22 read both and found the disagreement.
+- **Why it is structural, not a typo.** Rule 1 said status lives here *"and nowhere else"*; the
+  register's header said *"Status lives in `outputs/STATE.md`; this file is its defect half"* —
+  and then carried a `status` column. Two files each claiming, or deferring, the same fact is a
+  design that drifts on the first update, and it did.
+- **The sweep, same day.** Beyond D46: §8.4 still said D47 *"Filed, not fixed"* (fixed under Phase 1,
+  `c02b8b0`); §9 still said the music device run was pending (§10 had recorded it confirmed); the
+  register's own D3, D8 and D41 status cells still said *"NOT RELEASED"* after 1.0.5 b10 was
+  recorded live on 09-21. **Six stale status sentences across two files, all in the same direction
+  (stale-open).**
+- **Repair.** Rule 5 added (one authority per kind of fact); the register carries an AUTHORITY block
+  at its top; §8.1's nine-row status table replaced with pointers; §8.2, §8.3, §8.4 and §9 now point
+  to register rows; the register's D3, D8 and D46 cells corrected, each noting what it read before.
+- **What makes the repeat impossible rather than merely fixed:** a defect status sentence in this
+  file is now itself a rule-5 violation, so the next reader who sees one knows it is wrong before
+  checking whether it is stale. Pattern, dates: §4.2 (found 09-12), §4.3 (found 09-12), §4.9 (made
+  09-21, found 09-22).
+
 ### 4.5 The receipt pre-test is not in this repository
 
 `DECISION_RECEIPT_INPUT_PRETEST.md` is cited by **five documents in `outputs/`** — counted, not
@@ -611,24 +649,29 @@ quoting `443bbfb` (`ARCHITECTURE.md:392`, `StoreFixtures/StoreV1_0_5_BUILD10/MAN
 `GO_LIVE_CHECKLIST.md:39`, `scripts/capture-store-fixture.sh:99`) describe the earlier object and
 are correct as history.
 
-| defect | present in 1.0.5 b10? | reachable by a user today | evidence |
-|---|---|---|---|
-| D3 migration floor | **NO** — fixed | no | `8c748b7` ∈ `v1.0.5-build10` (§5 table) |
-| D2 import cap / aggregate overflow on the recovery journey | **NO** — fixed | no | `1b6be14`, `c2461b3` ∈ tag (§5 table) |
-| D10 PDF clips amounts | **NO** — fixed | no | `f7dde93` ∈ tag (§5 table) |
-| D7 `idTBD` store link | **NO** — fixed | no | `git show v1.0.5-build10:FinanceTracker/Views/Settings/AboutView.swift` `:59` = `id6784424678`. Regression test added 2026-09-21: `AppStoreLinkTests` (`8e52013`), commissioned red with the competitor ID |
-| D8 "Restart onboarding" no-op | **NO** — removed | no | `git grep restartOnboarding v1.0.5-build10 -- FinanceTracker` → 0 hits |
-| D9 month-end recurrence drift | **NO** — fixed | no | `anchor: Date` present in tag's `RecurrenceType.swift`; `RecurrenceMonthEndDriftTests` exists |
-| D11 rewound clock revives trial | **NO** — fixed | no | tag's `ReverseTrial.swift:58` *"never earlier than the…"*; `AccessManagerTests.swift:143` *"A rewound clock can no longer revive an expired trial"* |
-| **D1 VoiceInputService teardown `abort()`** | **YES** | **YES on the code's reading** — never fixed | `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:135`. Founder's device run n≈5–7, no crash — *"bounds a rate, it does not prove simulator-only"* (`BRIEF_MASTER_2026-09-21.md:122–124`). **Stays filed** per brief §0.5 |
-| **D5 14 overflow expressions (`AnalyticsSeries` et al.)** | **YES** | **YES** — Analytics traps on an unrepresentable amount | `DEFECT_REGISTER.md` D5, re-counted 2026-09-12. **Scheduled: fixed under Reports (RP1)** |
-| **D46 music does not resume after voice input** | **YES** | **YES — every voice entry while audio plays** | founder's device, `BRIEF_MASTER_2026-09-21.md:95–98`. **Fixed in the tree `b3ca3ef`, NOT released, device confirmation PENDING** (§8.2) |
-| D4 V2 sentinel | YES, latent | no (fires on V2→V3) | unchanged |
+**Rewritten 2026-09-22 under rule 5.** This section used to carry a nine-row table restating each
+defect's presence and reachability — the same facts the register owns — and that copy is where the
+D46 drift lived (§4.9). Now it carries only pointers and the programme fact for each:
 
-**So the §3.1 question ("still reachable?") answers NO for all five**, D7–D11. None needs a 1.0.6
-action beyond the D7 test already added.
+| pointer | programme fact (this file's business) |
+|---|---|
+| `DEFECT_REGISTER.md` **D2, D3, D7, D8, D9, D10, D11** | fixes are in `v1.0.5-build10` (§5 table; D7 regression test `AppStoreLinkTests`, `8e52013`). **No 1.0.6 action** — the brief's §0.3 question is answered by the register's rows |
+| `DEFECT_REGISTER.md` **D1** | **stays filed, not fixed**, per brief §0.5 (`BRIEF_MASTER_2026-09-21.md:122–124`) — a founder's decision, which is why it is recorded here |
+| `DEFECT_REGISTER.md` **D5** | 12 of 14 sites fixed under RP1 (§9, `f2ae0a9`) — carried by **1.0.6 b11**; the 2 remaining are out of 1.0.6 scope |
+| `DEFECT_REGISTER.md` **D46** | fix `b3ca3ef` carried by **1.0.6 b11**; founder's device confirmation is a recorded decision (§10) |
+| `DEFECT_REGISTER.md` **D47** | fix `c02b8b0` carried by **1.0.6 b11** — the founder's condition for the release (§2 RP1) |
+| `DEFECT_REGISTER.md` **D48, D49** | fixes `cff1dbf` carried by **1.0.6 b11** (D48 partial — the register says which half) |
+| `DEFECT_REGISTER.md` **D4** | unchanged; a prerequisite of V3 (row V3, L1–L3) |
 
-### 8.2 D46 — the voice fix, and what is NOT yet established
+For "is it present / reachable / tested" on any of these, open the register row. Do not answer
+from this table.
+
+### 8.2 D46 — the voice fix (defect status: `DEFECT_REGISTER.md` D46)
+
+> **Rule 5 (2026-09-22): the status of D46 lives in the register row, not here.** What this
+> section keeps is the programme record — what `b3ca3ef` changed, the founder's decision that
+> closed the device question (§10), and the Option B proposal. The "CLOSED" paragraph below is the
+> one that drifted from the register on 2026-09-21 (§4.9); it is kept as history, not as status.
 
 `b3ca3ef`: `AVAudioSession` now lives only in `FinanceTracker/Services/VoiceAudioSessionController.swift`.
 Activation errors propagate; deactivation is retried (100 ms, 250 ms, 500 ms, 1 s) and a final
@@ -653,10 +696,10 @@ run, D46 is "fixed by construction", which this project does not accept as fixed
 audible to the mic, and `requiresOnDeviceRecognition` models have no noise model for it — a
 recognition-accuracy risk with no measurement behind it. Product decision; Dmitry's call.
 
-### 8.3 D1 stays filed — brief §0.5
+### 8.3 D1 stays filed — brief §0.5 (defect status: `DEFECT_REGISTER.md` D1)
 
-Nothing in `b3ca3ef` touches `VoiceInputService.deinit`. The three device tests in
-`DEFECT_VOICE_INPUT_DEINIT_ABORT.md` §8.4 stay specified and unrun.
+Founder's decision, not a status: nothing in `b3ca3ef` touches `VoiceInputService.deinit`, and the
+three device tests in `DEFECT_VOICE_INPUT_DEINIT_ABORT.md` §8.4 stay specified and unrun.
 
 ### 8.4 TSV export — `COVERAGE_MATRIX.md` row 1 closed
 
@@ -667,10 +710,12 @@ compile before the seam existed, so it was commissioned by mutation with two oth
 for its mutant**. Fixes forced: date formatter pinned to `en_US_POSIX`/Gregorian (a Thai-region
 device wrote Buddhist-era years); private decimal formatter replaced by `Money.plainDecimalString`.
 
-Filed, not fixed — `DEFECT_REGISTER.md` **D47**: a split transaction exports as ONE row under its
-parent category, so category totals computed in Excel disagree with Analytics for anyone who splits.
-Recorded, not a defect: the importer cannot read TSV (sees one column, recognises no header) — the
-test pins that so it cannot start being mis-imported silently.
+Filed that day as `DEFECT_REGISTER.md` **D47** (a split exports as one row under its parent
+category) — status in the register; programme fact: it became the founder's condition for 1.0.6 and
+was fixed under Phase 1 (§9, `c02b8b0`). *(This paragraph read "Filed, not fixed" until 2026-09-22
+— a second stale status sentence found by the §4.9 sweep.)* Recorded, not a defect: the importer
+cannot read TSV (sees one column, recognises no header) — the test pins that so it cannot start
+being mis-imported silently.
 
 ### 8.5 The suite constant
 
@@ -732,11 +777,11 @@ guard is in that commit's message and, where the red was a crash, in `outputs/cr
 **What is NOT done, stated plainly:**
 - **No version bump.** `MARKETING_VERSION` is still 1.0.5 / build 10. The bump, tag, release branch
   and store fixture happen at submission per `ARCHITECTURE.md` "Releases".
-- **The music-fix device run is still pending** (§8.2). The What's New paragraph for it is marked ⚠️
-  and is deleted if the run does not confirm.
-- **D5's two remaining sites** (`EditTransactionView:120`, `CSVImportService:827`) are open; the
-  dashboard card's deleted sentence stays deleted.
-- **The safe-to-spend alert's own tap** still only foregrounds the app (D48, partial).
+- ~~**The music-fix device run is still pending** (§8.2).~~ Superseded by §10 (confirmed; What's New
+  Variant A) — *a third stale status sentence found by the §4.9 sweep, 2026-09-22.*
+- **D5's two remaining sites** are out of 1.0.6 scope — which sites and whether they are open:
+  `DEFECT_REGISTER.md` D5. The dashboard card's deleted sentence stays deleted until that row closes.
+- **The safe-to-spend alert's own tap** is out of 1.0.6 scope — `DEFECT_REGISTER.md` D48.
 - **`e4a8bc88`** (the market notebook) is still mostly 404 pages (§8.7).
 - The existing `PDFExportRenderTests` / `PDFExportLayoutTests` were **not modified**; the draw helpers
   they pin were opened from `private` to `internal` so the report renderer composes them.
