@@ -859,12 +859,96 @@ cannot bleed into the next launch) is therefore the **FIRST item after 1.0.6 shi
 Reports touches none of those paths, and the release run's baseline for these three is
 "intermittent", read against this table, not against a two-name list.
 
+### 9.2b HYPOTHESIS, 2026-09-24: the three intermittent tests and field report D51 may share a cause
+
+**Not a conclusion.** `DEFECT_REGISTER.md` D51 (TestFlight, 1.0.6 b11, iPhone 13, iOS 26.6.1): on
+Analytics, once, the controls above the title stopped responding; a relaunch cleared it. The three
+tests above have been attributed to the DEBUG `wipeLedger` seam for a month; a second, independent
+sighting of a tap-yields-nothing shape on a **real device in a Release build** means *"test
+flakiness"* is no longer the working assumption. The register's D33 row now says its classification
+may have been wrong, and what confirms / refutes the shared cause. **Caveat recorded there too: the
+tests fail on ABSENT rows / buttons; Elena's control was VISIBLE and dead — same family, different
+observable.** Investigation and the reproduction result: §9.4.
+
 ### 9.3 Release-candidate rule (founder, 2026-09-21)
 
 The full suite runs on the **exact commit that is archived**, after the version bump, from an
 erased simulator, and its count must equal **1184 plus whatever is added** after `52ecdc1`. Scoped
 re-runs are evidence for the change they cover, never for the archive. If memory kills the run, that
 is reported; nothing is archived on scoped runs.
+
+### 9.4 D51 — the TestFlight report, and the investigation record
+
+**Received 2026-09-24** via TestFlight screenshot feedback. Elena Logacheva, iPhone 13, iOS 26.6.1,
+Europe/Moscow, 2026-09-24 12:00, 1.0.6 (11). Verbatim:
+
+> «Один раз был сбой в разделе Аналитика (как на фото). В этот момент всё что стояло над словом
+> «Аналитика» вообще никак не реагировало, а что под словом «Аналитика» работало. После выхода из
+> программы и входа через минут 20 всё заработало. Проверку повторила в течение дня 3 раза — сбоев
+> не было. Всё остальное работает без замечаний.»
+
+Screenshot: Trends (Horizon), Combined, April 2026, +0,00 ₽ — the sticky month tooltip was up.
+
+**Founder's investigation order** (2026-09-24): (1) present/dismiss the Reports sheet from the
+Analytics toolbar repeatedly — swipe, button, during a data reload — hit-test probe, not eyeballing;
+(2) every other sheet/overlay reachable from Analytics in 1.0.6; (3) whether the report path presents
+from a view whose lifetime outlives the sheet. **Reproduce first; an unreproduced report stays open.**
+Three follow-up questions are out to Elena (opened a report just before? interruption? did scrolling
+revive it?) — **nothing concludes before they arrive.**
+
+**Phase 1 evidence, read at HEAD `553f85c`:**
+- Above the title there is exactly one control: the toolbar `analytics_open_report` button
+  (`AnalyticsView.swift:136–146`) presenting `ReportsScreen` via `.sheet(isPresented:)` (`:147`).
+- Sheets/overlays reachable from Analytics: the Reports sheet (`:147`); the Horizon month sheet
+  `.sheet(item: $detailMonth)` (`AnalyticsHorizonView.swift:69–72`, since 1.0.3); the Pulse day sheet;
+  inside Reports, the paywall sheet (`ReportsView.swift:120`) and a pushed settings screen. Over the
+  whole TabView: `EdgeSwipeHintView` — **cleared**, it is `.allowsHitTesting(false)`
+  (`SwipeNavigation.swift:174`); the coach-mark overlay renders only during a coach-mark phase
+  (`ContentView.swift:72–86`).
+- A second presenter of the same `ReportsScreen` exists on the TabView (`ContentView.swift:187`,
+  notification / Siri). Noted; not implicated by the report.
+- Nothing in the 1.0.6 diff to `AnalyticsView` / `ContentView` / `Views/Analytics/` beyond `cff1dbf`
+  (the toolbar button + sheet) and `f2ae0a9` (overflow guards) — `git log v1.0.5-build10..v1.0.6-build11`.
+- Known class, web (Apple developer forums 131404, 685163, 692338): a toolbar button dead after a
+  swipe-dismissed sheet in NavigationStack/TabView, revived by scrolling. Old threads; iOS 26
+  status unknown from sources. **Elena's third question (scrolling) is the discriminator.**
+
+**Reproduction attempt 1 — 2026-09-24, iPhone 17 Pro / iOS 26.5 simulator, ERASED before each run,
+Debug build at `553f85c` + the probe, `AnalyticsToolbarAfterSheetProbeTests`, via `run-tests.sh`
+(scoped; executed counts printed, so no zero-test pass):**
+
+| variant | cycles | result |
+|---|---|---|
+| Reports sheet → dismissed by **swipe** → toolbar probe | 8 | passed, 8/8 presented |
+| Reports sheet → dismissed by **Done** → probe | 8 | passed |
+| Reports sheet → swipe-dismiss **interrupted by Home**, 2 s background, reactivate → probe | 8 | passed |
+| Horizon: scrub → month tooltip → **month sheet** → swipe-dismiss → probe | 8 | passed (run 2; run 1 failed at cycle 2 on a **test-scaffolding** defect — the scrub was anchored on the hint text, which the sticky tooltip replaces; timing is consistent with cycle 1 having completed the probe) |
+| Horizon: sticky tooltip **up** (the screenshot state) → Reports sheet → swipe-dismiss → probe | 8 | passed; the tooltip survived every cycle |
+
+Probe = `isHittable`, then a tap that must **present** the Reports screen (`reports_kind_picker`);
+on a miss it would have recorded window count, a scroll-revive attempt and the accessibility tree.
+**No miss occurred. NOT REPRODUCED. D51 stays OPEN.**
+
+**What this attempt did NOT exercise, stated so it is not read as clearance:**
+- a **data reload while a sheet is up** (founder's item 1c) — no in-app path changes the ledger
+  under a presented sheet without new code; the closest existing trigger (foreground refreshers on
+  reactivation) was covered by variant 3 only;
+- **iOS 26.6.1 on a device**, a **Release** build, an iPhone 13 — the simulator is 26.5 / Debug;
+- a real **interruption** (incoming call, Face ID prompt, a system alert) mid-transition;
+- the two-presenter case: a **report notification tap while the toolbar's Reports sheet is up**
+  (`ContentView.swift:187` vs `AnalyticsView.swift:147`) — SwiftUI would refuse the second
+  presentation and `pendingReport` would stay set; that stalls the *notification* route, not the
+  toolbar, so it does not explain Elena's report, but it is a sibling of the same class and is noted.
+
+**Item 3 (view lifetime) — answered from code, no:** `AnalyticsHorizonView` is built structurally in
+`switch screen` with no `.id` (`AnalyticsView.swift:170–191`), so `recompute()` keeps its identity
+and its `detailMonth` / sticky state; both `ReportsScreen` presenters hang off long-lived views.
+
+**Next, in order:** Elena's three answers (the scrolling one is the discriminator for the known
+SwiftUI class); if "yes, just opened a report" or "yes, an interruption", add the interruption
+variant on a **device** build; if the 26.6.1 runtime becomes available in Xcode, re-run all five
+there. The probe file stays in the tree as a probe (its header says so); it is not a guard and it
+does not enter the known-failure baseline.
 
 ---
 
