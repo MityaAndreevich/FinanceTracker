@@ -2,22 +2,29 @@
 //  PurgeCostMeasurementTests.swift
 //  FinanceTrackerTests
 //
-//  Measures what `LargeDatasetDebugSeed.purgeIfLeftOver` actually costs, because
-//  it was the last UNMEASURED inference in the UI-suite investigation.
+//  Guards what `LargeDatasetDebugSeed.purgeIfLeftOver` costs at the size the
+//  seam seeds (DEFECT_REGISTER D33).
 //
-//  THE CLAIM UNDER TEST
-//    `BUG…`/`BRIEF_UI_SHARED_CONTAINER_RESIDUE` argued two mechanisms behind the
-//    flaky UI suite: (1) the purge deleted demo rows it should not have — FIXED
-//    by moving it to the top of the launch task, and confirmed fixed by the
-//    `editAfterQuickAddInsert` failure disappearing from both arms; and (2) the
-//    purge's DELETE ITSELF is slow enough at 8 000 rows to blow the timeouts of
-//    whichever test launches next. (2) was inferred from the shape of the code
-//    and from a structurally similar path measured at 44.7 s
-//    (`BRIEF_BULK_DELETE_P1_P2_P3`), never measured here.
+//  HISTORY
+//    2026-08-14: written as a MEASUREMENT. `wipeLedger` was private, so the test
+//    timed a verbatim COPY of its body, and its 120 s ceiling only caught a cost
+//    that would obviously break any launch. It measured 45 764 ms. That is the
+//    attributed cause of the three intermittent UI tests (STATE §9.2): the first
+//    non-scale launch after a scale-seeding class spends ~46 s on the main thread
+//    deleting rows, while every waiting assertion in the suite times out at 8–20 s.
 //
-//  This measures it. `wipeLedger` is private and DEBUG-only, so the body is
-//  reproduced exactly: fetch every split, delete each; fetch every transaction,
-//  delete each; one save.
+//    2026-10-11: turned into a GUARD. It now calls the REAL `wipeLedger` (made
+//    internal for this; a copy stops measuring the moment the original changes)
+//    on a store shaped like the seed, splits included, because the cost is the
+//    maintenance of the `Category.transactions` / `Category.splits` inverses, not
+//    the row count alone.
+//
+//  THE BUDGET — set at 5 s on 2026-10-11, BEFORE the fix was run against it.
+//    The shortest UI-test wait is 8 s, and the purge must leave the launch room
+//    inside that wait. The same technique measured 0.72 s on the structurally
+//    identical bulk-delete path (BRIEF_BULK_DELETE_P1_P2_P3), so 5 s leaves ~7×
+//    headroom for a loaded full-suite machine (16 GB, swap-bound). Under 5 s does
+//    NOT prove the UI tests are cured. Only a full run can show that.
 //
 
 import XCTest
@@ -28,7 +35,10 @@ import SwiftData
 final class PurgeCostMeasurementTests: XCTestCase {
 
     /// What `LargeDatasetDebugSeed` seeds.
-    private static let seedCount = 8_000
+    private static let seedCount = LargeDatasetDebugSeed.targetCount
+
+    /// Pre-registered 2026-10-11. See the header. Do not raise it to make a run pass.
+    private static let budgetSeconds: TimeInterval = 5.0
 
     func test_wipeLedgerCost_at8kRows() throws {
         let directory = FileManager.default.temporaryDirectory
@@ -40,9 +50,8 @@ final class PurgeCostMeasurementTests: XCTestCase {
         let container = try SharedModelContainer.openContainer(storeURL: store, localStoreURL: local)
         let context = container.mainContext
 
-        // Shape it like the real seed: rows spread across the standard category
-        // set, because the cost being investigated is the maintenance of
-        // `Category.transactions` — a to-many inverse — not the row count alone.
+        // Shape it like the real seed: rows across the standard category set, a
+        // source, and a 2-part split on every 7th row (the seed's own ratio).
         var categories: [FinanceTracker.Category] = []
         for i in 0..<13 {
             let category = FinanceTracker.Category(name: "Cat\(i)", kindRaw: "expense", order: i)
@@ -51,44 +60,51 @@ final class PurgeCostMeasurementTests: XCTestCase {
         }
         let source = FinanceTracker.Source(name: "Cash")
         context.insert(source)
+        var splitCount = 0
         for i in 0..<Self.seedCount {
             let tx = FinanceTracker.Transaction(
                 typeRaw: "expense",
-                amountCents: 100 + i,
+                amountCents: 1_000 + i,
                 currency: "USD",
                 date: Date(timeIntervalSince1970: 1_750_000_000 - Double(i) * 3_600),
                 category: categories[i % categories.count],
                 source: source
             )
             context.insert(tx)
+            if i % 7 == 0 {
+                for part in 0..<2 {
+                    let split = FinanceTracker.TransactionSplit(
+                        amountCents: 100,
+                        category: categories[(i + part + 1) % categories.count],
+                        order: part
+                    )
+                    context.insert(split)
+                    split.parent = tx
+                    splitCount += 1
+                }
+            }
         }
         try context.save()
 
-        let seeded = try context.fetchCount(FetchDescriptor<FinanceTracker.Transaction>())
-        XCTAssertEqual(seeded, Self.seedCount, "seeding failed — a cost measured over the wrong store is worthless")
+        // Assert the store we are about to time is the store we meant to build.
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FinanceTracker.Transaction>()), Self.seedCount,
+                       "seeding failed — a cost measured over the wrong store is worthless")
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FinanceTracker.TransactionSplit>()), splitCount)
+        XCTAssertGreaterThan(splitCount, 2_000)
 
-        // ── wipeLedger, verbatim ────────────────────────────────────────────
         let start = Date()
-        for split in try context.fetch(FetchDescriptor<FinanceTracker.TransactionSplit>()) {
-            context.delete(split)
-        }
-        for tx in try context.fetch(FetchDescriptor<FinanceTracker.Transaction>()) {
-            context.delete(tx)
-        }
-        try context.save()
+        try LargeDatasetDebugSeed.wipeLedger(modelContext: context)
         let elapsed = Date().timeIntervalSince(start)
-        // ────────────────────────────────────────────────────────────────────
 
+        // Presence of the outcome, not only the timing: the ledger is empty and
+        // the categories survive (the purge deletes rows, never the taxonomy).
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<FinanceTracker.Transaction>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FinanceTracker.TransactionSplit>()), 0)
+        XCTAssertEqual(try context.fetchCount(FetchDescriptor<FinanceTracker.Category>()), 13)
 
         let ms = Int(elapsed * 1000)
-        print("PURGECOST wipeLedger over \(Self.seedCount) rows took \(ms) ms")
-
-        // Deliberately generous: this is a MEASUREMENT, and its number belongs in
-        // the report, not in a threshold nobody re-derives. It fails only if the
-        // cost is so large that it would obviously break any launch that runs it,
-        // which is the claim under test.
-        XCTAssertLessThan(elapsed, 120.0,
-                          "wipeLedger took \(ms) ms at \(Self.seedCount) rows")
+        print("PURGECOST wipeLedger over \(Self.seedCount) rows + \(splitCount) splits took \(ms) ms")
+        XCTAssertLessThan(elapsed, Self.budgetSeconds,
+                          "wipeLedger took \(ms) ms at \(Self.seedCount) rows; budget \(Int(Self.budgetSeconds * 1000)) ms")
     }
 }

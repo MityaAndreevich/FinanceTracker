@@ -234,6 +234,10 @@ struct ContentView: View {
             // (BRIEF_BULK_DELETE_P1_P2_P3). Deleting the store FILE instead of
             // walking the object graph is the other candidate. Either is its own
             // change with its own verification.
+            //
+            // DONE 2026-10-11 (D33): the first one. `wipeLedger` now detaches first;
+            // PurgeCostMeasurementTests guards it at 5 s (was 50 070 ms). Whether that
+            // cures the three intermittent UI tests is a full-run question, not this one.
             LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
             #endif
             if DemoSeeder.isDemoMode {

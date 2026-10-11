@@ -121,12 +121,24 @@ enum LargeDatasetDebugSeed {
     /// A fetch-and-delete loop has no such restriction. It is slower, which does
     /// not matter here: this runs before the measurement window opens, and the
     /// seam exists to build an 8 000-row ledger in the first place.
+    ///
+    /// Internal, not private, so `PurgeCostMeasurementTests` times THIS body rather
+    /// than a copy of it. A copy stops measuring the moment the original changes.
     @MainActor
-    private static func wipeLedger(modelContext: ModelContext) throws {
+    ///
+    /// D33 (2026-10-11): rebuild each affected to-many ONCE before deleting, exactly
+    /// as `TransactionResetService.reset` does. Without it, save() maintains the
+    /// `Category.transactions` / `.splits` inverses one identity-removal per row:
+    /// 50 070 ms at 8 000 rows (PurgeCostMeasurementTests, red 2026-10-11), on the
+    /// main thread of the first non-scale launch, while UI-test waits time out at
+    /// 8–20 s. That cost was the attributed cause of the three intermittent UI tests.
+    static func wipeLedger(modelContext: ModelContext) throws {
+        let transactions = try modelContext.fetch(FetchDescriptor<Transaction>())
+        TransactionDeleteService.detachForBulkDelete(transactions)
         for split in try modelContext.fetch(FetchDescriptor<TransactionSplit>()) {
             modelContext.delete(split)
         }
-        for tx in try modelContext.fetch(FetchDescriptor<Transaction>()) {
+        for tx in transactions {
             modelContext.delete(tx)
         }
         try modelContext.save()

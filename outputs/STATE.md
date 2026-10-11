@@ -1072,3 +1072,12 @@ languages.
 Receipt photos (R1) · Elena's three D51 answers (`DEFECT_REGISTER.md` D51) · T0, the 1.0.4 live
 date from ASC version history (R1c) · the ASC product-ID list (`DEFECT_REGISTER.md` D22). He is
 sending screenshots for the last two.
+
+### 13.6 D33 / `wipeLedger`, time-boxed (2026-10-11)
+
+**Size estimate: bounded.** The code change is one function plus its guard. The cost that is not
+bounded is evidence: only full runs can show whether the three intermittent tests (§9.2) are cured.
+**Code done:** red 50 070 ms against a pre-registered 5 s budget → green. Defect status:
+`DEFECT_REGISTER.md` D33. **Programme fact: NOT yet verified against the UI suite.** The next full run
+from an erased simulator is the first evidence, and it is also the first run of the cleanup trap in
+this repo (§13.3). Read its three tests against §9.2's table, never against a two-name list.
