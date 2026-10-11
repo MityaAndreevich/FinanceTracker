@@ -978,7 +978,7 @@ ARRIVED", appended verbatim below the Phase 1 approval.
 
 ---
 
-## 11. 1.0.6 (BUILD 11) — UPLOADED 2026-09-21, NOT SUBMITTED
+## 11. 1.0.6 (BUILD 11) — LIVE 2026-10-08 (uploaded 2026-09-21, submitted ~2026-10-01)
 
 | fact | value | evidence |
 |---|---|---|
@@ -989,10 +989,10 @@ ARRIVED", appended verbatim below the Phase 1 approval.
 | upload | `xcodebuild -exportArchive` with a copy of `ExportOptions.plist` whose ONLY difference is `destination = upload` (`manageAppVersionAndBuildNumber` false); *"Upload succeeded"*, no sign-in prompted | xcodebuild output 21:31:36 |
 | tag / branch | `v1.0.6-build11` (annotated, on `3473c5c`), `release/1.0.6` — both pushed | `git ls-remote --tags origin` |
 | store fixture | `StoreFixtures/StoreV1_0_6_BUILD11` from the tagged commit: 33 transactions, sum 635473, 13 categories, 3 sources; `ShippedStoreShapeTests.test_v1_0_6_build11_storeOpens` added, 10/10 | `MANIFEST.md`, commit `3473c5c` recorded there |
-| **submitted for review** | **NO — Dmitry does that in App Store Connect.** What's New to paste: `ASC_WHATS_NEW_1_0_6.md` (FINAL) | — |
+| **submitted for review** | *(as of 2026-09-21)* **NO — Dmitry does that in App Store Connect.** What's New to paste: `ASC_WHATS_NEW_1_0_6.md` (FINAL) | — |
 | tag message to amend on approval | "approved and released" + date, `git tag -f -a`, force-push the tag (`ARCHITECTURE.md` Releases) | — |
 | **submitted** | **around 2026-10-01 — Dmitry's statement**, received 2026-10-06; not otherwise recorded (no ASC access from here) | founder's brief of 2026-10-06, item 4a |
-| **live?** | **YES: 1.0.6 is live, released 2026-10-08T18:15:45Z. Recorded 2026-10-11 from the lookup** (us and ru storefronts both return `version 1.0.6`, `currentVersionReleaseDate 2026-10-08T18:15:45Z`). Tag `v1.0.6-build11` amended "approved and released" with that date (§13.4). *Was "NO as of 2026-10-07", from the query below:* | `itunes.apple.com/lookup?id=6784424678&country=us` (queried 2026-10-07) → `version 1.0.5`, `currentVersionReleaseDate 2026-09-12T18:22:22Z`. The lookup is one storefront and can lag a release by hours; re-query before acting |
+| **live?** | **YES: 1.0.6 is live, released 2026-10-08T18:15:45Z. Recorded 2026-10-11 from the lookup** (us and ru storefronts both return `version 1.0.6`, `currentVersionReleaseDate 2026-10-08T18:15:45Z`). Tag `v1.0.6-build11` re-created 2026-10-11 on the same commit `3473c5c` with an "approved and released" message carrying that date, and force-pushed. Tag object `a16ee1a` supersedes `dbce5fa` (`git ls-remote --tags origin v1.0.6-build11`). Register rows D5, D46–D49 were moved to RELEASED in the same pass, each fix commit checked as an ancestor of the tag. *Was "NO as of 2026-10-07", from the query below:* | `itunes.apple.com/lookup?id=6784424678&country=us` (queried 2026-10-07) → `version 1.0.5`, `currentVersionReleaseDate 2026-09-12T18:22:22Z`. The lookup is one storefront and can lag a release by hours; re-query before acting |
 
 ---
 
