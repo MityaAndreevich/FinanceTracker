@@ -206,6 +206,11 @@ COUNT_TOLERANCE=0
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 3
+# Delete the simulator clones xcodebuild leaves behind (they filled the disk, 2026-10-04).
+# The trap runs on every exit path and does not change the exit status.
+# Absolute path: a relative one turns the cleanup into a silent no-op after any later cd.
+# CROSS-PROJECT: removes every project's clones in the testing set, not only ours.
+trap '"$REPO_ROOT/scripts/sim-clone-cleanup.sh"' EXIT
 
 BUNDLE="$(mktemp -d)/result.xcresult"
 LOG="$(mktemp)"
