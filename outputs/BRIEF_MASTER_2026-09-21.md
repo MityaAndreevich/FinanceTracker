@@ -474,3 +474,12 @@ PHASE 2 — RECEIPT SCANNING: approach A APPROVED. Decisions:
 Order: What's New fix → release pass → collection guide for Dmitry → Phase 2
 build.
 ```
+
+---
+
+## Correction — 2026-10-06 (appended at the end so no cited line number moves)
+
+> **CORRECTION, 2026-10-06 (Dmitry decided). The verbatim text is kept and NOT edited.** Line 237 says
+> accounts *"attach to INCOME only"*. **That is wrong.** Accounts attach to income AND expenses, which is
+> what the build does. The line came from reading an orphaned string (`add.source.expense_disabled_hint`,
+> referenced by no code) as a statement of behaviour. See `STATE.md` §4.10 and §13.1.

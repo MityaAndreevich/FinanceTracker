@@ -220,7 +220,7 @@ should confirm it there first.**
 
 | fact | value | evidence |
 |---|---|---|
-| Currently available on the App Store | **1.0.5 build 10** — **recorded 2026-09-21** (supersedes the 1.0.4 b8 inference that stood here from 2026-09-12) | `itunes.apple.com/lookup?id=6784424678` → `version: 1.0.5`, `currentVersionReleaseDate: 2026-09-12T18:22:22Z` (queried 2026-09-21). The lookup carries no build number; **build 10** is the founder's statement, `BRIEF_MASTER_2026-09-21.md:83`, and the only 1.0.5 build ever uploaded per `ARCHITECTURE.md` "Shipped so far" |
+| Currently available on the App Store | **1.0.6 build 11, recorded 2026-10-11**: the lookup returns `version 1.0.6`, `currentVersionReleaseDate 2026-10-08T18:15:45Z` (us + ru); build 11 is the only 1.0.6 build uploaded (§11). *Previously:* **1.0.5 build 10**, **recorded 2026-09-21** (supersedes the 1.0.4 b8 inference that stood here from 2026-09-12) | `itunes.apple.com/lookup?id=6784424678` → `version: 1.0.5`, `currentVersionReleaseDate: 2026-09-12T18:22:22Z` (queried 2026-09-21). The lookup carries no build number; **build 10** is the founder's statement, `BRIEF_MASTER_2026-09-21.md:83`, and the only 1.0.5 build ever uploaded per `ARCHITECTURE.md` "Shipped so far" |
 | 1.0.5 available | **2026-09-12** | same lookup, `currentVersionReleaseDate` |
 | Build 10 contains build 9 | yes | `git merge-base --is-ancestor v1.0.5-build9 v1.0.5-build10` → 0, checked 2026-09-12 |
 | In review | 1.0.5 build 10 | `PLAN_TUTORIAL_AND_HELP.md:170`; `DEFECT_VOICE_INPUT_DEINIT_ABORT.md:204` |
@@ -246,7 +246,7 @@ Evidence is the document **and line** that holds the detail, never a summary of 
 | **S1** | **iCloud sync (private CloudKit)** | **decided-build**, target 1.1, **design first with family in view** (`BRIEF_MASTER_2026-09-21.md:273–279`, `:300–303`); the technical blockers in the next column are unchanged and are what the design must resolve | (a) the rollback ladder — see L1–L3; (b) the recurrence watermark must move into the synced model | `DESIGN_ICLOUD_SYNC_1_0_4.md:3` (*"**Status: DESIGN ONLY.**"*) · `:539–540` (*"a prerequisite, not an option"*) · `PLAN_RECURRENCE_SYNC_IDENTITY.md:36` (step 3 = **REVIEW-BLOCKED — no code**) · `FEATURE_PREP_BACKLOG.md:179` |
 | **V3** | **V3 schema (8 frozen attributes)** | **blocked** | D3 (the sentinel defect) is a prerequisite of *shipping* V3, not only of drilling it; and there is no real V2 store to drill against | `DESIGN_V3_SCHEMA_FREEZE.md:3` (*"no code written yet"*) · `:166–170` (what is needed first) · `DEFECT_V2_MIGRATION_SENTINEL.md:26` · `AUDIT_V3_ROLLBACK_READINESS.md:122` (§6, no real V2 store on this machine) |
 | **RP1** | **Reports** | **BUILT 2026-09-21 — in the tree, NOT released; see §9** — design approved 2026-09-21: `outputs/DESIGN_REPORTS_1_0_6.md` approach A; decisions: **P1 premium split**, Analytics entry point yes, monthly always on the 1st, transactions table off by default in year/custom PDFs (`BRIEF_MASTER_2026-09-21.md:331–351`). **Condition: D47 ships in 1.0.6** with a split-heavy equality test commissioned red first (`:353–371`). **Premium rationale, founder's words:** *"no source supports any split (NOT IN SOURCES), and a gate is easy to remove later and painful to add — so start gated, revisit on data"* (`:339–341`). Building (`BRIEF_MASTER_2026-09-21.md:129–163`). Must fix D5's `AnalyticsSeries` overflow under it (`:152–155`) | nothing technical; it needs no schema change | `FEATURE_SPECS_BUDGETS_RECURRING_REPORTS.md:46` (*"The verified delta is exactly THREE things. Build these, not a Reports tab."*) · `:48–65` (the three) · `:69` (*"NOT in 1.0.5"*) · `PROPOSAL_1_0_5_SCOPE.md:5` |
-| **T1** | **Re-playable tutorial + annotated help → the User Guide** | **DESIGN WRITTEN 2026-09-22, AWAITING APPROVAL** — `outputs/DESIGN_USER_GUIDE.md` (26 cards + the scanning placeholder, walkthrough, Show-me routing, hints, screenshots, tests, 7 decisions in its §14). Founder's 2026-09-22 scope change: design now for everything shipped + Reports; scanning card is a named placeholder until the sealed run. **The brief's "accounts attach to INCOME only" is contradicted by the build** (both directions) — design §2, decision §14.1. Five false shipped teaching strings filed as `DEFECT_REGISTER.md` D50. Was decided-build, target 1.0.7 (`BRIEF_MASTER_2026-09-21.md:204–268`) | approval | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
+| **T1** | **Re-playable tutorial + annotated help → the User Guide** | **APPROVED 2026-10-06 — Dmitry decided, with rulings on all seven §14 questions; see §13. Ships in 1.0.7, alone if scanning slips (§13, 14.7). NOT STARTED: waits on the working-tree review (§13.3).** Was: DESIGN WRITTEN 2026-09-22, AWAITING APPROVAL — `outputs/DESIGN_USER_GUIDE.md` (26 cards + the scanning placeholder, walkthrough, Show-me routing, hints, screenshots, tests, 7 decisions in its §14). Founder's 2026-09-22 scope change: design now for everything shipped + Reports; scanning card is a named placeholder until the sealed run. **The brief's "accounts attach to INCOME only" is contradicted by the build** (both directions) — design §2, decision §14.1. Five false shipped teaching strings filed as `DEFECT_REGISTER.md` D50. Was decided-build, target 1.0.7 (`BRIEF_MASTER_2026-09-21.md:204–268`) | approval | `PLAN_TUTORIAL_AND_HELP.md:10–12` (*"Nothing here is designed yet. Nothing here is scheduled."*) · `:170` |
 | **A1** | **Auto-post recurrence** | **open** — design only | coupled to S1; must ship with the watermark move | `DESIGN_AUTOPOST_RECURRENCE_1_0_4.md:3` · `:644–645` |
 
 ### The rollback ladder — `AUDIT_V3_ROLLBACK_READINESS.md` §5
@@ -437,6 +437,17 @@ updated, one not) — and this time both places were files this project built *t
   file is now itself a rule-5 violation, so the next reader who sees one knows it is wrong before
   checking whether it is stale. Pattern, dates: §4.2 (found 09-12), §4.3 (found 09-12), §4.9 (made
   09-21, found 09-22).
+
+### 4.10 The master brief said accounts attach to income only; the build attaches them to both — RESOLVED 2026-10-06
+
+- `BRIEF_MASTER_2026-09-21.md:236–237` — *"accounts (and the fact that they attach to INCOME only —
+  say it, do not let users hunt for it)"*.
+- The build attaches accounts to income and expenses (`DESIGN_USER_GUIDE.md` §2).
+- **Cause, founder's account:** the reviewer read `add.source.expense_disabled_hint` as a statement
+  of behaviour. It is an **orphaned string**, present in all five `.strings` files and referenced by
+  no code (D50).
+- **Resolved by decision, not by picking a side silently:** Dmitry decided 2026-10-06 that the build
+  is the truth (§13, 14.1). The brief's line carries a correction note; its verbatim text is kept.
 
 ### 4.5 The receipt pre-test is not in this repository
 
@@ -691,7 +702,7 @@ Three lines decide it: `othersPlayingAtActivate=true`, then either `deactivated 
 confirms "busy") or `deactivate GAVE UP`, then `othersPlayingAfterRelease=true|false`. **Until that
 run, D46 is "fixed by construction", which this project does not accept as fixed.**
 
-**Option B, proposed, not chosen** (brief `:109–111`): category `.playAndRecord` with
+**Option B — DECLINED 2026-10-06, decided-skip; reopen only on user evidence (§13).** Was: proposed, not chosen (brief `:109–111`): category `.playAndRecord` with
 `[.duckOthers, .defaultToSpeaker]` so music ducks instead of stopping. Cost: the ducked music is
 audible to the mic, and `requiresOnDeviceRecognition` models have no noise model for it — a
 recognition-accuracy risk with no measurement behind it. Product decision; Dmitry's call.
@@ -980,6 +991,8 @@ ARRIVED", appended verbatim below the Phase 1 approval.
 | store fixture | `StoreFixtures/StoreV1_0_6_BUILD11` from the tagged commit: 33 transactions, sum 635473, 13 categories, 3 sources; `ShippedStoreShapeTests.test_v1_0_6_build11_storeOpens` added, 10/10 | `MANIFEST.md`, commit `3473c5c` recorded there |
 | **submitted for review** | **NO — Dmitry does that in App Store Connect.** What's New to paste: `ASC_WHATS_NEW_1_0_6.md` (FINAL) | — |
 | tag message to amend on approval | "approved and released" + date, `git tag -f -a`, force-push the tag (`ARCHITECTURE.md` Releases) | — |
+| **submitted** | **around 2026-10-01 — Dmitry's statement**, received 2026-10-06; not otherwise recorded (no ASC access from here) | founder's brief of 2026-10-06, item 4a |
+| **live?** | **YES: 1.0.6 is live, released 2026-10-08T18:15:45Z. Recorded 2026-10-11 from the lookup** (us and ru storefronts both return `version 1.0.6`, `currentVersionReleaseDate 2026-10-08T18:15:45Z`). Tag `v1.0.6-build11` amended "approved and released" with that date (§13.4). *Was "NO as of 2026-10-07", from the query below:* | `itunes.apple.com/lookup?id=6784424678&country=us` (queried 2026-10-07) → `version 1.0.5`, `currentVersionReleaseDate 2026-09-12T18:22:22Z`. The lookup is one storefront and can lag a release by hours; re-query before acting |
 
 ---
 
@@ -1002,3 +1015,60 @@ device the runtime asks again and falls back to ru + en for uk if absent.
 no freeze, no split, no measurement, no paywall row, no What's New. The
 scanner is reachable in a Debug build; **it must not ship until the sealed half has been run once
 and reported** — and the paywall row and `unshippedCapabilities` move in that same commit.
+
+---
+
+## 13. DECISIONS RECEIVED 2026-10-06 — Dmitry decided, 2026-10-06
+
+Source: the founder's brief of 2026-10-06, relayed from the review conversation. Recorded here
+because they were made in that conversation and had not reached the repo (rule 1). Each reason is
+the one given with the decision.
+
+### 13.1 `DESIGN_USER_GUIDE.md` — APPROVED, with rulings on its §14
+
+| § | Dmitry decided, 2026-10-06 | reason given |
+|---|---|---|
+| 14.1 | **Accounts attach to BOTH income and expenses. The build is the truth.** Delete `add.source.expense_disabled_hint` in all five locales with D50's batch. Record the incident in `ARCHITECTURE.md` next to the comment rule. Sweep for other orphaned strings that assert behaviour. Correct the master brief's line (done as a correction note, §4.10) | the brief's "income only" came from reading an orphaned string as behaviour; *"a UI string can go stale exactly like a comment"* |
+| 14.2 | **YES**: the Guide absorbs the six help articles; "Set up Widget & Siri" is dropped | *"Two homes for help drift exactly as two homes for status did"* (§4.9) |
+| 14.3 | **Per-locale screenshots, under a size budget.** Compress hard. **If the delta exceeds ~10 MB, come back with options instead of shipping it.** Note: the design's own estimate is ~10–16 MB (`DESIGN_USER_GUIDE.md:781`), so the budget is expected to bind | the app is ~5.8 MB and the funnel is already thin |
+| 14.4 | **SHOW walkthrough step 3 without a budget.** The sample figures must be **unmistakably marked as an example** | *"a number that looks like the user's own data is a false claim"* (§2.8) |
+| 14.5 | **YES**: fix C1–C5 (`DEFECT_REGISTER.md` D50) in the same release | — |
+| 14.6 | **THREE hints, not seven:** the monthly budget, a category limit, the Guide itself. Add more only when measurement shows what users fail to find | these are the three the pre-registered acceptance test turns on |
+| 14.7 | **YES**: the Guide ships alone in 1.0.7 if scanning slips | *"the only engineering item that touches conversion rather than traffic"* |
+
+### 13.2 D46 Option B — DECLINED, decided-skip
+
+Option A (music resumes after dictation) shipped in 1.0.6 b11 and was confirmed on device (§10).
+**Reason:** the complaint was *"music does not come back"*, not *"music stops"*. Ducking would leave
+music audible to the microphone during on-device recognition, an unmeasured accuracy risk with no
+complaint behind it. **Reopen only on user evidence.** Defect status: `DEFECT_REGISTER.md` D46.
+
+### 13.3 Unexplained working-tree changes to the test gate — HOLD released 2026-10-11 (approved)
+
+**No commit, no revert and no suite run until Dmitry has reviewed the report.** Reason: *"An
+unreviewed change to the test gate invalidates every verdict that runs through it."*
+
+Report delivered 2026-10-07, **awaiting review**:
+- `scripts/run-tests.sh`: 3 lines added after `cd "$REPO_ROOT"`, `trap 'scripts/sim-clone-cleanup.sh' EXIT`. mtime 2026-10-04 16:45:27.
+- `scripts/sim-clone-cleanup.sh`: new file, mtime 16:47:04.
+- **Origin:** a Claude session started in `~` (transcript `~/.claude/projects/-Users-dmitrylogachevusa/ca862344-….jsonl`), running Dmitry's 2026-10-04 "Disk is full" brief. Its PREVENTION item asked for a cleanup step in the test scripts of FocusCrab, FinanceTracker and ybg-ios. The session applied the change at 23:45:26Z and rewrote the script's `find` at 23:47:03Z, matching both mtimes. That session's verification run was in **ybg-ios, not FinanceTracker**.
+- **CROSS-PROJECT (recorded at Dmitry's instruction, 2026-10-11):** the cleanup does not know which project made a clone. When FinanceTracker's gate exits, it deletes **every** project's clones in the testing device set, as long as no `xcodebuild` is running at that moment. It also deletes every `$TMPDIR/Deleting-*` folder older than 30 minutes. Acceptable, but it must be known: a FocusCrab or ybg-ios run that has just finished loses its clones to a FinanceTracker run, and the reverse is also true.
+- **APPROVED 2026-10-11 (Dmitry), with one change made in review:** the trap uses an **absolute** path, `"$REPO_ROOT/scripts/sim-clone-cleanup.sh"`. A relative path would turn into a silent no-op after any later `cd`.
+- **The first full run after this commit is the trap's first run in this repo.** That run's report must say so.
+- **Effect on exit codes:** a bash EXIT trap does not change the exit status. Checked 2026-10-07 for exit codes 0, 1, 3, 4 and 5 with a failing trap, and for exit 4 with a missing trap target: each code is preserved.
+
+### 13.4 Order of work, as given
+
+(a) App Store lookup: **1.0.6 not live on 2026-10-07** (§11), tag not amended → (b) working-tree
+report (§13.3) → (c) if 1.0.6 is live: D33/`wipeLedger`, **time-boxed**, starting with a size estimate.
+If it is more than a bounded piece of work, report it and interleave it with the Guide → (d) build
+the Guide. Stop with the acceptance-test run, the screenshot size delta, and What's New in five
+languages.
+
+**Unblocked 2026-10-11:** 1.0.6 is live (§11) and the gate change is approved (§13.3). Order: tag amend → D33 size estimate → Guide.
+
+### 13.5 Still with Dmitry. Do NOT mark any of these resolved without his material
+
+Receipt photos (R1) · Elena's three D51 answers (`DEFECT_REGISTER.md` D51) · T0, the 1.0.4 live
+date from ASC version history (R1c) · the ASC product-ID list (`DEFECT_REGISTER.md` D22). He is
+sending screenshots for the last two.
