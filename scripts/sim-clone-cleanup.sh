@@ -23,7 +23,9 @@ fi
 
 # Already-deleted devices waiting for CoreSimulator's purge. The age floor only
 # avoids racing a move that is still in progress.
-TMP="$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null)"
+# SIM_CLONE_TMPDIR: commissioning seam only, so the rm -rf below can be shown to
+# hit ONLY old Deleting-* folders in a scratch directory (2026-10-11).
+TMP="${SIM_CLONE_TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null)}"
 if [ -n "$TMP" ] && [ -d "$TMP" ]; then
   # One folder at a time: two `-exec {} +` batches in one find have no
   # guaranteed order, and rm before chflags leaves the folder behind.

@@ -167,6 +167,18 @@ Exit `3` exists because `xcodebuild` also prints `** TEST FAILED **` for a compi
 error, so a mutation-testing driver can otherwise score "it didn't compile" as "the
 tests caught it" (that is exactly what happened to G8).
 
+### One full test run per machine, across projects
+
+**Standing rule (2026-10-11).** Only one full test run on this Mac at a time, counting every
+project, not just this one. On 16 GB two suites mean two simulators under swap, and a launch that
+did not finish seeding inside its timeout fails as *"demo seed missing"*. That is the same
+message a real regression produces. The 2026-10-11 full run shared the machine with another
+project's suite and its UI reds could not be read for that reason. Sessions in different projects
+cannot see each other, so the **operator** enforces the rule, and **every run report states whether
+the machine was quiet**. The wrapper helps without deciding: it prints a loud warning at start and
+a `── machine:` line in the verdict if another `xcodebuild … test` is alive at start or at end. It
+warns; it does not refuse.
+
 Two traps the wrapper's exit-2 message will remind you about:
 
 - **A Swift Testing case needs its trailing `()`** in the filter. Without it, zero match.

@@ -14,6 +14,14 @@
 #   `xcresulttool`. A documented manual step is not a guard — it is a comment,
 #   and a comment guards nothing. This script makes the check unskippable.
 #
+# ONE FULL TEST RUN PER MACHINE, ACROSS PROJECTS (standing rule, 2026-10-11)
+#   Never start a full run while ANY other project's test run is going on this
+#   machine. On 16 GB, two suites mean two simulators and swap, and launch-timing
+#   reds ("demo seed missing") become indistinguishable from memory pressure: the
+#   2026-10-11 run settled nothing for that reason. Sessions cannot see each
+#   other, so the OPERATOR enforces this. Every run report states whether the
+#   machine was quiet; the verdict prints a "── machine:" line for that.
+#
 # CONTRACT
 #   exit 0  — tests ran AND all passed
 #   exit 1  — tests ran AND at least one failed   (a real RED)
@@ -221,6 +229,26 @@ trap '"$REPO_ROOT/scripts/sim-clone-cleanup.sh"' EXIT
 
 BUNDLE="$(mktemp -d)/result.xcresult"
 LOG="$(mktemp)"
+
+# ── ONE FULL TEST RUN PER MACHINE, ACROSS PROJECTS (rule, 2026-10-11) ─────────
+# The 2026-10-11 full run shared this 16 GB machine with another project's test
+# run: two xcodebuilds, two simulators, swap. Its "demo seed missing" reds could
+# not be told apart from memory pressure, so the run settled nothing. Sessions in
+# different projects cannot see each other; the operator keeps the machine quiet.
+# This check only makes the condition VISIBLE in the verdict. A warning, not a
+# refusal: the operator decides. Checked at start and again at the end, because
+# another run can start mid-way.
+other_test_runs() {
+    pgrep -fl xcodebuild 2>/dev/null | grep -E '(^| )test( |$)' || true
+}
+OTHERS_AT_START="$(other_test_runs)"
+if [ -n "$OTHERS_AT_START" ]; then
+    echo ""
+    echo "⚠⚠ ANOTHER xcodebuild TEST RUN IS ALIVE ON THIS MACHINE:"
+    echo "$OTHERS_AT_START" | sed 's/^/     /'
+    echo "   Timing-sensitive reds from this run are weak evidence."
+    echo ""
+fi
 
 # ── COMMISSIONING AFFORDANCE: re-check an EXISTING bundle ────────────────────
 #   CHECK_BUNDLE=/path/to/result.xcresult scripts/run-tests.sh [same args]
@@ -437,6 +465,17 @@ reconcile_failures() {
 }
 
 echo "── executed=$EXECUTED  passed=$PASSED  failed=$FAILED  skipped=$SKIPPED"
+OTHERS_AT_END="$(other_test_runs)"
+if [ -n "${CHECK_BUNDLE:-}" ]; then
+    echo "── machine: not checked (CHECK_BUNDLE — the run being judged happened earlier)"
+elif [ -z "$OTHERS_AT_START" ] && [ -z "$OTHERS_AT_END" ]; then
+    echo "── machine: quiet (no other xcodebuild test run at start or at end)"
+else
+    echo "⚠⚠ machine: NOT QUIET — another xcodebuild test run was alive at" \
+         "$([ -n "$OTHERS_AT_START" ] && echo start)$([ -n "$OTHERS_AT_START" ] && [ -n "$OTHERS_AT_END" ] && echo ' and ')$([ -n "$OTHERS_AT_END" ] && echo end)."
+    [ -n "$OTHERS_AT_END" ] && echo "$OTHERS_AT_END" | sed 's/^/     /'
+    echo "   Reds that depend on timing (UI launches, seeds, waits) are NOT a verdict on the code."
+fi
 
 # ── THE GUARD ─────────────────────────────────────────────────────────────────
 if [ "$EXECUTED" -eq 0 ]; then
