@@ -864,6 +864,32 @@ the first non-scale launch after a scale-seeding class wiping 8 000 rows on the 
 the demo seed writes (`:89–98`, D33/D44) — fits all three. It has not been shown to be the cause of
 `savingThreeConsecutive`'s "Save button missing".
 
+**LEADING CANDIDATE FOR THE RESIDUAL REDS, 2026-10-12: memory exhaustion from leftover simulators.**
+This is measured, not hypothesised. `xcrun simctl list devices booted` showed **six** booted
+simulators: iPhone SE (iOS 18.6); iPhone 17 Pro, 17 Pro Max and Air, plus iPad mini (iOS 26.5);
+and Apple Watch Ultra 3. CoreSimulator processes summed to **21.5 GB RSS** on a 16 GB M1. RSS
+double-counts shared pages, but the order of magnitude holds. Swap was **13.2 GB**. Dmitry shut
+them all down and rebooted. The machine rules that followed live in **`~/.claude/CLAUDE.md`**,
+which is their only home (`ARCHITECTURE.md` explains why they exist). The mechanism fits the
+messages: a launch that cannot finish seeding inside its timeout under swap fails as *"demo seed
+missing"* or *"never showed rows"*.
+
+**What this does NOT yet show, written down before the rerun:**
+
+- §13.6 records **no booted device in either set at the start and at the end** of the clean
+  rerun (`c0da729`). So the six simulators are **not shown to have been booted during that run**.
+  They may have been booted after 22:34, or the check may have missed them. The record cannot say
+  which.
+- What the record does show is memory pressure in that run, from some source: swap was 4.6 GB at
+  the start and 6.1 GB at the end.
+- The candidate is therefore *memory pressure*. Leftover simulators are its measured mechanism on
+  2026-10-12, not a mechanism proven for 2026-10-11.
+
+**Test:** one full run on the rebooted machine, all simulators shut down, with swap and
+`pgrep xcodebuild` / `Simulator` recorded at start and at end. If the three reds vanish, D33's
+remaining cause was memory exhaustion, and D33 closes on that evidence. If they survive at low
+swap, memory is ruled out and the time-boxed investigation goes ahead. Result: §13.8.
+
 **Consequence, written down:** these three cover **opening the editor, editing after a quick add,
 and saving consecutive entries** — the most money-critical UI paths in the app. While they are
 intermittent, **a real regression on those paths is indistinguishable from flake in a full run.**

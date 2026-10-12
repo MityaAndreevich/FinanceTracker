@@ -169,15 +169,25 @@ tests caught it" (that is exactly what happened to G8).
 
 ### One full test run per machine, across projects
 
-**Standing rule (2026-10-11).** Only one full test run on this Mac at a time, counting every
-project, not just this one. On 16 GB two suites mean two simulators under swap, and a launch that
-did not finish seeding inside its timeout fails as *"demo seed missing"*. That is the same
-message a real regression produces. The 2026-10-11 full run shared the machine with another
-project's suite and its UI reds could not be read for that reason. Sessions in different projects
-cannot see each other, so the **operator** enforces the rule, and **every run report states whether
-the machine was quiet**. The wrapper helps without deciding: it prints a loud warning at start and
-a `── machine:` line in the verdict if another `xcodebuild … test` is alive at start or at end. It
-warns; it does not refuse.
+**The machine rules live in `~/.claude/CLAUDE.md` and nowhere else.** Dmitry wrote them on
+2026-10-12 and they apply to every project on this Mac. Read them there. They are deliberately
+not restated here, because two copies of one rule drift apart.
+
+**Why they exist.** On 2026-10-12 `xcrun simctl list devices booted` showed **six** booted
+simulators: iPhone SE (iOS 18.6); iPhone 17 Pro, 17 Pro Max and Air, plus iPad mini (iOS 26.5);
+and Apple Watch Ultra 3. CoreSimulator processes summed to **21.5 GB RSS** on this 16 GB M1, and
+swap stood at **13.2 GB**. RSS double-counts shared pages, but the order of magnitude holds.
+Earlier, the 2026-10-11 full run had shared the machine with another project's suite, and its
+UI reds could not be read. Under memory pressure, a launch that does not finish seeding inside its
+timeout fails as *"demo seed missing"*. A real regression produces the same message
+(`outputs/STATE.md` §9.2, D33).
+
+**What this repo does to enforce them:**
+
+- `scripts/run-tests.sh` prints a loud warning at start, and a `── machine:` line in the verdict,
+  if another `xcodebuild … test` is alive at start or at end. It warns but does not refuse.
+- Its EXIT trap, `scripts/sim-clone-cleanup.sh`, shuts down every booted simulator in the default
+  set when no `xcodebuild` is alive.
 
 Two traps the wrapper's exit-2 message will remind you about:
 
