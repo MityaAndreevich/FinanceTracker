@@ -850,6 +850,7 @@ is the truncated `executed=563` one (`scripts/run-tests.sh:36`).
 | build-10 confirming run | 2026-09-02 | `8c98982` | **G** | R | R | `GO_LIVE_CHECKLIST.md:25–34`; tag `v1.0.5-build10` message |
 | Phase 1 full run | 2026-09-21 | `f73e871` | R | R | **G** | §9.1 |
 | scoped, erased | 2026-09-21 | `f73e871` | G (1/1) | — | — | §9.1 |
+| full, after the D33 fix | 2026-10-11 | `9584969` | R | **G** | R | §13.6 |
 
 Tallies over the nine unfiltered rows: `seededRowTap` **7 R / 2 G**, `editAfterQuickAddInsert`
 **9 R / 0 G** (its "flaky" label is the generous one — on record it has never passed in a full run;
@@ -1081,3 +1082,42 @@ bounded is evidence: only full runs can show whether the three intermittent test
 `DEFECT_REGISTER.md` D33. **Programme fact: NOT yet verified against the UI suite.** The next full run
 from an erased simulator is the first evidence, and it is also the first run of the cleanup trap in
 this repo (§13.3). Read its three tests against §9.2's table, never against a two-name list.
+
+**THE RUN, 2026-10-11 16:42–17:50, erased simulator, unfiltered, HEAD `9584969`:**
+
+```
+executed=1223 passed=1218 failed=5 skipped=5
+count: executed+skipped=1228 expected=1184 Δ=+44 → exit 5 (the designed path)
+```
+
+- **Count.** `EXPECTED_TOTAL_RUN` set to **1228** from this run (`chore(test)` commit). The +44 are
+  the tests committed between `f73e871` and `9584969`.
+- **Two reds were MINE, not the tree's.** `LocaleCompletenessTests` `testAllLocalizedKeysExist` and
+  `testNoMissingLocalizationKeys` scan the SOURCE TREE at run time, not the build. They read the
+  uncommitted Guide step-1 file I was writing during the run. Its storage keys
+  (`guide.walkthrough.outcome` …) have the shape of localization keys. **This was a contamination
+  of the run by working-tree edits, and it is a rule for this file now: no source edits during a
+  full run either, not only no commits.** The keys were renamed out of that shape before step 1
+  was committed.
+- **The three intermittent tests:** `seededRowTap` R (*"Transactions list never showed rows"*, 164 s,
+  inside its own scale class). `editAfterQuickAddInsert` **G**: the first green in a full run on
+  record (0 of 9 before). `savingThreeConsecutive` R (*"Save button missing for entry #1"*).
+- **A FOURTH test with the same message:** `EditPresentationReproTests.test_editPopBack_thenEditAgain_opensEditor`
+  R, *"no rows (demo seed missing)"*. It is not in the table above. **No scale class ran before it**
+  (the preceding class, `EditPresentationInterleavedTests`, seeds nothing large), so `wipeLedger`
+  cannot explain it.
+- **The mechanism's own cases.** The first non-scale launch after a scale class happened 4 times:
+  `DuplicateReviewFlow` after `BulkDeleteStall` (G), `editAfterQuickAddInsert` after `EditAtScale` (G),
+  `MonetizationGateFlow` after `MainThreadHangScale` (G), and `savingThree` after
+  `SearchRecomputationRegression` (R).
+- **Confound.** Another project's `xcodebuild` (FocusCrab) was running at the start and at the end of
+  this run. Under that load a red is weak evidence and a green is strong evidence.
+- **VERDICT: D33's cost is fixed; the UI tests are NOT cured.** Three of four post-scale launches now
+  pass, against a history of near-universal red. But "missing rows" persists, including once with no
+  scale class in front of it. So the seam was A cause, not THE cause. The remaining cause is
+  unidentified. Open in `DEFECT_REGISTER.md` D33.
+- **The trap's first run here.** It exited with the script's own status (`exit=5` recorded after the
+  trap), which is the property the review required. It had nothing observable to clean: the testing
+  device set was empty and there were no `Deleting-*` folders. This suite runs with parallel testing
+  off, so it makes no clones. And with FocusCrab's `xcodebuild` alive at exit, the `pgrep` guard
+  would have skipped the delete anyway. **Not observed doing a deletion.**
