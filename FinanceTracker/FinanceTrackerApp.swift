@@ -40,6 +40,7 @@ struct FinanceTrackerApp: App {
         _ = appLaunchClock   // prime the launch clock as early as possible
 
         #if DEBUG
+        LaunchTimeline.begin()
         // Must precede migrateLegacyStoreIfNeeded and the launch gate: it
         // REPLACES the App Group store with a pre-V1 one and clears the
         // migration sentinels, so `needsGuardedMigration` must not have been

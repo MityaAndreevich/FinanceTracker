@@ -203,6 +203,7 @@ struct ContentView: View {
         }
         .task {
             #if DEBUG
+            LaunchTimeline.mark("task-start")
             // MOVED HERE 2026-08-14. This purge drops a large seeded ledger a
             // previous run left behind, and `wipeLedger` deletes EVERY
             // Transaction unconditionally — so it must run before anything that
@@ -244,12 +245,16 @@ struct ContentView: View {
             // PurgeCostMeasurementTests guards it at 5 s (was 50 070 ms). Whether that
             // cures the three intermittent UI tests is a full-run question, not this one.
             LargeDatasetDebugSeed.purgeIfLeftOver(modelContext: modelContext)
+            LaunchTimeline.mark("purge-done")
             #endif
             if DemoSeeder.isDemoMode {
                 DemoSeeder.resetAndSeedDemoData(modelContext: modelContext)
             } else {
                 SeedService.seedIfNeeded(modelContext: modelContext)
             }
+            #if DEBUG
+            LaunchTimeline.mark("seed-done demo=\(DemoSeeder.isDemoMode ? 1 : 0)")
+            #endif
             applyScreenshotRoutingIfNeeded()
             handlePendingIntentNavigation()
             RatingPromptCoordinator.recordSessionOpen()
@@ -321,6 +326,10 @@ struct ContentView: View {
                 "launch-seams rows=\(seededRows)"
                 + " scale=\(LargeDatasetDebugSeed.isRequested ? 1 : 0)"
                 + " dup=\(DuplicateReviewDebugSeed.isRequested ? 1 : 0)"
+            )
+            LaunchTimeline.mark(
+                "seams-done rows=\(seededRows)"
+                + " scale=\(LargeDatasetDebugSeed.isRequested ? 1 : 0)"
             )
             #endif
         }
