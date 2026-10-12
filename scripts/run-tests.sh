@@ -192,7 +192,13 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 # hit-test probe, the 1.0.6 fixes. The diff adds 44 test declarations and
 # removes none; per the note above, that agreement is NOT the evidence. The run is.)
 # Bundle: /var/folders/.../tmp.we8pXFOhYY/result.xcresult (session-local).
-EXPECTED_TOTAL_RUN=1228
+#
+# OBSERVED 2026-10-11 21:32–22:34, ERASED simulator, UNFILTERED, HEAD c0da729,
+# machine QUIET (no other xcodebuild or Simulator.app at start or end):
+#     executed=1237 skipped=5 → total 1242, exit 5 against 1228
+# (Δ=+14: Guide step 1's instrumentation tests and the four Settings-stack UI tests.)
+# Bundle: /var/folders/.../tmp.kcbeeYStBn/result.xcresult (session-local).
+EXPECTED_TOTAL_RUN=1242
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
 # The obvious instinct is a percentage band for headroom. It is wrong here, twice
