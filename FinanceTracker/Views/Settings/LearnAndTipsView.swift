@@ -206,6 +206,7 @@ struct LearnAndTipsView: View {
         } label: {
             Label(article.rowLabelKey, systemImage: icon)
         }
+        .accessibilityIdentifier("help_article_row_\(article.rawValue)")
     }
 }
 

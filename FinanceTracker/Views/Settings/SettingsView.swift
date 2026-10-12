@@ -20,6 +20,7 @@ struct SettingsView: View {
                 } label: {
                     Label("settings.general", systemImage: "slider.horizontal.3")
                 }
+                .accessibilityIdentifier("settings_general_row")
 
                 NavigationLink {
                     PremiumSettingsView()
@@ -71,6 +72,7 @@ struct SettingsView: View {
                 } label: {
                     Label("settings.learn_tips", systemImage: "lightbulb")
                 }
+                .accessibilityIdentifier("settings_learn_tips_row")
 
                 // Discoverability (1.0.5): the widget and the Siri intents are
                 // finished, shipped surfaces that the app never mentioned. Both

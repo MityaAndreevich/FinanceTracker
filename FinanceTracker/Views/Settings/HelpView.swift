@@ -83,6 +83,7 @@ struct HelpArticleView: View {
         // content is actually taller than the viewport.
         .scrollBounceBehavior(.basedOnSize)
         .navigationTitle(article.titleKey)
+        .accessibilityIdentifier("help_article_view")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
