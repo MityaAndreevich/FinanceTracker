@@ -1146,3 +1146,29 @@ front of it is consistent with that too. **No open-ended investigation.** Instea
    seam) exited 0 and removed **only `Deleting-OLD`**, flagged file included. The other two
    survived. The testing device set was empty before, so the `simctl delete all` branch had
    nothing to remove.
+
+### 13.7 Guide step 2 — the R1 guard, written before the Settings stack is touched (2026-10-11)
+
+`FinanceTrackerUITests/SettingsStackDeepPopTests`, two tests:
+- **(a)** Settings → Learn & Tips → article → back → back → General opens. 3 cycles.
+- **(b)** Same depth, leave the tab, come back. Settings is at its root and General opens.
+  3 cycles.
+
+All runs below were on a quiet machine (the wrapper's `── machine:` line).
+
+| variant | (a) | (b) |
+|---|---|---|
+| today's code | G | G |
+| mutant 1: bound `NavigationPath`, `.id` reset kept | **G** | — (not yet written) |
+| mutant 2: the exact pre-fb9c075 shape (bound path, reset by assigning the path, no `.id`) | R, *"Test crashed with signal term"* at the FIRST Settings open, no crash report | **R**, *"returning to Settings did not land on its root"* |
+| mutant 3: General's row opens the wrong screen | **R**, the R1 assertion's own message | — |
+
+**What this does and does not show:**
+- **R1 itself did not reproduce on iOS 26.5.** Mutant 1 stays green, and mutant 2's (a) died
+  before any deep pop. So (a) is commissioned only against "General does not open" (mutant 3),
+  not against the June mechanism.
+- **(b) is commissioned against a real failure of the old shape:** assigning a fresh path does not
+  pop screens pushed by destination links. That is exactly the failure the conversion must not
+  bring back.
+- Mutant 2's SIGTERM is unexplained and was not chased. It is not R1, and that shape is not being
+  re-introduced.
