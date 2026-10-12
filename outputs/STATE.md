@@ -852,6 +852,7 @@ is the truncated `executed=563` one (`scripts/run-tests.sh:36`).
 | scoped, erased | 2026-09-21 | `f73e871` | G (1/1) | — | — | §9.1 |
 | full, after the D33 fix | 2026-10-11 | `9584969` | R | **G** | R | §13.6 (machine NOT quiet: concurrent FocusCrab suite) |
 | full, CLEAN rerun | 2026-10-11 | `c0da729` | R | R | R | §13.6 (machine quiet; swap 4.6 GB used at start) |
+| full, rebooted + one simulator | 2026-10-12 | `9754f74` | R | R | R | §13.8 (quiet; swap 0 at start, peak 13.9 GB at 02:29 in the unit phase, 3.2–4.3 GB through the UI phase) |
 
 Tallies over the nine unfiltered rows: `seededRowTap` **7 R / 2 G**, `editAfterQuickAddInsert`
 **9 R / 0 G** (its "flaky" label is the generous one — on record it has never passed in a full run;
@@ -1228,3 +1229,72 @@ All runs below were on a quiet machine (the wrapper's `── machine:` line).
   bring back.
 - Mutant 2's SIGTERM is unexplained and was not chased. It is not R1, and that shape is not being
   re-introduced.
+
+### 13.8 D33 decider — full run on a rebooted machine, one simulator (2026-10-12)
+
+**THE RUN, 2026-10-12 02:08–03:09, HEAD `9754f74`, erased iPhone 17 Pro, unfiltered:**
+
+```
+executed=1237 passed=1233 failed=4 skipped=5
+machine: quiet (no other xcodebuild test run at start or at end)
+count: executed+skipped=1242 expected=1242 Δ=+0 → exit 1 (real reds)
+```
+
+**Machine checks.** Before the run (02:08:53): the machine had been rebooted, swap was **0**, there
+was no `xcodebuild`, no `Simulator.app`, and no booted device in either set. After the run
+(03:09:53) there was no `xcodebuild`, no `Simulator.app` and no booted device, and swap was 1.86 GB.
+Swap, booted devices and `xcodebuild` processes were sampled every 2 min. Booted devices: 0 at the
+first sample, then 1 throughout.
+
+**One open item in the quiet check:** the **02:45 sample counted 2 `xcodebuild` processes**. Every
+other sample counted 1. The sampler did not record arguments, so this sample cannot tell our run's
+own child process from another project's run. At 02:45 `EditAtScaleReproTests` was running, and it
+is the class `seededRowTap` belongs to. **Not resolved.**
+
+**The intermittent tests:**
+
+- `seededRowTap` (`EditAtScaleReproTests`, started 02:43:48): **R**, *"Transactions list never
+  showed rows"*.
+- `editAfterQuickAddInsert` (`EditPresentationInterleavedTests`, 02:48:36): **R**, *"no rows (demo
+  seed missing)"*.
+- `savingThreeConsecutive` (`SecondTransactionCrashTests`, 03:03:32): **R**, *"Save button missing
+  for entry #1"*.
+- `editPopBack_thenEditAgain`: **G**.
+
+**A fourth red, new on record:** `AnalyticsToolbarAfterSheetProbeTests.test_reportsSheet_
+backgroundedDuringSwipeDismiss_toolbarKeepsPresenting` failed with *"the Reports entry point is
+missing from Analytics"*. That message is the probe's PRECONDITION failing: the element was absent.
+It is **not** D51's observable, which is a visible control that does not respond, so it is **not a
+reproduction of D51**. It was the first UI class to run (02:36:12), straight after the unit phase.
+Not investigated. `VoiceAudioSessionControllerTests` (D52) passed.
+
+**Swap series** (`sysctl vm.swapusage`, used, sampled every 2 min):
+
+| time | 02:09 | 02:15 | 02:17 | 02:21 | 02:27 | **02:29** | 02:31 | 02:35 | 02:43 | 02:51 | 03:01 | 03:09 | end 03:09:53 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| GB | 0 | 4.3 | 4.9 | 10.2 | 6.2 | **13.9** | 4.7 | 4.3 | 3.5 | 3.4 | 3.3 | 3.2 | 1.9 |
+
+The samples not shown in the table lie between their neighbours. Phases, from the result bundle:
+the unit tests ran from about 02:10 to 02:36, and the UI tests from 02:36:12 to about 03:09.
+
+- **The peak (02:29) fell in the unit phase.** The bundle cannot say which class was running then.
+  Only 4 of 153 unit classes carry timestamps, and Swift Testing runs suites concurrently, so it may
+  not have been one class. The longest unit tests are the bulk-delete scale measurements: 689 s,
+  319 s and 290 s, out of 1 509 s of summed unit-test time. They are the likely occupants of
+  02:21–02:29. **That is not shown.**
+- **During the UI phase, where all four reds happened,** swap used was 3.2–4.3 GB and falling
+  slowly. Swap used is residue: these samples do not show whether paging was happening at the
+  moment of each red, because pageouts were not sampled.
+
+**MEASUREMENT FOR DMITRY: is a 16 GB M1 enough for this workload?** Conditions: freshly rebooted,
+one simulator, quiet machine, a full run of this suite. **Peak swap used was 13.9 GB, well above
+~8 GB.** Swap total grew to 15 GB at that sample. These are 2-minute samples, so the true peak was
+at least this high and may have been higher. Through the UI phase it stayed at 3–4 GB. That is all
+the series shows.
+
+**VERDICT under the rule set 2026-10-11: the three reds survive on a quiet, rebooted machine with one
+simulator, so a second cause exists, and D33 does NOT close.** The leftover-simulator mechanism is
+ruled out for these reds: none were booted. *Memory pressure as such* is **not** ruled out. The run
+made 13.9 GB of swap by itself, and pageouts at the moment of each red were not measured. Per the
+decision, a time-boxed investigation plan goes to Dmitry before any of it is spent. D33 stays OPEN.
+
