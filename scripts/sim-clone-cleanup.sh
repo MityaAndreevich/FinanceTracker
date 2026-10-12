@@ -12,13 +12,22 @@
 # leave them inside the simulator -- so clear the flag before deleting.
 #
 # Called from an EXIT trap in each test script; safe to run by hand any time.
-# Never touches regular simulators (the default device set) or runtimes.
+# Never deletes or erases regular simulators (the default device set) or
+# runtimes. It does SHUT THEM DOWN (see below).
 set -u
 
 # Clones belong to whichever xcodebuild is running. Another worktree may be
 # mid-run, so only delete the clone set when no xcodebuild is alive.
+#
+# The same guard shuts down every booted simulator in the default set
+# (2026-10-12): six booted devices left behind across projects held ~21.5 GB
+# RSS on a 16 GB machine with 13.2 GB of swap. The machine rule that a run
+# leaves no simulator booted lives in ~/.claude/CLAUDE.md; this enforces it
+# for this repo's runs. CROSS-PROJECT, like the clone delete: any simulator a
+# person is using by hand is shut down too.
 if ! pgrep -x xcodebuild >/dev/null 2>&1; then
   xcrun simctl --set testing delete all >/dev/null 2>&1 || true
+  xcrun simctl shutdown all >/dev/null 2>&1 || true
 fi
 
 # Already-deleted devices waiting for CoreSimulator's purge. The age floor only

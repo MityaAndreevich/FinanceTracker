@@ -15,6 +15,8 @@
 #   and a comment guards nothing. This script makes the check unskippable.
 #
 # ONE FULL TEST RUN PER MACHINE, ACROSS PROJECTS (standing rule, 2026-10-11)
+#   Authority for every machine rule: ~/.claude/CLAUDE.md (2026-10-12). What
+#   follows is why this script warns, not a copy of the rule.
 #   Never start a full run while ANY other project's test run is going on this
 #   machine. On 16 GB, two suites mean two simulators and swap, and launch-timing
 #   reds ("demo seed missing") become indistinguishable from memory pressure: the
