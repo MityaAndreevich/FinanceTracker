@@ -27,6 +27,7 @@ struct ReportsScreen: View {
     var body: some View {
         NavigationStack {
             ReportsView(initialPeriod: initialPeriod)
+                .settingsRouteDestinations()
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("common.done") { dismiss() }
@@ -109,9 +110,7 @@ struct ReportsView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 shareMenu
-                NavigationLink {
-                    ReportsSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.reportsSettings) {
                     Image(systemName: "bell.badge")
                         .accessibilityLabel(Text("reports.settings.title"))
                 }

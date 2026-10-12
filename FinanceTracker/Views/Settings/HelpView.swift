@@ -106,15 +106,11 @@ struct SetupGuideView: View {
     var body: some View {
         List {
             Section {
-                NavigationLink {
-                    HelpArticleView(article: .widget)
-                } label: {
+                NavigationLink(value: SettingsRoute.article(.widget)) {
                     Label("help.widget", systemImage: "rectangle.on.rectangle")
                 }
 
-                NavigationLink {
-                    HelpArticleView(article: .siri)
-                } label: {
+                NavigationLink(value: SettingsRoute.article(.siri)) {
                     Label("help.siri", systemImage: "waveform")
                 }
             } footer: {

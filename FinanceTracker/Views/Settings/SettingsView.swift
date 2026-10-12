@@ -15,61 +15,49 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                NavigationLink {
-                    GeneralSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.general) {
                     Label("settings.general", systemImage: "slider.horizontal.3")
                 }
                 .accessibilityIdentifier("settings_general_row")
 
-                NavigationLink {
-                    PremiumSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.premium) {
                     premiumRow
                 }
+                .accessibilityIdentifier("settings_premium_row")
 
-                NavigationLink {
-                    DataSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.data) {
                     Label("settings.data", systemImage: "externaldrive")
                 }
+                .accessibilityIdentifier("settings_data_row")
 
-                NavigationLink {
-                    CategoriesSourcesView()
-                } label: {
+                NavigationLink(value: SettingsRoute.categories) {
                     Label("settings.categories", systemImage: "square.grid.2x2")
                 }
+                .accessibilityIdentifier("settings_categories_row")
 
-                NavigationLink {
-                    RecurringSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.recurring) {
                     Label("settings.recurring", systemImage: "arrow.triangle.2.circlepath")
                 }
+                .accessibilityIdentifier("settings_recurring_row")
 
-                NavigationLink {
-                    PrivacySettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.privacy) {
                     Label("settings.privacy", systemImage: "lock.shield")
                 }
+                .accessibilityIdentifier("settings_privacy_row")
             }
 
             Section {
-                NavigationLink {
-                    AlertsSettingsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.alerts) {
                     Label("settings.alerts", systemImage: "bell.badge")
                 }
+                .accessibilityIdentifier("settings_alerts_row")
 
-                NavigationLink {
-                    ReportsView(initialPeriod: .month(containing: Date()))
-                } label: {
+                NavigationLink(value: SettingsRoute.reports) {
                     Label("reports.title", systemImage: "doc.text.magnifyingglass")
                 }
                 .accessibilityIdentifier("settings_reports_row")
 
-                NavigationLink {
-                    LearnAndTipsView()
-                } label: {
+                NavigationLink(value: SettingsRoute.learnTips) {
                     Label("settings.learn_tips", systemImage: "lightbulb")
                 }
                 .accessibilityIdentifier("settings_learn_tips_row")
@@ -81,11 +69,10 @@ struct SettingsView: View {
                 // needed was a signpost. The articles already existed (help.widget,
                 // help.siri) four taps deep inside Learn & Tips, which is itself an
                 // undiscovered screen. Promoted here: no new copy but the row label.
-                NavigationLink {
-                    SetupGuideView()
-                } label: {
+                NavigationLink(value: SettingsRoute.setupGuide) {
                     Label("settings.setup_guide", systemImage: "wand.and.stars")
                 }
+                .accessibilityIdentifier("settings_setup_guide_row")
 
                 // 1.0.3 Item 5: the only feedback channel a no-analytics app
                 // can have. A Button (not a NavigationLink): the composer is a
@@ -97,11 +84,10 @@ struct SettingsView: View {
                         .foregroundStyle(Color.bcTextPrimary)
                 }
 
-                NavigationLink {
-                    AboutView()
-                } label: {
+                NavigationLink(value: SettingsRoute.about) {
                     Label("settings.about", systemImage: "info.circle")
                 }
+                .accessibilityIdentifier("settings_about_row")
             }
         }
         .navigationTitle("settings.title")
@@ -152,5 +138,5 @@ struct SettingsView: View {
 }
 
 #Preview {
-    NavigationStack { SettingsView() }
+    NavigationStack { SettingsView().settingsRouteDestinations() }
 }

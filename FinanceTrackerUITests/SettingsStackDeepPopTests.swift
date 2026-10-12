@@ -93,6 +93,84 @@ final class SettingsStackDeepPopTests: XCTestCase {
         }
     }
 
+    /// Every route on the Settings stack lands on its own screen. With value
+    /// links, a route whose destination is not registered on the stack does
+    /// NOTHING when tapped, silently. This test is what catches that.
+    /// (`SettingsRoute.tip` is not driven: which tips are revealed depends on the
+    /// per-user deck and the day.)
+    func test_everySettingsRoute_opensItsScreen() {
+        let app = launch()
+        let settingsTab = app.tabBars.buttons.element(boundBy: 4)
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 15), "Settings tab never appeared")
+        settingsTab.tap()
+
+        let rows: [(row: String, title: String)] = [
+            ("settings_general_row", "General"),
+            ("settings_premium_row", "Premium"),
+            ("settings_data_row", "Data"),
+            ("settings_categories_row", "Categories & Accounts"),
+            ("settings_recurring_row", "Recurring"),
+            ("settings_privacy_row", "Privacy"),
+            ("settings_alerts_row", "Alerts"),
+            ("settings_reports_row", "Reports"),
+            ("settings_learn_tips_row", "Learn & Tips"),
+            ("settings_setup_guide_row", "Set up Widget & Siri"),
+            ("settings_about_row", "About"),
+        ]
+        for (rowID, title) in rows {
+            let row = app.buttons[rowID]
+            reveal(row, in: app)
+            row.tap()
+            XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 8),
+                          "\(rowID) did not open '\(title)'")
+            backOnce(app)
+        }
+
+        // Second level: the Reports bell, and an article from the Setup guide.
+        let reportsRow = app.buttons["settings_reports_row"]
+        reveal(reportsRow, in: app)
+        reportsRow.tap()
+        let bell = app.buttons["Automatic reports"]
+        XCTAssertTrue(bell.waitForExistence(timeout: 8), "Reports bell missing")
+        bell.tap()
+        XCTAssertTrue(app.navigationBars["Automatic reports"].waitForExistence(timeout: 8),
+                      "Reports bell (Settings stack) did not open Automatic reports")
+        backOnce(app)
+        backOnce(app)
+
+        let setup = app.buttons["settings_setup_guide_row"]
+        reveal(setup, in: app)
+        setup.tap()
+        let widgetArticle = app.buttons["Widget"]
+        XCTAssertTrue(widgetArticle.waitForExistence(timeout: 8), "Setup guide's Widget row missing")
+        widgetArticle.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["help_article_view"].waitForExistence(timeout: 8),
+                      "Setup guide article did not open")
+    }
+
+    /// The same bell inside `ReportsScreen`, the sheet Analytics opens. That stack
+    /// is not the Settings stack, so it must register the routes itself.
+    func test_reportsSheetBell_opensReportsSettings() {
+        let app = launch()
+        let analyticsTab = app.tabBars.buttons.element(boundBy: 3)
+        XCTAssertTrue(analyticsTab.waitForExistence(timeout: 15), "Analytics tab never appeared")
+        analyticsTab.tap()
+        let open = app.buttons["analytics_open_report"]
+        XCTAssertTrue(open.waitForExistence(timeout: 8), "Analytics' report button missing")
+        open.tap()
+        let bell = app.buttons["Automatic reports"]
+        XCTAssertTrue(bell.waitForExistence(timeout: 8), "Reports bell missing in the sheet")
+        bell.tap()
+        XCTAssertTrue(app.navigationBars["Automatic reports"].waitForExistence(timeout: 8),
+                      "Reports bell (sheet) did not open Automatic reports")
+    }
+
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<3 where !element.exists { app.swipeUp() }
+        for _ in 0..<4 where !element.exists { app.swipeDown() }
+        XCTAssertTrue(element.waitForExistence(timeout: 4), "\(element) not found in the Settings list")
+    }
+
     private func launch() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [

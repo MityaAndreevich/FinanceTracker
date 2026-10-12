@@ -43,12 +43,15 @@ struct ContentView: View {
     // cascade while a sheet/alert dismisses) could otherwise leave the stack in a
     // stuck transitional state — taps did nothing until switching tabs and back.
     //
-    // We deliberately do NOT bind a `NavigationPath` here. SettingsView and HelpView
-    // push with destination-based `NavigationLink`s; mixing those with a bound path
-    // (which only tracks value-based links) corrupted the stack after a deep pop —
-    // returning from a Help article left "General" unresponsive (Round 9 R1). A
-    // plain, id-reset NavigationStack is the canonical pairing for destination links.
+    // The path IS bound now (1.0.7): the Guide's "Show me" pushes Settings
+    // children from outside the view. That is safe only because every link on
+    // this stack is value-based (`SettingsRoute`). Round 9 R1 was a bound path
+    // mixed with destination links: after a deep pop the two disagreed and
+    // "General" stopped responding (fb9c075). `SettingsStackDeepPopTests` holds
+    // both halves. The `.id` reset stays as well: it also clears the one push the
+    // path cannot see, Privacy's navigation-style Picker.
     @State private var settingsResetToken = UUID()
+    @State private var settingsPath: [SettingsRoute] = []
 
     // The Dashboard's view identity is keyed to the calendar month because its
     // @Query month-window is fixed at identity creation (see DashboardView.init).
@@ -145,8 +148,9 @@ struct ContentView: View {
             .tabItem { Label("tab.analytics", systemImage: "chart.pie") }
             .tag(3)
 
-            NavigationStack {
+            NavigationStack(path: $settingsPath) {
                 SettingsView()
+                    .settingsRouteDestinations()
             }
             .id(settingsResetToken)
             .tabItem { Label("tab.settings", systemImage: "gear") }
@@ -181,6 +185,7 @@ struct ContentView: View {
             // Leaving Settings: recreate its NavigationStack so the next visit is a
             // clean root, never a stuck transitional state after a language change.
             if oldTab == 4 && newTab != 4 {
+                settingsPath = []
                 settingsResetToken = UUID()
             }
         }

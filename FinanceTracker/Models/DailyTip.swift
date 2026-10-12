@@ -9,7 +9,7 @@
 
 import Foundation
 
-struct DailyTip: Codable, Identifiable, Sendable, Equatable {
+struct DailyTip: Codable, Identifiable, Sendable, Hashable {
     let id: String
     let term: String
     let explanation: String

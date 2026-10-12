@@ -129,9 +129,7 @@ struct LearnAndTipsView: View {
     }
 
     private func tipNavigationRow(_ tip: DailyTip) -> some View {
-        NavigationLink {
-            TipDetailView(tip: tip)
-        } label: {
+        NavigationLink(value: SettingsRoute.tip(tip)) {
             tipRow(tip)
         }
     }
@@ -201,9 +199,7 @@ struct LearnAndTipsView: View {
     }
 
     private func articleLink(_ article: HelpArticle, icon: String) -> some View {
-        NavigationLink {
-            HelpArticleView(article: article)
-        } label: {
+        NavigationLink(value: SettingsRoute.article(article)) {
             Label(article.rowLabelKey, systemImage: icon)
         }
         .accessibilityIdentifier("help_article_row_\(article.rawValue)")
@@ -256,5 +252,5 @@ struct TipDetailView: View {
 }
 
 #Preview {
-    NavigationStack { LearnAndTipsView() }
+    NavigationStack { LearnAndTipsView().settingsRouteDestinations() }
 }
