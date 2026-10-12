@@ -177,7 +177,14 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 # The 2026-09-12 note that sat here — "stale on purpose, expect exit 5" — is
 # discharged by that run; its +1 (ShippedStoreShapeTests) is inside the 71.
 # Bundle: /var/folders/.../tmp.3ArmIEq7xW/result.xcresult (session-local).
-EXPECTED_TOTAL_RUN=1184
+#
+# OBSERVED 2026-10-11, same device, ERASED simulator, UNFILTERED, HEAD 9584969:
+#     executed=1223 skipped=5 → total 1228, exit 5 against the stale 1184
+# (Δ=+44: what landed between f73e871 and 9584969 — receipt scan, the D51
+# hit-test probe, the 1.0.6 fixes. The diff adds 44 test declarations and
+# removes none; per the note above, that agreement is NOT the evidence. The run is.)
+# Bundle: /var/folders/.../tmp.we8pXFOhYY/result.xcresult (session-local).
+EXPECTED_TOTAL_RUN=1228
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
 # The obvious instinct is a percentage band for headroom. It is wrong here, twice
