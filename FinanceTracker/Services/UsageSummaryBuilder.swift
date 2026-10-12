@@ -105,6 +105,12 @@ struct UsageSummary {
     /// 1.0.6. APPENDED as the LAST line so lines 1–8 keep the positions the
     /// decision file documents; a reader of an older reply is not misled.
     var usedReports: Bool
+    /// 1.0.7, the Guide's measurement. APPENDED after Reports, so lines 1–9 keep
+    /// their positions. Defaulted so existing call sites need no change.
+    var walkthrough: GuideUsageSignals.WalkthroughOutcome? = nil
+    var walkthroughReplayed: Bool = false
+    /// Card slugs, letters only (see `GuideUsageSignals`).
+    var guideCardsOpened: [String] = []
 
     // MARK: - Rendering
 
@@ -132,6 +138,18 @@ struct UsageSummary {
         lines.append("\(t("feedback.usage.import")): \(flag(usedCSVImport))")
         lines.append("\(t("feedback.usage.export")): \(flag(usedExport))")
         lines.append("\(t("feedback.usage.reports")): \(flag(usedReports))")
+        let walkthroughValue: String
+        switch walkthrough {
+        case .completed?: walkthroughValue = t("feedback.usage.walkthrough.completed")
+        case .skipped(let step)?: walkthroughValue = "\(t("feedback.usage.walkthrough.skipped")) · \(step)"
+        case nil: walkthroughValue = t("feedback.usage.walkthrough.not_recorded")
+        }
+        lines.append("\(t("feedback.usage.walkthrough")): \(walkthroughValue)")
+        lines.append("\(t("feedback.usage.walkthrough_replayed")): \(flag(walkthroughReplayed))")
+        let cards = guideCardsOpened.isEmpty
+            ? t("feedback.usage.guide_cards.none")
+            : guideCardsOpened.joined(separator: ", ")
+        lines.append("\(t("feedback.usage.guide_cards")): \(cards)")
 
         let rule = String(repeating: "—", count: 12)
         return "\n\(rule)\n" + lines.joined(separator: "\n") + "\n\(rule)\n"
@@ -165,7 +183,10 @@ enum UsageSummaryBuilder {
             usedVoiceEntry: FeatureUsageSignals.wasUsed(.voiceEntry),
             usedCSVImport: FeatureUsageSignals.wasUsed(.csvImport),
             usedExport: FeatureUsageSignals.wasUsed(.export),
-            usedReports: FeatureUsageSignals.wasUsed(.reportOpened)
+            usedReports: FeatureUsageSignals.wasUsed(.reportOpened),
+            walkthrough: GuideUsageSignals.firstOutcome(),
+            walkthroughReplayed: GuideUsageSignals.wasReplayed(),
+            guideCardsOpened: GuideUsageSignals.cardsOpened()
         )
     }
 

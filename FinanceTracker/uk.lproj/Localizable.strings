@@ -306,6 +306,13 @@
 "feedback.usage.import" = "Імпорт CSV";
 "feedback.usage.export" = "Експорт";
 "feedback.usage.reports" = "Звіти";
+"feedback.usage.walkthrough" = "Навчання";
+"feedback.usage.walkthrough.completed" = "пройдено";
+"feedback.usage.walkthrough.skipped" = "пропущено на кроці";
+"feedback.usage.walkthrough.not_recorded" = "немає даних";
+"feedback.usage.walkthrough_replayed" = "Навчання повторювалося";
+"feedback.usage.guide_cards" = "Відкриті розділи довідки";
+"feedback.usage.guide_cards.none" = "немає";
 "dashboard.spending_by_category" = "Витрати за категоріями";
 "dashboard.total_spent" = "Витрачено";
 

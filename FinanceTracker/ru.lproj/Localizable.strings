@@ -310,6 +310,13 @@
 "feedback.usage.import" = "Импорт CSV";
 "feedback.usage.export" = "Экспорт";
 "feedback.usage.reports" = "Отчёты";
+"feedback.usage.walkthrough" = "Обучение";
+"feedback.usage.walkthrough.completed" = "пройдено";
+"feedback.usage.walkthrough.skipped" = "пропущено на шаге";
+"feedback.usage.walkthrough.not_recorded" = "нет данных";
+"feedback.usage.walkthrough_replayed" = "Обучение повторялось";
+"feedback.usage.guide_cards" = "Открытые разделы справки";
+"feedback.usage.guide_cards.none" = "нет";
 "dashboard.spending_by_category" = "Расходы по категориям";
 "dashboard.total_spent" = "Потрачено";
 

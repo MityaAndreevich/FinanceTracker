@@ -125,9 +125,10 @@ final class UsageSummaryTests: XCTestCase {
             .map(String.init)
             .filter { !$0.hasPrefix("—") }
 
-        // heading + 9 fields (1.0.6 appended "Reports" as the LAST line; lines
-        // 1–8 keep the positions the decision file documents)
-        XCTAssertEqual(lines.count, 10, "Summary shape changed:\n\(text)")
+        // heading + 12 fields. 1.0.6 appended "Reports" (line 9); 1.0.7 appended
+        // walkthrough / replayed / guide cards (lines 10–12). Lines 1–8 keep the
+        // positions the decision file documents.
+        XCTAssertEqual(lines.count, 13, "Summary shape changed:\n\(text)")
 
         // Values are locale-neutral, so they can be asserted regardless of the
         // bundle's language.
@@ -207,5 +208,66 @@ final class UsageSummaryTests: XCTestCase {
         XCTAssertEqual(FeatureUsageSignals.Feature.reportOpened.rawValue, "report_opened")   // 1.0.6
         XCTAssertEqual(FeatureUsageSignals.Feature.receiptScan.rawValue, "receipt_scan")     // 1.0.7
         XCTAssertEqual(FeatureUsageSignals.Feature.allCases.count, 8)
+    }
+
+    // MARK: - 1.0.7 Guide measurement lines
+
+    /// The English .lproj of the host app — `.main` alone renders in whatever
+    /// language the test process happens to run in, and these lines assert words.
+    private static var englishBundle: Bundle {
+        Bundle(path: Bundle.main.path(forResource: "en", ofType: "lproj")!)!
+    }
+
+    /// The three new lines are LAST, in this order, and lines 1–9 do not move.
+    func test_render_guideLinesAreAppendedLast() {
+        var summary = sampleSummary()
+        summary.walkthrough = .skipped(at: "budget")
+        summary.walkthroughReplayed = true
+        summary.guideCardsOpened = ["categoryLimit", "monthlyBudget"]
+        let bundle = Self.englishBundle
+        let lines = summary.render(bundle: bundle)
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+            .filter { !$0.hasPrefix("—") }
+
+        XCTAssertEqual(lines.count, 13)
+        XCTAssertTrue(lines[9].hasPrefix("Reports"), "line 9 must stay Reports: \(lines[9])")
+        XCTAssertEqual(lines[10], "Walkthrough: skipped at · budget")
+        XCTAssertEqual(lines[11], "Walkthrough replayed: yes")
+        XCTAssertEqual(lines[12], "Guide cards opened: categoryLimit, monthlyBudget")
+    }
+
+    func test_render_guideLinesDefaultToNotRecordedAndNone() {
+        let lines = sampleSummary().render(bundle: Self.englishBundle)
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+            .filter { !$0.hasPrefix("—") }
+        XCTAssertEqual(lines[10], "Walkthrough: not recorded")
+        XCTAssertEqual(lines[11], "Walkthrough replayed: no")
+        XCTAssertEqual(lines[12], "Guide cards opened: none")
+    }
+
+    /// The privacy tripwire still holds with every new field populated: card
+    /// slugs and step ids are letters, so no new digit may appear.
+    func test_render_guideFieldsAddNoDigits() {
+        var summary = sampleSummary()
+        summary.walkthrough = .skipped(at: CoachmarkID.analyticsTab.rawValue)
+        summary.walkthroughReplayed = true
+        summary.guideCardsOpened = ["addExpense", "categoryLimit", "monthlyBudget", "reports"]
+        let base = Set(sampleSummary().render(bundle: .main)
+            .components(separatedBy: CharacterSet.decimalDigits.inverted).filter { !$0.isEmpty })
+        let now = Set(summary.render(bundle: .main)
+            .components(separatedBy: CharacterSet.decimalDigits.inverted).filter { !$0.isEmpty })
+        XCTAssertEqual(now, base, "a Guide field introduced a number into the usage summary")
+    }
+
+    func test_cardsOpened_isASortedSetAndIdempotent() {
+        let suite = "guide-signals-\(UUID().uuidString)"
+        let d = UserDefaults(suiteName: suite)!
+        defer { d.removePersistentDomain(forName: suite) }
+        GuideUsageSignals.markCardOpened("reports", defaults: d)
+        GuideUsageSignals.markCardOpened("addExpense", defaults: d)
+        GuideUsageSignals.markCardOpened("reports", defaults: d)
+        XCTAssertEqual(GuideUsageSignals.cardsOpened(defaults: d), ["addExpense", "reports"])
     }
 }

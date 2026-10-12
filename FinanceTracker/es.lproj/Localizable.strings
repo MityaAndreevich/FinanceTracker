@@ -364,6 +364,13 @@
 "feedback.usage.import" = "Importación CSV";
 "feedback.usage.export" = "Exportación";
 "feedback.usage.reports" = "Informes";
+"feedback.usage.walkthrough" = "Recorrido inicial";
+"feedback.usage.walkthrough.completed" = "completado";
+"feedback.usage.walkthrough.skipped" = "omitido en";
+"feedback.usage.walkthrough.not_recorded" = "sin datos";
+"feedback.usage.walkthrough_replayed" = "Recorrido repetido";
+"feedback.usage.guide_cards" = "Fichas de la guía abiertas";
+"feedback.usage.guide_cards.none" = "ninguna";
 "dashboard.spending_by_category" = "Gastos por categoría";
 "dashboard.total_spent" = "Gastado";
 "dashboard.day0.title" = "Estadísticas próximamente";

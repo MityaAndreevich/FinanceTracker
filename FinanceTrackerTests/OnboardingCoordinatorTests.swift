@@ -85,4 +85,69 @@ struct OnboardingCoordinatorTests {
         // The one-shot replay flag is consumed so a later start won't re-trigger.
         #expect(d.bool(forKey: OnboardingCoordinator.replayKey) == false)
     }
+
+    // MARK: - Walkthrough instrumentation (1.0.7, DESIGN_USER_GUIDE.md §6)
+
+    @Test func skipOnGreeting_recordsSkippedAtGreeting() {
+        let d = makeDefaults()
+        let c = OnboardingCoordinator(defaults: d)
+        c.startIfNeeded()
+        c.skip()
+        #expect(GuideUsageSignals.firstOutcome(defaults: d) == .skipped(at: "greeting"))
+    }
+
+    @Test func skipOnSecondMark_recordsThatMarksId() {
+        let d = makeDefaults()
+        let c = OnboardingCoordinator(defaults: d)
+        c.startIfNeeded()
+        c.advance()          // → coachmark(0)
+        c.advance()          // → coachmark(1)
+        c.skip()
+        #expect(GuideUsageSignals.firstOutcome(defaults: d) == .skipped(at: c.steps[1].rawValue))
+    }
+
+    @Test func walkingToTheEnd_recordsCompleted() {
+        let d = makeDefaults()
+        let c = OnboardingCoordinator(defaults: d)
+        c.startIfNeeded()
+        c.advance()
+        while c.phase != .firstWin { c.advance() }
+        c.finishFirstWin()
+        #expect(GuideUsageSignals.firstOutcome(defaults: d) == .completed)
+    }
+
+    /// Declining the first-win card is not leaving the tour: every mark was seen.
+    @Test func skipOnFirstWin_recordsCompleted() {
+        let d = makeDefaults()
+        let c = OnboardingCoordinator(defaults: d)
+        c.startIfNeeded()
+        c.advance()
+        while c.phase != .firstWin { c.advance() }
+        c.skip()
+        #expect(GuideUsageSignals.firstOutcome(defaults: d) == .completed)
+    }
+
+    /// The first run's answer survives a replay that ends differently.
+    @Test func replay_marksReplayed_andNeverOverwritesTheFirstOutcome() {
+        let d = makeDefaults()
+        let first = OnboardingCoordinator(defaults: d)
+        first.startIfNeeded()
+        first.skip()
+        #expect(GuideUsageSignals.wasReplayed(defaults: d) == false)
+
+        d.set(true, forKey: OnboardingCoordinator.replayKey)
+        let replay = OnboardingCoordinator(defaults: d)
+        replay.startIfNeeded()
+        replay.advance()
+        while replay.phase != .firstWin { replay.advance() }
+        replay.finishFirstWin()
+
+        #expect(GuideUsageSignals.wasReplayed(defaults: d))
+        #expect(GuideUsageSignals.firstOutcome(defaults: d) == .skipped(at: "greeting"))
+    }
+
+    /// Before 1.0.7 nothing was recorded; that must read as "not recorded", never "skipped".
+    @Test func noRun_readsAsNotRecorded() {
+        #expect(GuideUsageSignals.firstOutcome(defaults: makeDefaults()) == nil)
+    }
 }

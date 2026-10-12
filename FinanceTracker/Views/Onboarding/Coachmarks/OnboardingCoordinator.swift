@@ -35,6 +35,10 @@ final class OnboardingCoordinator: ObservableObject {
     private let defaults: UserDefaults
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
+    /// True while the running flow was started by Settings → Replay tutorial.
+    /// A replay never writes the first-run outcome (`GuideUsageSignals`).
+    private var isReplay = false
+
     /// The coach-mark target for the current phase, or nil outside `.coachmark`.
     var currentStep: CoachmarkID? {
         if case let .coachmark(i) = phase, steps.indices.contains(i) { return steps[i] }
@@ -48,6 +52,8 @@ final class OnboardingCoordinator: ObservableObject {
         let replay = defaults.bool(forKey: Self.replayKey)
         guard !completed || replay else { phase = .inactive; return }
         defaults.set(false, forKey: Self.replayKey)
+        isReplay = completed && replay
+        if isReplay { GuideUsageSignals.markReplayed(defaults: defaults) }
         phase = .greeting
     }
 
@@ -83,7 +89,10 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     /// Skip from anywhere ends the flow (and marks it complete so it won't re-run).
-    func skip() { complete() }
+    func skip() {
+        record(skippedAt: phase)
+        complete()
+    }
 
     /// The guided first win: the user landed their first real save or opted into the
     /// demo sandbox. Ends the flow.
@@ -95,7 +104,23 @@ final class OnboardingCoordinator: ObservableObject {
     // how a dead path gets "fixed" instead of the live one. `replayKey` above stays
     // the single named home for the key.
 
+    /// Skip on the first-win card still counts as completed: every mark of the
+    /// tour was seen, and declining the first entry is not leaving the tour.
+    private func record(skippedAt phase: Phase) {
+        guard !isReplay else { return }
+        let outcome: GuideUsageSignals.WalkthroughOutcome
+        switch phase {
+        case .greeting: outcome = .skipped(at: "greeting")
+        case .coachmark(let i): outcome = .skipped(at: steps.indices.contains(i) ? steps[i].rawValue : "coachmark")
+        case .firstWin, .inactive, .done: outcome = .completed
+        }
+        GuideUsageSignals.recordFirstOutcome(outcome, defaults: defaults)
+    }
+
     private func complete() {
+        if !isReplay, phase == .firstWin {
+            GuideUsageSignals.recordFirstOutcome(.completed, defaults: defaults)
+        }
         defaults.set(true, forKey: Self.completedKey)
         // The new coach-mark flow replaces the retired feature-tour carousel, but
         // RatingPromptCoordinator still gates the (post-onboarding) rating prompt on

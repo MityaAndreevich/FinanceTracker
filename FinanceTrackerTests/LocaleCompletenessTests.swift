@@ -312,7 +312,9 @@ final class LocaleCompletenessTests: XCTestCase {
         // sections of the report PDF) and paywall.compare.row.scheduled_reports.
         // 812 → 813: feedback.usage.reports, the usage summary's appended last line.
         // 813 → 830 (2026-09-21, receipt scanning 1.0.7): scan.* and the paywall row key.
-        XCTAssertEqual(enKeys.count, 830, "English baseline changed; update the expected count.")
+        // 830 → 837 (2026-10-11, User Guide 1.0.7): seven feedback.usage.* keys for the
+        // walkthrough / replayed / guide-cards lines appended to the usage summary.
+        XCTAssertEqual(enKeys.count, 837, "English baseline changed; update the expected count.")
 
         for locale in locales {
             guard let dict = strings(for: locale) else {

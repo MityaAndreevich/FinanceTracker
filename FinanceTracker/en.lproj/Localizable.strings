@@ -301,6 +301,13 @@
 "feedback.usage.import" = "CSV import";
 "feedback.usage.export" = "Export";
 "feedback.usage.reports" = "Reports";
+"feedback.usage.walkthrough" = "Walkthrough";
+"feedback.usage.walkthrough.completed" = "completed";
+"feedback.usage.walkthrough.skipped" = "skipped at";
+"feedback.usage.walkthrough.not_recorded" = "not recorded";
+"feedback.usage.walkthrough_replayed" = "Walkthrough replayed";
+"feedback.usage.guide_cards" = "Guide cards opened";
+"feedback.usage.guide_cards.none" = "none";
 "dashboard.spending_by_category" = "Spending by category";
 "dashboard.total_spent" = "Spent";
 
