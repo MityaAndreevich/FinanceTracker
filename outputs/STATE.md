@@ -853,6 +853,7 @@ is the truncated `executed=563` one (`scripts/run-tests.sh:36`).
 | full, after the D33 fix | 2026-10-11 | `9584969` | R | **G** | R | §13.6 (machine NOT quiet: concurrent FocusCrab suite) |
 | full, CLEAN rerun | 2026-10-11 | `c0da729` | R | R | R | §13.6 (machine quiet; swap 4.6 GB used at start) |
 | full, rebooted + one simulator | 2026-10-12 | `9754f74` | R | R | R | §13.8 (quiet; swap 0 at start, peak 13.9 GB at 02:29 in the unit phase, 3.2–4.3 GB through the UI phase) |
+| UI target only, failure diagnostics on | 2026-10-12 | `8c281a8` | **G** | R | **G** | §13.9 (swap 2.7 GB residue at start, flat; swap-outs 0 at the red; FocusCrab test run overlapped 03:43–03:45) |
 
 Tallies over the nine unfiltered rows: `seededRowTap` **7 R / 2 G**, `editAfterQuickAddInsert`
 **9 R / 0 G** (its "flaky" label is the generous one — on record it has never passed in a full run;
@@ -1286,7 +1287,7 @@ the unit tests ran from about 02:10 to 02:36, and the UI tests from 02:36:12 to 
   slowly. Swap used is residue: these samples do not show whether paging was happening at the
   moment of each red, because pageouts were not sampled.
 
-**MEASUREMENT FOR DMITRY: is a 16 GB M1 enough for this workload?** Conditions: freshly rebooted,
+**MEASUREMENT FOR DMITRY: is a 16 GB M1 enough for this workload?** This is **the suite WITH the scale measurements**. The number that decides the laptop question is the peak of a full run AFTER the bulk-delete benchmarks are split out (§13.9 proposal), and it is not yet measured. Conditions: freshly rebooted,
 one simulator, quiet machine, a full run of this suite. **Peak swap used was 13.9 GB, well above
 ~8 GB.** Swap total grew to 15 GB at that sample. These are 2-minute samples, so the true peak was
 at least this high and may have been higher. Through the UI phase it stayed at 3–4 GB. That is all
@@ -1297,4 +1298,99 @@ simulator, so a second cause exists, and D33 does NOT close.** The leftover-simu
 ruled out for these reds: none were booted. *Memory pressure as such* is **not** ruled out. The run
 made 13.9 GB of swap by itself, and pageouts at the moment of each red were not measured. Per the
 decision, a time-boxed investigation plan goes to Dmitry before any of it is spent. D33 stays OPEN.
+
+### 13.9 Failure diagnostics, then the UI target alone (2026-10-12)
+
+**What the recordings already showed.** Xcode recorded the screen for all four reds of the §13.8 run,
+and those recordings sit in its bundle. In every one, the app is on the **Dashboard with data on
+screen**, and nothing covers it: no paywall, rating prompt, tour or What's New sheet. Each test
+had just tapped a **tab-bar button**:
+
+- `seededRowTap` and `editAfterQuickAddInsert` tapped Transactions.
+- `savingThree` tapped `+`. Its typing landed in the Dashboard's Quick-add field because the
+  QuickEntry sheet never opened, which is why its Save button was "missing".
+- The D51 probe tapped Analytics.
+
+In all four the screen never changed. Every failure message names an absent element ("no rows",
+"demo seed missing", "Save button missing", "Reports entry point missing"). That absence is the
+consequence. The shared observable is **a tab-bar tap after launch that does not take effect**.
+
+**Diagnostics shipped (`8c281a8`).** Every UI failure now attaches the following, once per test:
+
+- a full-screen screenshot;
+- the app's hierarchy and SpringBoard's;
+- the launch timeline (`LaunchTimeline`, DEBUG): seeding finished at +X s, and the failure came
+  at +Y s.
+
+It is wired in through `NSPrincipalClass`, so no test class opts in. It was commissioned with a
+deliberate red: one set of four attachments for two failures, and the timeline's pid matched the
+app. A sampler (`scripts/machine-sampler.sh`, `0057b83`) logs per-interval swap-ins and swap-outs
+and names every `xcodebuild`.
+
+**THE RUN, 2026-10-12 03:39–04:14, `-only-testing:FinanceTrackerUITests`, erased iPhone 17 Pro:**
+
+```
+executed=64 passed=63 failed=1 skipped=0
+```
+
+- `seededRowTap` **G**, `savingThreeConsecutive` **G**, D51 probe **G**, `editPopBack` **G**.
+- `editAfterQuickAddInsert` **R**, *"no rows (demo seed missing)"*. The app launched at 03:52:03.
+  The diagnostics show:
+  - **Launch timeline:** seeding was done at **+3.14 s** (33 rows), and the failure came at
+    **+19.55 s**. So the seed was not missing.
+  - **Screenshot:** the Dashboard, with data loaded and rows visible. Nothing covers the screen.
+  - **Hierarchy:** the tab bar is present, **`Dashboard` is `Selected`** and `Transactions` is
+    not. The test had tapped Transactions and waited 15 s.
+- **Memory at the red:** swap-outs were **0** in the samples on both sides of it (03:51:44,
+  03:52:14, 03:52:44). Swap-ins were 969, 1 773 and 238 pages, which is the residue being read
+  back. **The machine was not paging out when this test went red**, so memory pressure does not
+  explain it. Swap used was 2.7 GB at the start (residue from earlier runs, not a reboot) and
+  2.27 GB at the end, and it never rose. The run's only swap-out burst came at 03:59:18 (13 061
+  pages, ~204 MB), and no test failed then.
+- **NOT QUIET for about a minute.** The sampler caught **FocusCrab's `xcodebuild … test`** alive
+  at 03:43:36 and 03:44:08, with a second simulator booted until 03:45:09. The wrapper reported
+  "quiet" because it checks only the start and the end. No red came in that window. The
+  unexplained `xcb=2` at 02:45 in §13.8 has the same shape, but whose process it was is **not
+  shown**.
+- **Reading the three greens:** they are one observation. All three have passed before in full runs
+  (see the table in §9.2), so their greens do not by themselves show that the unit phase's memory
+  caused their earlier reds.
+
+**Where this leaves D33.** On this evidence the residual cause is **a tap on the tab bar after
+launch that the app does not act on**. It is not missing data, not a covering modal, and not
+paging. **It is not explained yet. Stopped here as instructed.** Possibly the same family as D51:
+a bar control that does not respond to a tap, in a Release build on a device.
+
+**PROPOSAL, not implemented: take the bulk-delete benchmarks out of the default full run.**
+
+1. **The tests.** `BulkDeleteFixMeasurementTests` (689 s), `BulkDeleteCostMeasurementTests` (its
+   `deleteAll` test, 319 s, plus `reset`, 76 s, which comes with the suite) and
+   `BulkDeleteQuadraticMechanismTests` (290 s). Together that is **~1 374 s**, about 91% of the
+   unit phase's 1 509 s of summed test time. They are the likely source of the 13.9 GB peak, but
+   that is **not shown**.
+2. **Correction to the premise.** They are not all pure benchmarks. `BulkDeleteFixMeasurementTests`
+   **guards the D33 fix**: it asserts `saveSpeedup > 5.0`, that splits cascade, and that no
+   orphans survive. What stays in the default run after the move:
+   - `PurgeCostMeasurementTests` (12.7 s) guards `detachForBulkDelete` on the `wipeLedger` path at
+     8k rows, with a 5 s budget.
+   - `TransactionDeleteServiceTests` covers orphaned splits at small scale.
+   - **Nothing** guards the cost of `DuplicateReviewService.deleteAll` or `reset` at scale.
+3. **Mechanism: a condition trait, not `-skip-testing`.** Each suite gets
+   `.enabled(if: ProcessInfo.processInfo.environment["RUN_SCALE_TESTS"] == "1")`. Disabled tests
+   are reported as **skipped**, so the gate's `executed+skipped` **stays at 1242**: executed drops
+   1237 → 1233 and skipped rises 5 → 9. `EXPECTED_TOTAL_RUN` does not move, and a deleted suite
+   still shows up as a count drop. A `-skip-testing` approach would need
+   `EXPECTED_SKIPPED`/constant changes in two places.
+4. **`scripts/run-scale-tests.sh`.** It sets `TEST_RUNNER_RUN_SCALE_TESTS=1` and runs
+   `run-tests.sh -only-testing:` for the three suites. It follows the same exit contract (0 / 1 /
+   2 / 3) and expects **4 executed and 0 skipped**, so a scale run that silently skips counts as
+   exit 2, not a pass. It prints each test's measured seconds and the swap peak from
+   `machine-sampler.sh`.
+5. **Release rule.** Any release whose diff touches deletion (`TransactionDeleteService`,
+   `DuplicateReviewService`, `TransactionResetService`, `LargeDatasetDebugSeed`, or the
+   `Transaction`/`Category`/split relationships) must run `run-scale-tests.sh` green before
+   archiving. This goes in `GO_LIVE_CHECKLIST.md` and the release section of `ARCHITECTURE.md`.
+6. **The laptop number.** Do one full run after the split, on a rebooted, quiet machine with one
+   simulator, and record its peak swap here as **"the suite without scale measurements"**. That
+   number, not the 13.9 GB, decides the question.
 
