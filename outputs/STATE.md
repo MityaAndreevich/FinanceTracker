@@ -1121,3 +1121,28 @@ count: executed+skipped=1228 expected=1184 Δ=+44 → exit 5 (the designed path)
   device set was empty and there were no `Deleting-*` folders. This suite runs with parallel testing
   off, so it makes no clones. And with FocusCrab's `xcodebuild` alive at exit, the `pgrep` guard
   would have skipped the delete anyway. **Not observed doing a deletion.**
+
+**Decided 2026-10-11, on review of the run above (overrides the "NOT cured" verdict's reading):**
+the residual reds are **not yet evidence of a second cause**. The run was contaminated: another
+project's suite was running on this machine, and "demo seed missing" is what a launch looks like
+when it does not finish seeding inside its timeout under swap. The new red with no scale class in
+front of it is consistent with that too. **No open-ended investigation.** Instead:
+
+1. **ONE CLEAN RERUN.** Erased simulator, unfiltered, nothing else running, checked by `pgrep`
+   for xcodebuild AND Simulator at start and at end, both checks in the report. Run it at the
+   Guide's first natural commit point. No source edits during it.
+   - Reds survive → a second cause exists. Open a time-boxed investigation, plan reported first.
+   - Reds vanish → record the 2026-10-11 reds as contamination by a concurrent suite. D33
+     closes on the clean run.
+   - Either way, add the run to §9.2's table.
+2. **Rule: one full test run per machine, across projects.** Recorded in `ARCHITECTURE.md`
+   ("One full test run per machine") and in `run-tests.sh`'s header. The wrapper now warns at
+   start and prints a `── machine:` verdict line. It warns, never refuses. **Commissioned:** a
+   fake `xcodebuild … test` process → warning at start, "NOT QUIET … at start and end" in the
+   verdict. With none → "machine: quiet".
+3. **Cleanup trap commissioned (negative control for the destructive step).** In a scratch dir:
+   `Deleting-OLD` (mtime 09:00, holding a `uchg` file that a plain `rm` refused),
+   `Deleting-NEW` (fresh) and `Other-OLD` (09:00). The script (via the new `SIM_CLONE_TMPDIR`
+   seam) exited 0 and removed **only `Deleting-OLD`**, flagged file included. The other two
+   survived. The testing device set was empty before, so the `simctl delete all` branch had
+   nothing to remove.
