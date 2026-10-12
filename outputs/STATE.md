@@ -850,7 +850,8 @@ is the truncated `executed=563` one (`scripts/run-tests.sh:36`).
 | build-10 confirming run | 2026-09-02 | `8c98982` | **G** | R | R | `GO_LIVE_CHECKLIST.md:25–34`; tag `v1.0.5-build10` message |
 | Phase 1 full run | 2026-09-21 | `f73e871` | R | R | **G** | §9.1 |
 | scoped, erased | 2026-09-21 | `f73e871` | G (1/1) | — | — | §9.1 |
-| full, after the D33 fix | 2026-10-11 | `9584969` | R | **G** | R | §13.6 |
+| full, after the D33 fix | 2026-10-11 | `9584969` | R | **G** | R | §13.6 (machine NOT quiet: concurrent FocusCrab suite) |
+| full, CLEAN rerun | 2026-10-11 | `c0da729` | R | R | R | §13.6 (machine quiet; swap 4.6 GB used at start) |
 
 Tallies over the nine unfiltered rows: `seededRowTap` **7 R / 2 G**, `editAfterQuickAddInsert`
 **9 R / 0 G** (its "flaky" label is the generous one — on record it has never passed in a full run;
@@ -1146,6 +1147,35 @@ front of it is consistent with that too. **No open-ended investigation.** Instea
    seam) exited 0 and removed **only `Deleting-OLD`**, flagged file included. The other two
    survived. The testing device set was empty before, so the `simctl delete all` branch had
    nothing to remove.
+
+**THE CLEAN RERUN, 2026-10-11 21:32–22:34, erased simulator, unfiltered, HEAD `c0da729`:**
+
+```
+executed=1237 passed=1233 failed=4 skipped=5
+machine: quiet (no other xcodebuild test run at start or at end)
+count: executed+skipped=1242 expected=1228 Δ=+14 → exit 5 (the designed path)
+```
+
+- **Machine checks.** At start and at end: no other `xcodebuild`, no `Simulator.app`, no booted device
+  in either set. **Caveat:** "quiet" here means no other test run. It does not mean low memory. Swap
+  was 4.6 of 6 GB used before the run and 6.1 of 7 GB at the end.
+- **Count.** `EXPECTED_TOTAL_RUN` set to **1242** from this run. The +14 are today's step-1 and
+  Settings-stack tests.
+- **The intermittent tests all stayed red:**
+  - `seededRowTap`: *"never showed rows"*, 161 s, inside its own scale class.
+  - `editAfterQuickAddInsert`: *"no rows (demo seed missing)"*. It was green in the contaminated run.
+  - `savingThreeConsecutive`: *"Save button missing for entry #1"*.
+- `editPopBack_thenEditAgain` passed. Its red in the contaminated run is consistent with
+  contamination.
+- **Post-scale first launches:** `DuplicateReviewFlow` after `BulkDeleteStall` G,
+  `editAfterQuickAddInsert` after `EditAtScale` **R**, `MonetizationGateFlow` after
+  `MainThreadHangScale` G, `savingThree` after `SearchRecomputationRegression` **R**.
+- **VERDICT under the 2026-10-11 rule: the residual reds survive a clean run, so a second cause
+  exists.** D33's cost fix stands (guard green, 15 s), but it is not sufficient. Per the decision, a
+  time-boxed investigation plan is reported to Dmitry **before** any of it is spent. D33 stays OPEN.
+- **One unrelated new red:** `VoiceAudioSessionControllerTests` "a busy session is retried until it
+  releases". The outcome and call count were right (3 attempts), but the recorded `sleeps` read back
+  `[]`. It is first seen red here and not investigated. Register D52.
 
 ### 13.7 Guide step 2 — the R1 guard, written before the Settings stack is touched (2026-10-11)
 
