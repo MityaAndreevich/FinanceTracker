@@ -1394,3 +1394,126 @@ a bar control that does not respond to a tap, in a Release build on a device.
    simulator, and record its peak swap here as **"the suite without scale measurements"**. That
    number, not the 13.9 GB, decides the question.
 
+
+### 13.10 Scale split + tab-tap instrumentation (2026-10-14) — ready for the post-split full run
+
+Branch `test/d33-scale-split-and-tab-tap` (pushed): `516489a`, `dae221b`, `411bc2a`. Rulings: the
+split is APPROVED on one condition, that the correctness half stays in the default gate. D33 is
+treated as a real defect (a tab tap not acted on), diagnose only: no retries, no longer waits, no
+tap-until-selected.
+
+**A1 — small-N correctness, default gate.** `BulkDeleteCorrectnessTests` (3 tests, 50 rows, 17
+parents with 2 splits each, half flagged; every count read from a FRESH context on the on-disk
+store):
+- `deleteAllCascades`: the deleted rows' splits go, the survivors' splits stay, 0 orphans.
+- `resetCascades`: 0 rows, 0 splits, 0 orphans.
+- `wipeLedgerCascades`: the same, for the launch seam.
+
+Before this, no small-N test checked the split cascade on any of the three paths.
+`ImportDuplicateFlagTests.testDeleteAllRemovesEveryFlaggedRowAndLeavesTheOriginals`
+(`ImportDuplicateFlagTests.swift:201`) and `TransactionResetServiceTests.testResetTransactions_success_doesNotShowError`
+(`TransactionResetServiceTests.swift:41`) seed no splits. `PurgeCostMeasurementTests` asserts 0
+splits after `wipeLedger` (`PurgeCostMeasurementTests.swift:102`), but only at 8k rows and only for
+`wipeLedger`; it stays in the default gate.
+
+**A2 — commissioned both ways.**
+- RED on scratch `fe49fc8` (local, never merged): `Transaction.splits` `.cascade` → `.nullify`,
+  plus `wipeLedger`'s explicit split-delete loop removed. `executed=3 failed=3`:
+  - *"18 splits belonged to deleted rows; 0 were removed"*, *"18 orphaned splits survived deleteAll"*
+  - *"34 of 34 splits survived reset"*, *"34 orphaned splits survived reset"*
+  - *"34 of 34 splits survived wipeLedger"*, *"34 orphaned splits survived wipeLedger"*
+- GREEN on `516489a`: `executed=3 passed=3`, exit 0.
+
+**A3 — the gate.** `FinanceTrackerTests/ScaleTestGate.swift` defines the `.scaleMeasurement`
+trait, which the three scale suites now carry:
+
+```swift
+static var isEnabled: Bool { ProcessInfo.processInfo.environment["RUN_SCALE_TESTS"] == "1" }
+static var scaleMeasurement: Self { .enabled(if: ScaleTestGate.isEnabled, "Scale benchmark: …") }
+```
+
+How the variable reaches the test process, `scripts/run-scale-tests.sh`:
+
+```bash
+TEST_RUNNER_RUN_SCALE_TESTS=1 "$REPO_ROOT/scripts/run-tests.sh" "${SUITES[@]}"
+```
+
+`man xcodebuild`: *"TEST_RUNNER_<VAR> Set an environment variable whose name is prefixed with
+TEST_RUNNER_ to have that variable passed, with its prefix stripped, to all test runner processes
+launched during a test action."*
+
+**A4 — `run-scale-tests.sh`.**
+- NEGATIVE, observed: a temporary copy with only the `TEST_RUNNER_` assignment removed exited
+  **2**, with `executed=0 skipped=4`. All 4 tests were listed `Skipped` with 0.0 s, and the
+  script printed *"ZERO scale tests executed (4 skipped). RUN_SCALE_TESTS did not reach the test
+  process. This is a silent no-op, NOT a pass."*
+- POSITIVE: waits for C3.
+- Fixed during commissioning: the per-test seconds now come from `durationInSeconds`. The
+  `duration` string is locale-formatted (`"0,089s"`).
+- The script refuses to start when another xcodebuild is alive.
+- `run-tests.sh` gained `RESULT_BUNDLE` so the wrapper can read the bundle.
+
+**A5.** ARCHITECTURE.md → Releases → "A release that touches deletion needs a green scale run".
+It gives the path list and the `git diff` that decides whether the rule applies. A green run on
+the archived commit is recorded in §11. `GO_LIVE_CHECKLIST.md` §3 points there and does not
+restate the rule.
+
+**A6.** `EXPECTED_TOTAL_RUN` is still **1242**, stale on purpose: +3 tests from A1, and the gate
+moves 4 tests from executed to skipped. The new value comes from C3's observed count, then gets
+re-checked with `CHECK_BUNDLE`.
+
+**B1 — honest failure.** `FinanceTrackerUITests/TabBarNavigation.swift`, `app.tapTab(_:)`. There
+was no shared helper; the 5 affected files now route every tab tap through this one.
+- One tap, then the target must be `Selected` within 2 s. For "+" the Quick Add sheet must be up
+  instead (new identifier `quickEntry.close`).
+- Otherwise it attaches a screenshot, the hierarchy and the tap facts, then fails with
+  *"tab tap ignored: '<current>' still selected after tapping '<target>' (#n) …; seed rows=<n>"*.
+- It never taps twice.
+- `savingThree` used to accept ANY text field as the Quick Add input, so an ignored "+" passed
+  the Dashboard's own field off as the sheet. That is why it failed later, as "Save button
+  missing".
+
+Commissioned:
+- Scratch `033a6a6` (the tab bar's binding write dropped) stayed **GREEN**. The surprise: with
+  SwiftUI's `selectedTab` never written (no onChange line), UIKit still switched to Transactions
+  on screen. **So an ignored tab tap is NOT "the binding write was dropped".**
+- Scratch `baff82f` (onChange reverts every switch to Transactions) went **RED** with *"tab tap
+  ignored: 'Dashboard' still selected after tapping 'Transactions' (#1); expected 'Transactions'
+  Selected within 2 s; seed rows=33"*. The app's log named the revert:
+  `selection-write 0→1 at TabView selection binding (tab bar)` → `selection-onChange 0→1` →
+  `selection-write 1→0 at FinanceTracker/ContentView.swift:212`.
+
+**B2 — in-app diagnostics.** `FinanceTracker/Shared/TabTapDiagnostics.swift`: DEBUG only, inert
+without `--d33-tap-diagnostics`, os_log only, no network, no user data.
+- (a) `UIWindow.sendEvent` is exchanged for a logging pass-through: every touch-began in any app
+  window, with the window, its level, and the `hitTest` view plus two superviews.
+- (b) Every tab-selection write goes through `selectTab(_:)` (call site `#fileID:#line`) or a
+  logging binding (the tab bar's own write), plus the net onChange.
+- (c) The test logs its tap time, frame, `isHittable`, the tab-bar count and the number of
+  same-label buttons.
+- All lines share wall-clock `t=` stamps. Read them with `xcrun simctl spawn <udid> log show
+  --predicate 'category == "D33TabTap"'`. The simulator must be booted again first, because the
+  run-tests.sh trap shuts it down.
+
+**B3 — cheap reproduction: NO REPRO IN ISOLATION.** The 4 affected tests (`seededRowTap`,
+`editAfterQuickAddInsert`, `savingThreeConsecutive`, the D51 probe
+`test_reportsSheet_backgroundedDuringSwipeDismiss_…`) were run with `-test-iterations 10
+-run-tests-until-failure` on one erased iPhone 17 Pro, 19:57:32–20:35:29.
+- **40 of 40 repetitions passed** (per-test Repetition 1–10 in the bundle), exit 0.
+- Machine quiet: xcb=1 in every 30 s sample, no Simulator.app.
+- Swap was 1 246 MB at the start and 3 494 MB at the end. It peaked at 3 726 MB at 20:14:54, the
+  only sample with swap-outs (17 680 pages).
+- From the log:
+  - 70 test taps, 70 `reached=true`, 0 `reached=false`, 0 "selection lagged".
+  - Every tap had `tabBars=1`, `sameLabelButtons=1` and `isHittable=true`.
+  - All 70 tab-bar touch-begans hit `_UITabButton`.
+  - The 40 reverting writes are all `ContentView.swift:214`, the by-design "+" restore. The "+"
+    taps are 3 per `savingThree` and 1 per `editAfterQuickAddInsert`, × 10.
+
+**B4 — classification: E (no repro)** for all 40. Per the brief, this points at load or ordering.
+In §13.8 and §13.9 the reds came only inside the full or UI-target run. No fix is proposed.
+
+**What C3 adds.** B2 is live in the five affected files, so a D33 red in the full run will carry
+its own A/B/C/D evidence.
+
+**C2: ready for the post-split full run; it needs a reboot.**
