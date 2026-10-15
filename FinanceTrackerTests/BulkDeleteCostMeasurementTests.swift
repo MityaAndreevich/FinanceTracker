@@ -52,7 +52,7 @@ import Testing
 import SwiftData
 @testable import FinanceTracker
 
-@Suite("Bulk-delete cost at scale", .serialized)
+@Suite("Bulk-delete cost at scale", .serialized, .scaleMeasurement)
 @MainActor
 struct BulkDeleteCostMeasurementTests {
 

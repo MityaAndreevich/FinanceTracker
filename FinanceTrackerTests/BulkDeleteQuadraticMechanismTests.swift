@@ -46,7 +46,7 @@ import Testing
 import SwiftData
 @testable import FinanceTracker
 
-@Suite("Why bulk-delete save() is quadratic", .serialized)
+@Suite("Why bulk-delete save() is quadratic", .serialized, .scaleMeasurement)
 @MainActor
 struct BulkDeleteQuadraticMechanismTests {
 

@@ -67,7 +67,7 @@ import Testing
 import SwiftData
 @testable import FinanceTracker
 
-@Suite("Bulk-delete fix, measured on a realistically-shaped store", .serialized)
+@Suite("Bulk-delete fix, measured on a realistically-shaped store", .serialized, .scaleMeasurement)
 @MainActor
 struct BulkDeleteFixMeasurementTests {
 
