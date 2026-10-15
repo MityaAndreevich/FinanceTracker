@@ -44,6 +44,8 @@ final class EditPresentationReproTests: XCTestCase {
         // out-of-process window that covers the app and eats taps) from firing
         // mid-suite.
         app.launchArguments.append("--suppress-rating-prompt")
+        // D33: in-app touch + tab-selection logging (Shared/TabTapDiagnostics.swift).
+        app.launchArguments.append(TabBarNavigation.appDiagnosticsArgument)
         app.launch()
         return app
     }
@@ -83,7 +85,7 @@ final class EditPresentationReproTests: XCTestCase {
         let app = launchDemo(language: "ru", locale: "ru_RU")
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 20))
-        txTab.tap()
+        app.tapTab(1)
 
         let row = firstRow(app)
         XCTAssertTrue(row.waitForExistence(timeout: 15), "no rows (ru demo seed missing)")
@@ -97,7 +99,7 @@ final class EditPresentationReproTests: XCTestCase {
         let app = launchDemo(language: "en", locale: "en_US")
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 20))
-        txTab.tap()
+        app.tapTab(1)
 
         let row = firstRow(app)
         XCTAssertTrue(row.waitForExistence(timeout: 15), "no rows (demo seed missing)")
@@ -116,7 +118,7 @@ final class EditPresentationReproTests: XCTestCase {
         let app = launchDemo(language: "en", locale: "en_US")
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 20))
-        txTab.tap()
+        app.tapTab(1)
 
         let searchField = app.searchFields.firstMatch
         XCTAssertTrue(searchField.waitForExistence(timeout: 8), "search drawer missing")
@@ -139,7 +141,7 @@ final class EditPresentationReproTests: XCTestCase {
         // Settings → General → Language → Русский
         let settingsTab = app.tabBars.buttons.element(boundBy: 4)
         XCTAssertTrue(settingsTab.waitForExistence(timeout: 20))
-        settingsTab.tap()
+        app.tapTab(4)
         let generalRow = app.staticTexts["General"].firstMatch
         XCTAssertTrue(generalRow.waitForExistence(timeout: 8), "General row missing")
         generalRow.tap()
@@ -156,7 +158,7 @@ final class EditPresentationReproTests: XCTestCase {
 
         // Now edit from the Transactions list, in the switched language.
         let txTab = app.tabBars.buttons.element(boundBy: 1)
-        txTab.tap()
+        app.tapTab(1)
         let row = firstRow(app)
         XCTAssertTrue(row.waitForExistence(timeout: 15), "no rows after language switch")
         row.tap()
@@ -172,7 +174,7 @@ final class EditPresentationReproTests: XCTestCase {
         let app = launchDemo(language: "en", locale: "en_US")
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 20))
-        txTab.tap()
+        app.tapTab(1)
 
         // 1st entry.
         var row = firstRow(app)
@@ -214,7 +216,7 @@ final class EditPresentationReproTests: XCTestCase {
         let app = launchDemo(language: "ru", locale: "ru_RU")
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 20))
-        txTab.tap()
+        app.tapTab(1)
 
         let row = firstRow(app)
         XCTAssertTrue(row.waitForExistence(timeout: 15), "no rows (ru demo seed missing)")

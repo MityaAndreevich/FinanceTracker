@@ -335,6 +335,10 @@ struct QuickEntryView: View {
                     .overlay(Circle().strokeBorder(Color.bcDivider, lineWidth: 1))
             }
             .accessibilityLabel(Text("common.close"))
+            // UI tests assert the sheet is up by this (D33: a "+" tap that does
+            // not open the sheet used to pass the Dashboard's own Quick-add field
+            // off as the sheet's input).
+            .accessibilityIdentifier("quickEntry.close")
 
             Spacer()
 

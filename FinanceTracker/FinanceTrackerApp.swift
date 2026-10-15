@@ -41,6 +41,9 @@ struct FinanceTrackerApp: App {
 
         #if DEBUG
         LaunchTimeline.begin()
+        // Inert without `--d33-tap-diagnostics`: logs touches and tab-selection
+        // writes to os_log for D33 (Shared/TabTapDiagnostics.swift).
+        TabTapDiagnostics.installIfRequested()
         // Must precede migrateLegacyStoreIfNeeded and the launch gate: it
         // REPLACES the App Group store with a pre-V1 one and clears the
         // migration sentinels, so `needsGuardedMigration` must not have been

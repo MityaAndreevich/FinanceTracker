@@ -48,6 +48,8 @@ final class EditAtScaleReproTests: XCTestCase {
         // out-of-process window that covers the app and eats taps) from firing
         // mid-suite.
         app.launchArguments.append("--suppress-rating-prompt")
+        // D33: in-app touch + tab-selection logging (Shared/TabTapDiagnostics.swift).
+        app.launchArguments.append(TabBarNavigation.appDiagnosticsArgument)
         if seeded { app.launchArguments.append("--seed-large-dataset") }
         app.launch()
         return app
@@ -62,7 +64,7 @@ final class EditAtScaleReproTests: XCTestCase {
         XCTAssertTrue(txTab.waitForExistence(timeout: 300),
                       "app never became ready while seeding")
         dismissReviewPromptIfPresent(app)
-        txTab.tap()
+        app.tapTab(1)
 
         let row = app.buttons.matching(
             NSPredicate(format: "label CONTAINS ',' AND label CONTAINS '$'")
@@ -94,7 +96,7 @@ final class EditAtScaleReproTests: XCTestCase {
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 300), "app never became ready")
         dismissReviewPromptIfPresent(app)
-        txTab.tap()
+        app.tapTab(1)
         let row = app.buttons.matching(
             NSPredicate(format: "label CONTAINS ',' AND label CONTAINS '$'")
         ).firstMatch
@@ -175,7 +177,7 @@ final class EditAtScaleReproTests: XCTestCase {
         app = launch(seeded: true)
         let txTab = app.tabBars.buttons.element(boundBy: 1)
         XCTAssertTrue(txTab.waitForExistence(timeout: 120), "tab bar missing")
-        txTab.tap()
+        app.tapTab(1)
 
         // First real row — a SEEDED "Seed Merchant N" row, source == nil.
         let row = app.buttons.matching(

@@ -40,6 +40,8 @@ final class EditPresentationInterleavedTests: XCTestCase {
         // and it fires on a save COUNT shared across the whole suite, so a test
         // that saves (as these do) is a prime victim without this.
         app.launchArguments.append("--suppress-rating-prompt")
+        // D33: in-app touch + tab-selection logging (Shared/TabTapDiagnostics.swift).
+        app.launchArguments.append(TabBarNavigation.appDiagnosticsArgument)
         app.launch()
         return app
     }
@@ -90,7 +92,7 @@ final class EditPresentationInterleavedTests: XCTestCase {
     /// QuickEntry presents ABOVE the whole TabView, and the resulting insert
     /// rebuilds the period-scoped @Query behind it.
     private func quickAddSave(_ app: XCUIApplication, _ text: String) {
-        app.tabBars.buttons.element(boundBy: 2).tap()
+        app.tapTab(2)
 
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 8), "QuickEntry input missing")
@@ -120,7 +122,7 @@ final class EditPresentationInterleavedTests: XCTestCase {
     func test_editAfterQuickAddInsert_stillOpensEditor() {
         let app = launchDemo()
         XCTAssertTrue(transactionsTab(app).waitForExistence(timeout: 20))
-        transactionsTab(app).tap()
+        app.tapTab(1)
 
         XCTAssertTrue(firstRow(app).waitForExistence(timeout: 15), "no rows (demo seed missing)")
         firstRow(app).tap()
@@ -138,14 +140,14 @@ final class EditPresentationInterleavedTests: XCTestCase {
     func test_quickAddWhileEditorPushed_thenEditAgain_opensEditor() {
         let app = launchDemo()
         XCTAssertTrue(transactionsTab(app).waitForExistence(timeout: 20))
-        transactionsTab(app).tap()
+        app.tapTab(1)
 
         XCTAssertTrue(firstRow(app).waitForExistence(timeout: 15), "no rows (demo seed missing)")
         firstRow(app).tap()
         assertEditorOpened(app, "1st entry")
 
         // Disturb WITHOUT popping first.
-        app.tabBars.buttons.element(boundBy: 2).tap()
+        app.tapTab(2)
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 8), "QuickEntry input missing")
         field.tap()
@@ -171,7 +173,7 @@ final class EditPresentationInterleavedTests: XCTestCase {
     func test_repeatedEditCycles_bothAffordances_keepOpening() {
         let app = launchDemo()
         XCTAssertTrue(transactionsTab(app).waitForExistence(timeout: 20))
-        transactionsTab(app).tap()
+        app.tapTab(1)
         XCTAssertTrue(firstRow(app).waitForExistence(timeout: 15), "no rows (demo seed missing)")
 
         for cycle in 1...3 {

@@ -52,6 +52,8 @@ final class SecondTransactionCrashTests: XCTestCase {
         // out-of-process window that covers the app and eats taps) from firing
         // mid-suite.
         app.launchArguments.append("--suppress-rating-prompt")
+        // D33: in-app touch + tab-selection logging (Shared/TabTapDiagnostics.swift).
+        app.launchArguments.append(TabBarNavigation.appDiagnosticsArgument)
         if let budgetCents {
             // A budget makes the safe-to-spend hero (and the pace cue) live.
             app.launchArguments += ["-monthlyBudgetCents", String(budgetCents)]
@@ -97,7 +99,7 @@ final class SecondTransactionCrashTests: XCTestCase {
         // Tabs: Dashboard(0), Transactions(1), +(2), Analytics(3), Settings(4).
         let plusTab = app.tabBars.buttons.element(boundBy: 2)
         XCTAssertTrue(plusTab.waitForExistence(timeout: 20), "+ tab never appeared")
-        plusTab.tap()
+        app.tapTab(2)
 
         // The QuickEntry input is a multiline TextField (axis: .vertical), which
         // UIKit exposes as a text view.
@@ -182,13 +184,13 @@ final class SecondTransactionCrashTests: XCTestCase {
 
         let analyticsTab = app.tabBars.buttons.element(boundBy: 3)
         XCTAssertTrue(analyticsTab.waitForExistence(timeout: 15))
-        analyticsTab.tap()
+        app.tapTab(3)
         XCTAssertEqual(app.state, .runningForeground, "app died rendering Analytics with 1 transaction")
 
         addTransaction(app, text: "34 groceries", index: 2)
         XCTAssertEqual(app.state, .runningForeground, "app CRASHED after transaction #2 with Analytics visible")
 
-        analyticsTab.tap()
+        app.tapTab(3)
         XCTAssertEqual(app.state, .runningForeground, "app died rendering Analytics with 2 transactions")
     }
 }

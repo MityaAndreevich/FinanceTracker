@@ -115,8 +115,36 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: onboarding.phase)
     }
 
+    /// Every programmatic write to the tab selection goes through here, so the
+    /// D33 diagnostics can name the call site of a write that moves (or puts
+    /// back) the selection. Without `--d33-tap-diagnostics` it is a plain assignment.
+    private func selectTab(_ tab: Int, file: StaticString = #fileID, line: UInt = #line) {
+        #if DEBUG
+        TabTapDiagnostics.selectionWrite(old: selectedTab, new: tab, site: "\(file):\(line)")
+        #endif
+        selectedTab = tab
+    }
+
+    /// The TabView's own writes (a tab-bar tap) arrive through this binding.
+    /// Logged under `--d33-tap-diagnostics` only; otherwise it is `$selectedTab`.
+    private var tabSelection: Binding<Int> {
+        #if DEBUG
+        if TabTapDiagnostics.isEnabled {
+            return Binding(
+                get: { selectedTab },
+                set: { newTab, transaction in
+                    TabTapDiagnostics.selectionWrite(old: selectedTab, new: newTab,
+                                                     site: "TabView selection binding (tab bar)")
+                    withTransaction(transaction) { selectedTab = newTab }
+                }
+            )
+        }
+        #endif
+        return $selectedTab
+    }
+
     private var mainTabView: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             NavigationStack {
                 DashboardView()
                     // The Dashboard's @Query month-window is fixed at view-identity
@@ -178,9 +206,12 @@ struct ContentView: View {
             }
         }
         .onChange(of: selectedTab) { oldTab, newTab in
+            #if DEBUG
+            TabTapDiagnostics.selectionChanged(old: oldTab, new: newTab)
+            #endif
             if newTab == 2 {
                 showAddSheet = true
-                selectedTab = oldTab   // restore: the + tab never "sticks"
+                selectTab(oldTab)   // restore: the + tab never "sticks"
             }
             // Leaving Settings: recreate its NavigationStack so the next visit is a
             // clean root, never a stuck transitional state after a language change.
@@ -351,12 +382,12 @@ struct ContentView: View {
         // Settings → Replay tutorial: jump to the Dashboard and re-run the coach-marks
         // (the coordinator consumes the one-shot replay flag armed by Settings).
         .onReceive(NotificationCenter.default.publisher(for: .budgetCrabReplayOnboarding)) { _ in
-            selectedTab = 0
+            selectTab(0)
             onboarding.startIfNeeded()
         }
         // Dashboard "Recent → See all": jump to the Transactions tab (device QA round 1 #7).
         .onReceive(NotificationCenter.default.publisher(for: .budgetCrabNavigateToTransactions)) { _ in
-            selectedTab = 1
+            selectTab(1)
         }
     }
 
@@ -378,7 +409,7 @@ struct ContentView: View {
         let target = forward ? index + 1 : index - 1
         guard swipeableTabTags.indices.contains(target) else { return }
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-            selectedTab = swipeableTabTags[target]
+            selectTab(swipeableTabTags[target])
         }
     }
 
@@ -389,8 +420,8 @@ struct ContentView: View {
     private func applyScreenshotRoutingIfNeeded() {
         guard let screen = ScreenshotMode.requestedScreen else { return }
         switch screen {
-        case .dashboard:  selectedTab = 0
-        case .analytics:  selectedTab = 3   // AnalyticsView selects .breakdown itself
+        case .dashboard:  selectTab(0)
+        case .analytics:  selectTab(3)   // AnalyticsView selects .breakdown itself
         case .quickentry: showAddSheet = true
         case .privacy, .categories, .categorylimit, .categorylimitsheet,
              .split, .export, .lifetime:
@@ -445,7 +476,7 @@ struct ContentView: View {
         }
         if defaults.bool(forKey: "pendingNavigateToAnalytics") {
             defaults.set(false, forKey: "pendingNavigateToAnalytics")
-            selectedTab = 3
+            selectTab(3)
             // Analytics shows fixed windows; a Siri period it cannot show opens
             // as a report on that period instead (1.0.6). `thisMonth`/`today`
             // are what Analytics already shows, so they stay a plain tab switch.

@@ -45,6 +45,8 @@ final class AnalyticsToolbarAfterSheetProbeTests: XCTestCase {
             "-defaultCurrencyCode", "USD"
         ]
         app.launchArguments.append("--suppress-rating-prompt")
+        // D33: in-app touch + tab-selection logging (Shared/TabTapDiagnostics.swift).
+        app.launchArguments.append(TabBarNavigation.appDiagnosticsArgument)
         // A small real ledger, so Horizon has a month to select.
         app.launchArguments.append("--seed-onboarding-demo")
         app.launch()
@@ -53,7 +55,7 @@ final class AnalyticsToolbarAfterSheetProbeTests: XCTestCase {
 
     private func openAnalytics(_ app: XCUIApplication) {
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
-        app.tabBars.buttons.element(boundBy: 3).tap()
+        app.tapTab(3)
         XCTAssertTrue(app.buttons["analytics_open_report"].waitForExistence(timeout: 15),
                       "the Reports entry point is missing from Analytics")
     }
