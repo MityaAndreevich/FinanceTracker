@@ -200,6 +200,11 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 #     executed=1237 skipped=5 → total 1242, exit 5 against 1228
 # (Δ=+14: Guide step 1's instrumentation tests and the four Settings-stack UI tests.)
 # Bundle: /var/folders/.../tmp.kcbeeYStBn/result.xcresult (session-local).
+#
+# STALE ON PURPOSE, 2026-10-14 (branch test/d33-scale-split-and-tab-tap): +3 tests
+# (BulkDeleteCorrectnessTests). The scale gate moves 4 tests from executed to
+# skipped and leaves the sum alone. Expect the next unfiltered run to exit 5;
+# take the new value from THAT run, not from this arithmetic.
 EXPECTED_TOTAL_RUN=1242
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
@@ -235,7 +240,9 @@ cd "$REPO_ROOT" || exit 3
 # CROSS-PROJECT: removes every project's clones in the testing set, not only ours.
 trap '"$REPO_ROOT/scripts/sim-clone-cleanup.sh"' EXIT
 
-BUNDLE="$(mktemp -d)/result.xcresult"
+# RESULT_BUNDLE lets a wrapper (run-scale-tests.sh) read the bundle afterwards;
+# it must not exist yet. Default: a fresh temp path.
+BUNDLE="${RESULT_BUNDLE:-$(mktemp -d)/result.xcresult}"
 LOG="$(mktemp)"
 
 # ── ONE FULL TEST RUN PER MACHINE, ACROSS PROJECTS (rule, 2026-10-11) ─────────

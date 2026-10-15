@@ -130,6 +130,10 @@ Gate: delete app → `git pull` (latest commits) → Xcode Clean Build Folder (�
 
 ## 3. Build & submit
 - [ ] Xcode: Version **1.0**, increment **build number**, `ITSAppUsesNonExemptEncryption = NO` present, Release scheme, all icon sizes.
+- [ ] **If the release diff touches deletion, purge or reset: a green `scripts/run-scale-tests.sh`
+      on the commit being archived, recorded in STATE §11.** The rule, the path list and the
+      `git diff` that decides it are in `ARCHITECTURE.md` → Releases → "A release that touches
+      deletion needs a green scale run".
 - [ ] **Archive → Distribute → App Store Connect (upload).**
 - [ ] **UNCHECK "Manage Version and Build Number" in the Distribute App dialog.** Or export from
       the command line, which cannot forget:

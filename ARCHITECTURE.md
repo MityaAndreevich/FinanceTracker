@@ -400,6 +400,46 @@ On the 1.0.5 build 10 upload this was not set: Xcode was free to renumber and ha
 Recorded because *it did not happen* is not *it cannot happen*, and the difference is only
 visible after it has already cost a release.
 
+### A release that touches deletion needs a green scale run (2026-10-14)
+
+**Rule.** If the diff between the last released tag and the commit you are about to archive touches
+deletion, purge or reset, that commit needs a **green `scripts/run-scale-tests.sh`** before it is
+archived. Record the run in STATE §11 under the release (commit, exit code, per-test seconds, peak
+swap). "Touches" means any change to:
+
+- `FinanceTracker/Services/TransactionDeleteService.swift` (`detachForBulkDelete` included)
+- `FinanceTracker/Services/DuplicateReviewService.swift` (`deleteAll`)
+- `FinanceTracker/Services/TransactionResetService.swift`
+- `FinanceTracker/Data/LargeDatasetDebugSeed.swift` (`wipeLedger`)
+- any relationship or delete rule on `Transaction`, `Category`, `Source` or `TransactionSplit`
+  (`FinanceTracker/Models/`)
+
+```bash
+git diff --stat <last-release-tag>..<archive-commit> -- FinanceTracker/Services/TransactionDeleteService.swift \
+  FinanceTracker/Services/DuplicateReviewService.swift FinanceTracker/Services/TransactionResetService.swift \
+  FinanceTracker/Data/LargeDatasetDebugSeed.swift FinanceTracker/Models/
+```
+
+A non-empty result means the scale run is required. A change under `Models/` that is not a
+relationship still triggers it; reading the diff to decide otherwise is the judgement this rule
+exists to remove.
+
+**Why.** The three bulk-delete scale suites (`BulkDeleteFixMeasurementTests`,
+`BulkDeleteCostMeasurementTests`, `BulkDeleteQuadraticMechanismTests`) left the default run on
+2026-10-14. They seed 16k-row stores and took ~1 374 s of the unit phase, which peaked at 13.9 GB of
+swap on a 16 GB machine (STATE §13.8). Their **correctness** half (the split cascade fires, no
+orphaned splits) did not leave: `BulkDeleteCorrectnessTests` checks it at 50 rows for `deleteAll`,
+`reset` and `wipeLedger` in every run. What is now off by default is the **speed** half: the >5×
+`save()` speedup assertion, and the only check that the O(n²) inverse-maintenance cost (a 147 s
+main-thread block at 8k, `project_bulk_delete_cost_curve`) has not come back. The default gate
+still checks `wipeLedger`'s cost at 8k (`PurgeCostMeasurementTests`, 5 s budget). It does NOT check
+`deleteAll` or `reset` at scale. Only this script does.
+
+**How the script reports.** It sets `TEST_RUNNER_RUN_SCALE_TESTS=1` (xcodebuild strips the prefix
+and passes `RUN_SCALE_TESTS=1` to the test process). It requires exactly 4 executed and 0 skipped,
+and exits 2 when all four skipped themselves, i.e. the variable never arrived. It prints seconds
+per test and peak swap. Its header carries the full contract.
+
 **Shipped so far:**
 
 | Version | Build | Commit | Tag | Branch |
