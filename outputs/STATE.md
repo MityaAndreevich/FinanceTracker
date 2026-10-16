@@ -1517,3 +1517,33 @@ In §13.8 and §13.9 the reds came only inside the full or UI-target run. No fix
 its own A/B/C/D evidence.
 
 **C2: ready for the post-split full run; it needs a reboot.**
+
+### 13.11 Scope ruling — Dmitry decided, 2026-10-15 (effective after C3)
+
+Received while §13.10 was waiting for the reboot and "go". C3 is still to run as briefed; this ruling
+applies once it has.
+
+1. **D33 investigation ENDS with C3.** Report C3 and classify any red per B4 (§13.10), then stop.
+   - D33 stays OPEN in `DEFECT_REGISTER.md`, reclassified as a **test-infrastructure intermittent**.
+     The register row is updated with C3's result, not before.
+   - **The gate reads D33's known reds as baseline: "no new failure vs baseline".** `run-tests.sh`
+     has no baseline mechanism (exit 1 means "at least one red"), and building one is the
+     test-infrastructure work item 4 forbids. So this is a **reading rule, applied by hand**: an
+     exit 1 passes the gate only if every failing test is in the known set. Known set: the D33
+     tests seen red in full or UI-target runs (§13.6–§13.9): `seededRowTap`,
+     `editAfterQuickAddInsert`, `savingThreeConsecutive`, `editPopBack_thenEditAgain`. C3's result
+     confirms or amends the list. Any red outside it is a new failure.
+   - **Reopen ONLY if** C3's log shows a mechanism a user could hit: bucket B naming a real
+     overlay, or bucket C naming a production call site. Then report and wait. Do not fix.
+2. **Then resume the User Guide at step 2**: Settings routing, with the "General stops responding"
+   regression test written red first. Follow `DESIGN_USER_GUIDE.md` and the §13.1 rulings, in the
+   design's order. Commit to a branch after each step and report briefly after each step.
+3. **1.0.7 scope:**
+   - the User Guide;
+   - D50: the false teaching strings C1–C5, and deleting the orphaned
+     `add.source.expense_disabled_hint` in all 5 locales (§13.1 row 14.1);
+   - the pt-BR/pt-PT and es-MX locale sweeps.
+
+   Receipt scanning joins **only if** the corpus arrives and the sealed run passes. Otherwise it
+   moves to **1.0.8** (ruling 14.7: the Guide ships alone).
+4. **No more test-infrastructure work unless it blocks a release.**
