@@ -1287,7 +1287,7 @@ the unit tests ran from about 02:10 to 02:36, and the UI tests from 02:36:12 to 
   slowly. Swap used is residue: these samples do not show whether paging was happening at the
   moment of each red, because pageouts were not sampled.
 
-**MEASUREMENT FOR DMITRY: is a 16 GB M1 enough for this workload?** This is **the suite WITH the scale measurements**. The number that decides the laptop question is the peak of a full run AFTER the bulk-delete benchmarks are split out (§13.9 proposal), and it is not yet measured. Conditions: freshly rebooted,
+**[DROPPED by founder 2026-10-16: the laptop decision is no longer pending (§13.11).]** **MEASUREMENT FOR DMITRY: is a 16 GB M1 enough for this workload?** This is **the suite WITH the scale measurements**. The number that decides the laptop question is the peak of a full run AFTER the bulk-delete benchmarks are split out (§13.9 proposal), and it is not yet measured. Conditions: freshly rebooted,
 one simulator, quiet machine, a full run of this suite. **Peak swap used was 13.9 GB, well above
 ~8 GB.** Swap total grew to 15 GB at that sample. These are 2-minute samples, so the true peak was
 at least this high and may have been higher. Through the UI phase it stayed at 3–4 GB. That is all
@@ -1390,7 +1390,7 @@ a bar control that does not respond to a tap, in a Release build on a device.
    `DuplicateReviewService`, `TransactionResetService`, `LargeDatasetDebugSeed`, or the
    `Transaction`/`Category`/split relationships) must run `run-scale-tests.sh` green before
    archiving. This goes in `GO_LIVE_CHECKLIST.md` and the release section of `ARCHITECTURE.md`.
-6. **The laptop number.** Do one full run after the split, on a rebooted, quiet machine with one
+6. **[DROPPED by founder 2026-10-16 (§13.11).]** **The laptop number.** Do one full run after the split, on a rebooted, quiet machine with one
    simulator, and record its peak swap here as **"the suite without scale measurements"**. That
    number, not the 13.9 GB, decides the question.
 
@@ -1518,6 +1518,47 @@ its own A/B/C/D evidence.
 
 **C2: ready for the post-split full run; it needs a reboot.**
 
+**C3 — the post-split full run (2026-10-15 23:05:17 → 23:44, `a928b39`, erased iPhone 17 Pro).**
+Run on a NON-CLEAN machine, by ruling (§13.11): the clean-machine condition was lifted.
+
+Starting conditions:
+- Not rebooted since 2026-10-11 23:55.
+- Swap used 1 733 MB, load average 1.20.
+- Open: Safari, Mail, ChatGPT, Messages, PDF Reader Pro, Claude, Xcode, Terminal, plus 4 `claude` CLI processes.
+
+Result: **exit 5** (stale count). `executed=1236 passed=1235 failed=1 skipped=9`, total 1245 vs 1242 expected.
+- **EXPECTED_TOTAL_RUN 1242 → 1245** (`816b347`), taken from this run. Re-verified with `CHECK_BUNDLE`: `count … expected=1245 Δ=+0`, exit 1 (the one red below).
+- The +3 is `BulkDeleteCorrectnessTests`. The 4 gated scale tests appear as skipped (9 = 5 before + 4).
+- **The one red, a NEW failure under §13.11: D52 again** (`VoiceAudioSessionControllerTests` "a busy session is retried until it releases — the field bug"). Message: `VoiceAudioSessionControllerTests.swift:81: Expectation failed: (Array(scripted.sleeps.prefix(2)) → []) == (… → [0.1 seconds, 0.25 seconds])`. This is the identical observable to its first sighting (§13.6). Second observation. Unit test, test-only code, not D33.
+- **D33: zero reds.** All five watched UI tests PASSED:
+  - `seededRowTap`;
+  - `editAfterQuickAddInsert`;
+  - `savingThreeConsecutive`;
+  - `editPopBack_thenEditAgain`;
+  - the D51 probe.
+
+  Nothing to classify per B4; no reopen trigger.
+- Swap (30 s sampler): 1 733 MB at the start, **peak 5 235 MB at 23:09:57** (the unit phase), 5 059 MB at the end. Swap-outs occurred in 5 of 76 samples. For comparison, the suite WITH scale measurements peaked at 13.9 GB (§13.8). This number decides nothing now.
+- Quietness:
+  - 74 of 76 samples had one xcodebuild.
+  - **23:41:47–23:42:17 (2 samples): a FocusCrab xcodebuild ran concurrently** (pid 5592 action `?`, then pid 5676 `archive`). This was near the end, in the UI phase.
+  - The wrapper's start/end check reported "quiet", and missed it again.
+
+**Scale run, the positive A4 commission (2026-10-15 23:46 → 2026-10-16 00:13).**
+- **Exit 0, `executed=4 skipped=0`**, "✓ all 4 scale tests passed".
+- Per test:
+  - deleteAll 339.2 s;
+  - reset 77.4 s;
+  - fix measurement 758.9 s;
+  - quadratic mechanism 309.9 s.
+- **NOT a clean measurement:** another session's FocusCrab test runs started at 23:48, two minutes after this one, and overlapped 44 samples (to 00:10:58), with up to 4 simulators booted.
+  - Peak swap 23 666 MB at 00:04:51.
+  - Swap was 5 059 MB at the start and 6 725 MB at the end.
+
+  The pass/fail verdict stands, because its assertions are ratios and correctness. The seconds and the peak are contaminated.
+
+Afterwards: `xcrun simctl shutdown all` (0 booted), no xcodebuild running.
+
 ### 13.11 Scope ruling — Dmitry decided, 2026-10-15 (effective after C3)
 
 Received while §13.10 was waiting for the reboot and "go". C3 is still to run as briefed; this ruling
@@ -1547,3 +1588,16 @@ applies once it has.
    Receipt scanning joins **only if** the corpus arrives and the sealed run passes. Otherwise it
    moves to **1.0.8** (ruling 14.7: the Guide ships alone).
 4. **No more test-infrastructure work unless it blocks a release.**
+
+**Amendment, Dmitry 2026-10-15 (recorded after C3):**
+- A listed test's failure is a known red **only if its message is the tapTab "tab tap ignored"
+  message**. A listed test failing any other way (an assertion, a crash, a timeout elsewhere) is a
+  NEW failure. Otherwise a real edit/save regression would hide behind the list.
+- The D51 probe stays OFF the list. If it fails, it is reported as new, with its message and
+  attachments.
+
+**Ruling, Dmitry 2026-10-16:** the laptop decision is **dropped by the founder**. The machine counts
+as rebooted (2026-10-11). C3's clean-machine condition is lifted: its remaining purposes were the
+release gate, EXPECTED_TOTAL_RUN and a D33 classification that is parked either way.
+
+**D33 investigation is now CLOSED per item 1.** C3 had zero D33 reds and no reopen trigger.
