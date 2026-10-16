@@ -37,16 +37,18 @@ private struct SettingsRouteView: View {
     let route: SettingsRoute
 
     var body: some View {
+        // `screen.settings.*`: the Guide's Show-me journey test proves arrival by
+        // the destination's own id, not by the tab it is on.
         switch route {
-        case .general: GeneralSettingsView()
-        case .premium: PremiumSettingsView()
-        case .data: DataSettingsView()
-        case .categories: CategoriesSourcesView()
-        case .recurring: RecurringSettingsView()
-        case .privacy: PrivacySettingsView()
-        case .alerts: AlertsSettingsView()
-        case .reports: ReportsView(initialPeriod: .month(containing: Date()))
-        case .reportsSettings: ReportsSettingsView()
+        case .general: GeneralSettingsView().guideScreenID("screen.settings.general")
+        case .premium: PremiumSettingsView().guideScreenID("screen.settings.premium")
+        case .data: DataSettingsView().guideScreenID("screen.settings.data")
+        case .categories: CategoriesSourcesView().guideScreenID("screen.settings.categories")
+        case .recurring: RecurringSettingsView().guideScreenID("screen.settings.recurring")
+        case .privacy: PrivacySettingsView().guideScreenID("screen.settings.privacy")
+        case .alerts: AlertsSettingsView().guideScreenID("screen.settings.alerts")
+        case .reports: ReportsView(initialPeriod: .month(containing: Date())).guideScreenID("screen.settings.reports")
+        case .reportsSettings: ReportsSettingsView().guideScreenID("screen.settings.reportsSettings")
         case .learnTips: LearnAndTipsView()
         case .setupGuide: SetupGuideView()
         case .about: AboutView()

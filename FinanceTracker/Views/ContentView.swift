@@ -53,6 +53,10 @@ struct ContentView: View {
     @State private var settingsResetToken = UUID()
     @State private var settingsPath: [SettingsRoute] = []
 
+    // The User Guide's "Show me" (1.0.7). Everything that navigates on the
+    // Guide's behalf goes through `guideRouter.open(_:)`; see GuideRouter.swift.
+    @State private var guideRouter = GuideRouter()
+
     // The Dashboard's view identity is keyed to the calendar month because its
     // @Query month-window is fixed at identity creation (see DashboardView.init).
     // Refreshed on foreground; flipping it re-creates the Dashboard with the new
@@ -113,6 +117,37 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: onboarding.phase)
+        .environment(guideRouter)
+        .onChange(of: guideRouter.request) { _, request in
+            if let request { applyGuideRoute(request.destination.route) }
+        }
+        #if DEBUG
+        // Bottom-trailing, above the tab bar and below every navigation bar; one
+        // 36 pt button. Not in the tree at all without the launch argument.
+        .overlay(alignment: .bottomTrailing) {
+            if GuideRouteHarness.isRequested {
+                GuideRouteHarness(router: guideRouter)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 140)
+            }
+        }
+        #endif
+    }
+
+    /// Applies a Show-me route. The tab first; the Settings path and the
+    /// in-screen work one main-queue hop later, so they land AFTER the tab change
+    /// and after Settings' tab-leave reset (same hop as `.budgetCrabPendingIntent`).
+    private func applyGuideRoute(_ route: GuideRoute) {
+        if let url = route.externalURL {
+            UIApplication.shared.open(url)
+            return
+        }
+        if let tab = route.tab, tab != selectedTab { selectTab(tab) }
+        DispatchQueue.main.async {
+            if route.tab == GuideRoute.settingsTab { settingsPath = route.settingsPath }
+            if route.presentsQuickEntry { showAddSheet = true }
+            guideRouter.post(route.work)
+        }
     }
 
     /// Every programmatic write to the tab selection goes through here, so the

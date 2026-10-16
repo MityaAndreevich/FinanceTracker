@@ -86,10 +86,12 @@ enum FeedbackComposer {
 /// configured, the copy-the-address fallback otherwise.
 struct FeedbackView: View {
     var body: some View {
+        // Two ids: the simulator has no mail account, so a test there can only
+        // prove the fallback. The consent → Mail path is proven on device.
         if FeedbackComposer.canSendMail {
-            FeedbackConsentView()
+            FeedbackConsentView().guideScreenID("screen.feedback.consent")
         } else {
-            FeedbackFallbackView()
+            FeedbackFallbackView().guideScreenID("screen.feedback.fallback")
         }
     }
 }

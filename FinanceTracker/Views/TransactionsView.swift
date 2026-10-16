@@ -18,6 +18,7 @@ struct TransactionsView: View {
     // One-shot hint teaching the ‹ › month pager, first Transactions visit (Brief 28 Part B).
     @AppStorage("hasSeenPeriodHint") private var hasSeenPeriodHint = false
     @State private var searchText: String = ""
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
     @State private var typeFilter: TransactionFilter = .all
 
     // The editor push is driven by a path WE own, not by an item binding SwiftUI
@@ -55,6 +56,13 @@ struct TransactionsView: View {
         // landmine the edit-presentation investigation documented.
         NavigationStack(path: $editPath) {
             listContent
+        }
+        // Show me → transactions lands on the unfiltered list, editor closed.
+        .task(id: guide?.pending?.id) {
+            if guide?.take({ $0 == .clearTransactionsSearch ? true : nil }) == true {
+                searchText = ""
+                editPath = []
+            }
         }
     }
 
@@ -101,6 +109,7 @@ struct TransactionsView: View {
             .padding(.vertical, 8)
             .background(.bar)
         }
+        .guideScreenID("screen.transactions")
         .navigationTitle("title.transactions")
         // Inline (matching DashboardView) keeps the title fixed in the nav bar.
         // The default large title collapsed under the always-on search drawer +

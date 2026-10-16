@@ -26,6 +26,7 @@ struct DataSettingsView: View {
     @State private var showImportResult = false
     @State private var importResultMessage = ""
     @State private var showPaywall = false
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
 
     // Import progress (indeterminate — see note in startAsyncImport)
     @State private var isImporting = false
@@ -37,9 +38,21 @@ struct DataSettingsView: View {
     @State private var detectedPreset: SourcePreset = .custom
 
     var body: some View {
-        List {
-            exportSection
-            importSection
+        // ScrollViewReader: Show me → dataImport / dataExport scrolls its section's
+        // first row to the top. Transparent otherwise.
+        ScrollViewReader { scroll in
+            List {
+                exportSection
+                importSection
+            }
+            .task(id: guide?.pending?.id) {
+                guard let section = guide?.take({ work -> DataSettingsSection? in
+                    if case .dataSection(let s) = work { return s } else { return nil }
+                }) else { return }
+                // One layout pass first: a just-pushed List has no rows to scroll to yet.
+                try? await Task.sleep(for: .milliseconds(150))
+                withAnimation { scroll.scrollTo(section, anchor: .top) }
+            }
         }
         .navigationTitle("data.title")
         .listStyle(.insetGrouped)
@@ -118,6 +131,8 @@ struct DataSettingsView: View {
             } label: {
                 Label("data.export.csv.month", systemImage: "square.and.arrow.up")
             }
+            .id(DataSettingsSection.export)
+            .accessibilityIdentifier("data.export.first")
 
             Button {
                 exportCSV(scope: .all)
@@ -175,6 +190,8 @@ struct DataSettingsView: View {
                       systemImage: access.isAllowed(.csvImport) ? "tray.and.arrow.down" : "lock")
             }
             .disabled(isImporting)
+            .id(DataSettingsSection.import)
+            .accessibilityIdentifier("data.import.first")
 
             if !access.isAllowed(.csvImport) {
                 Text("data.premium_hint")

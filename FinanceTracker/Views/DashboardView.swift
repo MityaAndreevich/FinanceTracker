@@ -70,6 +70,8 @@ struct DashboardView: View {
     }
 
     @State private var showAddTransaction = false
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
+    @FocusState private var quickAddFocused: Bool
     @State private var animateArrow = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -288,6 +290,7 @@ struct DashboardView: View {
             .padding(.vertical, 12)
         }
         .background(Color.bcPage.ignoresSafeArea())
+        .guideScreenID("screen.dashboard")
         // Pin Quick Add below the nav bar so focusing its field never scrolls it
         // up under the inline title (the month "date").
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -302,8 +305,10 @@ struct DashboardView: View {
         .sheet(isPresented: $showBudgetSheet) {
             BudgetSetterSheet()
         }
+        // Show me (GuideRouter): the Dashboard's own sheets and field.
+        .task(id: guide?.pending?.id) { takeGuideWork() }
         .sheet(isPresented: $showAddTransaction) {
-            NavigationStack { AddTransactionView() }
+            NavigationStack { AddTransactionView().guideScreenID("screen.addTransaction") }
         }
         .sheet(isPresented: $showRecurringPrompt) {
             RecurringPromptSheet(prompts: duePrompts) { prompt in
@@ -448,11 +453,28 @@ struct DashboardView: View {
         }
     }
 
+    // MARK: - Show me
+
+    private func takeGuideWork() {
+        let work: GuideScreenWork? = guide?.take { work in
+            switch work {
+            case .focusQuickAdd, .budgetSheet, .addForm: return work
+            default: return nil
+            }
+        }
+        switch work {
+        case .focusQuickAdd: quickAddFocused = true
+        case .budgetSheet: showBudgetSheet = true
+        case .addForm: showAddTransaction = true
+        default: break
+        }
+    }
+
     // MARK: - Quick Add
 
     private var quickAddSection: some View {
         VStack(spacing: 8) {
-            QuickAddBar(text: $quickAddText) { parsed in
+            QuickAddBar(text: $quickAddText, focused: $quickAddFocused) { parsed in
                 // Q1 (option C): a confident parse (amount + merchant + concrete
                 // category) saves immediately and offers an edit toast — the
                 // preview chip stays as the escape hatch for unsure parses only.
@@ -1219,6 +1241,7 @@ private struct Day0EducationalCard: View {
 
 private struct QuickAddBar: View {
     @Binding var text: String
+    var focused: FocusState<Bool>.Binding
     let onSubmit: (QuickAddParsedInput) -> Void
 
     var body: some View {
@@ -1228,6 +1251,8 @@ private struct QuickAddBar: View {
                 .foregroundStyle(Color.bcAccent)
 
             TextField("quickadd.placeholder", text: $text)
+                .focused(focused)
+                .accessibilityIdentifier("dashboard.quickadd.field")
                 .plainTextEntry()
                 .submitLabel(.done)
                 .lineLimit(1)

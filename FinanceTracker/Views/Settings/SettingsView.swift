@@ -11,6 +11,7 @@ struct SettingsView: View {
     @StateObject private var pm = PurchaseManager.shared
     @StateObject private var access = AccessManager.shared
     @State private var showFeedback = false
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
 
     var body: some View {
         List {
@@ -94,6 +95,10 @@ struct SettingsView: View {
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showFeedback) {
             FeedbackView()
+        }
+        // Show me → feedback opens the row's own sheet; it has no second home.
+        .task(id: guide?.pending?.id) {
+            if guide?.take({ $0 == .feedback ? true : nil }) == true { showFeedback = true }
         }
         .task {
             // Гарантируем актуальный статус, если вернулись с paywall/restore.

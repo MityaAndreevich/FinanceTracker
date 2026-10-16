@@ -42,6 +42,7 @@ struct ReleaseDebugAffordanceTests {
         "resetForDebugIfRequested",   // --reset-tip-collection (wipes the collection)
         "applyDebugTrialOverrides",   // --expire/--reset-reverse-trial
         "ReceiptScanDebugSeam",       // --scan-fixture-text (renders a receipt for the scan journey)
+        "GuideRouteHarness",          // --guide-route-harness (a Show-me caller for the journey test)
     ]
 
     private static var repoRoot: URL {

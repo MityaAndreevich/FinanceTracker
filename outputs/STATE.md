@@ -1601,3 +1601,25 @@ as rebooted (2026-10-11). C3's clean-machine condition is lifted: its remaining 
 release gate, EXPECTED_TOTAL_RUN and a D33 classification that is parked either way.
 
 **D33 investigation is now CLOSED per item 1.** C3 had zero D33 reds and no reopen trigger.
+
+### 13.12 Guide step 2 — Show-me routing and its journey test (2026-10-16)
+
+Plan, amendments, as-built differences and commissioning: **`outputs/GUIDE_STEP2_PLAN.md`**.
+Branch `feat/guide-step2-routing`, cut from `test/d33-scale-split-and-tab-tap` (which carries `tapTab`
+and EXPECTED 1245).
+
+- **One entry point:** `GuideRouter.open(_:)`. In step 2 its only caller is the DEBUG
+  `GuideRouteHarness` (`--guide-route-harness`; registered in `ReleaseDebugAffordanceTests`). Step 3's
+  Show me button becomes the second caller.
+- **`GuideShowMeJourneyTests`:** 22 destinations in 5 families, plus a harness-absence test. Each
+  destination is proven by an element on the destination itself, and each journey starts away from
+  its target.
+  - Green on the real code (class runs 2026-10-16).
+  - Every destination seen red: mutant A turned 21 of 22 red. B covered `dashboard` (A's vacuous
+    case). C covered `categoryLimits` without its scroll.
+- **Limits, stated rather than claimed:**
+  - feedback proves the fallback sheet only. Mail is checked on device in the step-6 acceptance.
+  - The Data scroll can't be observed on iPhone 17 Pro, because the list fits one screen.
+- **R1 guard:** `SettingsStackDeepPopTests` is unchanged by this step and runs in the full suite.
+- **Cost (amendment 4):** the class took ≈ 392 s in its isolated green runs. This becomes
+  the measured full-run delta after the next full run, which also sets EXPECTED_TOTAL_RUN.

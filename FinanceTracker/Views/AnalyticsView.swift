@@ -55,6 +55,7 @@ struct AnalyticsView: View {
     }
 
     @State private var screen: Screen = .pulse
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
     /// The Reports sheet (1.0.6) — opened on the month this screen shows.
     @State private var showReports = false
 
@@ -124,6 +125,8 @@ struct AnalyticsView: View {
             }
         }
         .background(Color.bcPage.ignoresSafeArea())
+        // One id per sub-screen: Show me must prove the PICKER moved, not just the tab.
+        .guideScreenID("screen.analytics.\(screen.rawValue)")
         // Swipe cycles the three sub-screens (wrap-around). Chart scrubbing inside
         // Pulse/Horizon is a descendant gesture and wins over this paging, so a
         // horizontal drag on a chart scrubs; a drag on inert area pages.
@@ -146,6 +149,13 @@ struct AnalyticsView: View {
         }
         .sheet(isPresented: $showReports) {
             ReportsScreen(initialPeriod: .month(containing: Date()))
+        }
+        .task(id: guide?.pending?.id) {
+            if let target = guide?.take({ work -> Screen? in
+                if case .analytics(let s) = work { return s } else { return nil }
+            }) {
+                screen = target
+            }
         }
         .onAppear {
             #if DEBUG

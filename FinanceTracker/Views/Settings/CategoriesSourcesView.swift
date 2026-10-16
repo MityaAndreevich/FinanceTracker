@@ -47,6 +47,7 @@ struct CategoriesSourcesView: View {
     // Bug 9: categories/sources already refresh instantly via @Query — this toast
     // just makes the silent add visible so the user doesn't wonder whether it worked.
     @State private var toastMessage: LocalizedStringKey?
+    @Environment(GuideRouter.self) private var guide: GuideRouter?
 
     // MARK: - Derived
 
@@ -108,6 +109,14 @@ struct CategoriesSourcesView: View {
                 .presentationDetents([.medium])
         }
         .confirmationToast($toastMessage)
+        // Show me → categoryLimits: the Expense rows ARE the limit affordance
+        // (tap one → the limit sheet), so arrival scrolls the first one to the top.
+        .task(id: guide?.pending?.id) {
+            guard guide?.take({ $0 == .expenseCategories ? true : nil }) == true,
+                  let first = expenseCategories.first else { return }
+            try? await Task.sleep(for: .milliseconds(150))
+            withAnimation { scroll.scrollTo(first.uuid, anchor: .top) }
+        }
         // Screenshot seam (slot 06): App Store capture routes here to show the
         // gentle monthly-limit surface, and `simctl` can't tap a row. Gated on
         // `requestedScreen`, which is nil in Release — a shipped build never does this.
@@ -206,6 +215,8 @@ struct CategoriesSourcesView: View {
                     // the one shared surface for limit setting; income
                     // categories have no limit concept.
                     CategoryRow(category: cat) { editingLimitCategory = cat }
+                        .accessibilityIdentifier(cat.uuid == expenseCategories.first?.uuid
+                                                 ? "categories.expense.first" : "")
                 }
                 .onDelete { offsets in
                     pendingDelete = .categories(subset: expenseCategories, offsets: offsets)
@@ -226,6 +237,7 @@ struct CategoriesSourcesView: View {
             }
         } header: {
             Text("cs.section.expense_categories")
+                .accessibilityIdentifier("categories.section.expense")
         } footer: {
             // Discoverability (1.0.5): monthly category limits shipped in 1.0.3 and
             // nothing named them anywhere — the only way to find one was to tap a
