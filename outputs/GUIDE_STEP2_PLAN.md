@@ -110,3 +110,41 @@ The one-shot highlight pulse (§7 "Highlight") lands in step 3, with the button 
 
 `dashboardQuickAdd` went red under A (*"the Quick Add field is not focused"*, *"no keyboard"*), so it
 needed no second mutant.
+
+## Full run with step 2 (2026-10-16 00:59 → 01:44, `695ee75`, erased sim)
+
+- `executed=1242 passed=1242 failed=0 skipped=9`. Total 1251 against 1245 expected, so exit 5.
+  **EXPECTED_TOTAL_RUN 1245 → 1251**; `CHECK_BUNDLE` gives Δ+0, exit 0.
+- **Added cost:** `GuideShowMeJourneyTests` took 381.2 s (6.4 min), under the 8-min line, so there is
+  no family grouping. The whole run took ≈ 45.5 min, against C3's ≈ 39 min.
+- Machine: one xcodebuild in all 89 samples. Swap 5 575 MB at the start, peak 5 974 MB, 4 758 MB at the end.
+  The machine was not rebooted.
+
+## Moved to the step-6 acceptance list (Dmitry, 2026-10-16) — recorded, NOT claimed
+
+- **`dataImport` / `dataExport` scroll and the `categoryLimits` scroll on the smallest supported
+  simulator (iPhone 16e / SE class)**, where neither list fits one screen. Until that run, the Data
+  scroll is unproven, and the categoryLimits scroll is proven at iPhone 17 Pro size only.
+- The real Mail path for `feedback` (on device).
+
+## Rule for step 3 (D50-class, Dmitry 2026-10-16)
+
+**No card promises a control the user cannot use on their tier.**
+- A card whose controls are tier-gated says so in its copy, and its Show me lands a free user
+  somewhere honest: the locked screen, with its upgrade explanation visible.
+- Copy must be true in BOTH states: during the 14-day reverse-trial preview (unlocked) and after it
+  (locked).
+
+Gated controls found, per card:
+- A7: a custom category past 3.
+- A8: an account past 2.
+- A10: more than 5 scans a month.
+- B3: proactive alerts.
+- C5: sharing a non-month report.
+- D1: CSV import.
+- D3: all-time PDF/Excel.
+- E2: scheduled reports.
+
+**Open for step 3:** E2's destination (Automatic reports) showed two locked rows and a privacy footer,
+with no visible upgrade explanation (screenshot, 2026-10-16). Either the card states Premium before
+Show me, or the screen gets a line; check what a tap on a locked row does.

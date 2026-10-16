@@ -1623,3 +1623,12 @@ and EXPECTED 1245).
 - **R1 guard:** `SettingsStackDeepPopTests` is unchanged by this step and runs in the full suite.
 - **Cost (amendment 4):** the class took ≈ 392 s in its isolated green runs. This becomes
   the measured full-run delta after the next full run, which also sets EXPECTED_TOTAL_RUN.
+- **Full run 2026-10-16 (`695ee75`):** `executed=1242 passed=1242 failed=0 skipped=9`, exit 5
+  (stale count). **EXPECTED_TOTAL_RUN 1245 → 1251**, `CHECK_BUNDLE` Δ+0.
+  - The new class costs 381 s.
+  - Every sample saw one xcodebuild. Swap peaked at 5.97 GB.
+  - D52 passed this time.
+- **Step-6 acceptance additions and the step-3 tier rule:** `GUIDE_STEP2_PLAN.md`, last two sections.
+- **Merge plan (not executed):** main is at the merge base `a370077`, so both merges are fast-forwards
+  with no conflicts. First `test/d33-scale-split-and-tab-tap`: its C3 has zero D33 reds, and its one red
+  is D52, NEW under §13.11, so it needs a ruling. Then `feat/guide-step2-routing`.
