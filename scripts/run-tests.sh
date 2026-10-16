@@ -201,11 +201,12 @@ DESTINATION="${DESTINATION:-platform=iOS Simulator,name=iPhone 17 Pro}"
 # (Δ=+14: Guide step 1's instrumentation tests and the four Settings-stack UI tests.)
 # Bundle: /var/folders/.../tmp.kcbeeYStBn/result.xcresult (session-local).
 #
-# STALE ON PURPOSE, 2026-10-14 (branch test/d33-scale-split-and-tab-tap): +3 tests
-# (BulkDeleteCorrectnessTests). The scale gate moves 4 tests from executed to
-# skipped and leaves the sum alone. Expect the next unfiltered run to exit 5;
-# take the new value from THAT run, not from this arithmetic.
-EXPECTED_TOTAL_RUN=1242
+# OBSERVED 2026-10-15, iPhone 17 Pro / iOS 26.5, ERASED simulator, UNFILTERED
+# run at a928b39 (branch test/d33-scale-split-and-tab-tap, STATE §13.10 C3):
+#     executed=1236 skipped=9 → total 1245, exit 5 against 1242
+# +3 = BulkDeleteCorrectnessTests. The scale gate moved 4 tests from executed to
+# skipped and left the sum alone, as predicted; the value is taken from the run.
+EXPECTED_TOTAL_RUN=1245
 
 # ── Tolerance: ZERO, and that is deliberate ──────────────────────────────────
 # The obvious instinct is a percentage band for headroom. It is wrong here, twice
