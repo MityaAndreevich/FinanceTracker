@@ -1632,3 +1632,40 @@ and EXPECTED 1245).
 - **Merge plan (not executed):** main is at the merge base `a370077`, so both merges are fast-forwards
   with no conflicts. First `test/d33-scale-split-and-tab-tap`: its C3 has zero D33 reds, and its one red
   is D52, NEW under §13.11, so it needs a ruling. Then `feat/guide-step2-routing`.
+
+### 13.13 Receipt corpus: the unit is the RECEIPT, not the image (pre-registration amendment, 2026-10-25)
+
+**This is an amendment made before the freeze, not a change after the fact.** Nothing is frozen, no
+`FROZEN.sha256` exists, no split has run, and no corpus image has been opened (checked 2026-10-25:
+`FinanceTrackerTests/Fixtures/` does not exist). Dmitry decided this on 2026-10-25.
+
+- **Cause:** Dmitry's first paper receipt arrived as **5 photos of ONE receipt**, shot from different
+  angles and crumpled. The split as built (§12, `a8ad92e`) hashed each **file**, so near-duplicate
+  shots would have landed in both DEV and SEALED. Sealed content would then have leaked into tuning
+  and inflated the sealed score.
+- **Rule now:**
+  1. `manifest.csv` gains `receipt_id`, shared by every shot of one physical receipt (or one order
+     screenshot).
+  2. The DEV/SEALED split hashes `receipt_id`: first byte of SHA-256(id), even → DEV.
+  3. The bar in `DESIGN_RECEIPT_SCAN.md` §7.3 is judged **per receipt**, on shot `<receipt_id>_a`.
+     Variant shots go in a robustness sub-table and are not counted as samples. The 10-per-cell and
+     100 minimums count receipts.
+- **Primary shot (Claude's choice, open to Dmitry before the freeze):** `_a` is the shot taken first,
+  by the guide's photographing rules, before any parse. It is chosen at collection time, not by how
+  it scans. For the 5 photos already sent, Dmitry names which one is `_a` before the freeze.
+- **Residual risk, stated:** a person chooses the `receipt_id` string, and that string decides the
+  half. The guide therefore says to number ids in collection order and never rename one after the
+  manifest is written. The freeze then pins every id.
+- **Changed:** `RECEIPT_CORPUS_COLLECTION_GUIDE.md` (naming, manifest, split, reporting) and
+  `DESIGN_RECEIPT_SCAN.md` §7 (amendment block plus §7.1, §7.2 and §7.4).
+  `ReceiptCorpusTests` now checks:
+  - the manifest header must contain `receipt_id`, so an old manifest is refused rather than read
+    shifted by one column;
+  - every receipt has exactly one `_a` shot, and all its shots carry the same truth;
+  - reports are printed per receipt (gated) and per image (robustness).
+- **Commissioning:** `testSplitKeepsEveryShotOfAReceiptInOneHalf`. The fixture is 2 receipt_ids × 3
+  shots (`en_paper_01` → SEALED, `ru_paper_02` → DEV). The test asserts that the old per-file rule
+  splits **both** receipts, so the fixture keeps discriminating. Seen red and green: see the commit
+  body. `testManifestRejectsAReceiptWhoseShotsDisagree` covers the consistency check.
+- **Suite count:** +2 tests. Per the standing rule, EXPECTED_TOTAL_RUN is **not** set by arithmetic;
+  the next full run exits 5 and prints it.

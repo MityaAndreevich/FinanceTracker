@@ -249,6 +249,15 @@ written against `ReceiptParserTests` fixtures that are **not** corpus images (sy
 lists); (4) the corpus is run **once** and the result is reported as-is, misses included; (5) any
 parser change after (4) is followed by a re-run reported next to the first, never in place of it.
 
+> **Pre-registration amendment, 2026-10-25 — before any freeze, before any image was opened**
+> (STATE §13.13). The unit of measurement is the **physical receipt**, not the image. Cause: the first
+> paper receipt arrived as 5 photos of one receipt; the per-file hash split would have put
+> near-duplicates of it in both halves, leaking SEALED content into tuning and inflating the score.
+> (1) The manifest gains `receipt_id`, shared by every shot of one receipt (or one order screenshot).
+> (2) The DEV/SEALED split hashes `receipt_id`, never the file. (3) The bar (§7.3) is judged **per
+> receipt** on its primary shot `_a`; variant shots are a robustness sub-table, not samples. Every
+> "image" count below that is a sample count now reads "receipt". Nothing else in §7 moves.
+
 ### 7.1 The corpus
 
 | type | locale | minimum | source |
@@ -256,14 +265,19 @@ parser change after (4) is followed by a re-run reported next to the first, neve
 | paper | en · ru · es-MX · pt-BR · uk | **10 each** | real photographs of real receipts (the founder's, mine, and public-domain images whose licence permits redistribution), varied: thermal fade, skew, a crumple, a long grocery slip, a café slip with tip, a fuel receipt, a pharmacy receipt with tax lines |
 | screenshot | en · ru · es-MX · pt-BR · uk | **10 each** | real screenshots of order confirmations / payment apps / email receipts where available; **rendered fixtures** where not (a screenshot *is* rendered pixels, so rendering is faithful for this type in a way it is not for paper). Every rendered one carries Subtotal, Tax, Shipping or Discount lines **and** a grand total, because that is the failure the brief names |
 
-Minimum **100 images**. For each: `true_total_cents`, `true_merchant`, `true_date`, `locale`,
-`type`, `source` (real/rendered), `notes` — in `FinanceTrackerTests/Fixtures/Receipts/manifest.csv`.
+Minimum **100 receipts** (distinct `receipt_id`s; the "10 each" above counts receipts too — 5 shots of
+one receipt are one). For each image: `receipt_id`, `true_total_cents`, `true_merchant`, `true_date`,
+`locale`, `type`, `source` (real/rendered), `notes` — in `FinanceTrackerTests/Fixtures/Receipts/manifest.csv`.
+Shot `<receipt_id>_a` is the receipt's sample (taken first, by the photographing rules, before any
+parse); further shots `_b`, `_c` … are variants. All shots of a receipt carry the same truth.
+**Split:** first byte of SHA-256(`receipt_id`), even → DEV, odd → SEALED — so no receipt is in both halves.
 **Paper cannot be certified from rendered images.** If real paper photos are short in a locale, that
 locale's paper cell is reported as *"n < 10, not certified"*, not filled with renders.
 
 ### 7.2 The metrics — computed by a reporter test that prints the table
 
-Per (type × locale) cell, over the frozen corpus:
+Per (type × locale) cell, over the frozen corpus, **per receipt** (its `_a` shot) — and, as a
+robustness sub-table that is reported but never gated, per image over the variant shots:
 - **Exact total** — `parse.total?.cents == true_total_cents`.
 - **Wrong-prefill rate** — `confidence == .high && total != true` (the dangerous one: a plausible
   wrong money figure, filled in).
@@ -289,8 +303,10 @@ card, a page of text, a photo with no text, a bank statement) — every one must
 
 ### 7.4 What is reported, honestly
 
-One table, five rows × two types, every cell with n, exact %, wrong-prefill %, missed %, merchant %,
-date %, and **the list of misses** (image id, true total, what was chosen, which rule chose it).
+One table **per receipt**, five rows × two types, every cell with n (receipts), exact %, wrong-prefill %,
+missed %, merchant %, date %, and **the list of misses** (image id, true total, what was chosen, which
+rule chose it). Beneath it, the same columns **per image** for the variant shots — labelled robustness,
+n counted in images, not compared against §7.3.
 `ReceiptCorpusReportTests` prints it and asserts only that it measured something (n ≥ 100), so the
 number is visible in every run; `ReceiptAccuracyBarTests` asserts §7.3 per cell and is the gate.
 

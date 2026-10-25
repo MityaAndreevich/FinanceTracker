@@ -9,15 +9,17 @@
 //       visible here. Nothing personal is in it (RECEIPT_CORPUS_COLLECTION_GUIDE).
 //    2. `FROZEN.sha256` freezes it: one SHA-256 per file plus the manifest's.
 //       Every run re-hashes and refuses a corpus that changed since freezing.
-//    3. Each image is assigned to DEV or SEALED by the first byte of its SHA-256
-//       (even → DEV, odd → SEALED) — deterministic, decided by the bytes, not
-//       by anyone.
+//    3. Each RECEIPT is assigned to DEV or SEALED by the first byte of the
+//       SHA-256 of its receipt_id (even → DEV, odd → SEALED). All shots of one
+//       physical receipt share a receipt_id, so they land in the same half —
+//       a per-FILE split put near-duplicate shots in both halves and leaked
+//       sealed content into tuning (amendment 2026-10-25, STATE §13.13).
 //    4. The DEV half runs freely (`testDevHalfReport`). The SEALED half runs
 //       ONLY with RECEIPT_SEALED_RUN=1 in the environment, ONCE, after the
 //       parser is frozen; the run prints the parser commit it ran against.
-//    5. Both reporters print the table and assert only that they measured
-//       something; `testDevHalfMeetsTheBar` / `testSealedHalfMeetsTheBar`
-//       assert §7.3 per (type × locale) cell.
+//    5. Results are reported per RECEIPT (shot `_a`, the one taken by the
+//       photographing rules — §7.3 is judged on this table) and per IMAGE
+//       (variant shots: a robustness sub-table, not extra samples).
 //
 //  Until the manifest exists every test here SKIPS, visibly — a skipped test
 //  is counted (executed+skipped) and named in the log; a vacuous pass is the
@@ -36,6 +38,7 @@ final class ReceiptCorpusTests: XCTestCase {
 
     struct Row {
         let file: String
+        let receiptId: String     // shared by every shot of one physical receipt
         let locale: String        // en ru es pt uk, or "" for non-receipts
         let type: String          // paper | screenshot | nonreceipt
         let totalCents: Int?
@@ -57,23 +60,58 @@ final class ReceiptCorpusTests: XCTestCase {
             throw XCTSkip("receipt corpus not collected yet: \(url.path) is missing (RECEIPT_CORPUS_COLLECTION_GUIDE.md)")
         }
         let text = try String(contentsOf: url, encoding: .utf8)
+        let lines = text.components(separatedBy: .newlines)
+        // A pre-amendment manifest has no receipt_id; read positionally it would
+        // shift every column by one, so it is refused rather than misread.
+        guard lines.first?.hasPrefix(Self.manifestHeader) == true else {
+            XCTFail("manifest header must start with `\(Self.manifestHeader)` (RECEIPT_CORPUS_COLLECTION_GUIDE.md)")
+            return []
+        }
         var rows: [Row] = []
-        for (i, line) in text.components(separatedBy: .newlines).enumerated() where i > 0 && !line.trimmingCharacters(in: .whitespaces).isEmpty {
+        for (i, line) in lines.enumerated() where i > 0 && !line.trimmingCharacters(in: .whitespaces).isEmpty {
             let c = line.components(separatedBy: ",")
-            guard c.count >= 8 else { XCTFail("manifest line \(i + 1) has \(c.count) columns"); continue }
-            rows.append(Row(file: c[0], locale: c[1], type: c[2], totalCents: Int(c[3]), merchant: c[4], date: c[5], currency: c[6],
-                            notes: c[7...].joined(separator: ",")))
+            guard c.count >= 9 else { XCTFail("manifest line \(i + 1) has \(c.count) columns"); continue }
+            rows.append(Row(file: c[0], receiptId: c[1], locale: c[2], type: c[3], totalCents: Int(c[4]), merchant: c[5], date: c[6],
+                            currency: c[7], notes: c[8...].joined(separator: ",")))
         }
         XCTAssertGreaterThanOrEqual(rows.count, 1, "an empty manifest measures nothing")
+        for problem in Self.receiptProblems(rows) { XCTFail(problem) }
         return rows
     }
 
+    static let manifestHeader = "file,receipt_id,locale,type,total_cents,merchant,date,currency,notes"
+
+    /// Shot `_a` of a receipt is its sample for the bar; every other shot is a variant.
+    static func isPrimary(_ row: Row) -> Bool {
+        (row.file as NSString).deletingPathExtension == row.receiptId + "_a"
+    }
+
+    /// Every shot of one receipt is the same receipt: same truth, and exactly one
+    /// primary shot. A manifest that breaks this would make the per-receipt
+    /// table depend on which shot happened to be read.
+    static func receiptProblems(_ rows: [Row]) -> [String] {
+        var problems: [String] = []
+        for (id, shots) in Dictionary(grouping: rows, by: \.receiptId).sorted(by: { $0.key < $1.key }) {
+            if id.isEmpty { problems.append("rows with an empty receipt_id: \(shots.map(\.file))"); continue }
+            let primaries = shots.filter(isPrimary).count
+            if primaries != 1 { problems.append("\(id): \(primaries) primary shots (need exactly one `\(id)_a.*`)") }
+            let truths = Set(shots.map { "\($0.locale)|\($0.type)|\($0.totalCents.map(String.init) ?? "")|\($0.merchant)|\($0.date)|\($0.currency)" })
+            if truths.count > 1 { problems.append("\(id): shots of one receipt disagree on its truth: \(truths.sorted())") }
+        }
+        return problems
+    }
+
     private func sha256(_ url: URL) throws -> String {
-        SHA256.hash(data: try Data(contentsOf: url)).map { String(format: "%02x", $0) }.joined()
+        Self.sha256Hex(try Data(contentsOf: url))
+    }
+
+    static func sha256Hex(_ data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
     /// Refuses a corpus that changed since it was frozen. Absent FROZEN.sha256 =
     /// the corpus is not frozen = nothing may be measured on it yet.
+    @discardableResult
     private func verifyFrozen(_ rows: [Row]) throws -> [String: String] {
         let frozenURL = Self.corpusURL.appendingPathComponent("FROZEN.sha256")
         guard FileManager.default.fileExists(atPath: frozenURL.path) else {
@@ -97,6 +135,16 @@ final class ReceiptCorpusTests: XCTestCase {
     static func half(forSHA sha: String) -> Half {
         let firstByte = UInt8(sha.prefix(2), radix: 16) ?? 0
         return firstByte % 2 == 0 ? .dev : .sealed
+    }
+
+    /// The half is decided by the receipt, never by the file: hashing a file
+    /// sends near-duplicate shots of one receipt to both halves.
+    static func half(forReceiptID id: String) -> Half {
+        half(forSHA: sha256Hex(Data(id.utf8)))
+    }
+
+    static func split(_ rows: [Row]) -> (dev: [Row], sealed: [Row]) {
+        (rows.filter { half(forReceiptID: $0.receiptId) == .dev }, rows.filter { half(forReceiptID: $0.receiptId) == .sealed })
     }
 
     // MARK: - Running the parser on real OCR
@@ -195,6 +243,16 @@ final class ReceiptCorpusTests: XCTestCase {
         }
     }
 
+    /// Per receipt (gated) first, then the robustness sub-table of variant shots.
+    private func report(_ outcomes: [Outcome], title: String) -> [String: Cell] {
+        let receipts = table(outcomes.filter { Self.isPrimary($0.row) })
+        let variants = outcomes.filter { !Self.isPrimary($0.row) }
+        print(render(receipts, title: "\(title) — PER RECEIPT (shot _a; §7.3 is judged here)"))
+        print(render(table(variants), title: "\(title) — VARIANT SHOTS, \(variants.count) images (robustness only, NOT samples, NOT the bar)"))
+        print(render(table(outcomes), title: "\(title) — PER IMAGE, all \(outcomes.count) shots (robustness only)"))
+        return receipts
+    }
+
     private func nonReceiptControl(_ outcomes: [Outcome]) {
         let controls = outcomes.filter { $0.row.type == "nonreceipt" }
         XCTAssertGreaterThanOrEqual(controls.count, 5, "the negative control needs ≥ 5 non-receipt images")
@@ -208,11 +266,10 @@ final class ReceiptCorpusTests: XCTestCase {
 
     func testDevHalfReport() async throws {
         let rows = try loadManifest()
-        let hashes = try verifyFrozen(rows)
-        let dev = rows.filter { Self.half(forSHA: hashes[$0.file]!) == .dev }
+        try verifyFrozen(rows)
+        let dev = Self.split(rows).dev
         let outcomes = try await run(dev)
-        let cells = table(outcomes)
-        print(render(cells, title: "DEV half — \(dev.count) images"))
+        let cells = report(outcomes, title: "DEV half — \(Set(dev.map(\.receiptId)).count) receipts, \(dev.count) images")
         for v in barVerdicts(cells) { print("  \(v.cell): \(v.verdict)") }
         nonReceiptControl(outcomes)
         XCTAssertGreaterThanOrEqual(outcomes.count, 1, "measured nothing")
@@ -225,12 +282,11 @@ final class ReceiptCorpusTests: XCTestCase {
             throw XCTSkip("SEALED half runs only with RECEIPT_SEALED_RUN=1, ONCE, after the parser is frozen (DESIGN §7, held-out rule)")
         }
         let rows = try loadManifest()
-        let hashes = try verifyFrozen(rows)
-        let sealed = rows.filter { Self.half(forSHA: hashes[$0.file]!) == .sealed }
+        try verifyFrozen(rows)
+        let sealed = Self.split(rows).sealed
         let outcomes = try await run(sealed)
-        let cells = table(outcomes)
         let commit = ProcessInfo.processInfo.environment["RECEIPT_PARSER_COMMIT"] ?? "UNRECORDED — pass RECEIPT_PARSER_COMMIT"
-        print(render(cells, title: "SEALED half — \(sealed.count) images — parser commit \(commit)"))
+        let cells = report(outcomes, title: "SEALED half — \(Set(sealed.map(\.receiptId)).count) receipts, \(sealed.count) images — parser commit \(commit)")
         let verdicts = barVerdicts(cells)
         for v in verdicts { print("  \(v.cell): \(v.verdict)") }
         nonReceiptControl(outcomes)
@@ -255,5 +311,45 @@ final class ReceiptCorpusTests: XCTestCase {
         XCTAssertEqual(ReceiptCorpusTests.half(forSHA: "01abc"), .sealed)
         XCTAssertEqual(ReceiptCorpusTests.half(forSHA: "fe"), .dev)
         XCTAssertEqual(ReceiptCorpusTests.half(forSHA: "ff"), .sealed)
+    }
+
+    /// The commissioning fixture: 2 receipts × 3 shots. The file names and bytes
+    /// were chosen so the OLD per-file rule splits BOTH receipts across the
+    /// halves — asserted below, so the fixture cannot quietly stop discriminating.
+    static let splitFixture: [(row: Row, bytes: Data)] = ["en_paper_01", "ru_paper_02"].flatMap { id in
+        ["a", "b", "c"].map { shot in
+            let file = "\(id)_\(shot).jpg"
+            let row = Row(file: file, receiptId: id, locale: String(id.prefix(2)), type: "paper", totalCents: 1234,
+                          merchant: "Fixture", date: "2026-10-25", currency: "USD", notes: "")
+            return (row, Data("shot \(file)".utf8))
+        }
+    }
+
+    func testSplitKeepsEveryShotOfAReceiptInOneHalf() {
+        let rows = Self.splitFixture.map(\.row)
+        XCTAssertEqual(Self.receiptProblems(rows), [])
+
+        // Precondition: the pre-amendment rule (first byte of each FILE's SHA-256) leaks.
+        let perFile = Self.splitFixture.filter { Self.half(forSHA: Self.sha256Hex($0.bytes)) == .dev }.map(\.row)
+        let perFileLeaks = Set(perFile.map(\.receiptId)).intersection(rows.filter { r in !perFile.contains { $0.file == r.file } }.map(\.receiptId))
+        XCTAssertEqual(perFileLeaks, ["en_paper_01", "ru_paper_02"], "fixture no longer discriminates: the per-file rule must split both receipts")
+
+        let (dev, sealed) = Self.split(rows)
+        XCTAssertEqual(Set(dev.map(\.receiptId)).intersection(sealed.map(\.receiptId)), [], "a receipt_id appears in both halves")
+        XCTAssertEqual(dev.count + sealed.count, rows.count)
+        // And the fixture exercises both halves, so "everything in one half" cannot pass it.
+        XCTAssertEqual(Set(dev.map(\.receiptId)), ["ru_paper_02"])
+        XCTAssertEqual(Set(sealed.map(\.receiptId)), ["en_paper_01"])
+    }
+
+    func testManifestRejectsAReceiptWhoseShotsDisagree() {
+        var rows = Self.splitFixture.map(\.row)
+        let b = rows[1]
+        rows[1] = Row(file: b.file, receiptId: b.receiptId, locale: b.locale, type: b.type, totalCents: 9999,
+                      merchant: b.merchant, date: b.date, currency: b.currency, notes: "")
+        rows.removeAll { $0.file == "ru_paper_02_a.jpg" }
+        let problems = Self.receiptProblems(rows)
+        XCTAssertTrue(problems.contains { $0.hasPrefix("en_paper_01: shots of one receipt disagree") }, "\(problems)")
+        XCTAssertTrue(problems.contains { $0.hasPrefix("ru_paper_02: 0 primary shots") }, "\(problems)")
     }
 }

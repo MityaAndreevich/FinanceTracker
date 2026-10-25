@@ -37,20 +37,36 @@ line items, or any amount — those are what we measure. If a screenshot cannot 
 out. The corpus is private, and it still must not carry personal data — a corpus is a file that gets
 copied.
 
-## Naming
+## Naming — one receipt, one `receipt_id`, any number of shots
 
-`<locale>_<type>_<nn>.jpg` (or `.png` for screenshots), e.g. `ru_paper_03.jpg`, `en_screenshot_07.png`,
-`uk_paper_bad_02.jpg` for the deliberately bad ones, `xx_nonreceipt_01.jpg` for the control set.
-Locale = the language printed on the receipt (`en`, `ru`, `es`, `pt`, `uk`), not where you are.
+*(Amended 2026-10-25, before any freeze — STATE §13.13. The first paper receipt arrived as 5 photos of
+ONE receipt; a per-file split would have put those near-duplicates in both halves.)*
+
+- **`receipt_id`** = `<locale>_<type>_<nn>`, e.g. `ru_paper_03`, `en_screenshot_07`, `uk_paper_bad_02`
+  (a receipt that only exists in bad shape), `xx_nonreceipt_01`. One id per **physical receipt** (or one
+  order screenshot). Locale = the language printed on the receipt (`en`, `ru`, `es`, `pt`, `uk`), not
+  where you are.
+- **File** = `<receipt_id>_<shot>.jpg` (`.png` for screenshots), shot = `a`, `b`, `c` …:
+  `ru_paper_03_a.jpg`, `ru_paper_03_b.jpg`. A receipt with one photo is still `…_a`.
+- **Shot `a` is the receipt's sample** — the one taken by "How to photograph paper" above. **Take it
+  first**, then the angled/crumpled variants as `b`, `c` …. Variants are measured, but as a robustness
+  table, **not as extra samples**: 5 shots of one receipt count as **one** receipt toward the 10.
+- Number ids in the order you collect them and **never rename one** after the manifest is written — the
+  id decides which half a receipt lands in, so the id must be fixed before anyone knows the half.
 
 ## Recording the truth — `manifest.csv`, one row per image
 
 ```
-file,locale,type,total_cents,merchant,date,currency,notes
-ru_paper_03.jpg,ru,paper,125000,Перекрёсток,2026-09-18,RUB,thermal slightly faded
-en_screenshot_07.png,en,screenshot,4599,Amazon,2026-09-20,USD,subtotal 42.99 + shipping 3.00
-xx_nonreceipt_01.jpg,,nonreceipt,,,,,restaurant menu
+file,receipt_id,locale,type,total_cents,merchant,date,currency,notes
+ru_paper_03_a.jpg,ru_paper_03,ru,paper,125000,Перекрёсток,2026-09-18,RUB,thermal slightly faded
+ru_paper_03_b.jpg,ru_paper_03,ru,paper,125000,Перекрёсток,2026-09-18,RUB,crumpled; angled ~30°
+en_screenshot_07_a.png,en_screenshot_07,en,screenshot,4599,Amazon,2026-09-20,USD,subtotal 42.99 + shipping 3.00
+xx_nonreceipt_01_a.jpg,xx_nonreceipt_01,,nonreceipt,,,,,restaurant menu
 ```
+
+- Every shot of one receipt repeats the **same** truth (locale, type, total, merchant, date, currency);
+  only `notes` may differ. The test refuses a manifest where shots disagree, where a receipt has no
+  `_a` shot, or whose header lacks `receipt_id`.
 
 - `total_cents` = the amount you actually paid, **in cents, no separators** (12 500,00 ₽ → `125000`).
   Read it from the receipt, not from the app.
@@ -61,9 +77,12 @@ xx_nonreceipt_01.jpg,,nonreceipt,,,,,restaurant menu
 
 1. You hand over the images + manifest. I freeze it: a SHA-256 of every file and of the manifest,
    committed. **Nothing is added to a frozen set.** Late arrivals become the *next* set.
-2. The set is split in two **by hash, not by hand** — a DEV half I may look at and tune the parser
-   against, and a SEALED half nobody looks at.
-3. The parser is frozen (a commit). The sealed half is run **once**; the numbers reported are those.
+2. The set is split in two **by hash, not by hand** — by the SHA-256 of each **`receipt_id`**, so all
+   shots of a receipt land in the **same** half: a DEV half I may look at and tune the parser
+   against, and a SEALED half nobody looks at. Nobody (me included) opens an image before its
+   half is known.
+3. The parser is frozen (a commit). The sealed half is run **once**; the numbers reported are those —
+   **per receipt** (shot `a`; the §7 bar is judged here) and **per image** (variants, robustness only).
 4. If the sealed half misses the bar, that is the report. We do not tune and re-run the sealed half;
    we collect a new sealed set.
 
