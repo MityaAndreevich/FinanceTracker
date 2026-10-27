@@ -1669,3 +1669,36 @@ and EXPECTED 1245).
   body. `testManifestRejectsAReceiptWhoseShotsDisagree` covers the consistency check.
 - **Suite count:** +2 tests. Per the standing rule, EXPECTED_TOTAL_RUN is **not** set by arithmetic;
   the next full run exits 5 and prints it.
+
+### 13.14 Receipt corpus intake: halves recorded BEFORE any image is opened (2026-10-27)
+
+A message from Dmitry, 2026-10-27, says 9 ru paper receipts (10 images) are arriving in
+`budget-crab-internal/receipt-corpus/`, ids assigned in arrival order and **final**. `ru_paper_02`
+has two shots: `_a` is the clear one, `_b` the blurred variant. At the time of recording,
+`receipt-corpus/` does not exist and `FinanceTrackerTests/Fixtures/` does not exist, so **no image
+can have been opened**. This commit's timestamp is the evidence that the halves came first.
+
+Rule (§13.13): first byte of SHA-256(receipt_id as UTF-8), even → DEV, odd → SEALED. Computed with
+`printf '%s' "$id" | shasum -a 256`. The two fixture ids agree with `ReceiptCorpusTests`
+(`en_paper_01` → SEALED, `ru_paper_02` → DEV).
+
+| receipt_id | byte 0 | half | shots |
+|---|---|---|---|
+| en_paper_01 | `c9` | **SEALED** | already received (5 photos; Dmitry names `_a`) |
+| ru_paper_01 | `73` | **SEALED** | 1 |
+| ru_paper_02 | `40` | DEV | 2 (`_a` clear, `_b` blurred) |
+| ru_paper_03 | `8d` | **SEALED** | 1 |
+| ru_paper_04 | `43` | **SEALED** | 1 |
+| ru_paper_05 | `99` | **SEALED** | 1 |
+| ru_paper_06 | `1e` | DEV | 1 |
+| ru_paper_07 | `fe` | DEV | 1 |
+| ru_paper_08 | `ae` | DEV | 1 |
+| ru_paper_09 | `a9` | **SEALED** | 1 |
+
+ru: 4 DEV / 5 SEALED receipts (5 / 5 images). All: 4 DEV / 6 SEALED receipts. Not frozen. Counts
+elsewhere: en paper 1, screenshots 0, non-receipts 0.
+
+**The intake PII check conflicts with the sealed rule.** Card numbers, cashier names and QR codes
+can only be confirmed covered by looking at the image. Claude may open the DEV files only. The six
+SEALED receipts need a check by someone who will not tune the parser (Dmitry). This is open; it is
+not to be resolved by a Claude session opening a SEALED file.
