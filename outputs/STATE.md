@@ -1761,3 +1761,21 @@ parser) redacted and privacy-checked ALL new files, SEALED included. Claude chec
     en_screenshot_06; ru fiscal fields (ФД/ФП/ФН) on ru_paper_02/08 — the redacted QR encodes the same
     fields, and an FNS lookup returns only what the image already shows.
   - Everything else listed in `INTAKE_2026-10-31.md` is covered on the DEV files.
+
+### 13.16 D52 — root cause shown and fixed (test-only, 2026-10-31)
+
+Ruling needed by the §13.12 merge plan; the queue given 2026-10-31 was "D52 → merge → Guide step 3".
+- **Mechanism:** `ScriptedBackend.sleep` was a nonisolated `async` closure. The project is Swift 5
+  mode without `NonisolatedNonsendingByDefault`, so it ran on the global executor (SE-0338):
+  `sleeps.append` happened off-main while the test read `sleeps` on main. After a successful release
+  the controller's 2 s probe appends a third element; a capacity-2 array reallocates by moving its
+  elements out (old buffer count → 0), so a read racing that append sees `[]`, which is the exact
+  observed message both times.
+- **Shown, not inferred:** a guard `#expect(Thread.isMainThread)` inside the scripted sleep went red on
+  the old code in every retrying test (`firstAttemptSucceeds` via its probe, `busySessionIsRetried`,
+  `givesUpLoudly`, `secondReleaseIsIdempotent`). With the closure marked `@MainActor`: 6/6 green, and
+  `-test-iterations 50` gave 50/50 with zero guard hits. Machine quiet, one xcodebuild, sims shut down.
+- **Not user-reachable:** `.live` sleep is `Task.sleep` with no shared state; the controller is
+  `@MainActor`. No production change. Suite count unchanged (no new test; the guard is in the fixture).
+- With D52 fixed, `test/d33-scale-split-and-tab-tap`'s one non-D33 red is explained, which is what the
+  merge plan was waiting on.

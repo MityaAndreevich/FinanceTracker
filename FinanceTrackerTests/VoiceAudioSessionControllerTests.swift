@@ -42,7 +42,14 @@ struct VoiceAudioSessionControllerTests {
                     }
                 },
                 isOtherAudioPlaying: { false },
-                sleep: { [self] in sleeps.append($0) }
+                // D52: a nonisolated async closure runs on the global executor (SE-0338,
+                // Swift 5 mode), so without @MainActor this append raced the test's read
+                // of `sleeps`; the post-release probe's append grew the array mid-read
+                // and the read saw the moved-out buffer: `[]`. The guard keeps it fixed.
+                sleep: { @MainActor [self] in
+                    #expect(Thread.isMainThread, "scripted sleep ran off the main actor — `sleeps` is raced (D52)")
+                    sleeps.append($0)
+                }
             )
         }
     }
