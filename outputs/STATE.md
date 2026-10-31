@@ -1736,3 +1736,28 @@ ru paper 9/10, en screenshots 8/10, ru screenshots 0/10, non-receipts 0/5.
 
 The §13.14 SEALED-privacy conflict is closed for intake #2: the reviewer (Cowork, does not tune the
 parser) redacted and privacy-checked ALL new files, SEALED included. Claude checks DEV only.
+
+**Intake #2 checks (run after the halves commit `fc9a53e`):**
+- Every file has a row, every row has a file (30/30), every row has 9 columns, no duplicate filenames.
+- `en_paper_02` and `en_paper_03` share merchant/date/total (Burger King, 2026-10-07, 439) but are
+  **distinct receipts** (different order times and order numbers). Both DEV, so even if
+  they were one receipt nothing would leak across halves.
+- **Negative total (`en_screenshot_05`, −7680, SEALED).** The manifest loader accepts it (`Int("-7680")`).
+  The report does not handle it: `ReceiptParser` only keeps candidates with `cents > 0`
+  (`ReceiptParser.swift:141`), so that receipt can never score `exact`, and if the parser reads 7680 at
+  HIGH it counts as a **wrong prefill**. With n≈10 in the en/screenshot cell, one wrong prefill is 10% >
+  the 3% gate → the whole cell goes HINT-ONLY. Row left unchanged as instructed. **Founder decision
+  needed before freezing:** score refunds on magnitude, exclude refunds from the bar, or make the parser
+  emit a signed total.
+- **DEV privacy check** (all 12 DEV images, intakes #1 and #2; no EXIF/GPS in any DEV file):
+  - **`en_screenshot_04_a` (medical) — FAIL: the patient "Account Number" field is unredacted** (a
+    patient account number at a named provider; the value is deliberately not written here — this
+    repo is PUBLIC). The file is **NOT committed** to budget-crab-internal
+    (`2b6b867`); its manifest row is. Back to the reviewer for re-redaction. Because the reviewer
+    missed this on a DEV medical receipt, the two SEALED medical receipts (`en_screenshot_02`, `_07`)
+    should be re-checked by the reviewer for the same field — Claude can't look.
+  - Residual, low risk, reported not blocking: store-side counters left visible — kiosk `T#` on
+    en_paper_02/03, the store/lane/transaction line on en_paper_04, the associate number on
+    en_screenshot_06; ru fiscal fields (ФД/ФП/ФН) on ru_paper_02/08 — the redacted QR encodes the same
+    fields, and an FNS lookup returns only what the image already shows.
+  - Everything else listed in `INTAKE_2026-10-31.md` is covered on the DEV files.
