@@ -1702,3 +1702,37 @@ elsewhere: en paper 1, screenshots 0, non-receipts 0.
 can only be confirmed covered by looking at the image. Claude may open the DEV files only. The six
 SEALED receipts need a check by someone who will not tune the parser (Dmitry). This is open; it is
 not to be resolved by a Claude session opening a SEALED file.
+
+### 13.15 Receipt corpus intake #2: halves recorded BEFORE any image is opened (2026-10-31)
+
+Intake #2 (`INTAKE_2026-10-31.md`): 15 images, 13 new receipt_ids plus `en_paper_01_f` (a sixth shot
+of the existing SEALED `en_paper_01`). **Unlike §13.14, the files already exist on disk when this is
+recorded**, so the commit timestamp is not, on its own, proof that no image was seen. What is: the half
+is a pure function of the id (§13.13 rule, `printf '%s' "$id" | shasum -a 256`, byte 0 even → DEV,
+odd → SEALED), no image was opened before this commit, and the ids were assigned by the reviewer in
+arrival order. Control: `ru_paper_02` recomputed → `40` → DEV, matching §13.14.
+
+| receipt_id | byte 0 | half | shots |
+|---|---|---|---|
+| en_paper_01 | `c9` | **SEALED** | +1 (`_f`; now 6) |
+| en_paper_02 | `b6` | DEV | 1 |
+| en_paper_03 | `fc` | DEV | 1 |
+| en_paper_04 | `20` | DEV | 1 (not whole-in-frame → bad set) |
+| en_paper_05 | `d6` | DEV | 1 (not whole-in-frame → bad set) |
+| en_screenshot_01 | `8d` | **SEALED** | 1 |
+| en_screenshot_02 | `8f` | **SEALED** | 1 (medical — never in shared material) |
+| en_screenshot_03 | `32` | DEV | 1 (medical — never in shared material) |
+| en_screenshot_04 | `d8` | DEV | 1 (medical — never in shared material) |
+| en_screenshot_05 | `f3` | **SEALED** | 1 (refund, total_cents −7680) |
+| en_screenshot_06 | `f0` | DEV | 1 |
+| en_screenshot_07 | `95` | **SEALED** | 1 (medical — never in shared material) |
+| en_screenshot_08 | `6d` | **SEALED** | 1 |
+| uk_screenshot_01 | `45` | **SEALED** | 2 (`_a` invoice, `_b` LiqPay receipt, same order) |
+
+New: 7 DEV / 6 SEALED receipts (7 / 8 images incl. `en_paper_01_f`). Corpus after intake #2:
+23 receipts, 30 images. en paper 5 (4 DEV / 1 SEALED), ru paper 9 (4 / 5), en screenshots 8 (3 / 5),
+uk screenshots 1 (0 / 1), non-receipts 0. **Not frozen.** Still missing vs. target: en paper 5/10,
+ru paper 9/10, en screenshots 8/10, ru screenshots 0/10, non-receipts 0/5.
+
+The §13.14 SEALED-privacy conflict is closed for intake #2: the reviewer (Cowork, does not tune the
+parser) redacted and privacy-checked ALL new files, SEALED included. Claude checks DEV only.
